@@ -166,8 +166,8 @@ const TrainingBudget = () => {
   ];
 
   return (
-    <div className="max-w-full mx-auto bg-white p-4 shadow-md rounded-lg w-full">
-      <div className="bg-sky-600 text-white p-2 rounded-t-lg">
+    <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
+      <div className="bg-sky-400 text-white p-2 rounded-t-lg">
         <h1 className="font-semibold">Actual Training Budget</h1>
       </div>
 
@@ -186,7 +186,7 @@ const TrainingBudget = () => {
             </div>
           </div>
         </div> */}
-        <div className="my-4 relative z-50">
+        <div className="my-4 relative z-0">
           <div className="flex items-center space-x-2">
             <label className="text-sm font-medium">Year</label>
             <DatePicker

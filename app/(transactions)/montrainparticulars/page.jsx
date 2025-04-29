@@ -110,14 +110,14 @@ const MonthlyTrainingParticulars = () => {
   };
 
   return (
-    <div className="max-w-full mx-auto bg-white p-4 shadow-md rounded-lg w-full">
-      <div className="bg-sky-600 text-white p-2 rounded-t-lg">
+    <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
+      <div className="bg-sky-400 text-white p-2 rounded-t-lg">
         <h1 className="font-semibold">Monthly Training Particulars</h1>
       </div>
 
       {/* Display only month dropdown initially */}
       
-        <div className="my-4 relative z-50">
+        <div className="my-4 relative z-30">
           <div className="flex items-center space-x-2">
             <label className="text-sm font-medium">Month</label>
             <DatePicker
@@ -185,8 +185,8 @@ const MonthlyTrainingParticulars = () => {
               </div>
             </div>
 
-            <div className="overflow-x-auto">
-                <table className="min-w-full border bg-card text-sm " 
+            <div className="overflow-x-auto relative z-20">
+                <table className="min-w-full border relative z-0 bg-card text-sm " 
                 style={{ 
                   tableLayout: "fixed", 
                   fontSize: "13px" , 
@@ -194,7 +194,7 @@ const MonthlyTrainingParticulars = () => {
                   whiteSpace: "nowrap", 
                   overflow: "hidden",   
                   textOverflow: "ellipsis", }} >
-                  <thead className="bg-muted sticky top-0 z-10" >
+                  <thead className="bg-muted top-0 z-0" >
                     <tr>
                       {[{ key: "Program_Name", label: "Training Name" },
                         { key: "Req_Months", label: "Scheduled Month" },

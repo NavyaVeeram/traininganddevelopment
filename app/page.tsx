@@ -11,7 +11,6 @@ export default function Home() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-   const [errorMessage, setErrorMessage] = useState('');
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
 const router = useRouter();
 const handleSubmit = async (e: React.FormEvent) => {

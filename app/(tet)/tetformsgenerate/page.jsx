@@ -121,8 +121,8 @@ const TETForms = () => {
   };
 
   return (
-    <div className="max-w-full mx-auto bg-white p-4 shadow-md rounded-lg w-full">
-      <div className="bg-sky-600 text-white p-2 rounded-t-lg">
+    <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
+      <div className="bg-sky-400 text-white p-2 rounded-t-lg">
         <h1 className="font-semibold">TET Forms</h1>
       </div>
       <div className="my-4 relative z-50">

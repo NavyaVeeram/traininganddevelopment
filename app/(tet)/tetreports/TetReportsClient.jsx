@@ -1,0 +1,644 @@
+"use client";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { FaPrint, FaSearch } from "react-icons/fa";
+import Select from "react-select";
+import makeAnimated from "react-select/animated";
+import React from "react";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+
+const TetReportsClient = () => {
+  const parameters = [
+    "Benefit to the person/employee",
+    "Benefit to the team",
+    "Benefit to the section/department",
+    "Improvement in process",
+    "Improvement in technical knowledge",
+    "Practical Working Improvement",
+    "Creativity",
+    "Meeting the department/section requirements",
+    "Self/Managerial (Focused) Change",
+    "Usefulness of the programme",
+  ];
+  const [percentage, setPercentage] = useState(0);
+  const [averageRating, setAverageRating] = useState(0);
+
+  const searchParams = useSearchParams();
+  const programId = searchParams.get("id"); // `id` represents the Program_Id
+
+  const [formData, setFormData] = useState({
+    Program_Id: '',
+    EmployeeId: '',
+    Overall: '',
+    Percentage: '',
+    CreatedBy: 'admin',
+    Remarks: '',
+    ratings: Array(10).fill(5),
+  });
+
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [isMounted, setIsMounted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [programName, setProgramName] = useState('');
+  const [options, setOptions] = useState([]);
+  const [error, setError] = useState(null);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [employeeDetails, setEmployeeDetails] = useState(null);
+
+  // Set Program_Id dynamically when programId changes
+  React.useEffect(() => {
+    if (programId) {
+      setFormData((prev) => ({ ...prev, Program_Id: programId }));
+    }
+  }, [programId]);
+
+  // Set EmployeeId dynamically when selectedEmployee changes
+  React.useEffect(() => {
+    if (selectedEmployee) {
+      setFormData((prev) => ({ ...prev, EmployeeId: selectedEmployee.value }));
+    }
+  }, [selectedEmployee]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleRatingChange = (index, rating) => {
+    const newRatings = [...formData.ratings];
+    newRatings[index] = rating;
+    setFormData({ ...formData, ratings: newRatings });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Basic validation for required fields
+    if (!formData.Program_Id || !formData.EmployeeId || !formData.CreatedBy) {
+      alert("Please fill in all required fields: Program_Id, EmployeeId, CreatedBy.");
+      return;
+    }
+
+    const payload = {
+      Program_Id: formData.Program_Id,
+      EmployeeId: formData.EmployeeId,
+      Overall: Number(formData.Overall) || 0,
+      Percentage: Number(formData.Percentage) || 0,
+      CreatedBy: formData.CreatedBy,
+      Remarks: formData.Remarks,
+      Q_1: formData.ratings[0] || 0,
+      Q_2: formData.ratings[1] || 0,
+      Q_3: formData.ratings[2] || 0,
+      Q_4: formData.ratings[3] || 0,
+      Q_5: formData.ratings[4] || 0,
+      Q_6: formData.ratings[5] || 0,
+      Q_7: formData.ratings[6] || 0,
+      Q_8: formData.ratings[7] || 0,
+      Q_9: formData.ratings[8] || 0,
+      Q_10: formData.ratings[9] || 0,
+    };
+
+    const res = await fetch('/api/post_tet_form_review', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    alert(data.message);
+  };
+  useEffect(() => {
+    const filledRatings = formData.ratings.filter((r) => r > 0);
+    const total = filledRatings.reduce((sum, r) => sum + r, 0);
+    const maxPossible = parameters.length * 5; // 10 * 5 = 50
+  
+    if (filledRatings.length > 0) {
+      const average = total * 2; // or total / filledRatings.length if you want mean
+      const percent = ((total / maxPossible) * 100).toFixed(2);
+  
+      setAverageRating(average);
+      setPercentage(percent);
+  
+      // ✅ Update formData with these values
+      setFormData((prev) => ({
+        ...prev,
+        Overall: average,
+        Percentage: percent,
+      }));
+    } else {
+      setAverageRating(0);
+      setPercentage(0);
+      setFormData((prev) => ({
+        ...prev,
+        Overall: 0,
+        Percentage: 0,
+      }));
+    }
+  }, [formData.ratings]);
+  
+  const [response, setResponse] = useState(null);
+
+  // Generate PDF based on the filtered employee data
+  async function generatePdfForEmployees(programId) {
+    const templatePath = "/Training_Effect_Tracing_Form.pdf";
+    const label = "Training_Effectiveness_Filtered_Employees.pdf";
+    const templateBytes = await fetch(templatePath).then((res) => res.arrayBuffer());
+    const mergedPdf = await PDFDocument.create();
+    const font = await mergedPdf.embedFont(StandardFonts.HelveticaBold);
+
+    const apiUrl = `/api/get_tet_form_emp_details_for_report?programId=${programId}`;
+    let employees = [];
+    try {
+      const response = await fetch(apiUrl);
+      if (response.ok) {
+        employees = await response.json();
+      } else {
+        alert("Failed to fetch employee data for PDF.");
+        return;
+      }
+    } catch (error) {
+      alert("Error fetching employee data for PDF.");
+      return;
+    }
+
+    if (employees.length === 0) {
+      alert("No employee data available for PDF.");
+      return;
+    }
+
+    for (const emp of employees) {
+      const templatePdf = await PDFDocument.load(templateBytes);
+      const copiedPages = await mergedPdf.copyPages(templatePdf, templatePdf.getPageIndices());
+
+      copiedPages.forEach((page, index) => {
+        const height = page.getSize().height;
+
+        if (index === 0) {
+          // Customize on the first page
+          page.drawText(emp.EmployeeId || "", {
+            x: 170,
+            y: height - 55,
+            size: 8,
+            font,
+            color: rgb(0, 0, 0),
+          });
+          page.drawText(emp.Username || "", {
+            x: 170,
+            y: height - 75,
+            size: 8,
+            font,
+            color: rgb(0, 0, 0),
+          });
+          page.drawText(emp.Designation || "", {
+            x: 170,
+            y: height - 98,
+            size: 8,
+            font,
+            color: rgb(0, 0, 0),
+          });
+          page.drawText(emp.Section || "", {
+            x: 170,
+            y: height - 118,
+            size: 8,
+            font,
+            color: rgb(0, 0, 0),
+          });
+          page.drawText(emp.Department || "", {
+            x: 170,
+            y: height - 140,
+            size: 8,
+            font,
+            color: rgb(0, 0, 0),
+          });
+          page.drawText(emp.Venue || "", {
+            x: 170,
+            y: height - 160,
+            size: 8,
+            font,
+            color: rgb(0, 0, 0),
+          });
+          page.drawText(emp.Program_Name || "", {
+            x: 385,
+            y: height - 55,
+            size: 8,
+            font,
+            color: rgb(0, 0, 0),
+          });
+          page.drawText(emp.Trainer || "", {
+            x: 385,
+            y: height - 75,
+            size: 8,
+            font,
+            color: rgb(0, 0, 0),
+          });
+
+          // Updated tickPath to scaled down version of provided SVG path for tick mark
+          const tickPath = "M18.277 3.03 6.99 14.32 0.92 8.25 0 9.18 6.99 16.16 19.2 3.95 z";
+          const mode = emp.Train_Mode;
+          if (mode === "Internal") {
+            page.drawSvgPath(tickPath, { x: 420, y: height - 77, font, color: rgb(0, 0, 0) });
+          } else if (mode === "External") {
+            page.drawSvgPath(tickPath, { x: 458, y: height - 77, font, color: rgb(0, 0, 0) });
+          } else if (mode === "Overseas") {
+            page.drawSvgPath(tickPath, { x: 518, y: height - 77, font, color: rgb(0, 0, 0) });
+          }
+
+          page.drawText(String(emp.No_Hrs) || "", {
+            x: 385,
+            y: height - 118,
+            size: 8,
+            font,
+            color: rgb(0, 0, 0),
+          });
+
+          const formattedTrainingDate = emp.Training_Date
+            ? new Date(emp.Training_Date).toISOString().slice(0, 10)
+            : "";
+
+          const formattedEvaluationDate = emp.Evaluation_Date
+            ? new Date(emp.Evaluation_Date).toISOString().slice(0, 10)
+            : "";
+
+          page.drawText(String(formattedTrainingDate) || "", {
+            x: 385,
+            y: height - 140,
+            size: 8,
+            font,
+            color: rgb(0, 0, 0),
+          });
+          page.drawText(String(formattedEvaluationDate) || "", {
+            x: 385,
+            y: height - 160,
+            size: 8,
+            font,
+            color: rgb(0, 0, 0),
+          });
+        }
+
+        mergedPdf.addPage(page);
+      });
+    }
+
+    const finalPdfBytes = await mergedPdf.save();
+    const blob = new Blob([finalPdfBytes], { type: "application/pdf" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = label;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  // Fetch program data for the selected program
+  useEffect(() => {
+    if (programId) {
+      setLoading(true);
+      fetchProgramData();
+    }
+  }, [programId]);
+
+  const fetchProgramData = async () => {
+    try {
+      const [empRes, nameRes] = await Promise.all([
+        fetch(`/api/get_tet_form_emp_details?id=${programId}`),
+        fetch(`/api/get_tet_form_program_name?id=${programId}`),
+      ]);
+
+      const empData = await empRes.json();
+      const nameData = await nameRes.json();
+
+      if (nameData && nameData[0]) {
+        setProgramName(nameData[0].Program_Name);
+      }
+
+      if (!Array.isArray(empData) || empData.length === 0 || empData.every((emp) => !emp.EmployeeId)) {
+        setError("No training data available ...");
+        setFilteredData([]);
+      } else {
+        setError(null);
+        setProgramDetails(empData);
+        setFilteredData(Array.isArray(empData) ? empData : [empData]);
+      }
+      setLoading(false);
+    } catch (err) {
+      setError("Error fetching program details");
+      setLoading(false);
+    }
+  };
+
+  // Fetch employee data options for the dropdown
+  useEffect(() => {
+    const fetchDropdownData = async () => {
+      try {
+        const res = await fetch(`/api/get_tet_form_user_dropdown?programId=${programId}`);
+        const data = await res.json();
+
+        // Format the data for React Select
+      // Adjust dropdown options to show EmployeeId as value and include EmployeeId in label with Username + Department
+      const formattedOptions = data.map((item) => ({
+        value: item.Value,
+        label: `${item.Value} | ${item.Text}`, // Show EmployeeId along with Username + Department
+      }));
+
+      setOptions(formattedOptions);
+      } catch (error) {
+        console.error("Error fetching dropdown data:", error);
+      }
+    };
+
+    fetchDropdownData();
+  }, [programId]);
+
+  // Fetch employee details based on selected EmployeeId
+  useEffect(() => {
+    if (selectedEmployee) {
+      setLoading(true);
+      fetchEmployeeDetails(selectedEmployee.value);
+    }
+  }, [selectedEmployee]);
+
+  const fetchEmployeeDetails = async (employeeId) => {
+    setLoading(true); // Set loading state to true before fetching data
+    try {
+      const res = await fetch(`/api/get_tet_form_emp_details_for_report_empid?programId=${programId}&employeeId=${employeeId}`);
+      const data = await res.json();
+      
+      if (data && Array.isArray(data) && data.length > 0) {
+        setEmployeeDetails(data[0]);
+        setErrorMessage(""); // Clear any previous error messages
+      } else {
+        setEmployeeDetails(null);
+        setErrorMessage("No details available for the selected employee.");
+      }
+    } catch (error) {
+      setEmployeeDetails(null); // Clear employee details if an error occurs
+      setErrorMessage("Error fetching employee details.");
+    } finally {
+      setLoading(false); // Always stop loading, whether success or failure
+    }
+  };
+  
+  useEffect(() => {
+    setIsMounted(true); // Set the mounted state to true once the component is mounted
+  }, []);
+  
+  if (!isMounted) {
+    return null; // Ensure nothing is rendered until the component has mounted
+  }
+  
+  return (
+    <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
+      <div className="bg-sky-400 text-white p-2 rounded-t-lg flex justify-between items-center">
+        <h1 className="font-semibold">
+          TET Report Generation
+          {programName && (
+            <span className="font-semibold text-[#f8e111]"> {programName}</span>
+          )}
+        </h1>
+        <div className="flex mt-2 lg:mt-0 w-full lg:w-auto justify-start">
+          <button
+            type="button"
+            onClick={() => generatePdfForEmployees(programId)}
+            className="flex items-center justify-end bg-gray-600 text-white px-4 py-2 rounded-sm hover:bg-gray-900 transition"
+          >
+            <FaPrint />
+          </button>
+        </div>
+      </div>
+        <div className="my-4 relative z-0">
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium">Select EmpId</label>
+      <Select
+  options={options}
+  onChange={(selectedOption) => {
+    setSelectedEmployee(selectedOption);
+    console.log(selectedOption); // Log the selected employee
+  }}
+  placeholder="Select an Employee Id"
+  styles={{
+    control: (base, state) => ({
+      ...base,
+      borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
+      boxShadow: state.isFocused
+        ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
+        : "none",
+      borderRadius: "0.5rem",
+      minHeight: "2rem",
+      display: "flex",
+      alignItems: "center",
+    }),
+    menu: (base) => ({
+      ...base,
+      zIndex: 50,
+    }),
+    menuPortal: (base) => ({
+      ...base,
+      zIndex: 9999,
+    }),
+  }}
+/>
+
+</div>
+</div>
+{/* 
+      </div> */}
+     
+        {/* Personal Info */}
+    
+      {loading && <p>Loading...</p>}
+      {errorMessage && <p>{errorMessage}</p>}
+      {employeeDetails && (
+        <div className="max-w-5xl mx-auto p-6">
+        <div className="bg-sky-400 text-white p-2 rounded-t-lg">
+          <h1 className="text-center font-bold text-xl">Training Effectiveness Tracing Form</h1>
+    </div>
+    <form onSubmit={handleSubmit}>
+            <div className="overflow-x-auto mb-6">
+         <table className="table-auto w-full border text-sm">
+            <tbody>
+          <tr>
+          <td className="border px-4 py-2 font-semibold">Employee Name</td>
+          <td className="border px-4 py-2">{ employeeDetails.Username}</td>
+          <td className="border px-4 py-2 font-semibold">Program Title</td>
+          <td className="border px-4 py-2">{employeeDetails.Program_Name}</td>
+        </tr>
+        <tr>
+        <td className="border px-4 py-2 font-semibold">Employee ID</td>
+        <td className="border px-4 py-2">{employeeDetails.EmployeeId}</td>
+        <td className="border px-4 py-2 font-semibold">Trainer Name</td>
+        <td className="border px-4 py-2">{employeeDetails.Trainer}</td>
+      </tr>
+      <tr>
+        <td className="border px-4 py-2 font-semibold">Designation</td>
+        <td className="border px-4 py-2">{employeeDetails.Designation}</td>
+        <td className="border px-4 py-2 font-semibold">Mode of Training</td>
+        <td className="border px-4 py-2">{employeeDetails.Train_Mode}</td>
+      </tr>
+      <tr>
+        <td className="border px-4 py-2 font-semibold">Section</td>
+        <td className="border px-4 py-2">{employeeDetails.Section}</td>
+        <td className="border px-4 py-2 font-semibold">Duration</td>
+        <td className="border px-4 py-2">{employeeDetails.No_Hrs} hrs</td>
+      </tr>
+      <tr>
+        <td className="border px-4 py-2 font-semibold">Department</td>
+        <td className="border px-4 py-2">{employeeDetails.Department}</td>
+        <td className="border px-4 py-2 font-semibold">Date of Training</td>
+        <td className="border px-4 py-2">{employeeDetails.Training_Date
+    ? new Date(employeeDetails.Training_Date).toISOString().slice(0, 10)
+    : "N/A"}
+</td>
+      </tr>
+      <tr>
+        <td className="border px-4 py-2 font-semibold">Place of Training</td>
+        <td className="border px-4 py-2">{employeeDetails.Venue}</td>
+        <td className="border px-4 py-2 font-semibold">Date of Evaluation</td>
+        <td className="border px-4 py-2"> {employeeDetails.Evaluation_Date
+    ? new Date(employeeDetails.Evaluation_Date).toISOString().slice(0, 10)
+    : "N/A"}
+</td>
+      </tr>
+        </tbody>
+            
+    </table>
+    </div>
+    <div className="border mb-6 overflow-x-auto">
+          {/* Removed Program_Id and EmployeeId input fields as per user request */}
+          {/* <input name="Program_Id" value={formData.Program_Id} readOnly placeholder="Program ID" required /> */}
+          {/* <input name="EmployeeId" value={formData.EmployeeId} readOnly placeholder="Employee ID" required /> */}
+          <table className="w-full table-auto text-sm">
+            <thead>
+            <tr className="bg-gray-100">
+            <th className="border p-2"  colSpan={2}>Rating</th>        
+        <th className="border p-2" colSpan={1}>1️⃣ Poor</th>
+        <th className="border p-2"  colSpan={1}>2️⃣ Average</th>
+        <th className="border p-2"  colSpan={1}>3️⃣ Good</th>
+        <th className="border p-2"  colSpan={1}>4️⃣ Very Good</th>
+        <th className="border p-2"  colSpan={2}>5️⃣ Excellent</th>
+      </tr>
+              <tr className="bg-gray-100">
+                <th className="border p-2" rowSpan="2">S.No</th>
+                <th className="border p-2" rowSpan="2">Parameters</th>
+                <th className="border p-2" colSpan="5">Rating</th>
+                <th className="border p-2" rowSpan="2">Rating</th>
+              </tr>
+              <tr className="bg-gray-100">
+                {[1, 2, 3, 4, 5].map((num) => (
+                  <th key={num} className="border p-2">{num}</th>
+                ))}
+              </tr>
+            </thead>
+
+            <tbody>
+              {/* {parameters.map((param, index) => (
+                <tr key={index}>
+                  <td className="border p-2 text-center">{index + 1}</td>
+                  <td className="border p-2">{param}</td>
+                  {[1, 2, 3, 4, 5].map((rating) => (
+                    <td className="border p-2 text-center" key={rating}>
+                      <input
+                        type="radio"
+                        name={`rating-${index}`}
+                        checked={formData.ratings[index] === rating}
+                        onChange={() => handleRatingChange(index, rating)}
+                      />
+                    </td>
+                  ))}
+                  <td className="border p-2 text-center">{formData.ratings[index]}</td>
+                </tr>
+              ))} */}
+                {parameters.map((param, index) => (
+            <tr key={index}>
+              <td className="border p-2 text-center">{index + 1}</td>
+              <td className="border p-2">{param}</td>
+              {[1, 2, 3, 4, 5].map(rating => (
+                <td className="border p-2 text-center" key={rating}>
+                  <input
+                    type="radio"
+                    name={`rating-${index}`}
+                    checked={formData.ratings[index] === rating}
+                    onChange={() => handleRatingChange(index, rating)}
+                  />
+                </td>
+              ))}
+              <td className="border p-2 text-center">{formData.ratings[index]}</td>
+            </tr>
+          ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-4 flex justify-between border p-2">
+        <div className="font-bold">Overall Rating</div>
+        {/* <div className="text-lg">{averageRating}</div> */}
+        <input name="Overall" type="number" value={formData.Overall} readOnly className="bg-gray-100" />      </div>
+
+        <div className="mt-4 flex justify-between border p-2">
+            <div className="font-bold">Percentage</div>
+            <input name="Percentage" type="number" value={formData.Percentage} readOnly className="bg-gray-100" />
+            {/* <div className="text-lg">{percentage}%</div> */}
+          </div>
+
+        {/* Score Range */}
+        <div className="border mt-4 p-4">
+          <table className="w-full table-auto border-collapse text-sm">
+            <thead>
+              <tr>
+                <th className="border p-2">&lt;35</th>
+                <th className="border p-2">36-50</th>
+                <th className="border p-2">51-70</th>
+                <th className="border p-2">71-85</th>
+                <th className="border p-2">86-100</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="border p-2 text-center">Poor</td>
+                <td className="border p-2 text-center">Adequate</td>
+                <td className="border p-2 text-center">Good</td>
+                <td className="border p-2 text-center">Very Good</td>
+                <td className="border p-2 text-center">Excellent</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div className="mt-2 text-sm">Note: Retraining will be conducted if percentage is below 50</div>
+        </div>
+        {/* Remarks */}
+        <div className="mb-6 mt-6">
+          <label className="block font-semibold mb-2">HOD/HOS Remarks (If any):</label>
+          <textarea
+            name="Remarks"
+            className="w-full border p-2"
+            rows="4"
+            required
+            placeholder="Enter remarks..."
+            onChange={handleInputChange}
+          ></textarea>
+        </div>
+
+     {/* Footer */}
+     <div className="flex justify-between text-xs text-gray-600 mt-6">
+          <div>
+            <div>T & D - HR</div>
+            <div>Greentech Industries (India) Pvt. Ltd.</div>
+          </div>
+          <div>Authorized Person from concerned Dept</div>
+        </div>
+<div className="flex justify-end">
+<button
+       type="submit"
+       className="px-6 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"          >
+    submit</button>
+</div>
+   
+    </form>
+    </div>
+      )}
+
+    </div>
+
+
+  );
+};
+
+export default TetReportsClient;

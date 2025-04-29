@@ -265,7 +265,7 @@ export default function Requirement() {
   // const isYearEnabled function and other code remain unchanged
 const isYearEnabled = (date) => {
   const year = date.getFullYear();
-  return [2024, 2025, 2026].includes(year);
+  return [ 2025, 2026].includes(year);
 }; 
 const handleDelete = async (programId) => {
   try {
@@ -398,7 +398,7 @@ const handleEdit = (data) => {
         );
 
   return (
-    <div className="max-w-full mx-auto bg-white shadow-md p-2 w-full">
+    <div className="max-w-full mx-auto bg-white p-2 w-full">
     <div className="bg-sky-400 text-white p-2  flex justify-between rounded-t-lg">
         <p className="font-semibold">   Annual Training Requirement Form</p>
         <div className="flex justify-end mx-3">
@@ -483,8 +483,8 @@ const handleEdit = (data) => {
             required 
           >
             <option value="">Select Training Name</option>
-            <option value="IATF">International Automotive Task Force</option>
-            <option value="HSE">Health, Safety, and Environment</option>
+            <option value="IATF">International Automotive Task Force - (IATF)</option>
+            <option value="HSE">Health, Safety, and Environment - (HSE)</option>
           </select>
         </div>
       </div>

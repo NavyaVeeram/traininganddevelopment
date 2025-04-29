@@ -3,15 +3,15 @@ const prisma = new PrismaClient();
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
-    const { EmployeeId, Year_No } = req.query;
+    const { EmployeeId} = req.query;
 
-    if (!EmployeeId || !Year_No) {
+    if (!EmployeeId) {
       return res.status(400).json({ message: "EmployeeId and Year_No are required" });
     }
 
     try {
       const employeeDetails = await prisma.$queryRaw`
-        EXEC [dbo].[Get_Employee_History_Table] @EmployeeId = ${EmployeeId}, @Year_No = ${Year_No}
+        EXEC [dbo].[Get_Employee_History_Table] @EmployeeId = ${EmployeeId}
       `;
 
       if (!Array.isArray(employeeDetails) || employeeDetails.length === 0) {

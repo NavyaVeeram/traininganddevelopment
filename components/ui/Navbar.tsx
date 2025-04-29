@@ -1,14 +1,11 @@
-"use client"
-/* eslint-disable @next/next/no-html-link-for-pages */
 "use client";
 
 import * as React from "react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
-import {  X, User, ChevronDown, ChevronUp, Sun, Moon } from "lucide-react";
+import {  X, User, ChevronDown, ChevronUp } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +22,6 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
 
 const training: { title: string; href: string }[] = [
@@ -110,17 +106,22 @@ const masterreport: { title: string; href: string }[] = [
     title: "Training Cost/Budget",
     href: "/traincost",
   },
-]
-const trainingagencies: { title: string; href: string }[] = [
   {
-    title: "Upload External Training Agency details",
-    href: "/uploadexternal",
+    title: "Training Agencies",
+    href: "/trainingagencies",
   },
-  // {
-  //   title:"List of External Training Agencies",
-  //   href: "/listofexternal",
-  // },
+  
 ]
+// const trainingagencies: { title: string; href: string }[] = [
+//   {
+//     title: "Upload External Training Agency details",
+//     href: "/uploadexternal",
+//   },
+//   // {
+//   //   title:"List of External Training Agencies",
+//   //   href: "/listofexternal",
+//   // },
+// ]
 const trainingcertificates: { title: string; href: string }[] = [
   {
     title: "Upload Certificates",
@@ -136,37 +137,37 @@ const trainingmaterials: { title: string; href: string }[] = [
     title: "Upload Materials",
     href: "/uploadmaterials",
   },
-  {
-    title: "View Materials",
-    href: "/viewmaterials",
-  },
+  // {
+  //   title: "View Materials",
+  //   href: "/viewmaterials",
+  // },
 ]
 
 export default function NavigationMenuDemo() {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
   }
 
-  const router = useRouter();
-  const handleLogout = () => {
+  // const router = useRouter();
+  // const handleLogout = () => {
   
-    // Remove the Logged data from localStorage
-    localStorage.removeItem('isLoggedIn');
+  //   // Remove the Logged data from localStorage
+  //   localStorage.removeItem('isLoggedIn');
     
-    // Redirect to the login page
-    router.push('/');
-  };
+  //   // Redirect to the login page
+  //   router.push('/');
+  // };
   const toggleGroup = (group: string) => {
     setOpenGroup(openGroup === group ? null : group);
   };
  
   return (
     <div>
-      <nav className="flex items-center justify-between p-2" >
+      <nav className="flex items-center bg-gray-100 justify-between p-2" >
         {/* Brand Name on the Left */}
         <div className="text-black font-semibold text-xl">
         <Link href="/dashboard"> Greentech Industries</Link> 
@@ -200,16 +201,16 @@ export default function NavigationMenuDemo() {
 
         {/* Navigation Menu for Desktop and Toggleable for Mobile */}
         <NavigationMenu>
-          <NavigationMenuList
-            className={cn(
-              "flex space-x-4",
-              isMenuOpen ? "flex-col mt-4 space-y-2 md:flex-row md:mt-0 md:space-y-0" : "hidden md:flex"
-            )}
-          >
-   <NavigationMenuItem className="!bg-transparent">
-  <NavigationMenuTrigger>Training Calendar</NavigationMenuTrigger>
-  <NavigationMenuContent className="grid gap-2 p-1 md:w-[300px]">
-    <ul className="grid gap-2 p-1">
+        <NavigationMenuList
+          className={cn(
+            "flex space-x-4 overflow-hidden",
+            isMenuOpen ? "flex-col mt-4 space-y-2 md:flex-row md:mt-0 md:space-y-0" : "hidden md:flex"
+          )}
+        >
+<NavigationMenuItem className="bg-gray-100">
+  <NavigationMenuTrigger className="hover:text-sky-400">Training Calendar</NavigationMenuTrigger>
+  <NavigationMenuContent className="grid gap-2 p-1 md:w-[300px] max-h-[300px]">
+    <ul className="grid gap-2">
       {training.map((component) => (
         <ListItem key={component.title} title={component.title} href={component.href} />
       ))}
@@ -217,9 +218,9 @@ export default function NavigationMenuDemo() {
   </NavigationMenuContent>
 </NavigationMenuItem>
 
-            <NavigationMenuItem >
-              <NavigationMenuTrigger>Transaction</NavigationMenuTrigger>
-              <NavigationMenuContent className="grid gap-2 p-1 md:w-[250px] ">
+<NavigationMenuItem className="bg-gray-100">
+              <NavigationMenuTrigger className="hover:text-sky-400" >Transaction</NavigationMenuTrigger>
+              <NavigationMenuContent className="grid gap-2 p-1 md:w-[250px] px-3 max-h-[300px] ">
                 <ul className="grid gap-2 p-1">
                   {transaction.map((component) => (
                     <ListItem key={component.title} title={component.title} href={component.href} />
@@ -227,9 +228,9 @@ export default function NavigationMenuDemo() {
                 </ul>
               </NavigationMenuContent>
             </NavigationMenuItem>
-            <NavigationMenuItem>
-              <NavigationMenuTrigger>TET</NavigationMenuTrigger>
-              <NavigationMenuContent className="grid gap-2 p-1 md:w-[200px]">
+<NavigationMenuItem className="bg-gray-100">
+              <NavigationMenuTrigger className="hover:text-sky-400">TET</NavigationMenuTrigger>
+              <NavigationMenuContent className="grid gap-2 p-1 md:w-[200px] max-h-[300px] ">
                 <ul className="grid gap-2 p-1">
                   {tet.map((component) => (
                     <ListItem key={component.title} title={component.title} href={component.href} />
@@ -237,54 +238,60 @@ export default function NavigationMenuDemo() {
                 </ul>
               </NavigationMenuContent>
             </NavigationMenuItem>
-            <NavigationMenuItem>
-              <NavigationMenuTrigger>Master Report</NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid w-[200px] gap-1 p-1 md:w-[200px] md:grid-cols lg:w-[300px]">
+            <NavigationMenuItem className="bg-gray-100">
+              <NavigationMenuTrigger className="hover:text-sky-400">Master Report</NavigationMenuTrigger>
+              <NavigationMenuContent className="grid gap-2 p-1 md:w-[200px] max-h-[300px] ">
+                <ul className="grid gap-2 p-1">
                   {masterreport.map((component) => (
                     <ListItem key={component.title} title={component.title} href={component.href} />
                   ))}
                 </ul>
               </NavigationMenuContent>
             </NavigationMenuItem>
-            <NavigationMenuItem>
-              <NavigationMenuTrigger>Training Agencies</NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid w-[200px] gap-1 p-1 md:w-[500px] md:grid-cols lg:w-[300px]">
-                  {trainingagencies.map((component) => (
-                    <ListItem key={component.title} title={component.title} href={component.href} />
-                  ))}
-                </ul>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-              <NavigationMenuTrigger>Training certificates</NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid w-[200px] gap-1 p-1 md:w-[500px] md:grid-cols lg:w-[200px]">
-                  {trainingcertificates.map((component) => (
-                    <ListItem key={component.title} title={component.title} href={component.href} />
-                  ))}
-                </ul>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
+          {/* <NavigationMenuItem>
+            <NavigationMenuTrigger>Training Agencies</NavigationMenuTrigger>
+            <NavigationMenuContent>
+              <ul className="grid w-[200px] gap-1 p-1 md:w-[500px] md:grid-cols lg:w-[300px]">
+                {trainingagencies.map((component) => (
+                  <ListItem key={component.title} title={component.title} href={component.href} />
+                ))}
+              </ul>
+            </NavigationMenuContent>
+          </NavigationMenuItem> */}
+          <NavigationMenuItem className="bg-gray-100">
+            <NavigationMenuTrigger className="hover:text-sky-400">Training certificates</NavigationMenuTrigger>
+            <NavigationMenuContent
+              className="overflow-hidden"
+              style={{ "--radix-navigation-menu-viewport-height": "auto" } as React.CSSProperties}
+            >
+              <ul className="grid w-[150px] gap-1 p-1 md:w-[200px] md:grid-cols lg:w-[200px]">
+                {trainingcertificates.map((component) => (
+                  <ListItem key={component.title} title={component.title} href={component.href} />
+                ))}
+              </ul>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
 
-            <NavigationMenuItem>
-              <NavigationMenuTrigger>Training Materials</NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid w-[200px] gap-1 p-1 md:w-[500px] md:grid-cols lg:w-[180px]">
-                  {trainingmaterials.map((component) => (
-                    <ListItem key={component.title} title={component.title} href={component.href} />
-                  ))}
-                </ul>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
+          <NavigationMenuItem className="bg-gray-100 hover:bg-gray-200 focus:bg-gray-300 transition-all duration-300">
+            <NavigationMenuTrigger className="hover:text-sky-400">Training Materials</NavigationMenuTrigger>
+            <NavigationMenuContent
+              className="overflow-hidden"
+              style={{ "--radix-navigation-menu-viewport-height": "auto" } as React.CSSProperties}
+            >
+              <ul className="grid w-[100px] gap-1 p-1 md:w-[150px] md:grid-cols lg:w-[150px]">
+                {trainingmaterials.map((component) => (
+                  <ListItem key={component.title} title={component.title} href={component.href} />
+                ))}
+              </ul>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
 
           </NavigationMenuList>
 
         </NavigationMenu>
 
         {isOpen && (
-  <div className="md:hidden max-h-[80vh] overflow-y-auto px-4 pt-2 pb-4 space-y-4 bg-background border-t animate-slide-in-left">
+  <div className="md:hidden max-h-[80vh]  px-4 pt-2 pb-4 space-y-4 bg-background border-t animate-slide-in-left">
     {/* Training Group */}
     <MobileNavGroup title="Training" isOpen={openGroup === "training"} toggle={() => toggleGroup("training")}>
       {training.map((item) => (
@@ -321,14 +328,14 @@ export default function NavigationMenuDemo() {
       ))}
     </MobileNavGroup>
 
-    {/* Training Agencies Group */}
+    {/* Training Agencies Group
     <MobileNavGroup title="Training Agencies" isOpen={openGroup === "trainingagencies"} toggle={() => toggleGroup("trainingagencies")}>
       {trainingagencies.map((item) => (
         <MobileNavLink key={item.title} href={item.href}>
           {item.title}
         </MobileNavLink>
       ))}
-    </MobileNavGroup>
+    </MobileNavGroup> */}
 
     {/* Training Certificates Group */}
     <MobileNavGroup title="Training Certificates" isOpen={openGroup === "trainingcertificates"} toggle={() => toggleGroup("trainingcertificates")}>
@@ -356,7 +363,7 @@ export default function NavigationMenuDemo() {
 }
 function MobileNavLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <Link href={href} className="block px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-foreground hover:bg-muted">
+    <Link href={href} className="block px-4 py-3 rounded-md text-base font-medium text-muted-foreground hover:text-foreground hover:bg-muted">
       {children}
     </Link>
   );
@@ -402,17 +409,17 @@ const ListItem = React.forwardRef<React.ElementRef<"a">, React.ComponentPropsWit
   ({ className, title, children, ...props }, ref) => {
     return (
       <li>
-        <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
+        <NavigationMenuLink asChild>
           <a
             ref={ref}
             className={cn(
-              "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+              "block px-4 py-3 rounded-md text-sm font-medium text-black hover:text-foreground hover:bg-muted",
               className
             )}
             {...props}
           >
             <div className="text-sm font-medium leading-none">{title}</div>
-            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+            <p className="line-clamp-2 text-sm leading-snug text-black">
               {children}
             </p>
           </a>

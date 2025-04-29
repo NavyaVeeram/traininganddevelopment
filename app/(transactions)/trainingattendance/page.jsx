@@ -628,7 +628,7 @@ const TrainingAttendanceForm = () => {
 
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
-      <div className="bg-sky-600 text-white p-2 rounded-t-lg">
+      <div className="bg-sky-400 text-white p-2  rounded-t-lg">
         <h2 className="font-semibold">Training Attendance Entry</h2>
       </div>
       <form onSubmit={handleSubmit}>
@@ -669,7 +669,7 @@ const TrainingAttendanceForm = () => {
                   value: option.Value,
                   label: option.Text,
                 }))}
-                className="w-full"
+                className="w-[300px]"
                 placeholder="Select Program"
                 styles={{
                   control: (base, state) => ({
@@ -694,6 +694,7 @@ const TrainingAttendanceForm = () => {
                 }}
                 menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
                 instanceId="program-select"
+                // isClearable
               />
             </div>
           </div>
@@ -777,10 +778,7 @@ const TrainingAttendanceForm = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, Training_Date: e.target.value })
                 }
-                className={`w-full py-2 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-blue-500 ${
-                  formData.selectedMonth ? "bg-gray-100 cursor-not-allowed" : ""
-                }`}
-                disabled={formData.selectedMonth}
+                className={`w-full py-2 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-blue-500`}
               />
             </div>
 
@@ -988,6 +986,7 @@ const TrainingAttendanceForm = () => {
                   }),
                 }}
                 instanceId="trainer-select"
+                
               />
             </div>
           </div>
@@ -1083,21 +1082,15 @@ const TrainingAttendanceForm = () => {
                 formatOptionLabel={(data, { context }) =>
                   context === "menu" ? data.label : data.value
                 }
-                isDisabled={formData.selectedMonth}
+             
                 required
                 autoComplete="off"
-                className={`w-[400px] text-gray-900 ${
-                  formData.selectedMonth
-                    ? "bg-gray-100 cursor-not-allowed"
-                    : "bg-white"
-                }`}
+                className={`w-[400px] text-gray-900 bg-white`}
                 styles={{
                   control: (base, state) => ({
                     ...base,
-                    backgroundColor: formData.selectedMonth
-                      ? "#f7f9fded"
-                      : "#fff",
-                    cursor: formData.selectedMonth ? "not-allowed" : "default",
+                    backgroundColor: "#fff",
+                    cursor: "default",
                     borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
                     boxShadow: state.isFocused
                       ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
@@ -1137,8 +1130,7 @@ const TrainingAttendanceForm = () => {
         <div className="flex justify-end mt-1" style={{ marginRight: "100px" }}>
           <button
             type="submit"
-            className="px-6 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-300 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
-          >
+            className="px-6 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"          >
             Submit
           </button>
         </div>
