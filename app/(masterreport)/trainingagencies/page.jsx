@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Label } from "@/components/ui/label";
+// import { Label } from "@/components/ui/label";
+// import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {FaSearch } from "react-icons/fa";
+import { FaArrowUp, FaArrowDown, FaArrowsAltV, FaSearch } from "react-icons/fa";
+import Pagination from "@mui/material/Pagination"; // Material UI Pagination
 
-
-const TrainingAgencies = () => {
+const Upload = () => {
   const [formData, setFormData] = useState({
     Agency_name: "",
     Contact_person: "",
@@ -73,9 +74,9 @@ const TrainingAgencies = () => {
 
   const renderSortIcon = (column) => {
     if (sortConfig.key === column) {
-      return sortConfig.direction === "asc" ? "▲" : "▼"
+      return sortConfig.direction === "asc" ? <FaArrowUp /> : <FaArrowDown />;
     }
-    return  "↕";
+    return <FaArrowsAltV />;
   };
 
   const validatePhoneNumber = (number) => /^\d{10}$/.test(number);
@@ -120,7 +121,6 @@ const TrainingAgencies = () => {
       const data = await res.json();
 
       if (res.ok) {
-        setSuccessMessage(data.message || "Successfully added.");
         setFormData({
           Agency_name: "",
           Contact_person: "",
@@ -131,6 +131,7 @@ const TrainingAgencies = () => {
           Website: "",
         });
         fetchAgencies();
+        alert("Data Submitted Successfully")
       } else {
         setError(data.error || "Submission failed.");
       }
@@ -140,9 +141,9 @@ const TrainingAgencies = () => {
 
     setTimeout(() => {
       setError("");
-      setSuccessMessage("");
     }, 3000);
   };
+
   const filteredAgencies = agencies.filter((agency) =>
     Object.values(agency).some((val) =>
       val?.toString().toLowerCase().includes(searchQuery.toLowerCase())
@@ -162,61 +163,175 @@ const TrainingAgencies = () => {
   };
 
   return (
-    <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
-      {/* Header */}
-      <div className="bg-sky-400 text-white p-2 rounded-t-lg flex  items-center">
-      <h1 className="font-semibold">
-        External Training Agencies Entry
-        </h1>
-      </div>
 
+<div className="max-w-full mx-auto bg-white p-2 w-full">
+    <div className="bg-sky-400 text-white p-2  flex justify-between rounded-t-lg">
+        <p className="font-semibold"> External Training Agencies Entry</p>
+        </div>
+              {/* Header */}
+      {/* <div className="sticky top-0 z-10 p-1 bg-sky-600 text-white font-semibold text-lg shadow-md">
+        External Training Agencies Entry
+      </div> */}
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-4 mx-1">
         {successMessage && (
           <div className="text-green-600">{successMessage}</div>
         )}
         {error && <div className="text-red-600">{error}</div>}
-<div className="mt-2">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[
-            ["Agency_name", "Agency Name"],
-            ["Contact_person", "Contact Person"],
-            ["Location", "Location"],
-            ["Contact_1", "Contact 1"],
-            ["Contact_2", "Contact 2"],
-            ["Mailid", "Mail ID", "email"],
-            ["Website", "Website"],
-          ].map(([name, label, type = "text"]) => (
-            <div key={name} className="mb-4">
-            <Label htmlFor={name} className="block text-sm font-medium text-gray-900">
-              {label}
-            </Label>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div key="Agency_name" className="mb-4">
+            <label
+              htmlFor="Agency_name"
+             className="block text-sm font-medium text-gray-900"
+            >
+              Agency Name
+            </label>
             <input
-              type={type}
-              name={name}
-              id={name}
-              value={formData[name]}
+              type="text"
+              name="Agency_name"
+              id="Agency_name"
+              value={formData.Agency_name}
               onChange={handleChange}
               required
               autoComplete="off"
-              className="block w-full py-2 pl-3 pr-8 border rounded-md text-gray-900"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
               />
           </div>
-          
-          ))}
+
+          <div key="Contact_person" className="mb-4">
+            <label
+              htmlFor="Contact_person"
+              className="block text-sm font-medium text-gray-900"     >
+              Contact Person
+            </label>
+            <input
+              type="text"
+              name="Contact_person"
+              id="Contact_person"
+              value={formData.Contact_person}
+              onChange={handleChange}
+              required
+              autoComplete="off"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
+              />
+          </div>
+
+          <div key="Location" className="mb-4">
+            <label
+              htmlFor="Location"
+             className="block text-sm font-medium text-gray-900"
+            >
+              Location
+            </label>
+            <input
+              type="text"
+              name="Location"
+              id="Location"
+              value={formData.Location}
+              onChange={handleChange}
+              required
+              autoComplete="off"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
+              />
+          </div>
+
+          <div key="Contact_1" className="mb-4">
+            <label
+              htmlFor="Contact_1"
+             className="block text-sm font-medium text-gray-900"
+            >
+              Contact 1
+            </label>
+            <input
+              type="text"
+              name="Contact_1"
+              id="Contact_1"
+              value={formData.Contact_1}
+              onChange={handleChange}
+              required
+              autoComplete="off"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
+              />
+          </div>
+
+          <div key="Contact_2" className="mb-4">
+            <label
+              htmlFor="Contact_2"
+             className="block text-sm font-medium text-gray-900"
+            >
+              Contact 2
+            </label>
+            <input
+              type="text"
+              name="Contact_2"
+              id="Contact_2"
+              value={formData.Contact_2}
+              onChange={handleChange}
+              required
+              autoComplete="off"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
+/>
+          </div>
+                                                                      
+          <div key="Mailid" className="mb-4 relative">
+            <label
+              htmlFor="Mailid"
+             className="block text-sm font-medium text-gray-900"
+            >
+              Mail ID
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                name="Mailid"
+                id="Mailid"
+                value={formData.Mailid}
+                onChange={handleChange}
+                required
+                autoComplete="off"
+                placeholder="Enter your email"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
+                />
+              {/* Show @gmail.com if not in email */}
+              {!formData.Mailid.includes("@") && (
+                <span className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-500">
+                  @gmail.com
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div key="Website" className="mb-4">
+            <label
+              htmlFor="Website"
+           className="block text-sm font-medium text-gray-900"
+            >
+              Website
+            </label>
+            <input
+              type="text"
+              name="Website"
+              id="Website"
+              value={formData.Website}
+              onChange={handleChange}
+              required
+              autoComplete="off"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
+              />
+          </div>
+
           <div className="col-span-full sm:col-span-2 lg:col-span-4 flex justify-end">
-            <Button    className="px-6 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2">              Submit
+            <Button type="submit" className="bg-gray-600 hover:bg-gray-900 text-white w-full sm:w-auto">
+              Submit
             </Button>
           </div>
-        </div>
         </div>
       </form>
 
       {/* Controls */}
-      <div className="card-body p-0 overflow-x-auto pb-3">
-      <div className="p-4 bg-card">
-      <div className="flex flex-wrap justify-between items-center mb-4 space-y-2">
-          <div className="flex items-center space-x-2 text-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mx-2">
+        <div className="flex items-center gap-2 ">
           <span>Show</span>
           <select
             value={itemsPerPage}
@@ -233,31 +348,37 @@ const TrainingAgencies = () => {
               </option>
             ))}
           </select>
-          <span>entries</span>
+          <span>Entries</span>
         </div>
-        <div className="relative">
-  <input
-    type="text"
-    placeholder="Search ..."
-    value={searchQuery}
-    onChange={(e) => setSearchQuery(e.target.value)}
-    className="border p-1 pt-[0.9] pl-8 rounded bg-secondary"  />
-    <FaSearch className="absolute left-2 top-2 text-muted-foreground" />
-</div>
 
+        <div className="relative w-auto">
+          <FaSearch className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-500 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search here..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-4 w-4"    />
+        </div>
       </div>
-</div>
-</div>
+
       {/* Table */}
-              <table className="min-w-full overf border relative z-0  bg-card text-foreground" 
-                style={{ 
-                  tableLayout: "fixed" ,
-                  fontSize: "13px", 
-                 }}>
-                <thead className="bg-muted sticky top-0 z-10">
+      <div className="overflow-x-auto">
+        <table
+          className="min-w-full overf border  bg-card text-foreground border-gray-600 "
+          style={{
+            tableLayout: "fixed",
+            fontSize: "13px",
+            padding: "1px",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          <thead className="bg-muted sticky top-0 z-10">
             <tr>
               <th
-                className="px-4 py-2 border text-left cursor-pointer"
+                className="border px-4 py-2 cursor-pointer  text-left font-bold text-gray-900"
                 onClick={() => handleSort("Agency_name")}
               >
                 <div className="flex items-center justify-start gap-2">
@@ -268,7 +389,7 @@ const TrainingAgencies = () => {
                 </div>
               </th>
               <th
-                className="px-4 py-2 border text-left cursor-pointer"
+                className="border px-4 py-2 cursor-pointer text-left font-bold text-gray-900"
                 onClick={() => handleSort("Contact_person")}
               >
                 <div className="flex items-center justify-start gap-2">
@@ -279,7 +400,7 @@ const TrainingAgencies = () => {
                 </div>
               </th>
               <th
-                className="px-4 py-2 border text-left cursor-pointer"
+                className="border px-4 py-2 cursor-pointer text-left font-bold text-gray-900"
                 onClick={() => handleSort("Location")}
               >
                 <div className="flex items-center justify-start gap-2">
@@ -290,7 +411,7 @@ const TrainingAgencies = () => {
                 </div>
               </th>
               <th
-                className="px-4 py-2 border text-left cursor-pointer"
+                className="border px-4 py-2 cursor-pointer text-left font-bold text-gray-900"
                 onClick={() => handleSort("Contact_1")}
               >
                 <div className="flex items-center justify-start gap-2">
@@ -301,7 +422,7 @@ const TrainingAgencies = () => {
                 </div>
               </th>
               <th
-                className="px-4 py-2 border text-left cursor-pointer"
+                className="border px-4 py-2 cursor-pointer text-left font-bold text-gray-900"
                 onClick={() => handleSort("Contact_2")}
               >
                 <div className="flex items-center justify-start gap-2">
@@ -312,7 +433,7 @@ const TrainingAgencies = () => {
                 </div>
               </th>
               <th
-                className="px-4 py-2 border text-left cursor-pointer"
+                className="border px-4 py-2 cursor-pointer text-left font-bold text-gray-900"
                 onClick={() => handleSort("Mailid")}
               >
                 <div className="flex items-center justify-start gap-2">
@@ -323,7 +444,7 @@ const TrainingAgencies = () => {
                 </div>
               </th>
               <th
-                className="px-4 py-2 border text-left cursor-pointer"
+                className="border px-4 py-2 cursor-pointer text-left font-bold text-gray-900"
                 onClick={() => handleSort("Website")}
               >
                 <div className="flex items-center justify-start gap-2">
@@ -336,15 +457,25 @@ const TrainingAgencies = () => {
             </tr>
           </thead>
 
-          <tbody>
+          <tbody style={{ fontSize: "12px" }}>
             {currentAgencies.length > 0 ? (
               currentAgencies.map((agency, i) => (
                 <tr key={i} className="hover:bg-muted">
-                  <td className="px-4 py-2 border">{agency.Agency_name}</td>
-                  <td className="px-4 py-2 border">{agency.Contact_person}</td>
-                  <td className="px-4 py-2 border">{agency.Location}</td>
-                  <td className="px-4 py-2 border">{agency.Contact_1}</td>
-                  <td className="px-4 py-2 border">{agency.Contact_2}</td>
+                  <td className="border px-2 py-2 text-gray-800 font-bold">
+                    {agency.Agency_name}
+                  </td>
+                  <td className="border px-2 py-2 text-gray-800 font-bold">
+                    {agency.Contact_person}
+                  </td>
+                  <td className="border px-2 py-2 text-gray-800 font-bold">
+                    {agency.Location}
+                  </td>
+                  <td className="border px-2 py-2 text-gray-800 font-bold">
+                    {agency.Contact_1}
+                  </td>
+                  <td className="border px-2 py-2 text-gray-800 font-bold">
+                    {agency.Contact_2}
+                  </td>
                   {/* Mail ID - opens mail client */}
                   <td className="border px-2 py-2 text-gray-800 font-bold">
                     <a
@@ -355,15 +486,14 @@ const TrainingAgencies = () => {
                     </a>
                   </td>
 
-                  {/* Website - opens in new tab */}
-          {/* Website - opens in new tab */}
-          <td className="border px-2 py-2 text-gray-800 font-bold">
+                  
+                  <td className="border px-2 py-2 text-gray-800 font-bold">
                     <a
                       href={
                         agency.Website.startsWith("http")
                           ? agency.Website
                           : `https://${agency.Website}`
-                      } // Check if it starts with http or https
+                      } 
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 underline hover:text-blue-800"
@@ -493,9 +623,9 @@ const TrainingAgencies = () => {
             </button>
           </div>
         </div>
-
+      </div>
     </div>
   );
 };
 
-export default TrainingAgencies;
+export default Upload;

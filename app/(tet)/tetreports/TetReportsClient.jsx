@@ -44,6 +44,7 @@ const TetReportsClient = () => {
   const [error, setError] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [employeeDetails, setEmployeeDetails] = useState(null);
+  const [allFormsFilled, setAllFormsFilled] = useState(false);
 
   // Set Program_Id dynamically when programId changes
   React.useEffect(() => {
@@ -172,7 +173,12 @@ const TetReportsClient = () => {
 
       copiedPages.forEach((page, index) => {
         const height = page.getSize().height;
-
+        const tickPath = "M18.277 3.03 6.99 14.32 0.92 8.25 0 9.18 6.99 16.16 19.2 3.95 z";
+        const startY = height - 100; // starting Y position
+        const rowHeight = 25; // space between rows
+        const startX = 100; // start of the rating columns
+        const cellWidth = 38; // space between rating columns
+        
         if (index === 0) {
           // Customize on the first page
           page.drawText(emp.EmployeeId || "", {
@@ -273,6 +279,14 @@ const TetReportsClient = () => {
             font,
             color: rgb(0, 0, 0),
           });
+          page.drawText(emp.Remarks || "", {
+            x: 100,
+            y: height - 580, 
+            size: 8,
+            font,
+            color: rgb(0, 0, 0),
+          });
+                
         }
 
         mergedPdf.addPage(page);
@@ -294,6 +308,7 @@ const TetReportsClient = () => {
     if (programId) {
       setLoading(true);
       fetchProgramData();
+      checkAllFormsFilled(programId);
     }
   }, [programId]);
 
@@ -323,6 +338,37 @@ const TetReportsClient = () => {
     } catch (err) {
       setError("Error fetching program details");
       setLoading(false);
+    }
+  };
+
+  // Check if all forms are filled for the program
+  const checkAllFormsFilled = async (programId) => {
+    try {
+      const res = await fetch(`/api/get_tet_form_emp_details_for_report?programId=${programId}`);
+      if (!res.ok) {
+        setAllFormsFilled(false);
+        return;
+      }
+      const data = await res.json();
+      console.log("checkAllFormsFilled data:", data); // Debug log
+      if (!Array.isArray(data) || data.length === 0) {
+        setAllFormsFilled(false);
+        return;
+      }
+      // Check if all employees have filled forms
+      // Assuming form is filled if all Q_1 to Q_10 fields are non-null and > 0
+      const allFilled = data.every(emp => {
+        for (let i = 1; i <= 10; i++) {
+          const key = `Q_${i}`;
+          if (!emp[key] || emp[key] <= 0) {
+            return false;
+          }
+        }
+        return true;
+      });
+      setAllFormsFilled(allFilled);
+    } catch (error) {
+      setAllFormsFilled(false);
     }
   };
 
@@ -398,8 +444,19 @@ const TetReportsClient = () => {
         <div className="flex mt-2 lg:mt-0 w-full lg:w-auto justify-start">
           <button
             type="button"
-            onClick={() => generatePdfForEmployees(programId)}
-            className="flex items-center justify-end bg-gray-600 text-white px-4 py-2 rounded-sm hover:bg-gray-900 transition"
+            onClick={() => {
+              if (allFormsFilled) {
+                generatePdfForEmployees(programId);
+              } else {
+                alert("Please fill all the forms before printing.");
+              }
+            }}
+            disabled={!allFormsFilled}
+            className={`flex items-center justify-end px-4 py-2 rounded-sm transition ${
+              allFormsFilled
+                ? "bg-gray-600 text-white hover:bg-gray-900"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
           >
             <FaPrint />
           </button>
@@ -419,9 +476,8 @@ const TetReportsClient = () => {
     control: (base, state) => ({
       ...base,
       borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
-      boxShadow: state.isFocused
-        ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
-        : "none",
+      boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
+      padding: "1px",
       borderRadius: "0.5rem",
       minHeight: "2rem",
       display: "flex",
@@ -429,13 +485,14 @@ const TetReportsClient = () => {
     }),
     menu: (base) => ({
       ...base,
-      zIndex: 50,
+      zIndex: 9999,
     }),
     menuPortal: (base) => ({
       ...base,
       zIndex: 9999,
     }),
   }}
+  className="w-[400px]"
 />
 
 </div>
@@ -503,70 +560,55 @@ const TetReportsClient = () => {
     </table>
     </div>
     <div className="border mb-6 overflow-x-auto">
-          {/* Removed Program_Id and EmployeeId input fields as per user request */}
-          {/* <input name="Program_Id" value={formData.Program_Id} readOnly placeholder="Program ID" required /> */}
-          {/* <input name="EmployeeId" value={formData.EmployeeId} readOnly placeholder="Employee ID" required /> */}
-          <table className="w-full table-auto text-sm">
-            <thead>
-            <tr className="bg-gray-100">
-            <th className="border p-2"  colSpan={2}>Rating</th>        
-        <th className="border p-2" colSpan={1}>1️⃣ Poor</th>
-        <th className="border p-2"  colSpan={1}>2️⃣ Average</th>
-        <th className="border p-2"  colSpan={1}>3️⃣ Good</th>
-        <th className="border p-2"  colSpan={1}>4️⃣ Very Good</th>
-        <th className="border p-2"  colSpan={2}>5️⃣ Excellent</th>
-      </tr>
-              <tr className="bg-gray-100">
-                <th className="border p-2" rowSpan="2">S.No</th>
-                <th className="border p-2" rowSpan="2">Parameters</th>
-                <th className="border p-2" colSpan="5">Rating</th>
-                <th className="border p-2" rowSpan="2">Rating</th>
-              </tr>
-              <tr className="bg-gray-100">
-                {[1, 2, 3, 4, 5].map((num) => (
-                  <th key={num} className="border p-2">{num}</th>
-                ))}
-              </tr>
-            </thead>
+    <div className="flex justify-around bg-gray-100 font-bold text-center">
+  <div className="flex items-center justify-center  mx-9">
+    Rating
+  </div>
+  <div className="flex p-1">
+    <div className="mx-4">1️⃣ Poor</div>
+    <div className="mx-4">2️⃣ Average</div>
+    <div className="mx-4">3️⃣ Good</div>
+    <div className="mx-4">4️⃣ Very Good</div>
+    <div className="mx-4">5️⃣ Excellent</div>
+  </div>
+</div>
 
-            <tbody>
-              {/* {parameters.map((param, index) => (
-                <tr key={index}>
-                  <td className="border p-2 text-center">{index + 1}</td>
-                  <td className="border p-2">{param}</td>
-                  {[1, 2, 3, 4, 5].map((rating) => (
-                    <td className="border p-2 text-center" key={rating}>
-                      <input
-                        type="radio"
-                        name={`rating-${index}`}
-                        checked={formData.ratings[index] === rating}
-                        onChange={() => handleRatingChange(index, rating)}
-                      />
-                    </td>
-                  ))}
-                  <td className="border p-2 text-center">{formData.ratings[index]}</td>
-                </tr>
-              ))} */}
-                {parameters.map((param, index) => (
-            <tr key={index}>
-              <td className="border p-2 text-center">{index + 1}</td>
-              <td className="border p-2">{param}</td>
-              {[1, 2, 3, 4, 5].map(rating => (
-                <td className="border p-2 text-center" key={rating}>
-                  <input
-                    type="radio"
-                    name={`rating-${index}`}
-                    checked={formData.ratings[index] === rating}
-                    onChange={() => handleRatingChange(index, rating)}
-                  />
-                </td>
-              ))}
-              <td className="border p-2 text-center">{formData.ratings[index]}</td>
-            </tr>
+  <table className="w-full table-auto text-sm">
+    <thead>
+      <tr className="bg-gray-100">
+        <th className="border p-2" rowSpan="2">S.No</th>
+        <th className="border p-2" rowSpan="2">Parameters</th>
+        <th className="border p-2" colSpan="5">Rating</th>
+        <th className="border p-2" rowSpan="2">Selected</th>
+      </tr>
+      <tr className="bg-gray-100">
+        {[1, 2, 3, 4, 5].map((num) => (
+          <th key={num} className="border p-2 w-[80px]">{num}</th>
+        ))}
+      </tr>
+    </thead>
+    <tbody>
+      {parameters.map((param, index) => (
+        <tr key={index}>
+          <td className="border p-2 text-center">{index + 1}</td>
+          <td className="border p-2">{param}</td>
+          {[1, 2, 3, 4, 5].map((rating) => (
+            <td className="border p-2 text-center" key={rating}>
+              <input
+                type="radio"
+                name={`rating-${index}`}
+                checked={formData.ratings[index] === rating}
+                onChange={() => handleRatingChange(index, rating)}
+              />
+            </td>
           ))}
-            </tbody>
-          </table>
-        </div>
+          <td className="border p-2 text-center">{formData.ratings[index]}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+
         <div className="mt-4 flex justify-between border p-2">
         <div className="font-bold">Overall Rating</div>
         {/* <div className="text-lg">{averageRating}</div> */}

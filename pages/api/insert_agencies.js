@@ -16,8 +16,8 @@ export default async function handler(req, res) {
           @Mailid = ${Mailid},
           @Website = ${Website}
       `
-
-      return res.status(200).json({ message: 'Data uploaded successfully', result })
+      console.log(result)
+      return res.status(200).json({  result })
     } catch (error) {
       console.error('Error executing stored procedure:', error)
       return res.status(500).json({ error: 'An error occurred while uploading the agency' })

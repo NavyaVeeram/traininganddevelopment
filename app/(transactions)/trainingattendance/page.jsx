@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { faEdit, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { FaFilePdf, FaSearch,FaPrint } from "react-icons/fa";
+import { FaFilePdf, FaSearch, FaPrint } from "react-icons/fa";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import dynamic from "next/dynamic";
 const DatePicker = dynamic(() => import("react-datepicker"), { ssr: false });
@@ -11,7 +11,7 @@ import Select from "react-select";
 import makeAnimated from "react-select/animated";
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 const animatedComponents = makeAnimated();
 
 const TrainingAttendanceForm = () => {
@@ -79,6 +79,14 @@ const TrainingAttendanceForm = () => {
     { value: "Nov", label: "Nov" },
     { value: "Dec", label: "Dec" },
   ];
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
   const venueOptions = [
     { value: "Venue1", label: "Venue1" },
     { value: "Venue2", label: "Venue2" },
@@ -261,31 +269,6 @@ const TrainingAttendanceForm = () => {
     }
   };
 
-  // const handleMonthYearChange = async (date) => {
-  //   if (!date) return;
-  //   setSelectedDate(date);
-
-  //   const selectedMonth = date.getMonth() + 1;
-  //   const selectedYear = date.getFullYear();
-  //   setFormData((prev) => ({
-  //     ...prev,
-  //     selectedMonth: `${selectedMonth}-${selectedYear}`,
-  //   }));
-
-  //   try {
-  //     const res = await fetch(
-  //       `/api/get_training_attendance_dropdown?month=${selectedMonth}&year=${selectedYear}`
-  //     );
-  //     const data = await res.json();
-  //     if (res.ok) {
-  //       setOptions(data);
-  //     } else {
-  //       throw new Error(data.error || "Error fetching data");
-  //     }
-  //   } catch (err) {
-  //     setError(err.message);
-  //   }
-  // };
   const handleMonthYearChange = async (date) => {
     if (!date) return;
     setSelectedDate(date);
@@ -371,8 +354,8 @@ const TrainingAttendanceForm = () => {
         Persons: formData.Persons,
         No_Hrs: formData.No_Hrs,
         Training_Date: formData.Training_Date
-        ? new Date(formData.Training_Date).toISOString().split("T")[0]
-        : null,
+          ? new Date(formData.Training_Date).toISOString().split("T")[0]
+          : null,
         Training_Status: formData.selectedMonth || null,
         Schedule_Type: formData.Schedule_Type,
         Trainer: formData.Trainer,
@@ -380,7 +363,7 @@ const TrainingAttendanceForm = () => {
         Training_Budget: formData.Training_Budget || null,
         EmployeeIds: formData.EmployeeIds || null,
         CreatedBy: "admin",
-        };
+      };
       setLoading(true);
       const res = await fetch("/api/update_trainingdata_att_entry_submit", {
         method: "POST",
@@ -447,13 +430,25 @@ const TrainingAttendanceForm = () => {
       ? 1
       : Math.ceil(safeFilteredData.length / rowsPerPage);
 
+  const sortedData = [...safeFilteredData].sort((a, b) => {
+    if (!sortConfig.key) return 0;
+
+    const aValue = a[sortConfig.key];
+    const bValue = b[sortConfig.key];
+
+    if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+    if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
+    return 0;
+  });
+
   const paginatedData =
     rowsPerPage === "All"
-      ? safeFilteredData
-      : safeFilteredData.slice(
+      ? sortedData
+      : sortedData.slice(
           (currentPage - 1) * rowsPerPage,
           currentPage * rowsPerPage
         );
+
   const handleTableSearchChange = (e) => {
     const searchQuery = e.target.value;
     setTableSearchTerm(searchQuery);
@@ -480,13 +475,16 @@ const TrainingAttendanceForm = () => {
       setFilteredData(filtered);
     }
   };
+
   async function generatePdfForEmployees(Program_Id) {
-    const templatePath = '/training_report.pdf';
-    const label = 'Training_Effectiveness_Filtered_Employees.pdf';
-    const templateBytes = await fetch(templatePath).then(res => res.arrayBuffer());
+    const templatePath = "/training_report.pdf";
+    const label = "Training_Effectiveness_Filtered_Employees.pdf";
+    const templateBytes = await fetch(templatePath).then((res) =>
+      res.arrayBuffer()
+    );
     const mergedPdf = await PDFDocument.create();
     const font = await mergedPdf.embedFont(StandardFonts.HelveticaBold);
-  
+
     // Fetch data from API for PDF generation
     const apiUrl = `/api/get_tet_form_emp_details_for_report?programId=${Program_Id}`;
     let employees = [];
@@ -502,92 +500,94 @@ const TrainingAttendanceForm = () => {
       alert("Error fetching employee data for PDF.");
       return;
     }
-  
+
     if (employees.length === 0) {
       alert("No employee data available for PDF.");
       return;
     }
-  
+
     for (const emp of employees) {
       const templatePdf = await PDFDocument.load(templateBytes);
-      const copiedPages = await mergedPdf.copyPages(templatePdf, templatePdf.getPageIndices());
-  
+      const copiedPages = await mergedPdf.copyPages(
+        templatePdf,
+        templatePdf.getPageIndices()
+      );
+
       copiedPages.forEach((page, index) => {
         const height = page.getSize().height;
-  
+
         if (index === 0) {
-      
-          page.drawText(emp.Username || '', {
+          page.drawText(emp.Username || "", {
             x: 170,
             y: height - 68,
             size: 8,
             font,
             color: rgb(0, 0, 0),
           });
-              // Customize on first page
-              page.drawText(emp.EmployeeId || '', {
-                x: 170,
-                y: height - 102,
-                size: 8,
-                font,
-                color: rgb(0, 0, 0),
-              });
-          page.drawText(emp.Designation || '', {
+          // Customize on first page
+          page.drawText(emp.EmployeeId || "", {
+            x: 170,
+            y: height - 102,
+            size: 8,
+            font,
+            color: rgb(0, 0, 0),
+          });
+          page.drawText(emp.Designation || "", {
             x: 170,
             y: height - 136,
             size: 8,
             font,
             color: rgb(0, 0, 0),
           });
-          page.drawText(emp.Section || '', {
+          page.drawText(emp.Section || "", {
             x: 170,
             y: height - 171,
             size: 8,
             font,
             color: rgb(0, 0, 0),
           });
-          page.drawText(emp.Department || '', {
+          page.drawText(emp.Department || "", {
             x: 170,
             y: height - 206,
             size: 8,
             font,
             color: rgb(0, 0, 0),
           });
-          page.drawText(emp.Program_Name || '', {
+          page.drawText(emp.Program_Name || "", {
             x: 385,
             y: height - 68,
             size: 8,
             font,
             color: rgb(0, 0, 0),
           });
-          page.drawText(emp.Trainer || '', {
+          page.drawText(emp.Trainer || "", {
             x: 385,
             y: height - 102,
             size: 8,
             font,
             color: rgb(0, 0, 0),
           });
-          page.drawText(emp.Train_Mode || '', {
+          page.drawText(emp.Train_Mode || "", {
             x: 385,
             y: height - 137,
             size: 8,
             font,
             color: rgb(0, 0, 0),
           });
-  
-          page.drawText(String(emp.No_Hrs+"hr") || '', {
+
+          page.drawText(String(emp.No_Hrs + "hr") || "", {
             x: 385,
             y: height - 171,
             size: 8,
             font,
             color: rgb(0, 0, 0),
           });
-  
+
           const formattedTrainingDate = emp.Training_Date
             ? new Date(emp.Training_Date).toISOString().slice(0, 10)
-            : '';
-  
-          page.drawText(String(formattedTrainingDate) || '', {
+            : "";
+
+          page.drawText(String(formattedTrainingDate) || "", {
             x: 385,
             y: height - 206,
             size: 8,
@@ -595,15 +595,15 @@ const TrainingAttendanceForm = () => {
             color: rgb(0, 0, 0),
           });
         }
-  
+
         mergedPdf.addPage(page);
       });
     }
-  
+
     const finalPdfBytes = await mergedPdf.save();
-    const blob = new Blob([finalPdfBytes], { type: 'application/pdf' });
-    if (typeof document !== 'undefined') {
-      const link = document.createElement('a');
+    const blob = new Blob([finalPdfBytes], { type: "application/pdf" });
+    if (typeof document !== "undefined") {
+      const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.download = label;
       document.body.appendChild(link);
@@ -611,7 +611,7 @@ const TrainingAttendanceForm = () => {
       document.body.removeChild(link);
     }
   }
-  
+
   useEffect(() => {
     if (formData.Program_Id) {
       setLoading(true);
@@ -647,7 +647,6 @@ const TrainingAttendanceForm = () => {
           </div>
 
           {/* Program Selection */}
-      {/* Program Selection */}
           <div className="md:col-span-3">
             <label className="block font-medium">Select Program:</label>
             <div className="relative">
@@ -656,20 +655,26 @@ const TrainingAttendanceForm = () => {
                 isDisabled={!selectedDate || loading}
                 onChange={(selectedOption) => {
                   if (!selectedOption) return;
-                  handleProgramChange({ target: { value: selectedOption.value } });
+                  handleProgramChange({
+                    target: { value: selectedOption.value },
+                  });
                 }}
                 value={
                   options.length > 0
                     ? options
-                        .map((option) => ({ value: option.Value, label: option.Text }))
-                        .find((opt) => opt.value === formData.Program_Id) || null
+                        .map((option) => ({
+                          value: option.Value,
+                          label: option.Text,
+                        }))
+                        .find((opt) => opt.value === formData.Program_Id) ||
+                      null
                     : null
                 }
                 options={options.map((option) => ({
                   value: option.Value,
                   label: option.Text,
                 }))}
-                className="w-[300px]"
+                className="w-[500px]"
                 placeholder="Select Program"
                 styles={{
                   control: (base, state) => ({
@@ -692,7 +697,9 @@ const TrainingAttendanceForm = () => {
                     zIndex: 9999,
                   }),
                 }}
-                menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                menuPortalTarget={
+                  typeof document !== "undefined" ? document.body : null
+                }
                 instanceId="program-select"
                 // isClearable
               />
@@ -782,55 +789,6 @@ const TrainingAttendanceForm = () => {
               />
             </div>
 
-            {/* Month Selector (Combobox) */}
-            {/* <div>
-              <label className="block font-medium">Forward Month:</label>
-              <Select
-                id="Training_Status"
-                name="Training_Status"
-                options={monthOptions}
-                value={
-                  monthOptions.find(
-                    (opt) => opt.value === formData.selectedMonth
-                  ) || null
-                }
-                onChange={(selectedOption) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    selectedMonth: selectedOption ? selectedOption.value : "",
-                    EmployeeIds: [],
-                  }));
-                }}
-                placeholder="Select Month"
-                isClearable
-                isSearchable
-                isDisabled={!!formData.Training_Date}
-                className="text-gray-900"
-                styles={{
-                  control: (base, state) => ({
-                    ...base,
-                    borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
-                    boxShadow: state.isFocused
-                      ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
-                      : "none",
-                    padding: "1px",
-                    borderRadius: "0.5rem",
-                    minHeight: "2rem",
-                    display: "flex",
-                    alignItems: "center",
-                  }),
-                  menu: (base) => ({
-                    ...base,
-                    zIndex: 50,
-                  }),
-                  menuPortal: (base) => ({
-                    ...base,
-                    zIndex: 9999,
-                  }),
-                }}
-                menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
-              />
-            </div> */}
             <div>
               <label className="block font-medium">Forward Month:</label>
               <Select
@@ -894,7 +852,9 @@ const TrainingAttendanceForm = () => {
                     zIndex: 9999,
                   }),
                 }}
-                menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                menuPortalTarget={
+                  typeof document !== "undefined" ? document.body : null
+                }
                 instanceId="month-select"
               />
             </div>
@@ -903,9 +863,9 @@ const TrainingAttendanceForm = () => {
         <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mt-2">
           {/* Schedule Type */}
 
-          <div>
+          <div >
             <label className="block font-medium">Schedule Type:</label>
-            <div>
+            <div className="mt-2">
               <label className="inline-flex items-center">
                 <input
                   type="radio"
@@ -986,7 +946,6 @@ const TrainingAttendanceForm = () => {
                   }),
                 }}
                 instanceId="trainer-select"
-                
               />
             </div>
           </div>
@@ -1082,7 +1041,6 @@ const TrainingAttendanceForm = () => {
                 formatOptionLabel={(data, { context }) =>
                   context === "menu" ? data.label : data.value
                 }
-             
                 required
                 autoComplete="off"
                 className={`w-[400px] text-gray-900 bg-white`}
@@ -1130,7 +1088,8 @@ const TrainingAttendanceForm = () => {
         <div className="flex justify-end mt-1" style={{ marginRight: "100px" }}>
           <button
             type="submit"
-            className="px-6 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"          >
+            className="px-6 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
+          >
             Submit
           </button>
         </div>
@@ -1138,7 +1097,7 @@ const TrainingAttendanceForm = () => {
           <div className="text-center py-4">Loading data...</div>
         ) : error ? (
           <div className="text-center py-4 text-red-500">{error}</div>
-        ) : formData.Program_Id && filteredData.length ? (
+        ) : formData.Program_Id ? (
           <div className="card-body p-0 overflow-x-auto pb-3">
             <div className="card-body p-0 overflow-x-auto pb-3">
               <div className="p-4 bg-card">
@@ -1166,23 +1125,27 @@ const TrainingAttendanceForm = () => {
                     </select>
                     <span>entries</span>
                   </div>
-<div className="flex "> <button type="button"
-      onClick={() => generatePdfForEmployees(formData.Program_Id)}
-      className="flex items-center justify-end bg-gray-600 text-white px-4 py-2 mx-2 rounded-sm hover:bg-gray-900 transition"
-    >
-      <FaPrint />
-    </button>
-
-                  <div className="relative">
-                    <input
-                      type="text"
-                      className="border p-1 pl-8 rounded bg-secondary"
-                      placeholder="Search..."
-                      value={tableSearchTerm}
-                      onChange={handleTableSearchChange}
-                    />
-                    <FaSearch className="absolute left-2 top-2 text-gray-400" />
-                  </div>
+                  <div className="flex ">
+                    {" "}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        generatePdfForEmployees(formData.Program_Id)
+                      }
+                      className="flex items-center justify-end bg-gray-600 text-white px-4 py-2 mx-2 rounded-sm hover:bg-gray-900 transition"
+                    >
+                      <FaPrint />
+                    </button>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        className="border p-1 pl-8 rounded bg-secondary"
+                        placeholder="Search..."
+                        value={tableSearchTerm}
+                        onChange={handleTableSearchChange}
+                      />
+                      <FaSearch className="absolute left-2 top-2 text-gray-400" />
+                    </div>
                   </div>
                 </div>
 
@@ -1241,9 +1204,7 @@ const TrainingAttendanceForm = () => {
                               {item.Designation}
                             </td>
                             <td className="px-4 py-2 border">
-                              {item.DOJ
-                                ? item.DOJ.split("T")[0]
-                                : ""}
+                              {item.DOJ ? item.DOJ.split("T")[0] : ""}
                             </td>
                           </tr>
                         ))
