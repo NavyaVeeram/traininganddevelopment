@@ -107,6 +107,11 @@ const TetReportsClient = () => {
 
     const data = await res.json();
     alert(data.message);
+
+    // After successful submission, re-check if all forms are filled to enable print button dynamically
+    if (res.ok) {
+      checkAllFormsFilled(programId);
+    }
   };
   useEffect(() => {
     const filledRatings = formData.ratings.filter((r) => r > 0);
@@ -578,7 +583,7 @@ const TetReportsClient = () => {
   </>
 )}
         </h1>
-         <marquee dir="right" className="text-red-600">After filling all the forms refresh to download!</marquee>
+         {/* <marquee dir="right" className="text-red-600">After filling all the forms refresh to download!</marquee> */}
         <div className="flex mt-2 lg:mt-0 w-full lg:w-auto justify-start">
           <button
             type="button"
