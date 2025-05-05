@@ -75,9 +75,9 @@ const Upload = () => {
 
   const renderSortIcon = (column) => {
     if (sortConfig.key === column) {
-      return sortConfig.direction === "asc" ? <FaArrowUp /> : <FaArrowDown />;
+      return sortConfig.direction === "asc" ? "▲" : "▼"
     }
-    return <FaArrowsAltV />;
+    return "↕";
   };
 
   const validatePhoneNumber = (number) => /^\d{10}$/.test(number);
@@ -172,11 +172,7 @@ const Upload = () => {
       <div className="bg-sky-400 text-white p-2  flex justify-between rounded-t-lg">
         <p className="font-semibold"> External Training Agencies Entry</p>
       </div>
-      {/* Header */}
-      {/* <div className="sticky top-0 z-10 p-1 bg-sky-600 text-white font-semibold text-lg shadow-md">
-        External Training Agencies Entry
-      </div> */}
-      {/* Form */}
+     
       <form onSubmit={handleSubmit} className="space-y-4 mx-1">
         {successMessage && (
           <div className="text-green-600">{successMessage}</div>
@@ -199,7 +195,8 @@ const Upload = () => {
               onChange={handleChange}
               required
               autoComplete="off"
-              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
+              className="w-full p-2 border border-gray-300 
+              rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
             />
           </div>
 
