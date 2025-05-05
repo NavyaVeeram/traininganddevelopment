@@ -74,9 +74,10 @@ const TrainingAgencies = () => {
 
   const renderSortIcon = (column) => {
     if (sortConfig.key === column) {
-      return sortConfig.direction === "asc" ? <FaArrowUp /> : <FaArrowDown />;
+      return sortConfig.direction === "asc" ?  "▲" : "▼"
+    
     }
-    return <FaArrowsAltV />;
+    return  "↕";
   };
 
   const validatePhoneNumber = (number) => /^\d{10}$/.test(number);
@@ -366,91 +367,90 @@ const TrainingAgencies = () => {
       {/* Table */}
       <div className="overflow-x-auto">
         <table
-          className="min-w-full overf border  bg-card text-foreground border-gray-600 "
-          style={{
-            tableLayout: "fixed",
-            fontSize: "13px",
-            padding: "1px",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
+            className="min-w-full border rounded-lg bg-card text-foreground text-sm"  
+            style={{ 
+              tableLayout: "fixed" ,
+              fontSize: "13px", 
+              padding: "1px",
+              whiteSpace: "nowrap", 
+              overflow: "hidden",   
+              textOverflow: "ellipsis", }}
         >
           <thead className="bg-muted sticky top-0 z-10">
-            <tr>
+            <tr  className="bg-gray-100">
               <th
-                className="border px-4 py-2 cursor-pointer  text-left font-bold text-gray-900"
+                className="px-4 py-2 border text-left"
                 onClick={() => handleSort("Agency_name")}
               >
                 <div className="flex items-center justify-start gap-2">
                   <div>
-                    <span className="text-gray-900">Agency Name</span>
+                    <span>Agency Name</span>
                   </div>
                   <div>{renderSortIcon("Agency_name")}</div>
                 </div>
               </th>
               <th
-                className="border px-4 py-2 cursor-pointer text-left font-bold text-gray-900"
+                className="px-4 py-2 border text-left"
                 onClick={() => handleSort("Contact_person")}
               >
                 <div className="flex items-center justify-start gap-2">
                   <div>
-                    <span className="text-gray-900">Contact Person </span>
+                    <span>Contact Person </span>
                   </div>
                   <div>{renderSortIcon("Contact_person")}</div>
                 </div>
               </th>
               <th
-                className="border px-4 py-2 cursor-pointer text-left font-bold text-gray-900"
+                className="px-4 py-2 border text-left"
                 onClick={() => handleSort("Location")}
               >
                 <div className="flex items-center justify-start gap-2">
                   <div>
-                    <span className="text-gray-900">Location </span>
+                    <span>Location </span>
                   </div>
                   <div>{renderSortIcon("Location")}</div>
                 </div>
               </th>
               <th
-                className="border px-4 py-2 cursor-pointer text-left font-bold text-gray-900"
+                className="px-4 py-2 border text-left"
                 onClick={() => handleSort("Contact_1")}
               >
                 <div className="flex items-center justify-start gap-2">
                   <div>
-                    <span className="text-gray-900">Contact_1</span>
+                    <span>Contact_1</span>
                   </div>
                   <div>{renderSortIcon("Contact_1")}</div>
                 </div>
               </th>
               <th
-                className="border px-4 py-2 cursor-pointer text-left font-bold text-gray-900"
+                className="px-4 py-2 border text-left"
                 onClick={() => handleSort("Contact_2")}
               >
                 <div className="flex items-center justify-start gap-2">
                   <div>
-                    <span className="text-gray-900">Contact-2</span>
+                    <span>Contact-2</span>
                   </div>
                   <div>{renderSortIcon("Contact_2")}</div>
                 </div>
               </th>
               <th
-                className="border px-4 py-2 cursor-pointer text-left font-bold text-gray-900"
+                className="px-4 py-2 border text-left"
                 onClick={() => handleSort("Mailid")}
               >
                 <div className="flex items-center justify-start gap-2">
                   <div>
-                    <span className="text-gray-900">Mail ID </span>
+                    <span>Mail ID </span>
                   </div>
                   <div>{renderSortIcon("Mailid")}</div>
                 </div>
               </th>
               <th
-                className="border px-4 py-2 cursor-pointer text-left font-bold text-gray-900"
+                className="px-4 py-2 border text-left"
                 onClick={() => handleSort("Website")}
               >
                 <div className="flex items-center justify-start gap-2">
                   <div>
-                    <span className="text-gray-900"> Website </span>
+                    <span> Website </span>
                   </div>
                   <div>{renderSortIcon("Website")}</div>
                 </div>
@@ -458,27 +458,27 @@ const TrainingAgencies = () => {
             </tr>
           </thead>
 
-          <tbody style={{ fontSize: "12px" }}>
+          <tbody>
             {currentAgencies.length > 0 ? (
               currentAgencies.map((agency, i) => (
                 <tr key={i} className="hover:bg-muted">
-                  <td className="border px-2 py-2 text-gray-800 font-bold">
+                  <td className="px-4 py-2 border">
                     {agency.Agency_name}
                   </td>
-                  <td className="border px-2 py-2 text-gray-800 font-bold">
+                  <td className="px-4 py-2 border">
                     {agency.Contact_person}
                   </td>
-                  <td className="border px-2 py-2 text-gray-800 font-bold">
+                  <td className="px-4 py-2 border">
                     {agency.Location}
                   </td>
-                  <td className="border px-2 py-2 text-gray-800 font-bold">
+                  <td className="px-4 py-2 border">
                     {agency.Contact_1}
                   </td>
-                  <td className="border px-2 py-2 text-gray-800 font-bold">
+                  <td className="px-4 py-2 border">
                     {agency.Contact_2}
                   </td>
                   {/* Mail ID - opens mail client */}
-                  <td className="border px-2 py-2 text-gray-800 font-bold">
+                  <td className="px-4 py-2 border">
                     <a
                       href={`mailto:${agency.Mailid}`}
                       className="text-blue-600 underline hover:text-blue-800"
@@ -488,7 +488,7 @@ const TrainingAgencies = () => {
                   </td>
 
                   
-                  <td className="border px-2 py-2 text-gray-800 font-bold">
+                  <td className="px-4 py-2 border">
                     <a
                       href={
                         agency.Website.startsWith("http")
@@ -506,7 +506,7 @@ const TrainingAgencies = () => {
               ))
             ) : (
               <tr>
-                <td colSpan={7} className="py-4 text-gray-500">
+                <td colSpan={7} className="px-4 py-2 border">
                   No data found
                 </td>
               </tr>

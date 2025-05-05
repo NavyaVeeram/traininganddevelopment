@@ -304,6 +304,7 @@ const TrainingAttendanceForm = () => {
     setMessage("");
     setIsMessageVisible(false);
     setLoading(true);
+    setTableSearchTerm("");
     try {
       await fetchTrainingData(selectedProgramId);
       const [empRes, nameRes] = await Promise.all([
@@ -456,22 +457,25 @@ const TrainingAttendanceForm = () => {
     if (!searchQuery) {
       setFilteredData(programDetails);
     } else {
-      const filtered = programDetails.filter((trainer) =>
-        [
-          "EmployeeId",
-          "Username",
-          "Department",
-          "Section",
-          "Designation",
-          "DOJ",
-          "IsActive",
-        ].some((field) =>
-          trainer[field]
-            ?.toString()
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase())
-        )
-      );
+      const filtered = Array.isArray(programDetails)
+        ? programDetails.filter((trainer) =>
+            [
+              "EmployeeId",
+              "Username",
+              "Department",
+              "Section",
+              "Designation",
+              "DOJ",
+              "IsActive",
+            ].some((field) =>
+              trainer[field]
+                ?.toString()
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase())
+            )
+          )
+        : [];
+
       setFilteredData(filtered);
     }
   };
@@ -785,7 +789,10 @@ const TrainingAttendanceForm = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, Training_Date: e.target.value })
                 }
-                className={`w-full py-2 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-blue-500`}
+                disabled={!!formData.selectedMonth}
+                className={`w-full py-2 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-blue-500 ${
+                  formData.selectedMonth ? "bg-gray-100 cursor-not-allowed" : ""
+                }`}
               />
             </div>
 
@@ -801,29 +808,23 @@ const TrainingAttendanceForm = () => {
                   ) || null
                 }
                 onChange={(selectedOption) => {
-                  const newSelectedMonth = selectedOption
-                    ? selectedOption.value
-                    : "";
+                  const newSelectedMonth = selectedOption ? selectedOption.value : "";
+                
+                  const reqMonths = formData.Req_Months;
+                  const forward = formData.Forward;
                   setFormData((prev) => ({
                     ...prev,
                     selectedMonth: newSelectedMonth,
                     EmployeeIds: [],
                   }));
-
-                  // Update the message based on Req_Months and the new selected month
-                  const reqMonths = formData.Req_Months; // Get Req_Months from formData
-                  const forward = formData.Forward; // Get Forward from formData
-
-                  if (reqMonths) {
-                    const newMessage =
-                      reqMonths === forward
-                        ? `This program will be forwarded from ${reqMonths} to ${newSelectedMonth}`
-                        : `This program will be forwarded from ${reqMonths} to ${newSelectedMonth}`;
-                    setMessage(newMessage); // Update the message state
+                  if (newSelectedMonth && reqMonths) {
+                    const newMessage = `This program will be forwarded from ${reqMonths} to ${newSelectedMonth}`;
+                    setMessage(newMessage);
+                    setIsMessageVisible(true);
+                  } else {
+                    setIsMessageVisible(false);
+                    setMessage("");
                   }
-
-                  // Set message visibility to trues
-                  setIsMessageVisible(true);
                 }}
                 placeholder="Select Month"
                 isClearable
@@ -863,7 +864,7 @@ const TrainingAttendanceForm = () => {
         <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mt-2">
           {/* Schedule Type */}
 
-          <div >
+          <div>
             <label className="block font-medium">Schedule Type:</label>
             <div className="mt-2">
               <label className="inline-flex items-center">
@@ -1037,6 +1038,7 @@ const TrainingAttendanceForm = () => {
                     EmployeeIds: selectedValues,
                   }));
                 }}
+                isDisabled={!!formData.selectedMonth}
                 getOptionLabel={(e) => e.label}
                 formatOptionLabel={(data, { context }) =>
                   context === "menu" ? data.label : data.value
@@ -1047,8 +1049,8 @@ const TrainingAttendanceForm = () => {
                 styles={{
                   control: (base, state) => ({
                     ...base,
-                    backgroundColor: "#fff",
-                    cursor: "default",
+                    backgroundColor: formData.selectedMonth ? "#f3f4f6" : "#fff",
+                    cursor: formData.selectedMonth ? "not-allowed" : "default",
                     borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
                     boxShadow: state.isFocused
                       ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
@@ -1097,7 +1099,7 @@ const TrainingAttendanceForm = () => {
           <div className="text-center py-4">Loading data...</div>
         ) : error ? (
           <div className="text-center py-4 text-red-500">{error}</div>
-        ) : formData.Program_Id ? (
+        ) : formData.Program_Id && programDetails.length ? (
           <div className="card-body p-0 overflow-x-auto pb-3">
             <div className="card-body p-0 overflow-x-auto pb-3">
               <div className="p-4 bg-card">
@@ -1208,10 +1210,21 @@ const TrainingAttendanceForm = () => {
                             </td>
                           </tr>
                         ))
-                      ) : (
+                      ) : // <tr>
+                      //   <td colSpan="6" className="text-center py-4">
+                      //     No results found.
+                      //   </td>
+                      // </tr>
+                      filteredData.length === 0 ? (
                         <tr>
                           <td colSpan="6" className="text-center py-4">
                             No results found.
+                          </td>
+                        </tr>
+                      ) : (
+                        <tr>
+                          <td colSpan="6" className="text-center py-4">
+                            Loading...
                           </td>
                         </tr>
                       )}

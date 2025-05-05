@@ -186,7 +186,7 @@ const TrainingBudget = () => {
             </div>
           </div>
         </div> */}
-        <div className="my-4 relative z-0">
+        <div className="my-4 relative z-50">
           <div className="flex items-center space-x-2">
             <label className="text-sm font-medium">Year</label>
             <DatePicker
@@ -275,8 +275,8 @@ const TrainingBudget = () => {
 
             <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-300px)]">
               <div>
-                <table className="min-w-full border rounded-lg bg-card text-sm " style={{ tableLayout: "fixed", fontSize: "13px" }} >
-                  <thead className="bg-muted sticky top-0 z-10" >
+                <table className="min-w-full border z-0 rounded-lg bg-card text-sm " style={{ tableLayout: "fixed", fontSize: "13px" }} >
+                  <thead className="bg-muted sticky top-0" >
                     <tr>
                       {[{ key: "Program_Name", label: "Training Name" },
                         { key: "Req_Months", label: "Scheduled Month" },

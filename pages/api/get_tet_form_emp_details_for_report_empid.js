@@ -18,8 +18,18 @@ export default async function handler(req, res) {
         ${programId}, ${employeeId};
       `;
 
-      // Return the result as JSON
-      res.status(200).json(result);
+      // Convert rating fields to numbers before returning
+      const transformedResult = result.map(item => {
+        const transformedItem = { ...item };
+        for (let i = 1; i <= 10; i++) {
+          const key = `Q_${i}`;
+          transformedItem[key] = item[key] !== null && item[key] !== undefined ? Number(item[key]) : null;
+        }
+        transformedItem.Overall = item.Overall !== null && item.Overall !== undefined ? Number(item.Overall) : null;
+        transformedItem.Percentage = item.Percentage !== null && item.Percentage !== undefined ? Number(item.Percentage) : null;
+        return transformedItem;
+      });
+      res.status(200).json(transformedResult);
     } catch (error) {
       console.error("Error fetching employee details:", error);
       res.status(500).json({ error: 'An error occurred while fetching data.' });
