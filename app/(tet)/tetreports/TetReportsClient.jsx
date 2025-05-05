@@ -29,8 +29,8 @@ const TetReportsClient = () => {
   const [formData, setFormData] = useState({
     Program_Id: '',
     EmployeeId: '',
-    Overall: '',
-    Percentage: '',
+    Overall: 0,
+    Percentage: 0,
     CreatedBy: 'admin',
     Remarks: '',
     ratings: Array(10).fill(5),
@@ -44,6 +44,7 @@ const TetReportsClient = () => {
   const [error, setError] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [employeeDetails, setEmployeeDetails] = useState(null);
+  const [allFormsFilled, setAllFormsFilled] = useState(false);
 
   // Set Program_Id dynamically when programId changes
   React.useEffect(() => {
@@ -106,6 +107,11 @@ const TetReportsClient = () => {
 
     const data = await res.json();
     alert(data.message);
+
+    // After successful submission, re-check if all forms are filled to enable print button dynamically
+    if (res.ok) {
+      checkAllFormsFilled(programId);
+    }
   };
   useEffect(() => {
     const filledRatings = formData.ratings.filter((r) => r > 0);
@@ -139,161 +145,291 @@ const TetReportsClient = () => {
   const [response, setResponse] = useState(null);
 
   // Generate PDF based on the filtered employee data
-  async function generatePdfForEmployees(programId) {
-    const templatePath = "/Training_Effect_Tracing_Form.pdf";
-    const label = "Training_Effectiveness_Filtered_Employees.pdf";
-    const templateBytes = await fetch(templatePath).then((res) => res.arrayBuffer());
-    const mergedPdf = await PDFDocument.create();
-    const font = await mergedPdf.embedFont(StandardFonts.HelveticaBold);
+    async function generatePdfForEmployees(programId) {
+      const templatePath = "/Training_Effect_Tracing_Form.pdf";
+      const label = "Training_Effectiveness_Filtered_Employees.pdf";
+      const templateBytes = await fetch(templatePath).then((res) => res.arrayBuffer());
+      const mergedPdf = await PDFDocument.create();
+      const font = await mergedPdf.embedFont(StandardFonts.HelveticaBold);
 
-    const apiUrl = `/api/get_tet_form_emp_details_for_report?programId=${programId}`;
-    let employees = [];
-    try {
-      const response = await fetch(apiUrl);
-      if (response.ok) {
-        employees = await response.json();
-      } else {
-        alert("Failed to fetch employee data for PDF.");
+      // Embed tick image 
+      const tickImageBytes = await fetch("/assets/tick.png").then(res => res.arrayBuffer());
+      const tickImage = await mergedPdf.embedPng(tickImageBytes);
+    const tickImageDims = tickImage.scale(0.015);
+      const apiUrl = `/api/get_tet_form_emp_details_for_report?programId=${programId}`;
+      let employees = [];
+      try {
+        const response = await fetch(apiUrl);
+        if (response.ok) {
+          employees = await response.json();
+        } else {
+          alert("Failed to fetch employee data for PDF.");
+          return;
+        }
+      } catch (error) {
+        alert("Error fetching employee data for PDF.");
         return;
       }
-    } catch (error) {
-      alert("Error fetching employee data for PDF.");
-      return;
-    }
 
-    if (employees.length === 0) {
-      alert("No employee data available for PDF.");
-      return;
-    }
+      if (employees.length === 0) {
+        alert("No employee data available for PDF.");
+        return;
+      }
 
-    for (const emp of employees) {
-      const templatePdf = await PDFDocument.load(templateBytes);
-      const copiedPages = await mergedPdf.copyPages(templatePdf, templatePdf.getPageIndices());
+      for (const emp of employees) {
+        const templatePdf = await PDFDocument.load(templateBytes);
+        const copiedPages = await mergedPdf.copyPages(templatePdf, templatePdf.getPageIndices());
 
-      copiedPages.forEach((page, index) => {
-        const height = page.getSize().height;
+        copiedPages.forEach((page, index) => {
+          const height = page.getSize().height;
+          const startY = height - 100; // starting Y position
+          const rowHeight = 25; // space between rows
+          const startX = 100; // start of the rating columns
+          const cellWidth = 38; // space between rating columns
+          
+          if (index === 0) {
+            // Customize on the first page
+            page.drawText(emp.EmployeeId || "", {
+              x: 170,
+              y: height - 55,
+              size: 8,
+              font,
+              color: rgb(0, 0, 0),
+            });
+            page.drawText(emp.Username || "", {
+              x: 170,
+              y: height - 75,
+              size: 8,
+              font,
+              color: rgb(0, 0, 0),
+            });
+            page.drawText(emp.Designation || "", {
+              x: 170,
+              y: height - 98,
+              size: 8,
+              font,
+              color: rgb(0, 0, 0),
+            });
+            page.drawText(emp.Section || "", {
+              x: 170,
+              y: height - 118,
+              size: 8,
+              font,
+              color: rgb(0, 0, 0),
+            });
+            page.drawText(emp.Department || "", {
+              x: 170,
+              y: height - 140,
+              size: 8,
+              font,
+              color: rgb(0, 0, 0),
+            });
+            page.drawText(emp.Venue || "", {
+              x: 170,
+              y: height - 160,
+              size: 8,
+              font,
+              color: rgb(0, 0, 0),
+            });
+            page.drawText(emp.Program_Name || "", {
+              x: 385,
+              y: height - 55,
+              size: 8,
+              font,
+              color: rgb(0, 0, 0),
+            });
+            page.drawText(emp.Trainer || "", {
+              x: 385,
+              y: height - 75,
+              size: 8,
+              font,
+              color: rgb(0, 0, 0),
+            });
 
-        if (index === 0) {
-          // Customize on the first page
-          page.drawText(emp.EmployeeId || "", {
-            x: 170,
-            y: height - 55,
-            size: 8,
-            font,
-            color: rgb(0, 0, 0),
-          });
-          page.drawText(emp.Username || "", {
-            x: 170,
-            y: height - 75,
-            size: 8,
-            font,
-            color: rgb(0, 0, 0),
-          });
-          page.drawText(emp.Designation || "", {
-            x: 170,
-            y: height - 98,
-            size: 8,
-            font,
-            color: rgb(0, 0, 0),
-          });
-          page.drawText(emp.Section || "", {
-            x: 170,
-            y: height - 118,
-            size: 8,
-            font,
-            color: rgb(0, 0, 0),
-          });
-          page.drawText(emp.Department || "", {
-            x: 170,
-            y: height - 140,
-            size: 8,
-            font,
-            color: rgb(0, 0, 0),
-          });
-          page.drawText(emp.Venue || "", {
-            x: 170,
-            y: height - 160,
-            size: 8,
-            font,
-            color: rgb(0, 0, 0),
-          });
-          page.drawText(emp.Program_Name || "", {
-            x: 385,
-            y: height - 55,
-            size: 8,
-            font,
-            color: rgb(0, 0, 0),
-          });
-          page.drawText(emp.Trainer || "", {
-            x: 385,
-            y: height - 75,
-            size: 8,
-            font,
-            color: rgb(0, 0, 0),
-          });
+            // Draw tick image instead of SVG path
+            const mode = emp.Train_Mode;
+            let xPos = 420;
+            if (mode === "Internal") {
+              xPos = 420;
+            } else if (mode === "External") {
+              xPos = 458;
+            } else if (mode === "Overseas") {
+              xPos = 518;
+            }
+            const yPos = height - 93;
+            const imageWidth = 15;
+            const imageHeight = 15;
+            page.drawImage(tickImage, {
+              x: xPos,
+              y: yPos,
+              width: imageWidth,
+              height: imageHeight,
+            });
 
-          // Updated tickPath to scaled down version of provided SVG path for tick mark
-          const tickPath = "M18.277 3.03 6.99 14.32 0.92 8.25 0 9.18 6.99 16.16 19.2 3.95 z";
-          const mode = emp.Train_Mode;
-          if (mode === "Internal") {
-            page.drawSvgPath(tickPath, { x: 420, y: height - 77, font, color: rgb(0, 0, 0) });
-          } else if (mode === "External") {
-            page.drawSvgPath(tickPath, { x: 458, y: height - 77, font, color: rgb(0, 0, 0) });
-          } else if (mode === "Overseas") {
-            page.drawSvgPath(tickPath, { x: 518, y: height - 77, font, color: rgb(0, 0, 0) });
-          }
+            page.drawText(String(emp.No_Hrs) || "", {
+              x: 385,
+              y: height - 118,
+              size: 8,
+              font,
+              color: rgb(0, 0, 0),
+            });
 
-          page.drawText(String(emp.No_Hrs) || "", {
-            x: 385,
-            y: height - 118,
-            size: 8,
-            font,
-            color: rgb(0, 0, 0),
-          });
+            const formattedTrainingDate = emp.Training_Date
+              ? new Date(emp.Training_Date).toISOString().slice(0, 10)
+              : "";
 
-          const formattedTrainingDate = emp.Training_Date
-            ? new Date(emp.Training_Date).toISOString().slice(0, 10)
-            : "";
+            const formattedEvaluationDate = emp.Evaluation_Date
+              ? new Date(emp.Evaluation_Date).toISOString().slice(0, 10)
+              : "";
 
-          const formattedEvaluationDate = emp.Evaluation_Date
-            ? new Date(emp.Evaluation_Date).toISOString().slice(0, 10)
-            : "";
+            page.drawText(String(formattedTrainingDate) || "", {
+              x: 385,
+              y: height - 140,
+              size: 8,
+              font,
+              color: rgb(0, 0, 0),
+            });
+            page.drawText(String(formattedEvaluationDate) || "", {
+              x: 385,
+              y: height - 160,
+              size: 8,
+              font,
+              color: rgb(0, 0, 0),
+            });
+            page.drawText(String(emp.Q_1) || "", {
+              x: 530,
+              y: height -225, 
+              size: 8,
+              font,
+              color: rgb(0, 0, 0),
+            });
+            page.drawText(String(emp.Q_2) || "", {
+              x: 530,
+              y: height -252, 
+              size: 8,
+              font,
+              color: rgb(0, 0, 0),
+            });
+            page.drawText(String(emp.Q_3) || "", {
+              x: 530,
+              y: height -275, 
+              size: 8,
+              font,
+              color: rgb(0, 0, 0),
+            });
+            page.drawText(String(emp.Q_4) || "", {
+              x: 530,
+              y: height -300, 
+              size: 8,
+              font,
+              color: rgb(0, 0, 0),
+            });
+            page.drawText(String(emp.Q_5) || "", {
+              x: 530,
+              y: height -324, 
+              size: 8,
+              font,
+              color: rgb(0, 0, 0),
+            });
+            page.drawText(String(emp.Q_6) || "", {
+              x: 530,
+              y: height -347, 
+              size: 8,
+              font,
+              color: rgb(0, 0, 0),
+            });
+            page.drawText(String(emp.Q_7) || "", {
+              x: 530,
+              y: height -373, 
+              size: 8,
+              font,
+              color: rgb(0, 0, 0),
+            });
+            page.drawText(String(emp.Q_8) || "", {
+              x: 530,
+              y: height -397, 
+              size: 8,
+              font,
+              color: rgb(0, 0, 0),
+            });
+            page.drawText(String(emp.Q_9) || "", {
+              x: 530,
+              y: height -420, 
+              size: 8,
+              font,
+              color: rgb(0, 0, 0),
+            });
+            page.drawText(String(emp.Q_10) || "", {
+              x: 530,
+              y: height -445, 
+              size: 8,
+              font,
+              color: rgb(0, 0, 0),
+            });
+            page.drawText(String(emp.Overall) || "", {
+              x: 530,
+              y: height - 468, 
+              size: 8,
+              font,
+              color: rgb(0, 0, 0),
+            });
+            page.drawText(String(emp.Percentage) || "", {
+              x: 530,
+              y: height - 485, 
+              size: 8,
+              font,
+              color: rgb(0, 0, 0),
+            });
+            page.drawText(emp.Remarks || "", {
+              x: 100,
+              y: height - 580, 
+              size: 8,
+              font,
+              color: rgb(0, 0, 0),
+            });
+            let ratingYPositions = [226, 253, 276, 300.5, 324.5, 347.5, 373, 397, 420.5, 444];
 
-          page.drawText(String(formattedTrainingDate) || "", {
-            x: 385,
-            y: height - 140,
-            size: 8,
-            font,
-            color: rgb(0, 0, 0),
-          });
-          page.drawText(String(formattedEvaluationDate) || "", {
-            x: 385,
-            y: height - 160,
-            size: 8,
-            font,
-            color: rgb(0, 0, 0),
-          });
+                      for (let idx = 0; idx < 10; idx++) {
+        const rating = emp[`Q_${idx + 1}`];
+        let rowY = height - ratingYPositions[idx];
+        let xOffset = 388 + (rating - 1) * 10;
+        if (rating === 1) {
+          xOffset = 389;
+        } else if (rating === 2) {
+          xOffset = 421;
+        } else if (rating === 3) {
+          xOffset = 447;
+        } else if (rating === 4) {
+          xOffset = 475;
+        } else if (rating === 5) {
+          xOffset = 503;
         }
+        if (rating > 0) {
+          page.drawImage(tickImage, { x: xOffset, y: rowY, width: tickImageDims.width, height: tickImageDims.height });
+        }
+      }
+       }
 
-        mergedPdf.addPage(page);
-      });
+          mergedPdf.addPage(page);
+        });
+      }
+
+      const finalPdfBytes = await mergedPdf.save();
+      const blob = new Blob([finalPdfBytes], { type: "application/pdf" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = label;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
-
-    const finalPdfBytes = await mergedPdf.save();
-    const blob = new Blob([finalPdfBytes], { type: "application/pdf" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = label;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
 
   // Fetch program data for the selected program
   useEffect(() => {
     if (programId) {
       setLoading(true);
       fetchProgramData();
+      checkAllFormsFilled(programId);
     }
   }, [programId]);
 
@@ -323,6 +459,37 @@ const TetReportsClient = () => {
     } catch (err) {
       setError("Error fetching program details");
       setLoading(false);
+    }
+  };
+
+  // Check if all forms are filled for the program
+  const checkAllFormsFilled = async (programId) => {
+    try {
+      const res = await fetch(`/api/get_tet_form_emp_details_for_report?programId=${programId}`);
+      if (!res.ok) {
+        setAllFormsFilled(false);
+        return;
+      }
+      const data = await res.json();
+      console.log("checkAllFormsFilled data:", data); // Debug log
+      if (!Array.isArray(data) || data.length === 0) {
+        setAllFormsFilled(false);
+        return;
+      }
+      // Check if all employees have filled forms
+      // Assuming form is filled if all Q_1 to Q_10 fields are non-null and > 0
+      const allFilled = data.every(emp => {
+        for (let i = 1; i <= 10; i++) {
+          const key = `Q_${i}`;
+          if (!emp[key] || emp[key] <= 0) {
+            return false;
+          }
+        }
+        return true;
+      });
+      setAllFormsFilled(allFilled);
+    } catch (error) {
+      setAllFormsFilled(false);
     }
   };
 
@@ -381,6 +548,25 @@ const TetReportsClient = () => {
   useEffect(() => {
     setIsMounted(true); // Set the mounted state to true once the component is mounted
   }, []);
+
+  // Sync employeeDetails Q_1 to Q_10 into formData.ratings and Remarks
+  useEffect(() => {
+    if (employeeDetails) {
+      const newRatings = [];
+      for (let i = 1; i <= 10; i++) {
+        const key = `Q_${i}`;
+        const ratingValue = employeeDetails[key];
+        newRatings.push(ratingValue !== null && ratingValue !== undefined ? Number(ratingValue) : 5);
+      }
+      setFormData((prev) => ({
+        ...prev,
+        ratings: newRatings,
+        Remarks: employeeDetails.Remarks || '',
+        Overall: employeeDetails.Overall !== null && employeeDetails.Overall !== undefined ? employeeDetails.Overall : 0,
+        Percentage: employeeDetails.Percentage !== null && employeeDetails.Percentage !== undefined ? employeeDetails.Percentage : 0,
+      }));
+    }
+  }, [employeeDetails]);
   
   if (!isMounted) {
     return null; // Ensure nothing is rendered until the component has mounted
@@ -391,15 +577,29 @@ const TetReportsClient = () => {
       <div className="bg-sky-400 text-white p-2 rounded-t-lg flex justify-between items-center">
         <h1 className="font-semibold">
           TET Report Generation
-          {programName && (
-            <span className="font-semibold text-[#f8e111]"> {programName}</span>
-          )}
+{programName && (
+  <>
+  <span className="font-semibold text-[#f8e111]"> {'(' + programName + ')'}</span>
+  </>
+)}
         </h1>
+         {/* <marquee dir="right" className="text-red-600">After filling all the forms refresh to download!</marquee> */}
         <div className="flex mt-2 lg:mt-0 w-full lg:w-auto justify-start">
           <button
             type="button"
-            onClick={() => generatePdfForEmployees(programId)}
-            className="flex items-center justify-end bg-gray-600 text-white px-4 py-2 rounded-sm hover:bg-gray-900 transition"
+            onClick={() => {
+              if (allFormsFilled) {
+                generatePdfForEmployees(programId);
+              } else {
+                alert("Please fill all the forms before printing.");
+              }
+            }}
+            disabled={!allFormsFilled}
+            className={`flex items-center justify-end px-4 py-2 rounded-sm transition ${
+              allFormsFilled
+                ? "bg-gray-600 text-white hover:bg-gray-900"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
           >
             <FaPrint />
           </button>
@@ -419,9 +619,8 @@ const TetReportsClient = () => {
     control: (base, state) => ({
       ...base,
       borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
-      boxShadow: state.isFocused
-        ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
-        : "none",
+      boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
+      padding: "1px",
       borderRadius: "0.5rem",
       minHeight: "2rem",
       display: "flex",
@@ -429,13 +628,14 @@ const TetReportsClient = () => {
     }),
     menu: (base) => ({
       ...base,
-      zIndex: 50,
+      zIndex: 9999,
     }),
     menuPortal: (base) => ({
       ...base,
       zIndex: 9999,
     }),
   }}
+  className="w-[400px]"
 />
 
 </div>
@@ -503,78 +703,63 @@ const TetReportsClient = () => {
     </table>
     </div>
     <div className="border mb-6 overflow-x-auto">
-          {/* Removed Program_Id and EmployeeId input fields as per user request */}
-          {/* <input name="Program_Id" value={formData.Program_Id} readOnly placeholder="Program ID" required /> */}
-          {/* <input name="EmployeeId" value={formData.EmployeeId} readOnly placeholder="Employee ID" required /> */}
-          <table className="w-full table-auto text-sm">
-            <thead>
-            <tr className="bg-gray-100">
-            <th className="border p-2"  colSpan={2}>Rating</th>        
-        <th className="border p-2" colSpan={1}>1️⃣ Poor</th>
-        <th className="border p-2"  colSpan={1}>2️⃣ Average</th>
-        <th className="border p-2"  colSpan={1}>3️⃣ Good</th>
-        <th className="border p-2"  colSpan={1}>4️⃣ Very Good</th>
-        <th className="border p-2"  colSpan={2}>5️⃣ Excellent</th>
-      </tr>
-              <tr className="bg-gray-100">
-                <th className="border p-2" rowSpan="2">S.No</th>
-                <th className="border p-2" rowSpan="2">Parameters</th>
-                <th className="border p-2" colSpan="5">Rating</th>
-                <th className="border p-2" rowSpan="2">Rating</th>
-              </tr>
-              <tr className="bg-gray-100">
-                {[1, 2, 3, 4, 5].map((num) => (
-                  <th key={num} className="border p-2">{num}</th>
-                ))}
-              </tr>
-            </thead>
+    <div className="flex justify-around bg-gray-100 font-bold text-center">
+  <div className="flex items-center justify-center  mx-9">
+    Rating
+  </div>
+  <div className="flex p-1">
+    <div className="mx-4">1️⃣ Poor</div>
+    <div className="mx-4">2️⃣ Average</div>
+    <div className="mx-4">3️⃣ Good</div>
+    <div className="mx-4">4️⃣ Very Good</div>
+    <div className="mx-4">5️⃣ Excellent</div>
+  </div>
+</div>
 
-            <tbody>
-              {/* {parameters.map((param, index) => (
-                <tr key={index}>
-                  <td className="border p-2 text-center">{index + 1}</td>
-                  <td className="border p-2">{param}</td>
-                  {[1, 2, 3, 4, 5].map((rating) => (
-                    <td className="border p-2 text-center" key={rating}>
-                      <input
-                        type="radio"
-                        name={`rating-${index}`}
-                        checked={formData.ratings[index] === rating}
-                        onChange={() => handleRatingChange(index, rating)}
-                      />
-                    </td>
-                  ))}
-                  <td className="border p-2 text-center">{formData.ratings[index]}</td>
-                </tr>
-              ))} */}
-                {parameters.map((param, index) => (
-            <tr key={index}>
-              <td className="border p-2 text-center">{index + 1}</td>
-              <td className="border p-2">{param}</td>
-              {[1, 2, 3, 4, 5].map(rating => (
-                <td className="border p-2 text-center" key={rating}>
-                  <input
-                    type="radio"
-                    name={`rating-${index}`}
-                    checked={formData.ratings[index] === rating}
-                    onChange={() => handleRatingChange(index, rating)}
-                  />
-                </td>
-              ))}
-              <td className="border p-2 text-center">{formData.ratings[index]}</td>
-            </tr>
+  <table className="w-full table-auto text-sm">
+    <thead>
+      <tr className="bg-gray-100">
+        <th className="border p-2" rowSpan="2">S.No</th>
+        <th className="border p-2" rowSpan="2">Parameters</th>
+        <th className="border p-2" colSpan="5">Rating</th>
+        <th className="border p-2" rowSpan="2">Selected</th>
+      </tr>
+      <tr className="bg-gray-100">
+        {[1, 2, 3, 4, 5].map((num) => (
+          <th key={num} className="border p-2 w-[80px]">{num}</th>
+        ))}
+      </tr>
+    </thead>
+    <tbody>
+      {parameters.map((param, index) => (
+        <tr key={index}>
+          <td className="border p-2 text-center">{index + 1}</td>
+          <td className="border p-2">{param}</td>
+          {[1, 2, 3, 4, 5].map((rating) => (
+            <td className="border p-2 text-center" key={rating}>
+              <input
+                type="radio"
+                name={`rating-${index}`}
+                checked={formData.ratings[index] === rating}
+                onChange={() => handleRatingChange(index, rating)}
+              />
+            </td>
           ))}
-            </tbody>
-          </table>
-        </div>
+          <td className="border p-2 text-center">{formData.ratings[index]}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+
         <div className="mt-4 flex justify-between border p-2">
         <div className="font-bold">Overall Rating</div>
         {/* <div className="text-lg">{averageRating}</div> */}
-        <input name="Overall" type="number" value={formData.Overall} readOnly className="bg-gray-100" />      </div>
+        <input name="Overall" type="number" value={formData.Overall ?? 0} readOnly className="bg-gray-100" />      </div>
 
         <div className="mt-4 flex justify-between border p-2">
             <div className="font-bold">Percentage</div>
-            <input name="Percentage" type="number" value={formData.Percentage} readOnly className="bg-gray-100" />
+            <input name="Percentage" type="number" value={formData.Percentage ?? 0} readOnly className="bg-gray-100" />
             {/* <div className="text-lg">{percentage}%</div> */}
           </div>
 
@@ -612,6 +797,7 @@ const TetReportsClient = () => {
             rows="4"
             required
             placeholder="Enter remarks..."
+            value={formData.Remarks ?? ''}
             onChange={handleInputChange}
           ></textarea>
         </div>

@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Label } from "@/components/ui/label";
+// import { Label } from "@/components/ui/label";
+// import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {FaSearch } from "react-icons/fa";
+import { FaArrowUp, FaArrowDown, FaArrowsAltV, FaSearch } from "react-icons/fa";
+import Pagination from "@mui/material/Pagination"; // Material UI Pagination
 
-
-const TrainingAgencies = () => {
+const Upload = () => {
   const [formData, setFormData] = useState({
     Agency_name: "",
     Contact_person: "",
@@ -21,10 +22,11 @@ const TrainingAgencies = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const [sortConfig, setSortConfig] = useState({ key: "", direction: "asc" });
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
 
   const fetchAgencies = async () => {
     try {
@@ -73,9 +75,9 @@ const TrainingAgencies = () => {
 
   const renderSortIcon = (column) => {
     if (sortConfig.key === column) {
-      return sortConfig.direction === "asc" ? "▲" : "▼"
+      return sortConfig.direction === "asc" ? <FaArrowUp /> : <FaArrowDown />;
     }
-    return  "↕";
+    return <FaArrowsAltV />;
   };
 
   const validatePhoneNumber = (number) => /^\d{10}$/.test(number);
@@ -98,18 +100,18 @@ const TrainingAgencies = () => {
 
     // Ensure email ends with @gmail.com
     let email = formData.Mailid.trim();
-    if (!email.includes('@')) {
+    if (!email.includes("@")) {
       email = `${email}@gmail.com`; // Only append if there's no @ at all
     }
-    
+
     if (!validateEmail(email)) {
       setError("Please enter a valid email address.");
       setTimeout(() => setError(""), 3000);
       return;
     }
-    
+
     setFormData((prev) => ({ ...prev, Mailid: email }));
-    
+
     try {
       const res = await fetch("/api/insert_agencies", {
         method: "POST",
@@ -120,7 +122,6 @@ const TrainingAgencies = () => {
       const data = await res.json();
 
       if (res.ok) {
-        setSuccessMessage(data.message || "Successfully added.");
         setFormData({
           Agency_name: "",
           Contact_person: "",
@@ -131,6 +132,7 @@ const TrainingAgencies = () => {
           Website: "",
         });
         fetchAgencies();
+        alert("Data Submitted Successfully");
       } else {
         setError(data.error || "Submission failed.");
       }
@@ -140,21 +142,25 @@ const TrainingAgencies = () => {
 
     setTimeout(() => {
       setError("");
-      setSuccessMessage("");
     }, 3000);
   };
+
   const filteredAgencies = agencies.filter((agency) =>
     Object.values(agency).some((val) =>
       val?.toString().toLowerCase().includes(searchQuery.toLowerCase())
     )
   );
 
+  const totalPages =
+    rowsPerPage === "All"
+      ? 1
+      : Math.ceil(filteredAgencies.length / rowsPerPage);
   const currentAgencies =
-    itemsPerPage === "All"
+    rowsPerPage === "All"
       ? filteredAgencies
       : filteredAgencies.slice(
-          (currentPage - 1) * itemsPerPage,
-          currentPage * itemsPerPage
+          (currentPage - 1) * rowsPerPage,
+          currentPage * rowsPerPage
         );
 
   const handlePaginationChange = (event, value) => {
@@ -162,340 +168,422 @@ const TrainingAgencies = () => {
   };
 
   return (
-    <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
-      {/* Header */}
-      <div className="bg-sky-400 text-white p-2 rounded-t-lg flex  items-center">
-      <h1 className="font-semibold">
-        External Training Agencies Entry
-        </h1>
+    <div className="max-w-full mx-auto bg-white p-2 w-full">
+      <div className="bg-sky-400 text-white p-2  flex justify-between rounded-t-lg">
+        <p className="font-semibold"> External Training Agencies Entry</p>
       </div>
-
+      {/* Header */}
+      {/* <div className="sticky top-0 z-10 p-1 bg-sky-600 text-white font-semibold text-lg shadow-md">
+        External Training Agencies Entry
+      </div> */}
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-4 mx-1">
         {successMessage && (
           <div className="text-green-600">{successMessage}</div>
         )}
         {error && <div className="text-red-600">{error}</div>}
-<div className="mt-2">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[
-            ["Agency_name", "Agency Name"],
-            ["Contact_person", "Contact Person"],
-            ["Location", "Location"],
-            ["Contact_1", "Contact 1"],
-            ["Contact_2", "Contact 2"],
-            ["Mailid", "Mail ID", "email"],
-            ["Website", "Website"],
-          ].map(([name, label, type = "text"]) => (
-            <div key={name} className="mb-4">
-            <Label htmlFor={name} className="block text-sm font-medium text-gray-900">
-              {label}
-            </Label>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
+          <div key="Agency_name" className="mb-4">
+            <label
+              htmlFor="Agency_name"
+              className="block text-sm font-medium text-gray-900"
+            >
+              Agency Name
+            </label>
             <input
-              type={type}
-              name={name}
-              id={name}
-              value={formData[name]}
+              type="text"
+              name="Agency_name"
+              id="Agency_name"
+              value={formData.Agency_name}
               onChange={handleChange}
               required
               autoComplete="off"
-              className="block w-full py-2 pl-3 pr-8 border rounded-md text-gray-900"
-              />
+              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
+            />
           </div>
-          
-          ))}
-          <div className="col-span-full sm:col-span-2 lg:col-span-4 flex justify-end">
-            <Button    className="px-6 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2">              Submit
+
+          <div key="Contact_person" className="mb-4">
+            <label
+              htmlFor="Contact_person"
+              className="block text-sm font-medium text-gray-900"
+            >
+              Contact Person
+            </label>
+            <input
+              type="text"
+              name="Contact_person"
+              id="Contact_person"
+              value={formData.Contact_person}
+              onChange={handleChange}
+              required
+              autoComplete="off"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
+            />
+          </div>
+
+          <div key="Location" className="mb-4">
+            <label
+              htmlFor="Location"
+              className="block text-sm font-medium text-gray-900"
+            >
+              Location
+            </label>
+            <input
+              type="text"
+              name="Location"
+              id="Location"
+              value={formData.Location}
+              onChange={handleChange}
+              required
+              autoComplete="off"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
+            />
+          </div>
+
+          <div key="Contact_1" className="mb-4">
+            <label
+              htmlFor="Contact_1"
+              className="block text-sm font-medium text-gray-900"
+            >
+              Contact 1
+            </label>
+            <input
+              type="text"
+              name="Contact_1"
+              id="Contact_1"
+              value={formData.Contact_1}
+              onChange={handleChange}
+              required
+              autoComplete="off"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
+            />
+          </div>
+
+          <div key="Contact_2" className="mb-4">
+            <label
+              htmlFor="Contact_2"
+              className="block text-sm font-medium text-gray-900"
+            >
+              Contact 2
+            </label>
+            <input
+              type="text"
+              name="Contact_2"
+              id="Contact_2"
+              value={formData.Contact_2}
+              onChange={handleChange}
+              required
+              autoComplete="off"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
+            />
+          </div>
+
+          <div key="Mailid" className="mb-4 relative">
+            <label
+              htmlFor="Mailid"
+              className="block text-sm font-medium text-gray-900"
+            >
+              Mail ID
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                name="Mailid"
+                id="Mailid"
+                value={formData.Mailid}
+                onChange={handleChange}
+                required
+                autoComplete="off"
+                placeholder="Enter your email"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
+              />
+              {/* Show @gmail.com if not in email */}
+              {!formData.Mailid.includes("@") && (
+                <span className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-500">
+                  @gmail.com
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div key="Website" className="mb-4">
+            <label
+              htmlFor="Website"
+              className="block text-sm font-medium text-gray-900"
+            >
+              Website
+            </label>
+            <input
+              type="text"
+              name="Website"
+              id="Website"
+              value={formData.Website}
+              onChange={handleChange}
+              required
+              autoComplete="off"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
+            />
+          </div>
+          <div className="ml-20 mt-5">
+            <Button
+              type="submit"
+              className="bg-gray-600 hover:bg-gray-900 text-white w-full sm:w-auto"
+            >
+              Submit
             </Button>
           </div>
         </div>
+        <div className="card-body p-0 overflow-x-auto pb-3">
+          <div className="card-body p-0 overflow-x-auto pb-3">
+            <div className="p-4 bg-card">
+              <div className="flex flex-wrap justify-between items-center mb-4 space-y-2">
+                <div className="flex items-center space-x-2 text-sm">
+                  <span>Show</span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) =>
+                      setItemsPerPage(
+                        e.target.value === "All"
+                          ? "All"
+                          : Number(e.target.value)
+                      )
+                    }
+                    className="border px-2 py-1 rounded"
+                  >
+                    {[10, 15, 25, "All"].map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                  <span>entries</span>
+                </div>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search ..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="border p-1 pt-[0.9] pl-8 rounded bg-secondary"
+                  />
+                  <FaSearch className="absolute left-2 top-2 text-muted-foreground" />
+                </div>
+              </div>
+
+              {/* Table */}
+              <div className="overflow-x-auto">
+                <table
+                  className="min-w-full overf border relative z-0  bg-card text-foreground"
+                  style={{
+                    tableLayout: "fixed",
+                    fontSize: "13px",
+                  }}
+                >
+                  <thead className="bg-muted sticky top-0 z-10">
+                    <tr>
+                      <th
+                        className="px-4 py-2 border text-left cursor-pointer"
+                        onClick={() => handleSort("Agency_name")}
+                      >
+                        <div className="flex items-center justify-start gap-2">
+                          <div>
+                            <span className="text-gray-900">Agency Name</span>
+                          </div>
+                          <div>{renderSortIcon("Agency_name")}</div>
+                        </div>
+                      </th>
+                      <th
+                        className="px-4 py-2 border text-left cursor-pointer"
+                        onClick={() => handleSort("Contact_person")}
+                      >
+                        <div className="flex items-center justify-start gap-2">
+                          <div>
+                            <span className="text-gray-900">
+                              Contact Person{" "}
+                            </span>
+                          </div>
+                          <div>{renderSortIcon("Contact_person")}</div>
+                        </div>
+                      </th>
+                      <th
+                        className="px-4 py-2 border text-left cursor-pointer"
+                        onClick={() => handleSort("Location")}
+                      >
+                        <div className="flex items-center justify-start gap-2">
+                          <div>
+                            <span className="text-gray-900">Location </span>
+                          </div>
+                          <div>{renderSortIcon("Location")}</div>
+                        </div>
+                      </th>
+                      <th
+                        className="px-4 py-2 border text-left cursor-pointer"
+                        onClick={() => handleSort("Contact_1")}
+                      >
+                        <div className="flex items-center justify-start gap-2">
+                          <div>
+                            <span className="text-gray-900">Contact_1</span>
+                          </div>
+                          <div>{renderSortIcon("Contact_1")}</div>
+                        </div>
+                      </th>
+                      <th
+                        className="px-4 py-2 border text-left cursor-pointer"
+                        onClick={() => handleSort("Contact_2")}
+                      >
+                        <div className="flex items-center justify-start gap-2">
+                          <div>
+                            <span className="text-gray-900">Contact-2</span>
+                          </div>
+                          <div>{renderSortIcon("Contact_2")}</div>
+                        </div>
+                      </th>
+                      <th
+                        className="px-4 py-2 border text-left cursor-pointer"
+                        onClick={() => handleSort("Mailid")}
+                      >
+                        <div className="flex items-center justify-start gap-2">
+                          <div>
+                            <span className="text-gray-900">Mail ID </span>
+                          </div>
+                          <div>{renderSortIcon("Mailid")}</div>
+                        </div>
+                      </th>
+                      <th
+                        className="px-4 py-2 border text-left cursor-pointer"
+                        onClick={() => handleSort("Website")}
+                      >
+                        <div className="flex items-center justify-start gap-2">
+                          <div>
+                            <span className="text-gray-900"> Website </span>
+                          </div>
+                          <div>{renderSortIcon("Website")}</div>
+                        </div>
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {currentAgencies.length > 0 ? (
+                      currentAgencies.map((agency, i) => (
+                        <tr key={i} className="hover:bg-muted">
+                          <td className="px-4 py-2 border">
+                            {agency.Agency_name}
+                          </td>
+                          <td className="px-4 py-2 border">
+                            {agency.Contact_person}
+                          </td>
+                          <td className="px-4 py-2 border">
+                            {agency.Location}
+                          </td>
+                          <td className="px-4 py-2 border">
+                            {agency.Contact_1}
+                          </td>
+                          <td className="px-4 py-2 border">
+                            {agency.Contact_2}
+                          </td>
+                          {/* Mail ID - opens mail client */}
+                          <td className="border px-2 py-2 text-gray-800 font-bold">
+                            <a
+                              href={`mailto:${agency.Mailid}`}
+                              className="text-blue-600 underline hover:text-blue-800"
+                            >
+                              {agency.Mailid}
+                            </a>
+                          </td>
+
+                          {/* Website - opens in new tab */}
+                          <td className="border px-2 py-2 text-gray-800 font-bold">
+                            <a
+                              href={
+                                agency.Website.startsWith("http")
+                                  ? agency.Website
+                                  : `https://${agency.Website}`
+                              }
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 underline hover:text-blue-800"
+                            >
+                              {agency.Website}
+                            </a>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="6" className="text-center py-4">
+                          No results found.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {/* Pagination UI */}
+              {
+                <div className="flex flex-wrap justify-between items-center mt-4 text-sm">
+                  <div>
+                    Showing{" "}
+                    {filteredAgencies.length > 0
+                      ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
+                          currentPage * rowsPerPage,
+                          filteredAgencies.length
+                        )} of ${filteredAgencies.length} entries`
+                      : "0 entries"}
+                  </div>
+
+                  <div className="flex space-x-1">
+                    <button
+                      className="px-3 py-1 border rounded"
+                      onClick={() => setCurrentPage(1)}
+                      disabled={currentPage === 1}
+                    >
+                      {"<<"}
+                    </button>
+                    <button
+                      className="px-3 py-1 border rounded"
+                      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                      disabled={currentPage === 1}
+                    >
+                      {"<"}
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => (
+                      <button
+                        key={i}
+                        className={`px-3 py-1 border rounded ${
+                          currentPage === i + 1 ? "bg-primary text-white" : ""
+                        }`}
+                        onClick={() => setCurrentPage(i + 1)}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                    <button
+                      className="px-3 py-1 border rounded"
+                      onClick={() =>
+                        setCurrentPage((p) => Math.min(p + 1, totalPages))
+                      }
+                      disabled={currentPage === totalPages}
+                    >
+                      {">"}
+                    </button>
+                    <button
+                      className="px-3 py-1 border rounded"
+                      onClick={() => setCurrentPage(totalPages)}
+                      disabled={currentPage === totalPages}
+                    >
+                      {">>"}
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
         </div>
       </form>
-
-      {/* Controls */}
-      <div className="card-body p-0 overflow-x-auto pb-3">
-      <div className="p-4 bg-card">
-      <div className="flex flex-wrap justify-between items-center mb-4 space-y-2">
-          <div className="flex items-center space-x-2 text-sm">
-          <span>Show</span>
-          <select
-            value={itemsPerPage}
-            onChange={(e) =>
-              setItemsPerPage(
-                e.target.value === "All" ? "All" : Number(e.target.value)
-              )
-            }
-            className="border px-2 py-1 rounded"
-          >
-            {[5, 10, 20, "All"].map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
-            ))}
-          </select>
-          <span>entries</span>
-        </div>
-        <div className="relative">
-  <input
-    type="text"
-    placeholder="Search ..."
-    value={searchQuery}
-    onChange={(e) => setSearchQuery(e.target.value)}
-    className="border p-1 pt-[0.9] pl-8 rounded bg-secondary"  />
-    <FaSearch className="absolute left-2 top-2 text-muted-foreground" />
-</div>
-
-      </div>
-</div>
-</div>
-      {/* Table */}
-              <table className="min-w-full overf border relative z-0  bg-card text-foreground" 
-                style={{ 
-                  tableLayout: "fixed" ,
-                  fontSize: "13px", 
-                 }}>
-                <thead className="bg-muted sticky top-0 z-10">
-            <tr>
-              <th
-                className="px-4 py-2 border text-left cursor-pointer"
-                onClick={() => handleSort("Agency_name")}
-              >
-                <div className="flex items-center justify-start gap-2">
-                  <div>
-                    <span className="text-gray-900">Agency Name</span>
-                  </div>
-                  <div>{renderSortIcon("Agency_name")}</div>
-                </div>
-              </th>
-              <th
-                className="px-4 py-2 border text-left cursor-pointer"
-                onClick={() => handleSort("Contact_person")}
-              >
-                <div className="flex items-center justify-start gap-2">
-                  <div>
-                    <span className="text-gray-900">Contact Person </span>
-                  </div>
-                  <div>{renderSortIcon("Contact_person")}</div>
-                </div>
-              </th>
-              <th
-                className="px-4 py-2 border text-left cursor-pointer"
-                onClick={() => handleSort("Location")}
-              >
-                <div className="flex items-center justify-start gap-2">
-                  <div>
-                    <span className="text-gray-900">Location </span>
-                  </div>
-                  <div>{renderSortIcon("Location")}</div>
-                </div>
-              </th>
-              <th
-                className="px-4 py-2 border text-left cursor-pointer"
-                onClick={() => handleSort("Contact_1")}
-              >
-                <div className="flex items-center justify-start gap-2">
-                  <div>
-                    <span className="text-gray-900">Contact_1</span>
-                  </div>
-                  <div>{renderSortIcon("Contact_1")}</div>
-                </div>
-              </th>
-              <th
-                className="px-4 py-2 border text-left cursor-pointer"
-                onClick={() => handleSort("Contact_2")}
-              >
-                <div className="flex items-center justify-start gap-2">
-                  <div>
-                    <span className="text-gray-900">Contact-2</span>
-                  </div>
-                  <div>{renderSortIcon("Contact_2")}</div>
-                </div>
-              </th>
-              <th
-                className="px-4 py-2 border text-left cursor-pointer"
-                onClick={() => handleSort("Mailid")}
-              >
-                <div className="flex items-center justify-start gap-2">
-                  <div>
-                    <span className="text-gray-900">Mail ID </span>
-                  </div>
-                  <div>{renderSortIcon("Mailid")}</div>
-                </div>
-              </th>
-              <th
-                className="px-4 py-2 border text-left cursor-pointer"
-                onClick={() => handleSort("Website")}
-              >
-                <div className="flex items-center justify-start gap-2">
-                  <div>
-                    <span className="text-gray-900"> Website </span>
-                  </div>
-                  <div>{renderSortIcon("Website")}</div>
-                </div>
-              </th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {currentAgencies.length > 0 ? (
-              currentAgencies.map((agency, i) => (
-                <tr key={i} className="hover:bg-muted">
-                  <td className="px-4 py-2 border">{agency.Agency_name}</td>
-                  <td className="px-4 py-2 border">{agency.Contact_person}</td>
-                  <td className="px-4 py-2 border">{agency.Location}</td>
-                  <td className="px-4 py-2 border">{agency.Contact_1}</td>
-                  <td className="px-4 py-2 border">{agency.Contact_2}</td>
-                  {/* Mail ID - opens mail client */}
-                  <td className="border px-2 py-2 text-gray-800 font-bold">
-                    <a
-                      href={`mailto:${agency.Mailid}`}
-                      className="text-blue-600 underline hover:text-blue-800"
-                    >
-                      {agency.Mailid}
-                    </a>
-                  </td>
-
-                  {/* Website - opens in new tab */}
-          {/* Website - opens in new tab */}
-          <td className="border px-2 py-2 text-gray-800 font-bold">
-                    <a
-                      href={
-                        agency.Website.startsWith("http")
-                          ? agency.Website
-                          : `https://${agency.Website}`
-                      } // Check if it starts with http or https
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 underline hover:text-blue-800"
-                    >
-                      {agency.Website}
-                    </a>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={7} className="py-4 text-gray-500">
-                  No data found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-        {/* Showing Entries Summary and Pagination */}
-        <div className="flex flex-wrap justify-between items-center mt-4 px-2 space-y-2">
-          <div style={{ fontSize: "14px" }}>
-            Showing{" "}
-            {filteredAgencies.length > 0
-              ? `${
-                  (currentPage - 1) *
-                    (itemsPerPage === "All"
-                      ? filteredAgencies.length
-                      : itemsPerPage) +
-                  1
-                } to ${Math.min(
-                  currentPage *
-                    (itemsPerPage === "All"
-                      ? filteredAgencies.length
-                      : itemsPerPage),
-                  filteredAgencies.length
-                )} of ${filteredAgencies.length} entries`
-              : "0 entries"}
-          </div>
-
-          {/* Pagination Controls */}
-          <div className="flex space-x-2" style={{ fontSize: "14px" }}>
-            <button
-              className="px-3 py-1 border rounded"
-              onClick={() => setCurrentPage(1)}
-              disabled={currentPage === 1}
-            >
-              {"<<"}
-            </button>
-            <button
-              className="px-3 py-1 border rounded"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              {"<"}
-            </button>
-            {Array.from(
-              {
-                length: Math.ceil(
-                  filteredAgencies.length /
-                    (itemsPerPage === "All"
-                      ? filteredAgencies.length
-                      : itemsPerPage)
-                ),
-              },
-              (_, i) => (
-                <button
-                  key={i}
-                  className={`px-3 py-1 border rounded ${
-                    currentPage === i + 1 ? "bg-primary text-white" : ""
-                  }`}
-                  onClick={() => setCurrentPage(i + 1)}
-                >
-                  {i + 1}
-                </button>
-              )
-            )}
-            <button
-              className="px-3 py-1 border rounded"
-              onClick={() =>
-                setCurrentPage((prev) =>
-                  Math.min(
-                    prev + 1,
-                    Math.ceil(
-                      filteredAgencies.length /
-                        (itemsPerPage === "All"
-                          ? filteredAgencies.length
-                          : itemsPerPage)
-                    )
-                  )
-                )
-              }
-              disabled={
-                currentPage ===
-                Math.ceil(
-                  filteredAgencies.length /
-                    (itemsPerPage === "All"
-                      ? filteredAgencies.length
-                      : itemsPerPage)
-                )
-              }
-            >
-              {">"}
-            </button>
-            <button
-              className="px-3 py-1 border rounded"
-              onClick={() =>
-                setCurrentPage(
-                  Math.ceil(
-                    filteredAgencies.length /
-                      (itemsPerPage === "All"
-                        ? filteredAgencies.length
-                        : itemsPerPage)
-                  )
-                )
-              }
-              disabled={
-                currentPage ===
-                Math.ceil(
-                  filteredAgencies.length /
-                    (itemsPerPage === "All"
-                      ? filteredAgencies.length
-                      : itemsPerPage)
-                )
-              }
-            >
-              {">>"}
-            </button>
-          </div>
-        </div>
-
     </div>
   );
 };
 
-export default TrainingAgencies;
+export default Upload;
