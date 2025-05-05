@@ -52,8 +52,9 @@ export default function Requirement() {
 
   // Synchronize data and originalData with trainingData to keep hooks consistent
   useEffect(() => {
-    setData(trainingData);
+    // Only set data if it is empty to avoid overwriting sorted data
     setOriginalData(trainingData);
+    setData((prevData) => (prevData.length === 0 ? trainingData : prevData));
   }, [trainingData]);
 
   const handleFormChange = (e) => {
@@ -372,8 +373,14 @@ const handleEdit = (data) => {
       // Special handling for Req_Months (Months) array sorting
       if (key === "Req_Months") {
         const getMonthIndices = (months) => {
-          if (!Array.isArray(months)) return [];
-          return months.map(m => monthOrder.indexOf(m)).filter(i => i !== -1).sort((x, y) => x - y);
+          if (!months) return [];
+          let monthArray = [];
+          if (Array.isArray(months)) {
+            monthArray = months;
+          } else if (typeof months === "string") {
+            monthArray = months.split(",").map(m => m.trim());
+          }
+          return monthArray.map(m => monthOrder.indexOf(m)).filter(i => i !== -1).sort((x, y) => x - y);
         };
         const aIndices = getMonthIndices(a[key]);
         const bIndices = getMonthIndices(b[key]);
@@ -823,7 +830,7 @@ const handleEdit = (data) => {
               <td className="px-4 py-2 border">{training.Persons}</td>
               <td className="px-4 py-2 border">{training.No_Hrs}</td>
               <td className="px-4 py-2 border">{training.No_Times}</td>
-              <td className="px-4 py-2 border">{training.Req_Months}</td>
+              <td className="px-4 py-2 border">{Array.isArray(training.Req_Months) ? training.Req_Months.join(", ") : training.Req_Months}</td>
               <td className="px-4 py-2 border">{training.Evaluation_Period}</td>
               <td className="px-4 py-2 border">
                 <div className="flex justify-center">
