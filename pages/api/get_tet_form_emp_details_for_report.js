@@ -1,44 +1,39 @@
 import { PrismaClient } from "@prisma/client";
-import { Parser } from "json2csv";
 
 const prisma = new PrismaClient();
 
 export default async function handler(req, res) {
-  const { programId, empid, download } = req.query; // Accept empid and download flag
+  if (req.method === 'GET') {
+    const { programId } = req.query; // Get the programId from the query string
 
-  if (!programId) {
-    return res.status(400).json({ error: "Program Id is required" });
-  }
-
-  try {
-    // Call the stored procedure
-    let result = await prisma.$queryRaw`
-      EXEC [dbo].[Get_TET_Form_Emp_Details_For_Report] ${programId}
-    `;
-
-    // If empid filter is provided, filter the result
-    if (empid) {
-      const empidArray = Array.isArray(empid) ? empid : empid.split(",");
-      result = result.filter((item) =>
-        empidArray.includes(item.EmployeeId?.toString())
-      );
+    if (!programId) {
+      return res.status(400).json({ error: 'ProgramId is required' });
     }
 
-    if (download === "true") {
-      // Convert result to CSV and send as file download
-      const fields = result.length > 0 ? Object.keys(result[0]) : [];
-      const json2csvParser = new Parser({ fields });
-      const csv = json2csvParser.parse(result);
+    try {
+      // Execute the stored procedure using Prisma's $queryRaw
+      const result = await prisma.$queryRaw`
+        EXEC [dbo].[Get_TET_Form_Emp_Details_For_Report] 
+        ${programId};
+      `;
 
-      res.setHeader("Content-Disposition", "attachment; filename=tet_report.csv");
-      res.setHeader("Content-Type", "text/csv");
-      return res.status(200).send(csv);
-    } else {
-      // Return JSON response
-      return res.status(200).json(result);
+      // Convert rating fields to numbers before returning
+      const transformedResult = result.map(item => {
+        const transformedItem = { ...item };
+        for (let i = 1; i <= 10; i++) {
+          const key = "Q_" + i;
+          transformedItem[key] = item[key] !== null && item[key] !== undefined ? Number(item[key]) : null;
+        }
+        transformedItem.Overall = item.Overall !== null && item.Overall !== undefined ? Number(item.Overall) : null;
+        transformedItem.Percentage = item.Percentage !== null && item.Percentage !== undefined ? Number(item.Percentage) : null;
+        return transformedItem;
+      });
+      res.status(200).json(transformedResult);
+    } catch (error) {
+      console.error("Error fetching employee details for report:", error);
+      res.status(500).json({ error: 'An error occurred while fetching data.' });
     }
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
+  } else {
+    res.status(405).json({ error: 'Method Not Allowed' });
   }
 }

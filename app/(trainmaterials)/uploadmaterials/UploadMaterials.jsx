@@ -23,6 +23,9 @@ export default function UploadMaterials() {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [options, setOptions] = useState([]);
   const [fileUrl, setFileUrl] = useState(null);
+  const [department, setDepartment] = useState('');
+  const [username, setUsername] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
   const [formData, setFormData] = useState({
     Program_Id: "",
     Training_Name: "",
@@ -38,7 +41,7 @@ export default function UploadMaterials() {
     Trainer: "",
     Venue: "",
     Training_Budget: "",
-    CreatedBy: "admin",
+    CreatedBy: "",
     EmployeeIds: [],
     selectedMonth: "",
   });
@@ -55,7 +58,7 @@ export default function UploadMaterials() {
       Trainer: "",
       Venue: "",
       Training_Budget: "",
-      CreatedBy: "admin",
+      CreatedBy: employeeId || "",
       selectedMonth: "",
       EmployeeIds: [],
     });
@@ -150,7 +153,23 @@ useEffect(() => {
       setError(err.message);
     }
   };
+  useEffect(() => {
+    // Retrieve the department, username, and employeeId from localStorage
+    const storedDepartment = localStorage.getItem('department');
+    const storedUsername = localStorage.getItem('username');
+    const storedEmployeeId = localStorage.getItem('employeeId');
 
+    // If data is found, update state
+    if (storedDepartment && storedUsername && storedEmployeeId) {
+      setDepartment(storedDepartment);
+      setUsername(storedUsername);
+      setEmployeeId(storedEmployeeId);
+    } else {
+      // If no data found, redirect to login page
+      window.location.href = '/';
+    }
+    // Removed fetchData and trainingData usage as trainingData state is unused
+  }, [department, username, employeeId]);
   const handleUpload = async (e) => {
     e.preventDefault();
 
@@ -180,11 +199,11 @@ useEffect(() => {
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({
-              Program_Id: formData.Program_Id,
-              IsUpload: 1,
-              CreatedBy: "admin",
-            }),
+          body: JSON.stringify({
+            Program_Id: formData.Program_Id,
+            IsUpload: 1,
+            CreatedBy: employeeId || "",
+          }),
           });
 
           const insertData = await insertRes.json();
@@ -492,7 +511,7 @@ useEffect(() => {
                     <tr>
                       {[
                         { key: "Training_Name", label: "Training Name" },
-                        { key: "Program_Name", label: "Username" },
+                        { key: "Program_Name", label: "Program Name" },
                         { key: "Year_No", label: "Year No" },
                         { key: "Department", label: "Department" },
                         { key: "Trainer", label: "Trainer" },

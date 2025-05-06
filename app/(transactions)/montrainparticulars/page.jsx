@@ -185,7 +185,7 @@ const MonthlyTrainingParticulars = () => {
               </div>
             </div>
 
-            <div className="overflow-x-auto relative z-20">
+            <div className="overflow-x-auto ">
                 <table className="min-w-full border relative z-0 bg-card text-sm " 
                 style={{ 
                   tableLayout: "fixed", 

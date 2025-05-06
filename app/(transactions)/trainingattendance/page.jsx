@@ -18,7 +18,7 @@ const TrainingAttendanceForm = () => {
   const [mounted, setMounted] = useState(false);
   const [year, setYear] = useState("");
   const [selectedMonth, setSelectedMonth] = useState(null);
-  const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState({
     Program_Id: "",
     Training_Name: "",
     Train_Mode: "",
@@ -33,7 +33,7 @@ const TrainingAttendanceForm = () => {
     Trainer: "",
     Venue: "",
     Training_Budget: "",
-    CreatedBy: "admin",
+    CreatedBy: "",
     EmployeeIds: [],
     selectedMonth: "",
   });
@@ -53,6 +53,16 @@ const TrainingAttendanceForm = () => {
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogMessage, setDialogMessage] = useState("");
   const [message, setMessage] = useState("");
+   const [department, setDepartment] = useState('');
+    const [username, setUsername] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
+  
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      CreatedBy: employeeId || "",
+    }));
+  }, [employeeId]);
   const [isMessageVisible, setIsMessageVisible] = useState(false);
   const [trainingDetails, setTrainingDetails] = useState({
     Training_Name: "",
@@ -161,7 +171,23 @@ const TrainingAttendanceForm = () => {
       [name]: value,
     });
   };
+ useEffect(() => {
+    // Retrieve the department, username, and employeeId from localStorage
+    const storedDepartment = localStorage.getItem('department');
+    const storedUsername = localStorage.getItem('username');
+    const storedEmployeeId = localStorage.getItem('employeeId');
 
+    // If data is found, update state
+    if (storedDepartment && storedUsername && storedEmployeeId) {
+      setDepartment(storedDepartment);
+      setUsername(storedUsername);
+      setEmployeeId(storedEmployeeId);
+    } else {
+      // If no data found, redirect to login page
+      window.location.href = '/';
+    }
+    // Removed fetchData and trainingData usage as trainingData state is unused
+  }, [department, username, employeeId]);
   const fetchEmployees = async () => {
     try {
       const res = await fetch("/api/user_dropdown");
@@ -363,7 +389,7 @@ const TrainingAttendanceForm = () => {
         Venue: formData.Venue,
         Training_Budget: formData.Training_Budget || null,
         EmployeeIds: formData.EmployeeIds || null,
-        CreatedBy: "admin",
+        CreatedBy: formData.CreatedBy,
       };
       setLoading(true);
       const res = await fetch("/api/update_trainingdata_att_entry_submit", {
@@ -391,7 +417,7 @@ const TrainingAttendanceForm = () => {
               body: JSON.stringify({
                 Program_Id: formData.Program_Id,
                 EmployeeIds: formData.EmployeeIds,
-                CreatedBy: "admin",
+                CreatedBy: formData.CreatedBy,
               }),
             }
           );

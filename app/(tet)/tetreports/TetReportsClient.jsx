@@ -31,7 +31,7 @@ const TetReportsClient = () => {
     EmployeeId: '',
     Overall: 0,
     Percentage: 0,
-    CreatedBy: 'admin',
+    CreatedBy: '',
     Remarks: '',
     ratings: Array(10).fill(5),
   });
@@ -53,10 +53,10 @@ const TetReportsClient = () => {
     }
   }, [programId]);
 
-  // Set EmployeeId dynamically when selectedEmployee changes
+  // Set EmployeeId and CreatedBy dynamically when selectedEmployee changes
   React.useEffect(() => {
     if (selectedEmployee) {
-      setFormData((prev) => ({ ...prev, EmployeeId: selectedEmployee.value }));
+      setFormData((prev) => ({ ...prev, EmployeeId: selectedEmployee.value, CreatedBy: selectedEmployee.value }));
     }
   }, [selectedEmployee]);
 
@@ -189,20 +189,21 @@ const TetReportsClient = () => {
           
           if (index === 0) {
             // Customize on the first page
-            page.drawText(emp.EmployeeId || "", {
+            page.drawText(emp.Username || "", {
               x: 170,
               y: height - 55,
               size: 8,
               font,
               color: rgb(0, 0, 0),
             });
-            page.drawText(emp.Username || "", {
+            page.drawText(emp.EmployeeId || "", {
               x: 170,
               y: height - 75,
               size: 8,
               font,
               color: rgb(0, 0, 0),
             });
+  
             page.drawText(emp.Designation || "", {
               x: 170,
               y: height - 98,
@@ -266,7 +267,7 @@ const TetReportsClient = () => {
               height: imageHeight,
             });
 
-            page.drawText(String(emp.No_Hrs) || "", {
+            page.drawText(String(emp.No_Hrs +""+ "hrs") || "", {
               x: 385,
               y: height - 118,
               size: 8,

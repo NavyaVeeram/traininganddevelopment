@@ -8,16 +8,6 @@ import { FaArrowUp, FaArrowDown, FaArrowsAltV, FaSearch } from "react-icons/fa";
 import Pagination from "@mui/material/Pagination"; // Material UI Pagination
 
 const Upload = () => {
-  const [formData, setFormData] = useState({
-    Agency_name: "",
-    Contact_person: "",
-    Location: "",
-    Contact_1: "",
-    Contact_2: "",
-    Mailid: "",
-    Website: "",
-  });
-
   const [agencies, setAgencies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -27,6 +17,19 @@ const Upload = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+  const [department, setDepartment] = useState('');
+  const [username, setUsername] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
+  const [formData, setFormData] = useState({
+    Agency_name: "",
+    Contact_person: "",
+    Location: "",
+    Contact_1: "",
+    Contact_2: "",
+    Mailid: "",
+    Website: "",
+    CreatedBy: "",
+  });
 
   const fetchAgencies = async () => {
     try {
@@ -43,7 +46,23 @@ const Upload = () => {
       setLoading(false);
     }
   };
+ useEffect(() => {
+    // Retrieve the department, username, and employeeId from localStorage
+    const storedDepartment = localStorage.getItem('department');
+    const storedUsername = localStorage.getItem('username');
+    const storedEmployeeId = localStorage.getItem('employeeId');
 
+    // If data is found, update state
+    if (storedDepartment && storedUsername && storedEmployeeId) {
+      setDepartment(storedDepartment);
+      setUsername(storedUsername);
+      setEmployeeId(storedEmployeeId);
+    } else {
+      // If no data found, redirect to login page
+      window.location.href = '/';
+    }
+    // Removed fetchData and trainingData usage as trainingData state is unused
+  }, [department, username, employeeId]);
   useEffect(() => {
     fetchAgencies();
   }, []);
@@ -75,9 +94,9 @@ const Upload = () => {
 
   const renderSortIcon = (column) => {
     if (sortConfig.key === column) {
-      return sortConfig.direction === "asc" ? <FaArrowUp /> : <FaArrowDown />;
+      return sortConfig.direction === "asc" ? "▲" : "▼";
     }
-    return <FaArrowsAltV />;
+    return "↕";
   };
 
   const validatePhoneNumber = (number) => /^\d{10}$/.test(number);
@@ -112,11 +131,14 @@ const Upload = () => {
 
     setFormData((prev) => ({ ...prev, Mailid: email }));
 
+    // Update CreatedBy with current employeeId before submission
+    const submissionData = { ...formData, CreatedBy: employeeId };
+
     try {
       const res = await fetch("/api/insert_agencies", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submissionData),
       });
 
       const data = await res.json();
@@ -130,6 +152,7 @@ const Upload = () => {
           Contact_2: "",
           Mailid: "",
           Website: "",
+          CreatedBy: "",
         });
         fetchAgencies();
         alert("Data Submitted Successfully");

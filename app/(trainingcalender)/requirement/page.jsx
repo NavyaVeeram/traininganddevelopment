@@ -29,7 +29,7 @@ export default function Requirement() {
   const [editingData, setEditingData] = useState(null);
   const [formData, setFormData] = useState({
     Training_Name: '',
-    Year_No: '2025',
+    Year_No: new Date().getFullYear().toString(),
     Department: '',
     Program_Name: '',
     Train_Mode: '',
@@ -52,9 +52,8 @@ export default function Requirement() {
 
   // Synchronize data and originalData with trainingData to keep hooks consistent
   useEffect(() => {
-    // Only set data if it is empty to avoid overwriting sorted data
+    setData(trainingData);
     setOriginalData(trainingData);
-    setData((prevData) => (prevData.length === 0 ? trainingData : prevData));
   }, [trainingData]);
 
   const handleFormChange = (e) => {
@@ -67,7 +66,7 @@ export default function Requirement() {
   const resetForm = () => {
     setFormData({
       Training_Name: '',
-      Year_No: '2025',
+      Year_No: new Date().getFullYear().toString(),
       Department: '',
       Program_Name: null,
       Train_Mode: '',
@@ -221,6 +220,7 @@ export default function Requirement() {
       setPrograms([]); // Clear programs if no training name is selected
     }
   };
+  const monthOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 
   useEffect(() => {
@@ -244,15 +244,29 @@ export default function Requirement() {
     setOptions(fetchedOptions);
   }, []);
   const handleChange = (selectedOptions) => {
-    // Ensure Req_Months is an array and extract only the `value` (month names)
-    const selectedMonths = selectedOptions ? selectedOptions.map(option => option.value) : [];
+    if (!selectedOptions) {
+      setFormData({
+        ...formData,
+        Req_Months: [],
+        No_Times: 0,
+      });
+      return;
+    }
+  
+    // Sort selected months based on monthOrder
+    const sortedMonths = [...selectedOptions].sort(
+      (a, b) => monthOrder.indexOf(a.value) - monthOrder.indexOf(b.value)
+    );
+  
+    const selectedMonthValues = sortedMonths.map(option => option.value);
   
     setFormData({
       ...formData,
-      Req_Months: selectedMonths,  // Store only the month values
-      No_Times: selectedMonths.length,  // Automatically update No_Times based on selected months
+      Req_Months: selectedMonthValues,
+      No_Times: selectedMonthValues.length,
     });
   };
+  
   
 
   useEffect(() => {
@@ -298,6 +312,11 @@ const handleEdit = (data) => {
   setEditingData(data); // Set the data of the row to be edited
   setIsModalOpen(true); // Open the modal
 };
+const programOptions = programs.map(program => ({
+  value: program.Program_Name,
+  label: program.Program_Name,
+}));
+
 
   // Handle update button in the modal
   const handleUpdate = async () => {
@@ -356,9 +375,7 @@ const handleEdit = (data) => {
   const handleSort = (column) => {
     const key = columnKeyMap[column];
     if (!key) return;
-
-    const monthOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
+  
     let direction = "asc";
     if (sortConfig.key === key && sortConfig.direction === "asc") {
       direction = "desc";
@@ -366,13 +383,13 @@ const handleEdit = (data) => {
       // Instead of resetting to original data, toggle back to ascending
       direction = "asc";
     }
-
+  
     setSortConfig({ key, direction });
-
+  
     const sortedData = [...data].sort((a, b) => {
       // Special handling for Req_Months (Months) array sorting
       if (key === "Req_Months") {
-        const getMonthIndices = (months) => {
+        const getMonthArray = (months) => {
           if (!months) return [];
           let monthArray = [];
           if (Array.isArray(months)) {
@@ -380,25 +397,28 @@ const handleEdit = (data) => {
           } else if (typeof months === "string") {
             monthArray = months.split(",").map(m => m.trim());
           }
-          return monthArray.map(m => monthOrder.indexOf(m)).filter(i => i !== -1).sort((x, y) => x - y);
+          return monthArray;
         };
-        const aIndices = getMonthIndices(a[key]);
-        const bIndices = getMonthIndices(b[key]);
-
-        // Compare arrays of month indices
-        for (let i = 0; i < Math.min(aIndices.length, bIndices.length); i++) {
-          if (aIndices[i] !== bIndices[i]) {
-            return direction === "asc" ? aIndices[i] - bIndices[i] : bIndices[i] - aIndices[i];
+  
+        const aMonths = getMonthArray(a[key]);
+        const bMonths = getMonthArray(b[key]);
+  
+        // Compare arrays of months alphabetically (i.e., string sort)
+        for (let i = 0; i < Math.min(aMonths.length, bMonths.length); i++) {
+          const monthComparison = aMonths[i].localeCompare(bMonths[i]);
+          if (monthComparison !== 0) {
+            return direction === "asc" ? monthComparison : -monthComparison;
           }
         }
+  
         // If all compared months are equal, shorter array comes first
-        return direction === "asc" ? aIndices.length - bIndices.length : bIndices.length - aIndices.length;
+        return direction === "asc" ? aMonths.length - bMonths.length : bMonths.length - aMonths.length;
       }
-
+  
       // Convert numeric strings to numbers for sorting on numeric fields
       const aValue = !isNaN(a[key]) && a[key] !== null && a[key] !== undefined ? Number(a[key]) : a[key];
       const bValue = !isNaN(b[key]) && b[key] !== null && b[key] !== undefined ? Number(b[key]) : b[key];
-
+  
       if (typeof aValue === "string" && typeof bValue === "string") {
         return direction === "asc"
           ? aValue.toLowerCase().localeCompare(bValue.toLowerCase())
@@ -412,8 +432,12 @@ const handleEdit = (data) => {
           : String(bValue).toLowerCase().localeCompare(String(aValue).toLowerCase());
       }
     });
+  
     setData(sortedData);
   };
+  
+
+     
 
   const filteredData = useMemo(() => {
     return data.filter((item) =>
@@ -527,50 +551,57 @@ const handleEdit = (data) => {
 
       {/* Name of the Program */}
       <div className="space-y-0.5">
-        <label htmlFor="Program_Name" className="block text-sm font-medium text-gray-900">
-          Name of the Program
-        </label>
-        <div className="relative">
-      <Select
-        id="Program_Name"
-        name="Program_Name"
-        options={programs.map(program => ({ value: program.Program_Name, label: program.Program_Name }))}
-        value={formData.Program_Name ? { value: formData.Program_Name, label: formData.Program_Name } : null}
-        onChange={(selectedOption) => {
-          setFormData((prevData) => ({
-            ...prevData,
-            Program_Name: selectedOption ? selectedOption.value : '',
-          }));
-        }}
-        isDisabled={formData.Training_Name === ''}
-        classNamePrefix="react-select"
-        styles={{
-          control: (base, state) => ({
-            ...base,
-            borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
-            boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
-            padding: "1px",
-            borderRadius: "0.5rem",
-            minHeight: "2rem",
-            display: "flex",
-            alignItems: "center",
-          }),
-          menu: (base) => ({
-            ...base,
-            zIndex: 9999,
-          }),
-          menuPortal: (base) => ({
-            ...base,
-            zIndex: 9999,
-          }),
-        }}
-        className={`mb-1 ${formData.Training_Name === '' ? 'opacity-70 cursor-not-allowed' : ''}`}
-        placeholder="Select program name"
-        required
-        instanceId="program-name-select"
-      />
-        </div>
-      </div>
+  <label htmlFor="Program_Name" className="block text-sm font-medium text-gray-900">
+    Name of the Program
+  </label>
+  <div className="relative">
+  <Select
+  id="Program_Name"
+  name="Program_Name"
+  options={programOptions}
+  value={programOptions.find(opt => opt.value === formData.Program_Name) || null}
+  onChange={(selectedOption) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      Program_Name: selectedOption ? selectedOption.value : '',
+    }));
+  }}
+  isDisabled={formData.Training_Name === ''}
+  classNamePrefix="react-select"
+  styles={{
+    control: (base, state) => ({
+      ...base,
+      borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
+      boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
+      padding: "1px",
+      borderRadius: "0.5rem",
+      minHeight: "2rem",
+      display: "flex",
+      alignItems: "center",
+    }),
+    menu: (base) => ({
+      ...base,
+      zIndex: 9999,
+    }),
+    menuPortal: (base) => ({
+      ...base,
+      zIndex: 9999,
+    }),
+  }}
+  className={`mb-1 ${formData.Training_Name === '' ? 'opacity-70 cursor-not-allowed' : ''}`}
+  placeholder="Select program name"
+  required
+  autoComplete="off"
+  instanceId="program-name-select"
+/>
+
+  </div>
+</div>
+
+
+
+
+
       <div>        <fieldset className="space-y-2 ">
   <legend className="text-sm font-semibold text-gray-900">Mode of Training</legend>
   <div className="flex space-x-6">
@@ -671,8 +702,14 @@ const handleEdit = (data) => {
             name="Req_Months"
             closeMenuOnSelect={false}
             components={animatedComponents}
+            
             isMulti
-            options={options} value={formData.Req_Months.map(month => ({ value: month, label: month }))} 
+            options={options} 
+            value={
+              [...formData.Req_Months]
+                .sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b))
+                .map(month => ({ value: month, label: month }))
+            }
             onChange={handleChange}
             required autoComplete="off"
             instanceId="req-months-select"
@@ -737,7 +774,7 @@ const handleEdit = (data) => {
         handleFormChange(e);  // Only update if the value is numeric or empty
       }
     }}
-    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
+    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-64"
          
  aria-required />
 </div>
@@ -830,7 +867,7 @@ const handleEdit = (data) => {
               <td className="px-4 py-2 border">{training.Persons}</td>
               <td className="px-4 py-2 border">{training.No_Hrs}</td>
               <td className="px-4 py-2 border">{training.No_Times}</td>
-              <td className="px-4 py-2 border">{Array.isArray(training.Req_Months) ? training.Req_Months.join(", ") : training.Req_Months}</td>
+              <td className="px-4 py-2 border">{training.Req_Months}</td>
               <td className="px-4 py-2 border">{training.Evaluation_Period}</td>
               <td className="px-4 py-2 border">
                 <div className="flex justify-center">

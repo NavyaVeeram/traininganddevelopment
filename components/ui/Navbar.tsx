@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import  { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils"
 import {  X, User, ChevronDown, ChevronUp } from "lucide-react";
@@ -147,24 +148,38 @@ export default function NavigationMenuDemo() {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
   const [isOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
-
+const [department, setDepartment] = useState('');
+const [username, setUsername] = useState('');
+const [employeeId, setEmployeeId] = useState('');
+// Removed unused trainingData state
+// const [trainingData,setTrainingData] = useState([]);
+  
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
   }
 
-  // const router = useRouter();
-  // const handleLogout = () => {
-  
-  //   // Remove the Logged data from localStorage
-  //   localStorage.removeItem('isLoggedIn');
-    
-  //   // Redirect to the login page
-  //   router.push('/');
-  // };
   const toggleGroup = (group: string) => {
     setOpenGroup(openGroup === group ? null : group);
   };
  
+  
+  useEffect(() => {
+    // Retrieve the department, username, and employeeId from localStorage
+    const storedDepartment = localStorage.getItem('department');
+    const storedUsername = localStorage.getItem('username');
+    const storedEmployeeId = localStorage.getItem('employeeId');
+
+    // If data is found, update state
+    if (storedDepartment && storedUsername && storedEmployeeId) {
+      setDepartment(storedDepartment);
+      setUsername(storedUsername);
+      setEmployeeId(storedEmployeeId);
+    } else {
+      // If no data found, redirect to login page
+      window.location.href = '/';
+    }
+    // Removed fetchData and trainingData usage as trainingData state is unused
+  }, [department, username, employeeId]);
   return (
     <div>
       <nav className="flex items-center z-10  bg-gray-100 justify-between p-2" >
@@ -196,7 +211,7 @@ export default function NavigationMenuDemo() {
               </svg>
             )}
           </button>
-          <ProfileDropdown />
+          <ProfileDropdown username={username} />
         </div>
 
         {/* Navigation Menu for Desktop and Toggleable for Mobile */}
@@ -207,7 +222,7 @@ export default function NavigationMenuDemo() {
             isMenuOpen ? "flex-col mt-4 space-y-2 md:flex-row md:mt-0 md:space-y-0" : "hidden md:flex"
           )}
         >
-<NavigationMenuItem className="bg-gray-100 Z-10">
+<NavigationMenuItem className="bg-gray-100 position-relative Z-10">
   <NavigationMenuTrigger className="hover:text-sky-400">Training Calendar</NavigationMenuTrigger>
   <NavigationMenuContent className="grid gap-2 p-1 md:w-[300px] max-h-[300px]">
     <ul className="grid gap-2 ">
@@ -238,7 +253,7 @@ export default function NavigationMenuDemo() {
                 </ul>
               </NavigationMenuContent>
             </NavigationMenuItem>
-            <NavigationMenuItem className="bg-gray-100">
+            <NavigationMenuItem className="bg-gray-100 position-relative z-10">
               <NavigationMenuTrigger className="hover:text-sky-400">Master Report</NavigationMenuTrigger>
               <NavigationMenuContent className="grid gap-2 p-1 md:w-[200px] max-h-[300px] ">
                 <ul className="grid gap-2 p-1">
@@ -286,7 +301,7 @@ export default function NavigationMenuDemo() {
             </NavigationMenuContent>
           </NavigationMenuItem>
           <NavigationMenuItem className="bg-gray-100 hover:bg-gray-200 hover:text-sky-400 focus:bg-gray-300 transition-all duration-300">
-            <ProfileDropdown/>
+          <ProfileDropdown username={username} />
             </NavigationMenuItem>
           </NavigationMenuList>
 
@@ -384,7 +399,16 @@ function MobileNavGroup({ title, children, isOpen, toggle }: { title: string; ch
     </div>
   );
 }
-function ProfileDropdown() {
+function ProfileDropdown({ username }: { username: string }) {
+  
+  const router = useRouter();
+  const handleLogout = () => {
+  
+    // Remove the Logged data from localStorage
+    localStorage.removeItem('isLoggedIn');
+    // Redirect to the login page
+    router.push('/');
+  };
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -393,15 +417,12 @@ function ProfileDropdown() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56">
-        <DropdownMenuLabel className="text-center">John Doe || Unknown</DropdownMenuLabel>
+        <DropdownMenuLabel className="text-center text-xl font-bold">{username}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem>Dashboard</DropdownMenuItem>
-          <DropdownMenuItem>Account</DropdownMenuItem>
         </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem>Login</DropdownMenuItem>
-        <DropdownMenuItem>Logout</DropdownMenuItem>
+        <DropdownMenuItem><Button onClick={handleLogout}>Logout</Button></DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -415,7 +436,7 @@ const ListItem = React.forwardRef<React.ElementRef<"a">, React.ComponentPropsWit
           <a
             ref={ref}
             className={cn(
-              "block px-4 py-3 rounded-md text-sm font-medium text-black hover:text-foreground hover:bg-muted",
+              "block px-4 py-3 rounded-md text-sm font-medium text-black hover:text-sky-400 hover:bg-gray-100",
               className
             )}
             {...props}
@@ -432,5 +453,4 @@ const ListItem = React.forwardRef<React.ElementRef<"a">, React.ComponentPropsWit
 )
 
 ListItem.displayName = "ListItem"
-
 
