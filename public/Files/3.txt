@@ -1,0 +1,10 @@
+Date             Work
+
+14-03-25        1.Started learning SQL from basics, created tables, and performed DML (Data Manipulation Language) commands.
+                2.Created stored procedures to add books and authors into a table. 
+                3.Started a basic project: Employee Database Management and designed the Home Page.
+.
+
+17-03-25        1.Developed Login & Signup pages with validation.
+                2.Created a Main Page to collect employee details.
+                3.Designed and implemented the Emp table to store employee details with increment calculations.

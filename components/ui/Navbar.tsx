@@ -167,7 +167,7 @@ export default function NavigationMenuDemo() {
  
   return (
     <div>
-      <nav className="flex items-center bg-gray-100 justify-between p-2" >
+      <nav className="flex items-center z-10  bg-gray-100 justify-between p-2" >
         {/* Brand Name on the Left */}
         <div className="text-black font-semibold text-xl">
         <Link href="/dashboard"> Greentech Industries</Link> 
@@ -207,10 +207,10 @@ export default function NavigationMenuDemo() {
             isMenuOpen ? "flex-col mt-4 space-y-2 md:flex-row md:mt-0 md:space-y-0" : "hidden md:flex"
           )}
         >
-<NavigationMenuItem className="bg-gray-100">
+<NavigationMenuItem className="bg-gray-100 Z-10">
   <NavigationMenuTrigger className="hover:text-sky-400">Training Calendar</NavigationMenuTrigger>
   <NavigationMenuContent className="grid gap-2 p-1 md:w-[300px] max-h-[300px]">
-    <ul className="grid gap-2">
+    <ul className="grid gap-2 ">
       {training.map((component) => (
         <ListItem key={component.title} title={component.title} href={component.href} />
       ))}
@@ -272,20 +272,22 @@ export default function NavigationMenuDemo() {
             </NavigationMenuContent>
           </NavigationMenuItem>
 
-          <NavigationMenuItem className="bg-gray-100 hover:bg-gray-200 focus:bg-gray-300 transition-all duration-300">
+          <NavigationMenuItem className="bg-gray-100 hover:bg-gray-200 hover:text-sky-400 focus:bg-gray-300 transition-all duration-300">
             <NavigationMenuTrigger className="hover:text-sky-400">Training Materials</NavigationMenuTrigger>
             <NavigationMenuContent
               className="overflow-hidden"
               style={{ "--radix-navigation-menu-viewport-height": "auto" } as React.CSSProperties}
             >
-              <ul className="grid w-[100px] gap-1 p-1 md:w-[150px] md:grid-cols lg:w-[150px]">
+              <ul className="grid w-[100px] gap-1 p-1 md:w-[150px] md:grid-cols lg:w-[150px] ">
                 {trainingmaterials.map((component) => (
                   <ListItem key={component.title} title={component.title} href={component.href} />
                 ))}
               </ul>
             </NavigationMenuContent>
           </NavigationMenuItem>
-
+          <NavigationMenuItem className="bg-gray-100 hover:bg-gray-200 hover:text-sky-400 focus:bg-gray-300 transition-all duration-300">
+            <ProfileDropdown/>
+            </NavigationMenuItem>
           </NavigationMenuList>
 
         </NavigationMenu>
@@ -413,7 +415,7 @@ const ListItem = React.forwardRef<React.ElementRef<"a">, React.ComponentPropsWit
           <a
             ref={ref}
             className={cn(
-              "block px-4 py-3 rounded-md text-sm font-medium text-black hover:text-foreground hover:bg-muted",
+              "block px-4 py-3 rounded-md text-sm font-medium text-black hover:text-sky-400 hover:bg-muted",
               className
             )}
             {...props}

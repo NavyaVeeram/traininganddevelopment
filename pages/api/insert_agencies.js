@@ -4,7 +4,7 @@ const prisma = new PrismaClient()
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
-    const { Agency_name, Contact_person, Location, Contact_1, Contact_2, Mailid, Website } = req.body
+    const { Agency_name, Contact_person, Location, Contact_1, Contact_2, Mailid, Website,CreatedBy } = req.body
     try {
      const result = await prisma.$executeRaw`
         EXEC [dbo].[External_Training_Agencies_Upload] 
@@ -14,10 +14,11 @@ export default async function handler(req, res) {
           @Contact_1 = ${Contact_1},
           @Contact_2 = ${Contact_2},
           @Mailid = ${Mailid},
-          @Website = ${Website}
+          @Website = ${Website},
+          @CreatedBy = ${CreatedBy}
       `
-
-      return res.status(200).json({ message: 'Data uploaded successfully', result })
+      console.log(result)
+      return res.status(200).json({  result })
     } catch (error) {
       console.error('Error executing stored procedure:', error)
       return res.status(500).json({ error: 'An error occurred while uploading the agency' })

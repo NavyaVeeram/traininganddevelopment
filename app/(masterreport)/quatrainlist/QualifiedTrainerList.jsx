@@ -30,14 +30,12 @@ const QualifiedTrainerList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage,setRowsPerPage] = useState(10);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
-
-  // Fetch employee options
-  useEffect(() => {
+ useEffect(() => {
     const fetchEmployeeOptions = async () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch("/api/user_dropdown");
+        const res = await fetch("/api/user_qualified_dropdown");
         const data = await res.json();
         if (res.status === 200) {
           setEmployeeOptions(data);
@@ -75,9 +73,8 @@ const QualifiedTrainerList = () => {
   };
 
   useEffect(() => {
-    fetchQualifiedTrainers(); // Call the function when the component mounts
-  }, []); // Empty dependency array means this will run once when the component mounts
-
+    fetchQualifiedTrainers(); 
+  }, []);
   const resetForm = () => {
     setTrainingDetails({
       Username: "",
@@ -247,7 +244,7 @@ const QualifiedTrainerList = () => {
     },
     {
       name: 'Experience (3 Years)',
-      selector: row => row.Exp_3_yr ? "Yes" : "No",
+      selector: row => row.Exp_3_Yr ? "Yes" : "No",
       sortable: true,
       searchable: true,
     },
@@ -278,39 +275,53 @@ const QualifiedTrainerList = () => {
     },
   }
   const columnKeyMap={
-    EmployeeId: " Emp Id",
+    EmployeeId: "EmployeeId",
     Username: "Username",
-    DOJ: " DOJ",
-    Designation: " Designation",
-    Section: "  Section",
+    DOJ: "DOJ",
+    Designation: "Designation",
+    Section: "Section",
     Department: "Department",
-    Training_Name: "Training Name",
+    Training_Name: "Training_Name",
     Certified:  "Certified",
-    Exp_5_Yr:"Exp 5 Years",
-    Exp_3_yr: "Exp 6 years",
-    HOD_Rec: "HOD Rec",
+    Exp_5_Yr:"Exp(5yr)",
+    Exp_3_Yr: "Exp(3yr)",
+    HOD_Rec: "HOD_Rec",
     Qualified: "Qualified"
   }
   const handleSort = (column) => {
-    const key = columnKeyMap[column];
+    const key = column;
     if (!key) return;
 
     let direction = "asc";
     if (sortConfig.key === key && sortConfig.direction === "asc") {
       direction = "desc";
     } else if (sortConfig.key === key && sortConfig.direction === "desc") {
-      setSortConfig({ key: null, direction: null });
-      setData(qualifiedTrainers);
-      return;
+      // Instead of resetting to original data, toggle back to ascending
+      direction = "asc";
     }
 
     setSortConfig({ key, direction });
     const sortedData = [...data].sort((a, b) => {
-      if (typeof a[key] === "string") {
+      // Handle date field DOJ
+      if (key === "DOJ") {
+        const dateA = a[key] ? new Date(a[key]) : new Date(0);
+        const dateB = b[key] ? new Date(b[key]) : new Date(0);
+        return direction === "asc" ? dateA - dateB : dateB - dateA;
+      }
+      // Handle boolean fields
+      else if (["Certified", "Exp_5_Yr", "Exp_3_Yr", "HOD_Rec", "Qualified"].includes(key)) {
+        const boolA = a[key] ? 1 : 0;
+        const boolB = b[key] ? 1 : 0;
+        return direction === "asc" ? boolA - boolB : boolB - boolA;
+      }
+      // Handle string fields
+      else if (typeof a[key] === "string") {
         return direction === "asc"
           ? a[key].toLowerCase().localeCompare(b[key].toLowerCase())
           : b[key].toLowerCase().localeCompare(a[key].toLowerCase());
-      } else {
+      }
+      // Handle number fields
+      else {
         return direction === "asc" ? a[key] - b[key] : b[key] - a[key];
       }
     });
@@ -381,8 +392,7 @@ const QualifiedTrainerList = () => {
               required
             />
           </div>
-
-          {/* Other form fields */}
+         {/* Other form fields */}
           <div>
             <label className="block text-sm font-medium text-gray-900">Username</label>
             <input
@@ -544,19 +554,7 @@ const QualifiedTrainerList = () => {
           </div>
         </div>
 
-        {/* <DataTable
-          columns={columns} 
-          data={qualifiedTrainers}
-          pagination
-          paginationPerPage={5} 
-          paginationRowsPerPageOptions={[5,15, 25, 50, 100]}
-          highlightOnHover
-          responsive
-          striped
-          paginationComponentOptions={paginationComponentOptions}
-          sortIcon={<span className="text-black-600">▼</span>}
-          customStyles={CustomStyles}
-        /> */}
+       
         <div className="card-body p-0 overflow-x-auto pb-3">
           <div className="p-4 bg-card">
             <div className="flex flex-wrap justify-between items-center mb-4 space-y-2">
