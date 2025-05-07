@@ -421,7 +421,7 @@ useEffect(() => {
     <button
       type="submit"
       disabled={!formData.Training_Date || !file || !formData.Program_Id}
-      className={`px-6 py-2 w-20 rounded ${
+      className={`px-6 py-2 w-30 rounded ${
         formData.Training_Date
           ? "bg-gray-600 text-white hover:bg-gray-800"
           : "bg-gray-300 text-gray-400 cursor-not-allowed"
