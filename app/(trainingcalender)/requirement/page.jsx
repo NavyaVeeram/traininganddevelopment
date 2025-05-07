@@ -947,7 +947,7 @@ const programOptions = programs.map(program => ({
             </div>
             <div className="flex justify-end mt-3">
 
-<button className="px-6 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
+<button type="button" className="px-6 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
 >
   Send to approval
 </button>
@@ -1058,14 +1058,14 @@ const programOptions = programs.map(program => ({
                   : "0 entries"}
               </div>
               <div className="flex space-x-2" style={{fontSize:"14px"}}>
-                <button
+                <button 
                   className="px-3 py-1 border rounded"
                   onClick={() => setCurrentPage(1)}
                   disabled={currentPage === 1}
                 >
                   {"<<"}
                 </button>
-                <button
+                <button type="button"
                   className="px-3 py-1 border rounded"
                   onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
@@ -1084,7 +1084,7 @@ const programOptions = programs.map(program => ({
                     {i + 1}
                   </button>
                 ))}
-                <button
+                <button type="button"
                   className="px-3 py-1 border rounded"
                   onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}

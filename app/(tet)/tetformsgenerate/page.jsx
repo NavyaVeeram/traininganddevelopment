@@ -199,7 +199,7 @@ const TETForms = () => {
                     overflow: "hidden",   
                     textOverflow: "ellipsis",  }}
                 >
-                  <thead className="bg-muted sticky top-0 z-10">
+                  <thead className="bg-muted sticky top-0">
                     <tr>
                       {[
                         { key: "Program_Name", label: "Program Name" },

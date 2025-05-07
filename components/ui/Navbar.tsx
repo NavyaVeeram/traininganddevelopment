@@ -128,10 +128,10 @@ const trainingcertificates: { title: string; href: string }[] = [
     title: "Upload Certificates",
     href: "/uploadcer",
   },
-  {
-    title: "View Certificates",
-    href: "/viewcer",
-  },
+  // {
+  //   title: "View Certificates",
+  //   href: "/viewcer",
+  // },
 ]
 const trainingmaterials: { title: string; href: string }[] = [
   {
@@ -420,7 +420,7 @@ function ProfileDropdown({ username }: { username: string }) {
         <DropdownMenuLabel className="text-center text-xl font-bold">{username}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem>Dashboard</DropdownMenuItem>
+          <DropdownMenuItem><a href="/dashboard">Dashboard</a></DropdownMenuItem> 
         </DropdownMenuGroup>
         <DropdownMenuItem><Button onClick={handleLogout}>Logout</Button></DropdownMenuItem>
       </DropdownMenuContent>
