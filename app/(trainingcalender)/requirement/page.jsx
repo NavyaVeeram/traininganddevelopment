@@ -755,7 +755,7 @@ const programOptions = programs.map(program => ({
           </div>
           </div>
         {/* No. of Hours */}
-        <div className="flex justify-between">
+        <div className="flex">
       
         {/* Evaluation */}
         <div className="space-y-0.5">
@@ -778,15 +778,18 @@ const programOptions = programs.map(program => ({
          
  aria-required />
 </div>
-   
-</div>
-{/* Buttons */}
-<div className="space-y-0.5 flex justify-end mr-40">
-        <button type="submit" disabled={loading} className="px-6 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
+   {/* Buttons */}
+<div>
+<label htmlFor="Evaluation_Period" style={{visibility:"hidden"}} className="block text-sm font-medium text-gray-900">
+    Evaluation Period
+  </label>
+        <button type="submit" disabled={loading} className="px-6 mx-5 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
         >
       {loading ? 'Loading...' : 'Submit'}
     </button>
         </div>
+</div>
+
 {
   !isSubmitted ? (
     // Show existing data only (before submission)
