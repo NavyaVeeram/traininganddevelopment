@@ -345,142 +345,124 @@ useEffect(() => {
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
         <h2 className="font-semibold">Upload Certificates</h2>
       </div>
-      <form onSubmit={handleUpload} className="space-y-4 mt-2">
-        {/* Month-Year Picker */}
-        <div className="flex flex-wrap justify-between gap-4 m-2 items-end">
-        <div className="flex flex-col">
-          <label className="block font-medium">Select Month</label>
-         <div> <DatePicker
-            selected={selectedDate}
-            onChange={handleMonthYearChange}
-            dateFormat="MM/yyyy"
-            showMonthYearPicker
-            placeholderText="Select Month and Year"
-            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"          />
+      <form onSubmit={handleUpload} className="space-y-6 mt-4">
+  {/* Grid Layout */}
+  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    {/* Select Month */}
+    <div className="flex flex-col mx-2">
+      <label className="block font-medium mb-1">Select Month</label>
+      <DatePicker
+        selected={selectedDate}
+        onChange={handleMonthYearChange}
+        dateFormat="MM/yyyy"
+        showMonthYearPicker
+        placeholderText="Select Month and Year"
+        className="w-full pl-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+    </div>
 
-          </div>        </div>
+    {/* Program */}
+    <div className="flex flex-col mx-2">
+      <label className="block font-medium mb-1">Program</label>
+      <select
+        required
+        disabled={!selectedDate || loading}
+        onChange={(e) =>
+          setFormData((prev) => ({
+            ...prev,
+            Program_Id: e.target.value,
+          }))
+        }
+        value={formData.Program_Id || ""}
+        className={`w-full pl-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+          !selectedDate || loading
+            ? "bg-gray-100 text-gray-500"
+            : "bg-white"
+        }`}
+      >
+        <option value="">Select Program</option>
+        {options.map((option) => (
+          <option key={option.Value} value={option.Value}>
+            {option.Text}
+          </option>
+        ))}
+      </select>
+    </div>
 
-        {/* Program Name */}
-        <div className="flex flex-col">
-          <label className="block font-medium">Program</label>
-          <select
-            required
-            disabled={!selectedDate || loading}
-            onChange={(e) =>
-              setFormData((prev) => ({
-                ...prev,
-                Program_Id: e.target.value,
-              }))
-            }
-            value={formData.Program_Id || ""}
-            //className="w-80 pl-4 py-2 text-left border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            className={`w-120 p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100 ${
-              !selectedDate || loading
-                ? "bg-gray-100 text-gray-500"
-                : "bg-white"
-            }`}
-          >
-            <option value="">Select Program</option>
-            {options.map((option) => (
-              <option key={option.Value} value={option.Value}>
-                {option.Text}
-              </option>
-            ))}
-          </select>
-        </div>
+    {/* Trainer */}
+    <div className="flex flex-col mx-2">
+      <label htmlFor="Trainer" className="block font-medium mb-1">
+        Trainer
+      </label>
+      <Select
+        id="Trainer"
+        name="Trainer"
+        options={mappedTrainerOptions}
+        placeholder=""
+        value={
+          mappedTrainerOptions.find(
+            (opt) => opt.value === formData.Trainer
+          ) || null
+        }
+        isDisabled={true}
+        className="w-full"
+        styles={{
+          control: (base, state) => ({
+            ...base,
+            backgroundColor: "#f3f4f6",
+            borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
+            boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
+            padding: "1px",
+            borderRadius: "0.5rem",
+            minHeight: "2rem",
+          }),
+        }}
+      />
+    </div>
 
-        {/* Trainer */}
-        <div className="flex flex-col">
-            <label htmlFor="Trainer" className="block font-medium">
-              Trainer
-            </label>
-            <div className="flex flex-col w-120 space-y-2">
-              <Select
-                id="Trainer"
-                name="Trainer"
-                options={mappedTrainerOptions}
-                placeholder=""
-                value={
-                  mappedTrainerOptions.find(
-                    (opt) => opt.value === formData.Trainer
-                  ) || null
-                }
-                isDisabled={true} 
-                className="w-full"
-                styles={{
-                  control: (base, state) => ({
-                    ...base,
-                    backgroundColor: "#f3f4f6",
-                    borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
-                    boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
-                    padding: "1px",
-                    borderRadius: "0.5rem",
-                    minHeight: "2rem",
-                    display: "flex",
-                    alignItems: "center",
-                  }),
-                  singleValue: (base) => ({
-                    ...base,
-                    color: "#000000da",
-                  }),
-                  menu: (base) => ({
-                    ...base,
-                    zIndex: 50,
-                    position: "absolute",
-                  }),
-                  menuPortal: (base) => ({
-                    ...base,
-                    zIndex: 9999,
-                  }),
-                }}
-              />
-            </div>
-          </div>
-        {/* Training Date */}
-        <div className="flex flex-col">
-          <label className="block font-medium">Training Date</label>
-          <input
-            type="date"
-            value={
-              formData.Training_Date ? formData.Training_Date.split("T")[0] : ""
-            }
-            readOnly
-            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"      />
-        </div>
+    {/* Training Date */}
+    <div className="flex flex-col mx-2">
+      <label className="block font-medium mb-1">Training Date</label>
+      <input
+        type="date"
+        value={
+          formData.Training_Date ? formData.Training_Date.split("T")[0] : ""
+        }
+        readOnly
+        className="w-full pl-4 py-2 border border-gray-300 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+    </div>
 
-        {/* File Upload + Submit Button */}
-        <div className="flex flex-col">
-          <label htmlFor="fileInput" className="block font-medium">
-            Upload File
-          </label>
-          <div className="border border-gray-300 rounded-md px-2 py-1">
-              <input
-                id="fileInput"
-                type="file"
-                accept="*"
-                onChange={(e) => setFile(e.target.files[0])}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-1.5 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
-                />
-                </div>
-        </div>
-        <div className="flex flex-col">
-       
-              <button
-                type="submit"
-                disabled={
-                  !formData.Training_Date || !file || !formData.Program_Id
-                }
-                className={`px-6 py-2 rounded ${
-                  formData.Training_Date
-                    ? "bg-gray-600 text-white hover-bg-900"
-                    : "bg-gray-300 text-gray-400 cursor-not-allowed"
-                }`}
-              >
-                Submit
-              </button>
-        </div>
-        </div>
-      </form>
+    {/* Upload File - Positioned below Program */}
+    <div className="flex flex-col mx-2 md:col-start-1">
+      <label htmlFor="fileInput" className="block font-medium mb-1">Upload File</label>
+      <input
+        id="fileInput"
+        type="file"
+        accept="*"
+        onChange={(e) => setFile(e.target.files[0])}
+        className="block border rounded-lg p-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+      />
+    </div>
+
+
+  {/* Submit Button */}
+  <div className="flex flex-col mx-2 md:col-start-2">
+  <label htmlFor="button" className="block font-medium mb-1 " style={{visibility:"hidden"}}>submit</label>
+    <button
+      type="submit"
+      disabled={!formData.Training_Date || !file || !formData.Program_Id}
+      className={`px-6 py-2 w-30 rounded ${
+        formData.Training_Date
+          ? "bg-gray-600 text-white hover:bg-gray-800"
+          : "bg-gray-300 text-gray-400 cursor-not-allowed"
+      }`}
+    >
+      Submit
+    </button>
+  </div>
+</div>
+</form>
 
       {loading ? (
         <div className="text-center py-4">Loading data...</div>
@@ -545,7 +527,7 @@ useEffect(() => {
                         { key: "Department", label: "Department" },
                         { key: "Trainer", label: "Trainer" },
                         { key: "Training_Date", label: "Training Date" },
-                        { key: "", label: "Training Material" },
+                        { key: "", label: "Certificates" },
                       ].map(({ key, label }, index) => (
                         <th
                           key={key}
