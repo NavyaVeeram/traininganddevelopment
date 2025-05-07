@@ -402,7 +402,7 @@ useEffect(() => {
       />
     </div>
 
-    {/* Upload File - Positioned below Program */}
+    {/* Upload File - Positioned below Programs */}
     <div className="flex flex-col mx-2 md:col-start-1">
       <label htmlFor="fileInput" className="block font-medium mb-1">Upload File</label>
       <input
@@ -421,7 +421,7 @@ useEffect(() => {
     <button
       type="submit"
       disabled={!formData.Training_Date || !file || !formData.Program_Id}
-      className={`px-6 py-2 w-30 rounded ${
+      className={`px-6 py-2 w-20 rounded ${
         formData.Training_Date
           ? "bg-gray-600 text-white hover:bg-gray-800"
           : "bg-gray-300 text-gray-400 cursor-not-allowed"
@@ -487,6 +487,7 @@ useEffect(() => {
                     padding: "1px",
                   }}
                 >
+
                   <thead className="bg-muted sticky top-0 z-10">
                     <tr>
                       {[
