@@ -418,10 +418,10 @@ useEffect(() => {
   {/* Submit Button */}
   <div className="flex flex-col mx-2 md:col-start-2">
   <label htmlFor="button" className="block font-medium mb-1 " style={{visibility:"hidden"}}>submit</label>
-    <button
+   <button
       type="submit"
       disabled={!formData.Training_Date || !file || !formData.Program_Id}
-      className={`px-6 py-2 w-30 rounded ${
+      className={`px-6 w-30 py-2 text-sm font-semibold  rounded-md shadow-md focus:ring-2  ${
         formData.Training_Date
           ? "bg-gray-600 text-white hover:bg-gray-800"
           : "bg-gray-300 text-gray-400 cursor-not-allowed"
