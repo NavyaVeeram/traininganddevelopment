@@ -422,7 +422,7 @@ function ProfileDropdown({ username }: { username: string }) {
         <DropdownMenuGroup>
           <DropdownMenuItem><a href="/dashboard">Dashboard</a></DropdownMenuItem> 
         </DropdownMenuGroup>
-        <DropdownMenuItem><Button onClick={handleLogout}>Logout</Button></DropdownMenuItem>
+        <DropdownMenuItem><button className="px-6 mt-2 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2 " onClick={handleLogout}>Logout</button></DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
