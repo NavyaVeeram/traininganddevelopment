@@ -51,14 +51,14 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen flex flex-col items-center">
       {showPopup && (
-        <div className="fixed top-0 left-0 right-0 bg-blue-600 text-white p-4 shadow-md flex justify-between items-center z-50">
+        <div className="fixed top-0 left-0 right-0 bg-sky-400 text-white p-4 shadow-md flex justify-between items-center z-50">
           <div>
             <h2 className="text-lg font-semibold">Welcome to Dashboard</h2>
             <p>Hello, {username}!</p>
           </div>
           <button
             onClick={closePopup}
-            className="ml-4 px-3 py-1 bg-white text-blue-600 rounded hover:bg-gray-200 transition"
+            className="ml-4 px-3 py-1 bg-white text-sky-400 rounded hover:bg-gray-200 transition"
           >
             Close
           </button>

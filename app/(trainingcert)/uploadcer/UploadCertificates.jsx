@@ -298,36 +298,38 @@ useEffect(() => {
     }
   };
 
-  const handleSort = (key) => {
-    let direction = "asc";
-    if (sortConfig.key === key && sortConfig.direction === "asc") {
-      direction = "desc";
+const handleSort = (key) => {
+  if (!key) return; // Ignore empty keys or non-sortable columns
+
+  let direction = "asc";
+  if (sortConfig.key === key && sortConfig.direction === "asc") {
+    direction = "desc";
+  }
+  setSortConfig({ key, direction });
+
+  const sortedData = [...filteredData].sort((a, b) => {
+    if (!a[key]) return 1;
+    if (!b[key]) return -1;
+
+    if (key === "Training_Date") {
+      const dateA = new Date(a[key]);
+      const dateB = new Date(b[key]);
+      return direction === "asc"
+        ? dateA - dateB
+        : dateB - dateA;
     }
-    setSortConfig({ key, direction });
 
-    const sortedData = [...filteredData].sort((a, b) => {
-      if (!a[key]) return 1;
-      if (!b[key]) return -1;
+    if (typeof a[key] === "string" && typeof b[key] === "string") {
+      return direction === "asc"
+        ? a[key].localeCompare(b[key])
+        : b[key].localeCompare(a[key]);
+    }
 
-      if (key === "Training_Date") {
-        const dateA = new Date(a[key]);
-        const dateB = new Date(b[key]);
-        return direction === "asc"
-          ? dateA - dateB
-          : dateB - dateA;
-      }
+    return direction === "asc" ? a[key] - b[key] : b[key] - a[key];
+  });
 
-      if (typeof a[key] === "string" && typeof b[key] === "string") {
-        return direction === "asc"
-          ? a[key].localeCompare(b[key])
-          : b[key].localeCompare(a[key]);
-      }
-
-      return direction === "asc" ? a[key] - b[key] : b[key] - a[key];
-    });
-
-    setFilteredData(sortedData);
-  };
+  setFilteredData(sortedData);
+};
   // useEffect(() => {
   //   fetch(`/api/get_file_by_program_id?id=${formData.Program_Id}`)
   //     .then(res => res.json())
@@ -520,31 +522,33 @@ useEffect(() => {
                 >
                   <thead className="bg-muted sticky top-0">
                     <tr>
-                      {[
-                        { key: "Training_Name", label: "Training Name" },
-                        { key: "Program_Name", label: "Program Name" },
-                        { key: "Year_No", label: "Year No" },
-                        { key: "Department", label: "Department" },
-                        { key: "Trainer", label: "Trainer" },
-                        { key: "Training_Date", label: "Training Date" },
-                        { key: "", label: "Certificates" },
-                      ].map(({ key, label }, index) => (
-                        <th
-                          key={key}
-                          className={`px-4 py-2 border text-left cursor-pointer ${
-                            index === 0 ? "sticky left-0 bg-muted z-20" : ""
-                          }`}
-                          onClick={() => handleSort(key)}
-                        >
-                          {label}{" "}
-                          {/* {sortConfig.key === key && (sortConfig.direction === "asc" ? "▲" : "▼")} */}
-                          {sortConfig.key === key
-                            ? sortConfig.direction === "asc"
-                              ? "▲"
-                              : "▼"
-                            : "↕"}
-                        </th>
-                      ))}
+{[
+  { key: "Training_Name", label: "Training Name" },
+  { key: "Program_Name", label: "Program Name" },
+  { key: "Year_No", label: "Year No" },
+  { key: "Department", label: "Department" },
+  { key: "Trainer", label: "Trainer" },
+  { key: "Training_Date", label: "Training Date" },
+  { key: "", label: "Certificates" },
+].map(({ key, label }, index) => (
+  <th
+    key={key}
+    className={`px-4 py-2 border text-left ${
+      index === 0 ? "sticky left-0 bg-muted z-20" : ""
+    } ${key ? "cursor-pointer" : ""}`}
+    onClick={key ? () => handleSort(key) : undefined}
+  >
+    {label}{" "}
+    {/* {sortConfig.key === key && (sortConfig.direction === "asc" ? "▲" : "▼")} */}
+    {key
+      ? sortConfig.key === key
+        ? sortConfig.direction === "asc"
+          ? "▲"
+          : "▼"
+        : "↕"
+      : ""}
+  </th>
+))}
                     </tr>
                   </thead>
                   <tbody>

@@ -5,7 +5,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { FaSearch } from "react-icons/fa";
 import Select from "react-select";
 
-export default function UploadMaterials() {
+export default function UploadCertificates() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [uploadedData, setUploadedData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
@@ -185,7 +185,7 @@ useEffect(() => {
     try {
       console.log("Uploading file...");
 
-      const response = await fetch("/api/upload_files", {
+      const response = await fetch("/api/upload_certificates", {
         method: "POST",
         body: uploadData,
       });
@@ -194,7 +194,7 @@ useEffect(() => {
 
       if (response.ok && data.message === "File uploaded successfully") {
         try {
-          const insertRes = await fetch("/api/insert_upload_materials_status", {
+          const insertRes = await fetch("/api/insert_upload_certificates_status", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -242,7 +242,7 @@ useEffect(() => {
   const fetchUploadedData = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/view_upload_materials");
+      const res = await fetch("/api/view_upload_certificates");
       const data = await res.json();
       //if (!res.ok) throw new Error(data.error || "Error loading data");
 
@@ -276,9 +276,9 @@ useEffect(() => {
     setTableSearchTerm(searchQuery);
 
     if (!searchQuery) {
-      setFilteredData(programDetails);
+      setFilteredData(uploadedData);
     } else {
-      const filtered = programDetails.filter((trainer) =>
+      const filtered = uploadedData.filter((trainer) =>
         [
           "Training_Name",
           "Program_Name",
@@ -297,6 +297,39 @@ useEffect(() => {
       setFilteredData(filtered);
     }
   };
+
+const handleSort = (key) => {
+  if (!key) return; // Ignore empty keys or non-sortable columns
+
+  let direction = "asc";
+  if (sortConfig.key === key && sortConfig.direction === "asc") {
+    direction = "desc";
+  }
+  setSortConfig({ key, direction });
+
+  const sortedData = [...filteredData].sort((a, b) => {
+    if (!a[key]) return 1;
+    if (!b[key]) return -1;
+
+    if (key === "Training_Date") {
+      const dateA = new Date(a[key]);
+      const dateB = new Date(b[key]);
+      return direction === "asc"
+        ? dateA - dateB
+        : dateB - dateA;
+    }
+
+    if (typeof a[key] === "string" && typeof b[key] === "string") {
+      return direction === "asc"
+        ? a[key].localeCompare(b[key])
+        : b[key].localeCompare(a[key]);
+    }
+
+    return direction === "asc" ? a[key] - b[key] : b[key] - a[key];
+  });
+
+  setFilteredData(sortedData);
+};
   // useEffect(() => {
   //   fetch(`/api/get_file_by_program_id?id=${formData.Program_Id}`)
   //     .then(res => res.json())
@@ -312,9 +345,9 @@ useEffect(() => {
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
-        <h2 className="font-semibold">Upload Materials</h2>
+        <h2 className="font-semibold">Upload Certificates</h2>
       </div>
- <form onSubmit={handleUpload} className="space-y-6 mt-4">
+      <form onSubmit={handleUpload} className="space-y-6 mt-4">
   {/* Grid Layout */}
   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
     {/* Select Month */}
@@ -402,7 +435,7 @@ useEffect(() => {
       />
     </div>
 
-    {/* Upload File - Positioned below Programs */}
+    {/* Upload File - Positioned below Program */}
     <div className="flex flex-col mx-2 md:col-start-1">
       <label htmlFor="fileInput" className="block font-medium mb-1">Upload File</label>
       <input
@@ -418,7 +451,7 @@ useEffect(() => {
   {/* Submit Button */}
   <div className="flex flex-col mx-2 md:col-start-2">
   <label htmlFor="button" className="block font-medium mb-1 " style={{visibility:"hidden"}}>submit</label>
-   <button
+  <button
       type="submit"
       disabled={!formData.Training_Date || !file || !formData.Program_Id}
       className={`px-6 w-30 mt-2 py-2 text-sm font-semibold  rounded-md shadow-md focus:ring-2  ${
@@ -487,34 +520,35 @@ useEffect(() => {
                     padding: "1px",
                   }}
                 >
-
-                  <thead className="bg-muted sticky top-0 z-10">
+                  <thead className="bg-muted sticky top-0">
                     <tr>
-                      {[
-                        { key: "Training_Name", label: "Training Name" },
-                        { key: "Program_Name", label: "Program Name" },
-                        { key: "Year_No", label: "Year No" },
-                        { key: "Department", label: "Department" },
-                        { key: "Trainer", label: "Trainer" },
-                        { key: "Training_Date", label: "Training Date" },
-                        { key: "", label: "Training Material" },
-                      ].map(({ key, label }, index) => (
-                        <th
-                          key={key}
-                          className={`px-4 py-2 border text-left cursor-pointer ${
-                            index === 0 ? "sticky left-0 bg-muted z-20" : ""
-                          }`}
-                          onClick={() => handleSort(key)}
-                        >
-                          {label}{" "}
-                          {/* {sortConfig.key === key && (sortConfig.direction === "asc" ? "▲" : "▼")} */}
-                          {sortConfig.key === key
-                            ? sortConfig.direction === "asc"
-                              ? "▲"
-                              : "▼"
-                            : "↕"}
-                        </th>
-                      ))}
+{[
+  { key: "Training_Name", label: "Training Name" },
+  { key: "Program_Name", label: "Program Name" },
+  { key: "Year_No", label: "Year No" },
+  { key: "Department", label: "Department" },
+  { key: "Trainer", label: "Trainer" },
+  { key: "Training_Date", label: "Training Date" },
+  { key: "", label: "Training Materials" },
+].map(({ key, label }, index) => (
+  <th
+    key={key}
+    className={`px-4 py-2 border text-left ${
+      index === 0 ? "sticky left-0 bg-muted z-20" : ""
+    } ${key ? "cursor-pointer" : ""}`}
+    onClick={key ? () => handleSort(key) : undefined}
+  >
+    {label}{" "}
+    {/* {sortConfig.key === key && (sortConfig.direction === "asc" ? "▲" : "▼")} */}
+    {key
+      ? sortConfig.key === key
+        ? sortConfig.direction === "asc"
+          ? "▲"
+          : "▼"
+        : "↕"
+      : ""}
+  </th>
+))}
                     </tr>
                   </thead>
                   <tbody>
