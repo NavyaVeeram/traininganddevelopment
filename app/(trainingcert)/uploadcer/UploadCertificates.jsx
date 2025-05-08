@@ -294,7 +294,7 @@ useEffect(() => {
             .includes(searchQuery.toLowerCase())
         )
       );
-      setFilteredData(filtered);
+      setFilteredData(filtered.length > 0 ? filtered : []);
     }
   };
 
@@ -470,7 +470,7 @@ const handleSort = (key) => {
         <div className="text-center py-4">Loading data...</div>
       ) : error ? (
         <div className="text-center py-4 text-red-500">{error}</div>
-      ) : filteredData.length > 0 ? (
+      ) : (
         <div className="card-body p-0 overflow-x-auto pb-3">
           <div className="card-body p-0 overflow-x-auto pb-3">
             <div className="p-4 bg-card">
@@ -522,7 +522,7 @@ const handleSort = (key) => {
                 >
                   <thead className="bg-muted sticky top-0">
                     <tr>
-{[
+{[  
   { key: "Training_Name", label: "Training Name" },
   { key: "Program_Name", label: "Program Name" },
   { key: "Year_No", label: "Year No" },
@@ -552,7 +552,7 @@ const handleSort = (key) => {
                     </tr>
                   </thead>
                   <tbody>
-                    {paginatedData.length > 0 ? (
+                    {paginatedData && paginatedData.length > 0 ? (
                       paginatedData.map((item, index) => (
                         <tr key={index} className="hover:bg-muted border">
                           <td className="px-4 py-2 border ">
@@ -581,7 +581,6 @@ const handleSort = (key) => {
                               className="text-blue-600 underline"
                             >
                               {/* <FileLink programId={item.Program_Id} /> */}
-
                               View
                             </a>
                           </td>
@@ -589,7 +588,7 @@ const handleSort = (key) => {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="6" className="text-center py-4">
+                        <td colSpan="7" className="text-center py-4">
                           No results found.
                         </td>
                       </tr>
@@ -658,10 +657,6 @@ const handleSort = (key) => {
               }
             </div>
           </div>
-        </div>
-      ) : (
-        <div className="text-center py-4 text-gray-500">
-          No Files Uploaded Yet.
         </div>
       )}
     </div>

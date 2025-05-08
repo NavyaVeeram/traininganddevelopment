@@ -5,7 +5,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { FaSearch } from "react-icons/fa";
 import Select from "react-select";
 
-export default function UploadCertificates() {
+export default function UploadMaterials() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [uploadedData, setUploadedData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
@@ -185,7 +185,7 @@ useEffect(() => {
     try {
       console.log("Uploading file...");
 
-      const response = await fetch("/api/upload_certificates", {
+      const response = await fetch("/api/upload_files", {
         method: "POST",
         body: uploadData,
       });
@@ -194,7 +194,7 @@ useEffect(() => {
 
       if (response.ok && data.message === "File uploaded successfully") {
         try {
-          const insertRes = await fetch("/api/insert_upload_certificates_status", {
+          const insertRes = await fetch("/api/insert_upload_materials_status", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -242,7 +242,7 @@ useEffect(() => {
   const fetchUploadedData = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/view_upload_certificates");
+      const res = await fetch("/api/view_upload_materials");
       const data = await res.json();
       //if (!res.ok) throw new Error(data.error || "Error loading data");
 
@@ -345,7 +345,7 @@ const handleSort = (key) => {
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
-        <h2 className="font-semibold">Upload Certificates</h2>
+        <h2 className="font-semibold">Upload Materials</h2>
       </div>
       <form onSubmit={handleUpload} className="space-y-6 mt-4">
   {/* Grid Layout */}
@@ -470,7 +470,7 @@ const handleSort = (key) => {
         <div className="text-center py-4">Loading data...</div>
       ) : error ? (
         <div className="text-center py-4 text-red-500">{error}</div>
-      ) : filteredData.length > 0 ? (
+      ) : uploadedData.length > 0 ? (
         <div className="card-body p-0 overflow-x-auto pb-3">
           <div className="card-body p-0 overflow-x-auto pb-3">
             <div className="p-4 bg-card">
@@ -558,13 +558,10 @@ const handleSort = (key) => {
                           <td className="px-4 py-2 border ">
                             {item.Training_Name}
                           </td>
-                          <td className="px-4 py-2 border">
-                            {item.Program_Name}
-                          </td>
+                          <td className="px-4 py-2 border">{item.Program_Name}</td>
                           <td className="px-4 py-2 border">{item.Year_No}</td>
-                          <td className="px-4 py-2 border">
-                            {item.Department}
-                          </td>
+                          <td className="px-4 py-2 border">{item.Department}
+</td>
                           <td className="px-4 py-2 border">{item.Trainer}</td>
                           <td className="px-4 py-2 border">
                             {item.Training_Date
