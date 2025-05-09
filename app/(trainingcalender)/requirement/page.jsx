@@ -739,7 +739,7 @@ const programOptions = programs.map(program => ({
           </div>
         
        {/* No. of Times */}
-       <div >
+       <div className="space-y-0.5">
             <label htmlFor="No_Times" className="block text-sm font-medium text-gray-900">
               No. of Times
             </label>
@@ -755,7 +755,7 @@ const programOptions = programs.map(program => ({
           </div>
           </div>
         {/* No. of Hours */}
-        <div className="flex">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">  
       
         {/* Evaluation */}
         <div className="space-y-0.5">
@@ -774,8 +774,7 @@ const programOptions = programs.map(program => ({
         handleFormChange(e);  // Only update if the value is numeric or empty
       }
     }}
-    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-64"
-         
+    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-64"      
  aria-required />
 </div>
    {/* Buttons */}
@@ -783,7 +782,7 @@ const programOptions = programs.map(program => ({
 <label htmlFor="Evaluation_Period" style={{visibility:"hidden"}} className="block text-sm font-medium text-gray-900">
     Evaluation Period
   </label>
-        <button type="submit" disabled={loading} className="px-6 mx-5 mt-2 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
+        <button type="submit" disabled={loading} className="px-6 mt-2 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
         >
       {loading ? 'Loading...' : 'Submit'}
     </button>

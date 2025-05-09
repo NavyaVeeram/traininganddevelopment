@@ -47,6 +47,7 @@ export default async function handler(req, res) {
           ${CreatedBy};
       `;
       
+      
       // Return success or failure based on result
       res.status(200).json({ message: 'Data added successfully', result });
     } catch (error) {

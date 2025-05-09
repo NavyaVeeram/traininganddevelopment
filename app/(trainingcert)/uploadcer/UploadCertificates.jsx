@@ -330,6 +330,10 @@ const handleSort = (key) => {
 
   setFilteredData(sortedData);
 };
+const programOptions = options.map((option) => ({
+  value: option.Value,
+  label: option.Text,
+}));
   // useEffect(() => {
   //   fetch(`/api/get_file_by_program_id?id=${formData.Program_Id}`)
   //     .then(res => res.json())
@@ -366,29 +370,42 @@ const handleSort = (key) => {
     {/* Program */}
     <div className="flex flex-col mx-2">
       <label className="block font-medium mb-1">Program</label>
-      <select
-        required
-        disabled={!selectedDate || loading}
-        onChange={(e) =>
-          setFormData((prev) => ({
-            ...prev,
-            Program_Id: e.target.value,
-          }))
-        }
-        value={formData.Program_Id || ""}
-        className={`w-full pl-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-          !selectedDate || loading
-            ? "bg-gray-100 text-gray-500"
-            : "bg-white"
-        }`}
-      >
-        <option value="">Select Program</option>
-        {options.map((option) => (
-          <option key={option.Value} value={option.Value}>
-            {option.Text}
-          </option>
-        ))}
-      </select>
+      <Select
+  isRequired // Note: react-select does not natively support 'required'
+  isDisabled={!selectedDate || loading}
+  onChange={(selectedOption) =>
+    setFormData((prev) => ({
+      ...prev,
+      Program_Id: selectedOption ? selectedOption.value : "",
+    }))
+  }
+  value={programOptions.find(
+    (opt) => opt.value === formData.Program_Id
+  ) || null}
+  options={programOptions}
+  placeholder="Select Program"
+  classNamePrefix="react-select"
+  styles={{
+    control: (base, state) => ({
+      ...base,
+      borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
+      boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
+      padding: "1px",
+      borderRadius: "0.5rem",
+      minHeight: "2rem",
+      display: "flex",
+      alignItems: "center",
+    }),
+    menu: (base) => ({
+      ...base,
+      zIndex: 9999,
+    }),
+    menuPortal: (base) => ({
+      ...base,
+      zIndex: 9999,
+    }),
+  }}
+/>
     </div>
 
     {/* Trainer */}
