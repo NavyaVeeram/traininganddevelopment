@@ -159,7 +159,7 @@ export default function Requirement() {
       }
 
       // Submit data
-      const postRes = await fetch('/api/post_trainingdata', {
+      const postRes = await fetch('/api/insert_trainingdata', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -6,11 +6,53 @@ export default function TrainingRecord() {
   const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
+  const [department, setDepartment] = useState('');
+  const [username, setUsername] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
+  const [trainingData, setTrainingData] = useState([]);
   const [formData, setFormData] = useState({
     Training_Name: '',
     Program_Name: '',
     CreatedBy: '',
   });
+
+  useEffect(() => {
+    // Retrieve the department, username, and employeeId from localStorage
+    const storedDepartment = localStorage.getItem('department');
+    const storedUsername = localStorage.getItem('username');
+    const storedEmployeeId = localStorage.getItem('employeeId');
+
+    // If data is found, update state
+    if (storedDepartment && storedUsername && storedEmployeeId) {
+      setDepartment(storedDepartment);
+      setUsername(storedUsername);
+      setEmployeeId(storedEmployeeId);
+      setFormData((prevData) => ({
+        ...prevData,
+        CreatedBy: storedEmployeeId,
+      }));
+    } else {
+      // If no data found, redirect to login page
+      window.location.href = '/';
+    }
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`/api/view_training_data_by_employee?employeeId=${storedEmployeeId}&department=${storedDepartment}`);
+        const data = await response.json();
+        if (response.ok) {
+          setTrainingData(data); // Set the training data fetched from the server
+        } else {
+          console.error('Failed to fetch training data:', data.message);
+          setTrainingData([]); // Fallback to empty array in case of failure
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setTrainingData([]); // Fallback to empty array in case of error
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
@@ -84,7 +126,7 @@ export default function TrainingRecord() {
           Program Request Form
         </h2>
         <div className="flex flex-col">
-          {/* Training Mode */}
+          {/* Training Mode */} 
           <div className="space-y-1 mb-2">
             <label htmlFor="Training_Name" className="block text-sm font-medium text-gray-900">
               Mode of the Program

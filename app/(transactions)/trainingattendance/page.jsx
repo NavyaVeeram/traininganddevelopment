@@ -655,7 +655,10 @@ const TrainingAttendanceForm = () => {
   if (!mounted) {
     return null;
   }
-
+const programOptions = options.map((option) => ({
+  value: option.Value,
+  label: option.Text,
+}));
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
       <div className="bg-sky-400 text-white p-2  rounded-t-lg">
@@ -681,7 +684,7 @@ const TrainingAttendanceForm = () => {
             <label className="block font-medium">Select Program:</label>
             <div className="relative">
               <Select
-                required
+                 isRequired
                 isDisabled={!selectedDate || loading}
                 onChange={(selectedOption) => {
                   if (!selectedOption) return;
@@ -689,21 +692,10 @@ const TrainingAttendanceForm = () => {
                     target: { value: selectedOption.value },
                   });
                 }}
-                value={
-                  options.length > 0
-                    ? options
-                        .map((option) => ({
-                          value: option.Value,
-                          label: option.Text,
-                        }))
-                        .find((opt) => opt.value === formData.Program_Id) ||
-                      null
-                    : null
-                }
-                options={options.map((option) => ({
-                  value: option.Value,
-                  label: option.Text,
-                }))}
+               value={programOptions.find(
+    (opt) => opt.value === formData.Program_Id
+  ) || null}
+                options={programOptions}
                 className="w-[500px]"
                 placeholder="Select Program"
                 styles={{
