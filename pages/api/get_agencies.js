@@ -8,6 +8,7 @@ export default async function handler(req, res) {
       const agencies = await prisma.$queryRaw`
         EXEC [dbo].[Get_External_Training_Agencies]
       `;
+      console.log(agencies)
       return res.status(200).json({ agencies });
     } catch (error) {
       console.error("Error executing stored procedure:", error);

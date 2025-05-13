@@ -53,10 +53,18 @@ const TetReportsClient = () => {
     }
   }, [programId]);
 
-  // Set EmployeeId and CreatedBy dynamically when selectedEmployee changes
+  // Set CreatedBy from localStorage on mount
+  React.useEffect(() => {
+    const storedEmployeeId = localStorage.getItem('employeeId');
+    if (storedEmployeeId) {
+      setFormData((prev) => ({ ...prev, CreatedBy: storedEmployeeId }));
+    }
+  }, []);
+
+  // Set EmployeeId dynamically when selectedEmployee changes
   React.useEffect(() => {
     if (selectedEmployee) {
-      setFormData((prev) => ({ ...prev, EmployeeId: selectedEmployee.value, CreatedBy: selectedEmployee.value }));
+      setFormData((prev) => ({ ...prev, EmployeeId: selectedEmployee.value }));
     }
   }, [selectedEmployee]);
 
@@ -796,7 +804,6 @@ const TetReportsClient = () => {
             name="Remarks"
             className="w-full border p-2"
             rows="4"
-            required
             placeholder="Enter remarks..."
             value={formData.Remarks ?? ''}
             onChange={handleInputChange}
