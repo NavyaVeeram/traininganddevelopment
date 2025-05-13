@@ -160,7 +160,7 @@ const TrainingAttendanceForm = () => {
       Schedule_Type: value,
     }));
   };
-  const mappedTrainerOptions = trainerOptions.map((trainer) => ({
+  const mappedTrainerOptions = (trainerOptions || []).map((trainer) => ({
     value: trainer.Value,
     label: trainer.Text,
   }));
@@ -207,9 +207,15 @@ const TrainingAttendanceForm = () => {
       try {
         const res = await fetch("/api/qualified_trainer_dropdown");
         const data = await res.json();
-        setTrainerOptions(data);
+        if (Array.isArray(data)) {
+          setTrainerOptions(data);
+        } else {
+          setTrainerOptions([]);
+          console.error("Trainer data is not an array:", data);
+        }
       } catch (err) {
         console.error("Failed to fetch trainers:", err);
+        setTrainerOptions([]);
       }
     };
 
