@@ -6,6 +6,16 @@ export default async function handler(req, res) {
     const { Training_Name, EmployeeId, Certified, Exp_5_Yr, Exp_3_Yr, HOD_Rec, Qualified, CreatedBy } = req.body;
 
     try {
+         console.log('Calling stored procedure with parameters:', {
+      Training_Name,
+      EmployeeId,
+      Certified,
+      Exp_5_Yr,
+      Exp_3_Yr,
+      HOD_Rec,
+      Qualified,
+      CreatedBy
+      })
         const result = await prisma.$queryRaw`
           EXEC dbo.Insert_Qualified_Trainer_List 
           @Training_Name = ${Training_Name},
@@ -17,6 +27,7 @@ export default async function handler(req, res) {
           @Qualified = ${Qualified},
           @CreatedBy = ${CreatedBy}
         `;
+        console.log(result);
         res.status(200).json({ message: result[0]?.Result || 'Unknown error' });
     } catch (error) {
         console.error(error);

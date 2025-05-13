@@ -48,7 +48,17 @@ export default async function handler(req, res) {
           @Training_Date = ${Training_Date},
           @CreatedBy = ${CreatedBy}
       `;
-      
+         console.log('Calling stored procedure with parameters:', {
+      Program_Id: programIdInt,
+      Train_Mode: Train_Mode,
+      Train_Purpose: Train_Purpose,
+      Persons: Persons,
+      No_Hrs: No_Hrs,
+      Req_Months: Req_Months,
+      Evaluation_Period: Evaluation_Period,
+      Training_Date: Training_Date,
+      CreatedBy: CreatedBy
+      })
       // Log the raw result to see what is being returned from the stored procedure
       console.log('Stored Procedure Result:', result);
 

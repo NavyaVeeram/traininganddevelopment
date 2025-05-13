@@ -40,9 +40,24 @@ export default async function handler(req, res) {
 
       // Execute the query
       const result = await prisma.$queryRawUnsafe(query);
-
+   console.log('Calling stored procedure with parameters:', {
+      Training_Name,
+      Year_No,
+      Department,
+      Program_Name,
+      Train_Mode,
+      Train_Purpose,
+      Persons,
+      No_Hrs,
+      No_Times,
+      Req_Months,
+      Evaluation_Period,
+      CreatedBy,
+      UpdatedBy
+      })
       // Return a success response
       res.status(200).json({ message: 'Data inserted successfully', result });
+      console.log(result);
     } catch (error) {
       console.error('Error executing stored procedure:', error);
       res.status(500).json({ message: 'Failed to insert data', error: error.message });
