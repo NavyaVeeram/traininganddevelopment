@@ -280,8 +280,9 @@ export default function Requirement() {
   // const isYearEnabled function and other code remain unchanged
 const isYearEnabled = (date) => {
   const year = date.getFullYear();
-  return [ 2025, 2026].includes(year);
-}; 
+  const currentYear = new Date().getFullYear();
+  return [currentYear, currentYear + 1].includes(year);
+};
 const handleDelete = async (programId) => {
   try {
     const res = await fetch(`/api/delete_training_data_requirement?Program_Id=${programId}`, {
@@ -951,7 +952,7 @@ const programOptions = programs.map(program => ({
 
 <button type="button" className="px-6 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
 >
-  Send to approval
+  Send for approval
 </button>
 </div>
     </div> 

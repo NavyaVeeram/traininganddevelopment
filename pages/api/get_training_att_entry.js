@@ -17,7 +17,7 @@ export default async function handler(req, res) {
       if (trainingDetails.length === 0) {
         return res.status(404).json({ error: "No details found for the provided Program ID" });
       }
-
+      console.log(trainingDetails)
       res.status(200).json(trainingDetails);
     } catch (error) {
       console.error("Error executing stored procedure", error);
