@@ -164,10 +164,11 @@ const TrainingBudget = () => {
       width: '10%',
     },
   ];
-  const isYearEnabled = (date) => {
-    const year = date.getFullYear();
-    return [ 2025, 2026].includes(year);
-  }; 
+const isYearEnabled = (date) => {
+  const year = date.getFullYear();
+  const currentYear = new Date().getFullYear();
+  return [currentYear, currentYear + 1].includes(year);
+};
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
