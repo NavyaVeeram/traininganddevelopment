@@ -17,7 +17,7 @@ export default async function handler(req, res) {
         @Program_Name = ${Program_Name},
         @CreatedBy = ${CreatedBy}
     `;
-    
+
       console.log({
         Training_Name,
         Program_Name,
@@ -26,8 +26,8 @@ export default async function handler(req, res) {
       
       res.status(200).json({ message: result[0]?.Result || 'Unknown error' });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Error occurred while adding the program.' });
+        console.error('Database error:', error);
+        res.status(500).json({ message: 'Error occurred while adding the program.', details: error.message || error.toString() });
     }
   } else {
     res.status(405).json({ message: 'Method Not Allowed' });

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gradient-to-br from-gray-100 to-blue-50">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Approval Notification</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.2/dist/tailwind.min.css" rel="stylesheet">
+  </head>
+  <body class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-blue-50 font-sans text-gray-800">
+    <div class="w-full max-w-md sm:max-w-lg bg-white rounded-xl shadow-lg overflow-hidden p-8 m-4">
+      <!-- Header -->
+      <header class="border-b border-gray-300 pb-5 mb-6 text-center">
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-blue-700">Approval Needed</h1>
+        <p class="text-gray-500 mt-2 text-sm sm:text-base">A new request awaits your review</p>
+      </header>
+
+      <!-- Main Content -->
+      <main class="space-y-6 text-base sm:text-lg leading-relaxed">
+        <p>Dear Team Member,</p>
+        <p>
+          You have a new approval request that requires your attention. To take action, please review the request via the link below.
+        </p>
+
+        <div class="text-center">
+          <a
+            href="http://10.40.20.5:3000"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow transition-all duration-300"
+          >
+            View Request Details
+          </a>
+        </div>
+
+        <p>If you believe this message was sent to you in error, please ignore it or contact support.</p>
+      </main>
+
+      <!-- Footer -->
+      <footer class="mt-10 pt-5 border-t border-gray-200 text-center text-sm text-gray-500">
+        <p>&copy; 2025 Your Company. All rights reserved.</p>
+        <p>Need help? Reach out to <a href="mailto:support@yourcompany.com" class="text-blue-600 hover:underline">support@yourcompany.com</a>.</p>
+      </footer>
+    </div>
+  </body>
+</html>

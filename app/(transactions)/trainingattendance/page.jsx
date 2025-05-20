@@ -160,7 +160,7 @@ const TrainingAttendanceForm = () => {
       Schedule_Type: value,
     }));
   };
-  const mappedTrainerOptions = trainerOptions.map((trainer) => ({
+  const mappedTrainerOptions = (trainerOptions || []).map((trainer) => ({
     value: trainer.Value,
     label: trainer.Text,
   }));
@@ -207,9 +207,15 @@ const TrainingAttendanceForm = () => {
       try {
         const res = await fetch("/api/qualified_trainer_dropdown");
         const data = await res.json();
-        setTrainerOptions(data);
+        if (Array.isArray(data)) {
+          setTrainerOptions(data);
+        } else {
+          setTrainerOptions([]);
+          console.error("Trainer data is not an array:", data);
+        }
       } catch (err) {
         console.error("Failed to fetch trainers:", err);
+        setTrainerOptions([]);
       }
     };
 
@@ -655,7 +661,10 @@ const TrainingAttendanceForm = () => {
   if (!mounted) {
     return null;
   }
-
+const programOptions = options.map((option) => ({
+  value: option.Value,
+  label: option.Text,
+}));
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
       <div className="bg-sky-400 text-white p-2  rounded-t-lg">
@@ -681,7 +690,7 @@ const TrainingAttendanceForm = () => {
             <label className="block font-medium">Select Program:</label>
             <div className="relative">
               <Select
-                required
+                 isRequired
                 isDisabled={!selectedDate || loading}
                 onChange={(selectedOption) => {
                   if (!selectedOption) return;
@@ -689,21 +698,10 @@ const TrainingAttendanceForm = () => {
                     target: { value: selectedOption.value },
                   });
                 }}
-                value={
-                  options.length > 0
-                    ? options
-                        .map((option) => ({
-                          value: option.Value,
-                          label: option.Text,
-                        }))
-                        .find((opt) => opt.value === formData.Program_Id) ||
-                      null
-                    : null
-                }
-                options={options.map((option) => ({
-                  value: option.Value,
-                  label: option.Text,
-                }))}
+               value={programOptions.find(
+    (opt) => opt.value === formData.Program_Id
+  ) || null}
+                options={programOptions}
                 className="w-[500px]"
                 placeholder="Select Program"
                 styles={{

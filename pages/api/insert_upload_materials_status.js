@@ -12,6 +12,10 @@ export default async function handler(req, res) {
           @IsUpload = ${IsUpload},
           @CreatedBy = ${CreatedBy}
         `;
+      console.log('Calling stored procedure with parameters:', {
+       IsUpload,
+        CreatedBy,
+      })
         res.status(200).json({ message: result[0]?.Result || 'Unknown error' });
     } catch (error) {
         console.error(error);

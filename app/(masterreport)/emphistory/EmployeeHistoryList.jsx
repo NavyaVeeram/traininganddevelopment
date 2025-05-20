@@ -316,7 +316,7 @@ const EmployeeHistoryList = () => {
 
   return (
     <div>
-      <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
+      <div className="max-w-full mx-auto bg-white p-2 rounded-lg w-full">
         <div className="bg-sky-400 flex text-white justify-between p-2 rounded-t-lg">
           <div className="text-lg font-semibold">Employee History</div>
           <div className="flex items-center space-x-2"></div>
@@ -444,8 +444,8 @@ const EmployeeHistoryList = () => {
 
         <br />
         {EmployeeId && (
-          <div className="card shadow rounded-lg bg-[var(--bgBody)] mt-6">
-            <div className="card-header bg-[var(--bgBody)] text-black rounded-t-lg py-3 px-3">
+          <div className="card rounded-lg  mt-6">
+            <div className="card-header  text-black rounded-t-lg py-3 px-3">
               <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center">
                 <div className="flex flex-col">
                   <h2 className="text-sm font-bold">Employee Training History</h2>

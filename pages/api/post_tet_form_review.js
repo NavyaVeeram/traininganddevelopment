@@ -26,6 +26,7 @@ export default async function handler(req, res) {
     } = req.body;
 
     try {
+      
       // Calling the stored procedure (or executing a query) via Prisma
       const result = await prisma.$executeRaw`
         EXEC dbo.sp_Post_Tet_Form_Review 
@@ -47,6 +48,24 @@ export default async function handler(req, res) {
           ${CreatedBy};
       `;
       
+      console.log({
+        Program_Id,
+        EmployeeId,
+        Q_1,
+        Q_2,
+        Q_3,
+        Q_4,
+        Q_5,
+        Q_6,
+        Q_7,
+        Q_8,
+        Q_9,
+        Q_10,
+        Overall,
+        Percentage,
+        Remarks,
+        CreatedBy
+      })
       // Return success or failure based on result
       res.status(200).json({ message: 'Data added successfully', result });
     } catch (error) {

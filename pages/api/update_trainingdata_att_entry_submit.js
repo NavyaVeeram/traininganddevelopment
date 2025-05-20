@@ -36,7 +36,19 @@ export default async function handler(req, res) {
         @Training_Budget = ${Training_Budget},
         @CreatedBy = ${CreatedBy}
       `;
-
+         console.log('Calling stored procedure with parameters:', {
+  Program_Id,
+  Persons,
+  No_Hrs,
+  Training_Date,
+  Training_Status,
+  Schedule_Type,
+  Trainer,
+  Venue,
+  Training_Budget,
+  CreatedBy
+      })
+      console.log(result);
       res.status(200).json({ message: result[0]?.Result || 'Unknown error' });
     } catch (error) {
       console.error('Error:', error);

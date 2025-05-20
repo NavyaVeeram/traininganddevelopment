@@ -7,6 +7,15 @@ import Select from "react-select";
 const QualifiedTrainerList = () => {
   const [data, setData] = useState([]);
   const [EmployeeId, setEmployeeId] = useState(null);
+
+  // Add useEffect to set EmployeeId from localStorage on mount
+  useEffect(() => {
+    const storedEmployeeId = localStorage.getItem('employeeId');
+    if (storedEmployeeId) {
+      setEmployeeId(storedEmployeeId);
+    }
+  }, []);
+
   const [employeeOptions, setEmployeeOptions] = useState([]);
   const [trainingDetails, setTrainingDetails] = useState({
     Username: "",
@@ -175,6 +184,9 @@ const QualifiedTrainerList = () => {
       return;
     }
 
+    // Get CreatedBy from localStorage directly
+    const createdByFromStorage = localStorage.getItem('employeeId');
+
     const dataToSubmit = {
       Training_Name: trainingName,
       EmployeeId: EmployeeId,
@@ -183,7 +195,7 @@ const QualifiedTrainerList = () => {
       Exp_3_Yr: exp3Yr ? 1 : 0,
       HOD_Rec: hodRec ? 1 : 0,
       Qualified: qualified ? 1 : 0,
-      CreatedBy: EmployeeId, // Replace with the actual username if needed
+      CreatedBy: createdByFromStorage || "", // Use localStorage EmployeeId for CreatedBy
     };
 
     setLoading(true);

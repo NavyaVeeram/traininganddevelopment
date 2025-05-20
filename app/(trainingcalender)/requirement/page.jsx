@@ -7,7 +7,7 @@ import { Input } from "@headlessui/react";
 import { FaEdit, FaSearch, FaTrash } from "react-icons/fa";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css"; // Ensure you import the datepicker styles.
-
+import GenerateEmailForm from "../hos/page";
 const animatedComponents = makeAnimated();
 export default function Requirement() {
   const [options, setOptions] = useState([]);
@@ -19,6 +19,7 @@ export default function Requirement() {
   const [formloading, formsetLoading] = useState(false);
   const [selectedMonths, setSelectedMonths] = useState([]); // to store selected months
   const [department, setDepartment] = useState('');
+  const [section,setSection] = useState('');
   const [username, setUsername] = useState('');
   const [employeeId, setEmployeeId] = useState('');
   const [trainingData, setTrainingData] = useState([]);
@@ -31,6 +32,7 @@ export default function Requirement() {
     Training_Name: '',
     Year_No: new Date().getFullYear().toString(),
     Department: '',
+    Section :'',
     Program_Name: '',
     Train_Mode: '',
     Train_Purpose: '',
@@ -46,7 +48,7 @@ export default function Requirement() {
   const [data, setData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const [originalData, setOriginalData] = useState([]);
 
@@ -68,6 +70,7 @@ export default function Requirement() {
       Training_Name: '',
       Year_No: new Date().getFullYear().toString(),
       Department: '',
+      Section:'',
       Program_Name: null,
       Train_Mode: '',
       Train_Purpose: '',
@@ -88,12 +91,14 @@ export default function Requirement() {
     const storedDepartment = localStorage.getItem('department');
     const storedUsername = localStorage.getItem('username');
     const storedEmployeeId = localStorage.getItem('employeeId');
+    const storedSection = localStorage.getItem('section');
 
     // If data is found, update state
-    if (storedDepartment && storedUsername && storedEmployeeId) {
+    if (storedDepartment && storedUsername && storedEmployeeId && storedSection) {
       setDepartment(storedDepartment);
       setUsername(storedUsername);
       setEmployeeId(storedEmployeeId);
+      setSection(storedSection)
     } else {
       // If no data found, redirect to login page
       window.location.href = '/';
@@ -129,6 +134,7 @@ export default function Requirement() {
         CreatedBy: employeeId,
         UpdatedBy:employeeId,
         Department: department,
+        Section: section,  // Added Section here
       };
 
       // Validate fields
@@ -159,7 +165,7 @@ export default function Requirement() {
       }
 
       // Submit data
-      const postRes = await fetch('/api/post_trainingdata', {
+      const postRes = await fetch('/api/insert_trainingdata', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -181,6 +187,7 @@ export default function Requirement() {
       const res = await fetch(`/api/view_training_data_by_employee?employeeId=${employeeId}&department=${department}`);
       const newData = await res.json();
       setTrainingData(newData); // Update state with the latest data
+      setIsSubmitted(false); // Reset submission state to allow re-render
 
       resetForm(); // Reset form after submission
     } catch (error) {
@@ -280,8 +287,9 @@ export default function Requirement() {
   // const isYearEnabled function and other code remain unchanged
 const isYearEnabled = (date) => {
   const year = date.getFullYear();
-  return [ 2025, 2026].includes(year);
-}; 
+  const currentYear = new Date().getFullYear();
+  return [currentYear, currentYear + 1].includes(year);
+};
 const handleDelete = async (programId) => {
   try {
     const res = await fetch(`/api/delete_training_data_requirement?Program_Id=${programId}`, {
@@ -487,6 +495,14 @@ const programOptions = programs.map(program => ({
         type="text"
         value={department}
         onChange={(e) => setDepartment(e.target.value)}
+        readOnly // Makes sure the department is not editable by the user
+      />
+       <label className="font-bold " style={{visibility:"hidden"}}>Section :</label>
+      <input
+      style={{visibility:"hidden"}}
+        type="text"
+        value={section}
+        onChange={(e) => setSection(e.target.value)}
         readOnly // Makes sure the department is not editable by the user
       />
     </>
@@ -739,7 +755,7 @@ const programOptions = programs.map(program => ({
           </div>
         
        {/* No. of Times */}
-       <div >
+       <div className="space-y-0.5">
             <label htmlFor="No_Times" className="block text-sm font-medium text-gray-900">
               No. of Times
             </label>
@@ -755,7 +771,7 @@ const programOptions = programs.map(program => ({
           </div>
           </div>
         {/* No. of Hours */}
-        <div className="flex justify-between">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">  
       
         {/* Evaluation */}
         <div className="space-y-0.5">
@@ -774,344 +790,190 @@ const programOptions = programs.map(program => ({
         handleFormChange(e);  // Only update if the value is numeric or empty
       }
     }}
-    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-64"
-         
+    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-64"      
  aria-required />
 </div>
-   
-</div>
-{/* Buttons */}
-<div className="space-y-0.5 flex justify-end mr-40">
-        <button type="submit" disabled={loading} className="px-6 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
+   {/* Buttons */}
+<div>
+<label htmlFor="Evaluation_Period" style={{visibility:"hidden"}} className="block text-sm font-medium text-gray-900">
+    Evaluation Period
+  </label>
+        <button type="submit" disabled={loading} className="px-6 mt-2 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
         >
       {loading ? 'Loading...' : 'Submit'}
     </button>
         </div>
-{
-  !isSubmitted ? (
-    // Show existing data only (before submission)
-    trainingData.length > 0 ? (
-                <div className="card-body p-0 overflow-x-auto mt-2 pb-3">
-                  <div className="p-4 bg-card">
-                    <div className="flex flex-wrap justify-between items-center mb-4 space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <span style={{fontSize:"14px"}}>Show</span>
-                        <select
-                          style={{fontSize:"14px"}}
-                          className="border p-0 rounded bg-secondary"
-                          value={rowsPerPage}
-                          onChange={(e) => {
-                            setRowsPerPage(e.target.value === "All" ? "All" : parseInt(e.target.value));
-                            setCurrentPage(1);
-                          }}
-                        >                 
-                          <option value="5">5</option>
-                          <option value="15">15</option>
-                          <option value="25">25</option>
-                          <option value="50">50</option>
-                          <option value="100">100</option>
-                          <option value="All">All</option>
-                        </select>
-                        <span style={{fontSize:"14px"}}>entries</span>
-                      </div>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          className="border p-1 pt-[0.9] pl-8 rounded bg-secondary"
-                          placeholder="Search..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                        <FaSearch className="absolute left-2 top-2 text-muted-foreground" />
-                      </div>
-                    </div>
-      <table className="min-w-full overf border relative z-0  bg-card text-foreground" 
-                style={{ 
-                  tableLayout: "fixed" ,
-                  fontSize: "13px", 
-                  padding: "1px",
-                  whiteSpace: "nowrap", 
-                  overflow: "hidden",   
-                  textOverflow: "ellipsis", }}>
+</div>
+
+{trainingData.length > 0 ? (
+  <div className="card-body p-0 overflow-x-auto mt-2 pb-3">
+    <div className="p-4 bg-card">
+      <div className="flex flex-wrap justify-between items-center mb-4 space-y-2">
+        <div className="flex items-center space-x-2">
+          <span style={{ fontSize: "14px" }}>Show</span>
+          <select
+            style={{ fontSize: "14px" }}
+            className="border p-0 rounded bg-secondary"
+            value={rowsPerPage}
+            onChange={(e) => {
+              setRowsPerPage(e.target.value === "All" ? "All" : parseInt(e.target.value));
+              setCurrentPage(1);
+            }}
+          >
+            <option value="10">10</option>
+            <option value="15">15</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="All">All</option>
+          </select>
+          <span style={{ fontSize: "14px" }}>entries</span>
+        </div>
+        <div className="relative">
+          <input
+            type="text"
+            className="border p-1 pt-[0.9] pl-8 rounded bg-secondary"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <FaSearch className="absolute left-2 top-2 text-muted-foreground" />
+        </div>
+      </div>
+      <table
+        className="min-w-full overf border relative z-0  bg-card text-foreground"
+        style={{
+          tableLayout: "fixed",
+          fontSize: "13px",
+          padding: "1px",
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+      >
         <thead className="bg-muted sticky top-0 z-10">
-          <tr  className="bg-gray-100">
-          {Object.keys(columnKeyMap).map((key) => (
-                      <th
-                        key={key}
-                        onClick={() => handleSort(key)}
-                        className="cursor-pointer px-4 py-2 border text-left"
-                      >
-                        {key}{" "}
-                        {sortConfig.key === columnKeyMap[key] ? (
-                          sortConfig.direction === "asc" ? "▲" : "▼"
-                        ) : (
-                          "↕"
-                        )}
-                      </th>
-                    ))}
-                   
+          <tr className="bg-gray-100">
+            {Object.keys(columnKeyMap).map((key) => (
+              <th
+                key={key}
+                onClick={() => handleSort(key)}
+                className="cursor-pointer px-4 py-2 border text-left"
+              >
+                {key}{" "}
+                {sortConfig.key === columnKeyMap[key] ? (
+                  sortConfig.direction === "asc" ? "▲" : "▼"
+                ) : (
+                  "↕"
+                )}
+              </th>
+            ))}
+
             <th className="px-4 py-2 border text-left">Actions</th>
           </tr>
         </thead>
         <tbody>
-        {paginatedData.length > 0 ? (
-          paginatedData.map((training) => (
-            <tr  className ="border hover:bg-muted" key={training.Program_Id}>
-              <td className="px-4 py-2 border">{training.Training_Name}</td>
-              <td className="px-4 py-2 border">{training.Year_No}</td>
-              <td className="px-4 py-2 border">{training.Department}</td>
-              <td className="px-4 py-2 border">{training.Section}</td>
-              <td className="px-4 py-2 border">{training.Program_Name}</td>
-              <td className="px-4 py-2 border">{training.Train_Mode}</td>
-              <td className="px-4 py-2 border">{training.Train_Purpose}</td>
-              <td className="px-4 py-2 border">{training.Persons}</td>
-              <td className="px-4 py-2 border">{training.No_Hrs}</td>
-              <td className="px-4 py-2 border">{training.No_Times}</td>
-              <td className="px-4 py-2 border">{training.Req_Months}</td>
-              <td className="px-4 py-2 border">{training.Evaluation_Period}</td>
-              <td className="px-4 py-2 border">
-                <div className="flex justify-center">
-                <button type="button" onClick={() => handleDelete(training.Program_Id)}>
-                  <FaTrash style={{ color: 'red', cursor: 'pointer', fontSize: '15px' }} />
-                </button>
-                </div>
+          {paginatedData.length > 0 ? (
+            paginatedData.map((training) => (
+              <tr className="border hover:bg-muted" key={training.Program_Id}>
+                <td className="px-4 py-2 border">{training.Training_Name}</td>
+                <td className="px-4 py-2 border">{training.Year_No}</td>
+                <td className="px-4 py-2 border">{training.Department}</td>
+                <td className="px-4 py-2 border">{training.Section}</td>
+                <td className="px-4 py-2 border">{training.Program_Name}</td>
+                <td className="px-4 py-2 border">{training.Train_Mode}</td>
+                <td className="px-4 py-2 border">{training.Train_Purpose}</td>
+                <td className="px-4 py-2 border">{training.Persons}</td>
+                <td className="px-4 py-2 border">{training.No_Hrs}</td>
+                <td className="px-4 py-2 border">{training.No_Times}</td>
+                <td className="px-4 py-2 border">{training.Req_Months}</td>
+                <td className="px-4 py-2 border">{training.Evaluation_Period}</td>
+                <td className="px-4 py-2 border">
+                  <div className="flex justify-center">
+                    <button type="button" onClick={() => handleDelete(training.Program_Id)}>
+                      <FaTrash style={{ color: "red", cursor: "pointer", fontSize: "15px" }} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={Object.keys(columnKeyMap).length + 1} className="text-center py-4">
+                No results found.
               </td>
-     
             </tr>
-          ))
-        ) : (
-          <tr>
-            <td colSpan={Object.keys(columnKeyMap).length + 1} className="text-center py-4">
-              No results found.
-            </td>
-          </tr>
-        )}
+          )}
         </tbody>
       </table>
       <div className="flex flex-wrap justify-between items-center mt-4 space-y-2">
-              <div style={{fontSize:"14px"}}>
-                Showing{" "}
-                {filteredData.length > 0
-                  ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
-                      currentPage * rowsPerPage,
-                      filteredData.length
-                    )} of ${filteredData.length} entries`
-                  : "0 entries"}
-              </div>
-              <div className="flex space-x-2" style={{fontSize:"14px"}}>
-                <button
-                  type="button"
-                  className="px-3 py-1 border rounded"
-                  onClick={() => setCurrentPage(1)}
-                  disabled={currentPage === 1}
-                >
-                  {"<<"}
-                </button>
-                <button
-                  type="button"
-                  className="px-3 py-1 border rounded"
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                >
-                  {"<"}
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    className={`px-3 py-1 border rounded ${
-                      currentPage === i + 1 ? "bg-primary text-primary-foreground" : ""
-                    }`}
-                    onClick={() => setCurrentPage(i + 1)}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
-                <button
-                type="button"
-                  className="px-3 py-1 border rounded"
-                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                >
-                  {">"}
-                </button>
-                <button
-                type="button"
-                  className="px-3 py-1 border rounded"
-                  onClick={() => setCurrentPage(totalPages)}
-                  disabled={currentPage === totalPages}
-                >
-                  {">>"}
-                </button>
-              </div>
-            </div>
-            <div className="flex justify-end mt-3">
-
-<button type="button" className="px-6 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
->
-  Send to approval
-</button>
-</div>
-    </div> 
-    </div> 
-    ) : (
-      ""
-    )
-  ) : (
-    // Show all data (including new data after submission)
-    trainingData.length > 0 ? (
-      <div className="card-body p-0 overflow-x-auto pb-3">
-      <div className="p-4 bg-card">
-        <div className="flex flex-wrap justify-between items-center mb-4 space-y-2">
-          <div className="flex items-center space-x-2 text-sm">
-            <span>Show</span>
-            <select
-              className="border p-1 rounded bg-secondary"
-              value={rowsPerPage}
-              onChange={(e) => {
-                setRowsPerPage(e.target.value === "All" ? "All" : parseInt(e.target.value));
-                setCurrentPage(1);
-              }}
-            >                 
-              <option value="5">5</option>
-              <option value="15">15</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-              <option value="All">All</option>
-            </select>
-            <span style={{fontSize:"14px"}}>entries</span>
-          </div>
-          <div className="relative">
-            <input
-              type="text"
-              className="border p-1 pt-[0.9] pl-8 rounded bg-secondary"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <FaSearch className="absolute left-2 top-2 text-muted-foreground" />
-          </div>
+        <div style={{ fontSize: "14px" }}>
+          Showing{" "}
+          {filteredData.length > 0
+            ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
+                currentPage * rowsPerPage,
+                filteredData.length
+              )} of ${filteredData.length} entries`
+            : "0 entries"}
         </div>
-<table className="min-w-full overf border relative z-0  bg-card text-foreground" 
-    style={{ 
-      tableLayout: "fixed" ,
-      fontSize: "13px", 
-      padding: "1px",
-      whiteSpace: "nowrap", 
-      overflow: "hidden",   
-      textOverflow: "ellipsis", }}>
-<thead className="bg-muted sticky top-0 z-10">
-<tr  className="bg-gray-100">
-{Object.keys(columnKeyMap).map((key) => (
-          <th
-            key={key}
-            onClick={() => handleSort(key)}
-            className="cursor-pointer px-4 py-2 border text-left"
+        <div className="flex space-x-2" style={{ fontSize: "14px" }}>
+          <button
+            type="button"
+            className="px-3 py-1 border rounded"
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
           >
-            {key}{" "}
-            {sortConfig.key === columnKeyMap[key] ? (
-              sortConfig.direction === "asc" ? "▲" : "▼"
-            ) : (
-              "↕"
-            )}
-          </th>
-        ))}
-       
-<th className="px-4 py-2 border text-left">Actions</th>
-</tr>
-</thead>
-        <tbody>
-          {paginatedData.map((training) => (
-            <tr key={training.Program_Id}>
-              <td className="px-4 py-2 border">{training.Training_Name}</td>
-              <td className="px-4 py-2 border">{training.Year_No}</td>
-              <td className="px-4 py-2 border">{training.Department}</td>
-              <td className="px-4 py-2 border">{training.Section}</td>
-              <td className="px-4 py-2 border">{training.Program_Name}</td>
-              <td className="px-4 py-2 border">{training.Train_Mode}</td>
-              <td className="px-4 py-2 border">{training.Train_Purpose}</td>
-              <td className="px-4 py-2 border">{training.Persons}</td>
-              <td className="px-4 py-2 border">{training.No_Hrs}</td>
-              <td className="px-4 py-2 border">{training.No_Times}</td>
-              <td className="px-4 py-2 border">{training.Req_Months}</td>
-              <td className="px-4 py-2 border">{training.Evaluation_Period}</td>
-              <td className="px-4 py-2 border">
-                <div className="flex justify-center">
-                <button type="button" onClick={() => handleDelete(training.Program_Id)}>
-                  <FaTrash style={{ color: 'red', cursor: 'pointer', fontSize: '16px' }} />
-                </button>
-                </div>
-              </td> 
-            </tr>
+            {"<<"}
+          </button>
+          <button
+            type="button"
+            className="px-3 py-1 border rounded"
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+          >
+            {"<"}
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i}
+              type="button"
+              className={`px-3 py-1 border rounded ${
+                currentPage === i + 1 ? "bg-primary text-primary-foreground" : ""
+              }`}
+              onClick={() => setCurrentPage(i + 1)}
+            >
+              {i + 1}
+            </button>
           ))}
-        </tbody>
-      </table>
-      <div className="flex flex-wrap justify-between items-center mt-4 space-y-2">
-              <div style={{fontSize:"14px"}}>
-                Showing{" "}
-                {filteredData.length > 0
-                  ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
-                      currentPage * rowsPerPage,
-                      filteredData.length
-                    )} of ${filteredData.length} entries`
-                  : "0 entries"}
-              </div>
-              <div className="flex space-x-2" style={{fontSize:"14px"}}>
-                <button 
-                  className="px-3 py-1 border rounded"
-                  onClick={() => setCurrentPage(1)}
-                  disabled={currentPage === 1}
-                >
-                  {"<<"}
-                </button>
-                <button type="button"
-                  className="px-3 py-1 border rounded"
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                >
-                  {"<"}
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => (
-                  <button
-                    key={i}
-                    className={`px-3 py-1 border rounded ${
-                      currentPage === i + 1 ? "bg-primary text-primary-foreground" : ""
-                    }`}
-                    onClick={() => setCurrentPage(i + 1)}
-                    type="button"
-                  >
-                    {i + 1}
-                  </button>
-                ))}
-                <button type="button"
-                  className="px-3 py-1 border rounded"
-                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                >
-                  {">"}
-                </button>
-                <button
-                  className="px-3 py-1 border rounded"
-                  onClick={() => setCurrentPage(totalPages)}
-                  disabled={currentPage === totalPages}
-                >
-                  {">>"}
-                </button>
-              </div>
-            </div>   
-  <div className="flex justify-end mt-3">
-
-<button type="button"  className="px-6 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-700 focus:ring-2 focus:ring-black-600 focus:ring-offset-2">
-  Send to approval
-</button>
-</div>
-</div>
+          <button
+            type="button"
+            className="px-3 py-1 border rounded"
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+          >
+            {">"}
+          </button>
+          <button
+            type="button"
+            className="px-3 py-1 border rounded"
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={currentPage === totalPages}
+          >
+            {">>"}
+          </button>
+        </div>
       </div>
-    ) : (
-      ""
-    )
-  )
+      <div className="flex justify-end mt-3">
+        {/* <button type="button"  className="px-6 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
+>
+  Send for approval
+</button> */}
+        <GenerateEmailForm />
+      </div>
+    </div>
+  </div>
+) : (
+  ""
+)
 }
 </form>
     </div>

@@ -164,7 +164,11 @@ const TrainingBudget = () => {
       width: '10%',
     },
   ];
-
+const isYearEnabled = (date) => {
+  const year = date.getFullYear();
+  const currentYear = new Date().getFullYear();
+  return [currentYear, currentYear + 1].includes(year);
+};
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
@@ -198,12 +202,16 @@ const TrainingBudget = () => {
               className="p-2 border border-gray-300 rounded-lg"
               calendarClassName="z-50" 
               popperPlacement="top-start"
+              isClearable
+              isSearchable
+              required
               popperModifiers={{
                 preventOverflow: {
                   enabled: true,
                   boundariesElement: "viewport",
                 },
               }}
+              filterDate={isYearEnabled}
             />
           </div>
         </div>

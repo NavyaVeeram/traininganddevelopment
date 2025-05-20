@@ -35,14 +35,16 @@ const handleSubmit = async (e: React.FormEvent) => {
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem('department', data.department);
       localStorage.setItem('username', data.username);
+      localStorage.setItem('section',data.section);
       localStorage.setItem('employeeId', data.employeeId);
+      localStorage.setItem('Designation',data.designation);
       router.push("/dashboard");  // Redirect to the dashboard on successful login
     } else {
       setStatus("error");
     }
     
     setLoading(false);
-  }, 2000);  // Delay to simulate loading state
+  }, 200);  // Delay to simulate loading state
 };
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-yellow-50 to-gray-100">

@@ -19,7 +19,12 @@ export default async function handler(req, res) {
           @Status = ${Status},
           @CreatedBy = ${CreatedBy}
       `;
-
+   console.log('Calling stored procedure with parameters:', {
+       Program_Id,
+       EmployeeId,
+       Status,
+       CreatedBy
+      })
       console.log("Result from stored procedure:", Program_Id, EmployeeId, Status, CreatedBy);
 
       if (result && result[0] && result[0].Result) {
