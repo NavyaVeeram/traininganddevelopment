@@ -210,7 +210,7 @@ export default function Requirement() {
 
     if (trainingName) {
       try {
-        const response = await fetch(`/api/get_programs?Training_Name=${trainingName}`);
+        const response = await fetch(`/api/get_programs_dropdown?Training_Name=${trainingName}`);
         const data = await response.json();
 
         if (response.ok) {
@@ -700,6 +700,7 @@ const programOptions = programs.map(program => ({
             </label>
             <Input
               type="number"
+
               id="No_Hrs"
               name="No_Hrs"
               value={formData.No_Hrs}

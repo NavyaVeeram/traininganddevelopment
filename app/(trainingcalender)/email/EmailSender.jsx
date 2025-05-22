@@ -40,7 +40,7 @@ export default function EmailSender({  email, roleEmployeeId, senderEmployeeId  
     setSending(false);
 
     if (result.success) {
-      setStatus('Test email sent successfully!');
+      setStatus('Email sent successfully!');
     } else {
       setStatus(`Failed to send: ${result.error}`);
     }

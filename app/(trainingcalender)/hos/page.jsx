@@ -12,19 +12,37 @@ export default function GenerateEmailForm() {
   const [username, setUsername] = useState('');
   const [employeeId, setEmployeeId] = useState('');
   const [trainingData, setTrainingData] = useState([]);
+  const [error, setError] = useState(null);
 
   const handleSubmit = async () => {
-    const res = await fetch('/api/generate_email', {
-      method: 'POST',
-      body: JSON.stringify({ department, section }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    try {
+      const res = await fetch('/api/generate_email', {
+        method: 'POST',
+        body: JSON.stringify({ employeeId }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-    const data = await res.json();
-    setResult(data);
-    setEmail(data.Email); // Save email in state
+      if (!res.ok) {
+        const errorData = await res.json();
+        setError(errorData.message || 'Failed to fetch email data');
+        setResult(null);
+        setEmail('');
+        return;
+      }
+
+      const data = await res.json();
+      console.log('API response data:', data);
+      setResult(data);
+      setEmail(data.Email); // Save email in state
+      setError(null);
+    } catch (err) {
+      console.error('Fetch error:', err);
+      setError('Error fetching email data');
+      setResult(null);
+      setEmail('');
+    }
   };
 
   useEffect(() => {
@@ -64,14 +82,14 @@ export default function GenerateEmailForm() {
   }, []);
 
   useEffect(() => {
-    if (department && section) {
+    if (employeeId) {
       handleSubmit();
     }
-  }, [department, section]);
+  }, [employeeId]);
 
   return (
     <div>
-      <div style={{display:'none'}}>
+      <div >
       <input
         type="text"
         placeholder="Department"
@@ -88,7 +106,8 @@ export default function GenerateEmailForm() {
       />
       </div>
       {/* Removed the Generate Email button as per request */}
-<div style={{display:'none'}}>
+      {error && <p className="text-red-600">Error: {error}</p>}
+      <div >
       {result && (
         <div className="mt-4">
           <p>Email: {email}</p>
@@ -97,11 +116,9 @@ export default function GenerateEmailForm() {
           <p>Sender ID: {result.Send_EmployeeId}</p>
         </div>
       )}
-       {/* Pass email to another component */} 
-     
       </div>
-         <EmailSender email={email}   roleEmployeeId={result?.Role_EmployeeId} 
-  senderEmployeeId={result?.Send_EmployeeId} />
+      {/* Pass email to another component */}
+      <EmailSender email={email} roleEmployeeId={result?.Role_EmployeeId} senderEmployeeId={result?.Send_EmployeeId} />
     </div>
   );
 }
