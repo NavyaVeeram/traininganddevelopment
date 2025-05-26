@@ -342,7 +342,7 @@ No data found.
 </table>
 
 {/* Pagination */}
-{rowsPerPage !== "All" && (
+{rowsPerPage !== "All" && filteredData.length > 0 && (
 <div className="flex justify-between items-center mt-4 text-sm">
 <span>
 Showing{" "}

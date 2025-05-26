@@ -46,7 +46,7 @@ export default function EmailApproval() {
   return (
     <div>
       {/* Removed input field for employeeId */}
-      <button onClick={handleApprove} className='bg-green-400 px-4 py-2 rounded text-light' disabled={loading || !employeeId}>
+      <button onClick={handleApprove} className="px-6 mt-2 py-2 text-sm font-semibold text-white bg-green-500 rounded-md shadow-md hover:bg-green-700 focus:ring-2 focus:ring-black-600 focus:ring-offset-2" disabled={loading || !employeeId}>
         {loading ? 'Processing...' : 'Approve'}
       </button>
       {/* {email && (

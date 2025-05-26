@@ -46,7 +46,7 @@ export default function RejectEmail() {
     <div>
       <button
         onClick={handleReject}
-        className='bg-red-500 text-white px-4 py-2 rounded'
+        className="px-6 mt-2 py-2 text-sm font-semibold text-white bg-red-500 rounded-md shadow-md hover:bg-red-700 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
         disabled={loading || !employeeId}
       >
         {loading ? 'Sending...' : 'Reject'}

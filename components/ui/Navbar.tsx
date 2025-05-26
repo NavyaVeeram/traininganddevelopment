@@ -42,6 +42,10 @@ const training: { title: string; href: string }[] = [
   {
     title: "Training Record - IATF/HSE",
     href: "/trainingrecord",
+  },
+   {
+    title: "Approval Form",
+    href: "/approvalform",
   }
 ]
 
@@ -211,7 +215,7 @@ const [employeeId, setEmployeeId] = useState('');
               </svg>
             )}
           </button>
-          <ProfileDropdown username={username} />
+          {/* <ProfileDropdown username={username} /> */}
         </div>
 
         {/* Navigation Menu for Desktop and Toggleable for Mobile */}
