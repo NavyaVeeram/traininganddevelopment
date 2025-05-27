@@ -31,6 +31,7 @@ export default function TrainingRecord() {
         const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
         const data = await res.json();
 
+<<<<<<< HEAD
         if (res.ok && (data.Access_Role === 'HOS' || data.Access_Role === 'HOD')) {
           setIsAuthorized(true);
         } else {
@@ -38,6 +39,12 @@ export default function TrainingRecord() {
         }
       } catch (error) {
         console.error('Error fetching access role:', error);
+=======
+      if (res.ok && (data.Access_Role === 'HR_Res')) {
+        setAccessRole(data.Access_Role);
+        setIsAuthorized(true);
+      } else {
+>>>>>>> a03421aa870365d2f9b309abc922f8668e2031a3
         setIsAuthorized(false);
       }
     };

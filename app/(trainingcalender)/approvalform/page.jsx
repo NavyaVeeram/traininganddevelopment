@@ -17,6 +17,8 @@ const [username, setUsername] = useState('');
 const [employeeId, setEmployeeId] = useState('');
 const [isModalOpen, setIsModalOpen] = useState(false);
 const [editingData, setEditingData] = useState(null);
+ const [accessRole, setAccessRole] = useState(null);
+  const [isAuthorized, setIsAuthorized] = useState(false);
 const [error, setError] = useState('');
 const columnKeyMap = {
 "Training Name": "Training_Name",
@@ -34,7 +36,36 @@ Months: "Req_Months",
 IsActive:"IsActive",
 
 };
-
+  useEffect(() => {
+    const storedEmployeeId = localStorage.getItem('employeeId');
+  
+    if (!storedEmployeeId) {
+      window.location.href = '/';
+      return;
+    }
+  
+    setEmployeeId(storedEmployeeId);
+  
+    const fetchAccessRole = async () => {
+      try {
+        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+        const data = await res.json();
+  
+        if (res.ok && (data.Access_Role === 'HOS' || data.Access_Role === 'HOD'|| data.Access_Role === 'HR_Res'|| data.Access_Role === 'HR_HOD')) {
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+        }
+      } catch (error) {
+        console.error('Error fetching access role:', error);
+        setIsAuthorized(false);
+      }
+    };
+  
+    fetchAccessRole();
+  }, []);
+  
 useEffect(() => {
 const storedDepartment = localStorage.getItem('department');
 const storedUsername = localStorage.getItem('username');
@@ -218,10 +249,17 @@ console.error('Error updating status:', error);
 }
 };
 
-
-
-
-
+  // 🔒 Unauthorized view
+  if (!isAuthorized) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+        <div className="bg-white p-10 rounded shadow text-center">
+          <h2 className="text-2xl font-bold">Unauthorized</h2>
+          <p className="mt-2">You do not have access to view this page.</p>
+        </div>
+      </div>
+    );
+  }
 return (
 <div className="max-w-full mx-auto bg-white p-2 w-full">
 {/* Header */}
