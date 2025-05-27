@@ -16,52 +16,40 @@ export default function TrainingRecord() {
     CreatedBy: '',
   });
 
-  useEffect(() => {
-    const storedEmployeeId = localStorage.getItem('employeeId');
+useEffect(() => {
+  const storedEmployeeId = localStorage.getItem('employeeId');
 
-    if (storedEmployeeId) {
-      setEmployeeId(storedEmployeeId);
-      setFormData((prevData) => ({
-        ...prevData,
-        CreatedBy: storedEmployeeId,
-      }));
+  if (!storedEmployeeId) {
+    window.location.href = '/';
+    return;
+  }
 
-      // ✅ Fetch access role
-      const fetchAccessRole = async () => {
-        try {
-          const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-          const data = await res.json();
+  setEmployeeId(storedEmployeeId);
+  setFormData(prevData => ({
+    ...prevData,
+    CreatedBy: storedEmployeeId,
+  }));
 
-          if (res.ok && (data.Access_Role === 'HOS' || data.Access_Role === 'HOD')) {
-            setAccessRole(data.Access_Role);
-            setIsAuthorized(true);
+  const fetchAccessRole = async () => {
+    try {
+      const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+      const data = await res.json();
 
-            // Fetch training data only if authorized
-            const trainingRes = await fetch(
-              `/api/view_training_data_by_employee?employeeId=${storedEmployeeId}`
-            );
-            const trainingJson = await trainingRes.json();
-
-            if (trainingRes.ok) {
-              setTrainingData(trainingJson);
-            } else {
-              console.error('Failed to fetch training data:', trainingJson.message);
-              setTrainingData([]);
-            }
-          } else {
-            setIsAuthorized(false);
-          }
-        } catch (error) {
-          console.error('Access Role fetch error:', error);
-          setIsAuthorized(false);
-        }
-      };
-
-      fetchAccessRole();
-    } else {
-      window.location.href = '/';
+      if (res.ok && (data.Access_Role === 'HOS' || data.Access_Role === 'HOD')) {
+        setAccessRole(data.Access_Role);
+        setIsAuthorized(true);
+      } else {
+        setIsAuthorized(false);
+      }
+    } catch (error) {
+      console.error('Error fetching access role:', error);
+      setIsAuthorized(false);
     }
-  }, []);
+  };
+
+  fetchAccessRole();
+}, []);
+
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
