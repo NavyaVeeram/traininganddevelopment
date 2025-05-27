@@ -7,7 +7,7 @@ import { Input } from "@headlessui/react";
 import { FaEdit, FaSearch, FaTrash } from "react-icons/fa";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css"; // Ensure you import the datepicker styles.
-import GenerateEmailForm from "../hos/page";
+import EmailApprovalMain from "../email/EmailApproval"
 const animatedComponents = makeAnimated();
 export default function Requirement() {
   const [options, setOptions] = useState([]);
@@ -964,11 +964,7 @@ const programOptions = programs.map(program => ({
         </div>
       </div>
       <div className="flex justify-end mt-3">
-        {/* <button type="button"  className="px-6 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
->
-  Send for approval
-</button> */}
-        <GenerateEmailForm />
+<EmailApprovalMain/>
       </div>
     </div>
   </div>

@@ -7,6 +7,8 @@ export default function TrainingRecord() {
   const [username, setUsername] = useState('');
   const [employeeId, setEmployeeId] = useState('');
   const [trainingData, setTrainingData] = useState([]);
+  const [accessRole, setAccessRole] = useState(null);
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
   const [formData, setFormData] = useState({
     Training_Name: 'IATF',
@@ -14,41 +16,40 @@ export default function TrainingRecord() {
     CreatedBy: '',
   });
 
-  useEffect(() => {
-    const storedDepartment = localStorage.getItem('department');
-    const storedUsername = localStorage.getItem('username');
-    const storedEmployeeId = localStorage.getItem('employeeId');
+useEffect(() => {
+  const storedEmployeeId = localStorage.getItem('employeeId');
 
-    if (storedDepartment && storedUsername && storedEmployeeId) {
-      setDepartment(storedDepartment);
-      setUsername(storedUsername);
-      setEmployeeId(storedEmployeeId);
-      setFormData((prevData) => ({
-        ...prevData,
-        CreatedBy: storedEmployeeId,
-      }));
+  if (!storedEmployeeId) {
+    window.location.href = '/';
+    return;
+  }
 
-      const fetchData = async () => {
-        try {
-          const response = await fetch(`/api/view_training_data_by_employee?employeeId=${storedEmployeeId}&department=${storedDepartment}`);
-          const data = await response.json();
-          if (response.ok) {
-            setTrainingData(data);
-          } else {
-            console.error('Failed to fetch training data:', data.message);
-            setTrainingData([]);
-          }
-        } catch (error) {
-          console.error('Error fetching data:', error);
-          setTrainingData([]);
-        }
-      };
+  setEmployeeId(storedEmployeeId);
+  setFormData(prevData => ({
+    ...prevData,
+    CreatedBy: storedEmployeeId,
+  }));
 
-      fetchData();
-    } else {
-      window.location.href = '/';
+  const fetchAccessRole = async () => {
+    try {
+      const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+      const data = await res.json();
+
+      if (res.ok && (data.Access_Role === 'HOS' || data.Access_Role === 'HOD')) {
+        setAccessRole(data.Access_Role);
+        setIsAuthorized(true);
+      } else {
+        setIsAuthorized(false);
+      }
+    } catch (error) {
+      console.error('Error fetching access role:', error);
+      setIsAuthorized(false);
     }
-  }, []);
+  };
+
+  fetchAccessRole();
+}, []);
+
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
@@ -88,6 +89,19 @@ export default function TrainingRecord() {
     }
   };
 
+  // 🔒 Unauthorized view
+  if (!isAuthorized) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+        <div className="bg-white p-10 rounded shadow text-center">
+          <h2 className="text-2xl font-bold">Unauthorized</h2>
+          <p className="mt-2">You do not have access to view this page.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ Authorized view
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 text-white">
       <form
