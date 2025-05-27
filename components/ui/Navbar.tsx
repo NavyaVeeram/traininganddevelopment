@@ -155,6 +155,9 @@ export default function NavigationMenuDemo() {
 const [department, setDepartment] = useState('');
 const [username, setUsername] = useState('');
 const [employeeId, setEmployeeId] = useState('');
+const [accessRole, setAccessRole] = useState(null);
+const [isAuthorized, setIsAuthorized] = useState(false);
+
 // Removed unused trainingData state
 // const [trainingData,setTrainingData] = useState([]);
   
@@ -166,7 +169,40 @@ const [employeeId, setEmployeeId] = useState('');
     setOpenGroup(openGroup === group ? null : group);
   };
  
-  
+  useEffect(() => {
+  const storedDepartment = localStorage.getItem('department');
+  const storedUsername = localStorage.getItem('username');
+  const storedEmployeeId = localStorage.getItem('employeeId');
+
+  if (storedDepartment && storedUsername && storedEmployeeId) {
+    setDepartment(storedDepartment);
+    setUsername(storedUsername);
+    setEmployeeId(storedEmployeeId);
+  } else {
+    window.location.href = '/';
+    return;
+  }
+
+  const fetchAccessRole = async () => {
+    try {
+      const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+      const data = await res.json();
+
+      if (res.ok && data.Access_Role) {
+        setAccessRole(data.Access_Role);
+        setIsAuthorized(true);
+      } else {
+        setIsAuthorized(false);
+      }
+    } catch (error) {
+      console.error('Error fetching access role:', error);
+      setIsAuthorized(false);
+    }
+  };
+
+  fetchAccessRole();
+}, []);
+
   useEffect(() => {
     // Retrieve the department, username, and employeeId from localStorage
     const storedDepartment = localStorage.getItem('department');
@@ -184,6 +220,16 @@ const [employeeId, setEmployeeId] = useState('');
     }
     // Removed fetchData and trainingData usage as trainingData state is unused
   }, [department, username, employeeId]);
+    if (!isAuthorized) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+        <div className="bg-white p-10 rounded shadow text-center">
+          <h2 className="text-2xl font-bold">Unauthorized</h2>
+          <p className="mt-2">You do not have access to view this page.</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div>
       <nav className="flex items-center z-10  bg-gray-100 justify-between p-2" >
@@ -284,9 +330,13 @@ const [employeeId, setEmployeeId] = useState('');
               style={{ "--radix-navigation-menu-viewport-height": "auto" } as React.CSSProperties}
             >
               <ul className="grid w-[150px] gap-1 p-1 md:w-[200px] md:grid-cols lg:w-[200px]">
-                {trainingcertificates.map((component) => (
-                  <ListItem key={component.title} title={component.title} href={component.href} />
-                ))}
+                {trainingcertificates.map((component) => {
+  if (component.title === "Upload Certificates" && accessRole !== "HR_Res") {
+    return null;
+  }
+  return <ListItem key={component.title} title={component.title} href={component.href} />;
+})}
+
               </ul>
             </NavigationMenuContent>
           </NavigationMenuItem>

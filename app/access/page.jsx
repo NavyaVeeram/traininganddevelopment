@@ -53,7 +53,7 @@ const Access = () => {
   // Fetch Designation Dropdown
   const fetchDesignation = async () => {
     try {
-      const res = await fetch("/api/designation_dropdown");
+      const res = await fetch("/api/access_role_dropdown");
       const data = await res.json();
       const formatted = data.map((item) => ({
         value: item.Designation,

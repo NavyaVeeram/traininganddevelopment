@@ -35,7 +35,7 @@ useEffect(() => {
       const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
       const data = await res.json();
 
-      if (res.ok && (data.Access_Role === 'HOS' || data.Access_Role === 'HOD')) {
+      if (res.ok && (data.Access_Role === 'HR_Res')) {
         setAccessRole(data.Access_Role);
         setIsAuthorized(true);
       } else {
