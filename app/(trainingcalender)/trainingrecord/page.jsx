@@ -3,12 +3,8 @@ import React, { useState, useEffect } from "react";
 
 export default function TrainingRecord() {
   const [message, setMessage] = useState('');
-  const [department, setDepartment] = useState('');
-  const [username, setUsername] = useState('');
   const [employeeId, setEmployeeId] = useState('');
-  const [trainingData, setTrainingData] = useState([]);
-  const [accessRole, setAccessRole] = useState(null);
-  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(null); // null: not decided yet
 
   const [formData, setFormData] = useState({
     Training_Name: 'IATF',
@@ -16,40 +12,38 @@ export default function TrainingRecord() {
     CreatedBy: '',
   });
 
-useEffect(() => {
-  const storedEmployeeId = localStorage.getItem('employeeId');
+  useEffect(() => {
+    const storedEmployeeId = localStorage.getItem('employeeId');
 
-  if (!storedEmployeeId) {
-    window.location.href = '/';
-    return;
-  }
+    if (!storedEmployeeId) {
+      window.location.href = '/';
+      return;
+    }
 
-  setEmployeeId(storedEmployeeId);
-  setFormData(prevData => ({
-    ...prevData,
-    CreatedBy: storedEmployeeId,
-  }));
+    setEmployeeId(storedEmployeeId);
+    setFormData(prevData => ({
+      ...prevData,
+      CreatedBy: storedEmployeeId,
+    }));
 
-  const fetchAccessRole = async () => {
-    try {
-      const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-      const data = await res.json();
+    const fetchAccessRole = async () => {
+      try {
+        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+        const data = await res.json();
 
-      if (res.ok && (data.Access_Role === 'HOS' || data.Access_Role === 'HOD')) {
-        setAccessRole(data.Access_Role);
-        setIsAuthorized(true);
-      } else {
+        if (res.ok && (data.Access_Role === 'HOS' || data.Access_Role === 'HOD')) {
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+        }
+      } catch (error) {
+        console.error('Error fetching access role:', error);
         setIsAuthorized(false);
       }
-    } catch (error) {
-      console.error('Error fetching access role:', error);
-      setIsAuthorized(false);
-    }
-  };
+    };
 
-  fetchAccessRole();
-}, []);
-
+    fetchAccessRole();
+  }, []);
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
@@ -88,6 +82,9 @@ useEffect(() => {
       alert('An error occurred while submitting the form.');
     }
   };
+
+  // 🚫 Block render until auth is determined
+  if (isAuthorized === null) return null;
 
   // 🔒 Unauthorized view
   if (!isAuthorized) {
