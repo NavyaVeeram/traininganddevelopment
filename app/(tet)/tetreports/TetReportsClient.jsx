@@ -811,13 +811,18 @@ const TetReportsClient = () => {
         </div>
 
      {/* Footer */}
-     <div className="flex justify-between text-xs text-gray-600 mt-6">
-          <div>
-            <div>T & D - HR</div>
-            <div>Greentech Industries (India) Pvt. Ltd.</div>
-          </div>
-          <div>Authorized Person from concerned Dept</div>
-        </div>
+      <div className="flex justify-between text-xs text-gray-600 mt-6">
+              <div>
+                <div>T & D - HR</div>
+                <div>Greentech Industries (India) Pvt. Ltd.</div>
+              </div>
+              <div>Authorized Person from concerned Dept</div>
+             </div>
+             <div className="flex justify-end text-xs text-gray-600 gap-90">
+                 <div>Greentech Industries (India) Pvt. Ltd.</div>
+                 <div className="text-xs text-gray-600"> HR-040-3</div>
+             </div>
+          
 <div className="flex justify-end">
 <button
        type="submit"
@@ -835,4 +840,4 @@ const TetReportsClient = () => {
   );
 };
 
-export default TetReportsClient;
+export default TetReportsClient; 
