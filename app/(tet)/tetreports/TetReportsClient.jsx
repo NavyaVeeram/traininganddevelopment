@@ -45,7 +45,9 @@ const TetReportsClient = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [employeeDetails, setEmployeeDetails] = useState(null);
   const [allFormsFilled, setAllFormsFilled] = useState(false);
-
+const [accessRole, setAccessRole] = useState(null);
+const [isAuthorized, setIsAuthorized] = useState(null);
+const [employeeId, setEmployeeId] = useState(null);
   // Set Program_Id dynamically when programId changes
   React.useEffect(() => {
     if (programId) {
@@ -149,7 +151,35 @@ const TetReportsClient = () => {
       }));
     }
   }, [formData.ratings]);
+     useEffect(() => {
+    const storedEmployeeId = localStorage.getItem('employeeId');
   
+    if (storedEmployeeId) {
+      setEmployeeId(storedEmployeeId);
+    } else {
+      window.location.href = '/';
+      return;
+    }
+  
+    const fetchAccessRole = async () => {
+      try {
+        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+        const data = await res.json();
+  
+        if (res.ok && data.Access_Role) {
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+        }
+      } catch (error) {
+        console.error('Error fetching access role:', error);
+        setIsAuthorized(false);
+      }
+    };
+  
+    fetchAccessRole();
+  }, []);
   const [response, setResponse] = useState(null);
 
   // Generate PDF based on the filtered employee data
@@ -580,7 +610,17 @@ const TetReportsClient = () => {
   if (!isMounted) {
     return null; // Ensure nothing is rendered until the component has mounted
   }
-  
+    // 🔒 Unauthorized view
+  if (isAuthorized === false) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+        <div className="bg-white p-10 rounded shadow text-center">
+          <h2 className="text-2xl font-bold">Unauthorized</h2>
+          <p className="mt-2">You do not have access to view this page.</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
       <div className="bg-sky-400 text-white p-2 rounded-t-lg flex justify-between items-center">
@@ -590,27 +630,31 @@ const TetReportsClient = () => {
   <>
   <span className="font-semibold text-[#f8e111]"> {'(' + programName + ')'}</span>
   </>
-)}   </h1>
-         {/* <marquee dir="right" className="text-red-600">After filling all the forms refresh to download!</marquee> */}
+)}
+        </h1>
+         
         <div className="flex mt-2 lg:mt-0 w-full lg:w-auto justify-start">
-          <button
-            type="button"
-            onClick={() => {
-              if (allFormsFilled) {
-                generatePdfForEmployees(programId);
-              } else {
-                alert("Please fill all the forms before printing.");
-              }
-            }}
-            disabled={!allFormsFilled}
-            className={`flex items-center justify-end px-4 py-2 rounded-sm transition ${
-              allFormsFilled
-                ? "bg-gray-600 text-white hover:bg-gray-900"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-            }`}
-          >
-            <FaPrint />
-          </button>
+{accessRole === "HR_Res" && (
+  <button
+    type="button"
+    onClick={() => {
+      if (allFormsFilled) {
+        generatePdfForEmployees(programId);
+      } else {
+        alert("Please fill all the forms before printing.");
+      }
+    }}
+    disabled={!allFormsFilled}
+    className={`flex items-center justify-end px-4 py-2 rounded-sm transition ${
+      allFormsFilled
+        ? "bg-gray-600 text-white hover:bg-gray-900"
+        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+    }`}
+  >
+    
+    <FaPrint />
+  </button>
+)}
         </div>
       </div>
         <div className="my-4 relative z-0">
@@ -645,10 +689,14 @@ const TetReportsClient = () => {
   }}
   className="w-[400px]"
 />
+
 </div>
 </div>
-{/*     </div> */}
+{/* 
+      </div> */}
+     
         {/* Personal Info */}
+    
       {loading && <p>Loading...</p>}
       {errorMessage && <p>{errorMessage}</p>}
       {employeeDetails && (
@@ -702,7 +750,8 @@ const TetReportsClient = () => {
     : "N/A"}
 </td>
       </tr>
-        </tbody>     
+        </tbody>
+            
     </table>
     </div>
     <div className="border mb-6 overflow-x-auto">
@@ -718,6 +767,7 @@ const TetReportsClient = () => {
     <div className="mx-4">5️⃣ Excellent</div>
   </div>
 </div>
+
   <table className="w-full table-auto text-sm">
     <thead>
       <tr className="bg-gray-100">
@@ -753,15 +803,18 @@ const TetReportsClient = () => {
     </tbody>
   </table>
 </div>
+
         <div className="mt-4 flex justify-between border p-2">
         <div className="font-bold">Overall Rating</div>
         {/* <div className="text-lg">{averageRating}</div> */}
         <input name="Overall" type="number" value={formData.Overall ?? 0} readOnly className="bg-gray-100" />      </div>
+
         <div className="mt-4 flex justify-between border p-2">
             <div className="font-bold">Percentage</div>
             <input name="Percentage" type="number" value={formData.Percentage ?? 0} readOnly className="bg-gray-100" />
             {/* <div className="text-lg">{percentage}%</div> */}
           </div>
+
         {/* Score Range */}
         <div className="border mt-4 p-4">
           <table className="w-full table-auto border-collapse text-sm">
@@ -784,6 +837,7 @@ const TetReportsClient = () => {
               </tr>
             </tbody>
           </table>
+
           <div className="mt-2 text-sm">Note: Retraining will be conducted if percentage is below 50</div>
         </div>
         {/* Remarks */}
@@ -798,28 +852,34 @@ const TetReportsClient = () => {
             onChange={handleInputChange}
           ></textarea>
         </div>
+
      {/* Footer */}
-      <div className="flex justify-between text-xs text-gray-600 mt-6">
+      <div className="flex justify-between text-xs text-gray-600 mt-9">
               <div>
                 <div>T & D - HR</div>
                 <div>Greentech Industries (India) Pvt. Ltd.</div>
               </div>
               <div>Authorized Person from concerned Dept</div>
              </div>
-             <div className="flex justify-end text-xs text-gray-600 gap-90">
+             <div className="flex justify-end text-xs text-gray-600 mb-2 gap-90">
                  <div>Greentech Industries (India) Pvt. Ltd.</div>
                  <div className="text-xs text-gray-600"> HR-040-3</div>
-             </div>         
+             </div>
+          
 <div className="flex justify-end">
 <button
        type="submit"
        className="px-6 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"          >
     submit</button>
 </div>
+   
     </form>
     </div>
       )}
+
     </div>
+
+
   );
 };
 
