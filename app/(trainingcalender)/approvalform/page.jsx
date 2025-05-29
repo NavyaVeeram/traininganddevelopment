@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { FaSearch, FaTrash, FaEdit } from "react-icons/fa";
 import Select from "react-select";
-
+import MonthlyCalender from "../calender/page"
 import EmailApproval from "../email/page";
 export default function TrainingDataTable() {
 const [trainingData, setTrainingData] = useState([]);
@@ -17,9 +17,9 @@ const [username, setUsername] = useState('');
 const [employeeId, setEmployeeId] = useState('');
 const [isModalOpen, setIsModalOpen] = useState(false);
 const [editingData, setEditingData] = useState(null);
- const [accessRole, setAccessRole] = useState(null);
-  const [isAuthorized, setIsAuthorized] = useState(false);
 const [error, setError] = useState('');
+  const [data, setData] = useState([]);
+
 const columnKeyMap = {
 "Training Name": "Training_Name",
 Year: "Year_No",
@@ -36,36 +36,7 @@ Months: "Req_Months",
 IsActive:"IsActive",
 
 };
-  useEffect(() => {
-    const storedEmployeeId = localStorage.getItem('employeeId');
-  
-    if (!storedEmployeeId) {
-      window.location.href = '/';
-      return;
-    }
-  
-    setEmployeeId(storedEmployeeId);
-  
-    const fetchAccessRole = async () => {
-      try {
-        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-        const data = await res.json();
-  
-        if (res.ok && (data.Access_Role === 'HOS' || data.Access_Role === 'HOD'|| data.Access_Role === 'HR_Res'|| data.Access_Role === 'HR_HOD')) {
-          setAccessRole(data.Access_Role);
-          setIsAuthorized(true);
-        } else {
-          setIsAuthorized(false);
-        }
-      } catch (error) {
-        console.error('Error fetching access role:', error);
-        setIsAuthorized(false);
-      }
-    };
-  
-    fetchAccessRole();
-  }, []);
-  
+
 useEffect(() => {
 const storedDepartment = localStorage.getItem('department');
 const storedUsername = localStorage.getItem('username');
@@ -248,19 +219,35 @@ item.Program_Id === programId
 console.error('Error updating status:', error);
 }
 };
+useEffect(() => {
+    const storedEmployeeId = localStorage.getItem('employeeId');
 
-  // 🔒 Unauthorized view
-  if (!isAuthorized) {
-    return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
-        <div className="bg-white p-10 rounded shadow text-center">
-          <h2 className="text-2xl font-bold">Unauthorized</h2>
-          <p className="mt-2">You do not have access to view this page.</p>
-        </div>
-      </div>
-    );
-  }
+    if (!storedEmployeeId) {
+      alert('Employee ID not found in localStorage');
+      return;
+    }
+
+    fetch('/api/view_approval_form_submit_data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ employeeId: storedEmployeeId }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        setData(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error fetching approval data:', err);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) return <div>Loading...</div>;
+
+  if (data.length === 0) return <div>No records found.</div>;
 return (
+  <div>
 <div className="max-w-full mx-auto bg-white p-2 w-full">
 {/* Header */}
 <div className="bg-sky-400 text-white p-2 flex justify-between rounded-t-lg">
@@ -296,7 +283,10 @@ className="border rounded p-1"
 </select>
 <span>entries</span>
 </div>
+<div className="flex items-center gap-2 text-sm">
+
 <div className="relative">
+
 <input
 type="text"
 placeholder="Search..."
@@ -305,6 +295,8 @@ value={searchQuery}
 onChange={(e) => setSearchQuery(e.target.value)}
 />
 <FaSearch className="absolute left-2 top-2 text-gray-400" />
+</div>
+    <MonthlyCalender/>
 </div>
 </div>
 
@@ -605,6 +597,36 @@ className="border p-2 w-70 rounded-md"
 </div>
 )}
 </div>
+</div>
+   <div className="p-6">
+      <h1 className="text-sky-400 font-bold">Approved Data:</h1>
+      <table    className="min-w-full overf border relative z-0  bg-card text-foreground"
+        style={{
+          tableLayout: "fixed",
+          fontSize: "13px",
+          padding: "1px",
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}>
+        <thead className="bg-muted sticky top-0 z-10">
+          <tr className="bg-gray-100">
+            {Object.keys(data[0]).map((key) => (
+              <th key={key} className="cursor-pointer px-4 py-2 border text-left">{key}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((row, idx) => (
+            <tr key={idx} className="border hover:bg-muted">
+              {Object.values(row).map((value, index) => (
+                <td key={index} className="px-4 py-2 border">{value?.toString()}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
 </div>
 );
 }
