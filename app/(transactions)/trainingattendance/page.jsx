@@ -55,7 +55,10 @@ const TrainingAttendanceForm = () => {
   const [message, setMessage] = useState("");
    const [department, setDepartment] = useState('');
     const [username, setUsername] = useState('');
-  const [employeeId, setEmployeeId] = useState('');
+    const [accessRole, setAccessRole] = useState(null);
+    const [isAuthorized, setIsAuthorized] = useState(null);
+    const [employeeId, setEmployeeId] = useState(null);
+  // const [employeeId, setEmployeeId] = useState('');
   
   useEffect(() => {
     setFormData((prev) => ({
@@ -326,6 +329,36 @@ const TrainingAttendanceForm = () => {
       setError(err.message);
     }
   };
+     useEffect(() => {
+    const storedEmployeeId = localStorage.getItem('employeeId');
+  
+    if (storedEmployeeId) {
+      setEmployeeId(storedEmployeeId);
+    } else {
+      window.location.href = '/';
+      return;
+    }
+  
+    const fetchAccessRole = async () => {
+      try {
+        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+        const data = await res.json();
+  
+        if (res.ok && data.Access_Role) {
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+        }
+      } catch (error) {
+        console.error('Error fetching access role:', error);
+        setIsAuthorized(false);
+      }
+    };
+  
+    fetchAccessRole();
+  }, []);
+
   const handleProgramChange = async (e) => {
     const selectedProgramId = e.target.value;
     if (!selectedProgramId) return;
@@ -665,6 +698,18 @@ const programOptions = options.map((option) => ({
   value: option.Value,
   label: option.Text,
 }));
+ 
+    // 🔒 Unauthorized view
+  if (isAuthorized === false) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+        <div className="bg-white p-10 rounded shadow text-center">
+          <h2 className="text-2xl font-bold">Unauthorized</h2>
+          <p className="mt-2">You do not have access to view this page.</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
       <div className="bg-sky-400 text-white p-2  rounded-t-lg">
@@ -1152,7 +1197,9 @@ const programOptions = options.map((option) => ({
                     <span>entries</span>
                   </div>
                   <div className="flex ">
-                    {" "}
+                          {" "}
+{accessRole === "HR_Res" && (
+              
                     <button
                       type="button"
                       onClick={() =>
@@ -1162,6 +1209,7 @@ const programOptions = options.map((option) => ({
                     >
                       <FaPrint />
                     </button>
+)}
                     <div className="relative">
                       <input
                         type="text"

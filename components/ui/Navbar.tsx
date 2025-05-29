@@ -63,7 +63,7 @@ const transaction: { title: string; href: string }[] = [
 
 const tet: { title: string; href: string }[] = [
   {
-    title: "TET forms Generate",
+    title: " Generate Forms",
     href: "tetformsgenerate",
   },
   // {

@@ -610,8 +610,6 @@ const [employeeId, setEmployeeId] = useState(null);
   if (!isMounted) {
     return null; // Ensure nothing is rendered until the component has mounted
   }
-  
- 
     // 🔒 Unauthorized view
   if (isAuthorized === false) {
     return (
@@ -856,14 +854,14 @@ const [employeeId, setEmployeeId] = useState(null);
         </div>
 
      {/* Footer */}
-      <div className="flex justify-between text-xs text-gray-600 mt-6">
+      <div className="flex justify-between text-xs text-gray-600 mt-9">
               <div>
                 <div>T & D - HR</div>
                 <div>Greentech Industries (India) Pvt. Ltd.</div>
               </div>
               <div>Authorized Person from concerned Dept</div>
              </div>
-             <div className="flex justify-end text-xs text-gray-600 gap-90">
+             <div className="flex justify-end text-xs text-gray-600 mb-2 gap-90">
                  <div>Greentech Industries (India) Pvt. Ltd.</div>
                  <div className="text-xs text-gray-600"> HR-040-3</div>
              </div>
