@@ -33,8 +33,14 @@ export default function EmailApproval() {
         const data = await res.json();
         setEmail(data.email);
         if (data.email) {
-          alert(`Email sent to: ${data.email}`);
+          alert(`Approval Sent Successfully`);
           window.location.reload(); // Refresh page after alert
+        }else if(data){
+ alert(`Approval Sent Successfully`);
+          window.location.reload(); // Refresh page after alert
+        }
+        else{
+          alert('Error');
         }
       }
     } finally {

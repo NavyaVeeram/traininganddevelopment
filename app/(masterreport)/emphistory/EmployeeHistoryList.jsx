@@ -385,7 +385,7 @@ const EmployeeHistoryList = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-2">
           <div>
             <label className="block text-sm font-medium text-gray-900">Designation</label>
             <input

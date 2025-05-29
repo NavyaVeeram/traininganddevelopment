@@ -3,54 +3,17 @@ import React, { useState, useEffect } from "react";
 
 export default function TrainingRecord() {
   const [message, setMessage] = useState('');
+  const [department, setDepartment] = useState('');
+  const [username, setUsername] = useState('');
   const [employeeId, setEmployeeId] = useState('');
-  const [isAuthorized, setIsAuthorized] = useState(null); // null: not decided yet
-
+  const [trainingData, setTrainingData] = useState([]);
+ 
   const [formData, setFormData] = useState({
     Training_Name: 'IATF',
     Program_Name: '',
     CreatedBy: '',
   });
 
-  useEffect(() => {
-    const storedEmployeeId = localStorage.getItem('employeeId');
-
-    if (!storedEmployeeId) {
-      window.location.href = '/';
-      return;
-    }
-
-    setEmployeeId(storedEmployeeId);
-    setFormData(prevData => ({
-      ...prevData,
-      CreatedBy: storedEmployeeId,
-    }));
-
-    const fetchAccessRole = async () => {
-      try {
-        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-        const data = await res.json();
-
-<<<<<<< HEAD
-        if (res.ok && (data.Access_Role === 'HOS' || data.Access_Role === 'HOD')) {
-          setIsAuthorized(true);
-        } else {
-          setIsAuthorized(false);
-        }
-      } catch (error) {
-        console.error('Error fetching access role:', error);
-=======
-      if (res.ok && (data.Access_Role === 'HR_Res')) {
-        setAccessRole(data.Access_Role);
-        setIsAuthorized(true);
-      } else {
->>>>>>> a03421aa870365d2f9b309abc922f8668e2031a3
-        setIsAuthorized(false);
-      }
-    };
-
-    fetchAccessRole();
-  }, []);
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
@@ -89,21 +52,6 @@ export default function TrainingRecord() {
       alert('An error occurred while submitting the form.');
     }
   };
-
-  // 🚫 Block render until auth is determined
-  if (isAuthorized === null) return null;
-
-  // 🔒 Unauthorized view
-  if (!isAuthorized) {
-    return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
-        <div className="bg-white p-10 rounded shadow text-center">
-          <h2 className="text-2xl font-bold">Unauthorized</h2>
-          <p className="mt-2">You do not have access to view this page.</p>
-        </div>
-      </div>
-    );
-  }
 
   // ✅ Authorized view
   return (
