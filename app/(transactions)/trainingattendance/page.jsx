@@ -279,7 +279,7 @@ const TrainingAttendanceForm = () => {
       if (showDialog) {
         const newMessage =
           Req_Months === Forward
-            ? `This program has been forwarded from ${Start_Month} to ${Req_Months}`
+            ? `This program has been resheduled from ${Start_Month} to ${Req_Months}`
             : null;
 
         // Only update if message has changed
@@ -821,7 +821,7 @@ const programOptions = options.map((option) => ({
             </div>
 
             <div>
-              <label className="block font-medium">Forward Month:</label>
+              <label className="block font-medium">Rescheduled Month:</label>
               <Select
                 id="Training_Status"
                 name="Training_Status"
@@ -842,7 +842,7 @@ const programOptions = options.map((option) => ({
                     EmployeeIds: [],
                   }));
                   if (newSelectedMonth && reqMonths) {
-                    const newMessage = `This program will be forwarded from ${reqMonths} to ${newSelectedMonth}`;
+                    const newMessage = `This program will be rescheduled from ${reqMonths} to ${newSelectedMonth}`;
                     setMessage(newMessage);
                     setIsMessageVisible(true);
                   } else {

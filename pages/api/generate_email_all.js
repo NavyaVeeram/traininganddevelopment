@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Call the stored procedure to fetch email
+    // Call the stored procedure to fetch email and lastSubmission flag
     const result = await prisma.$queryRawUnsafe(`
       EXEC Generate_Email_All '${employeeId}'
     `);
@@ -26,12 +26,17 @@ export default async function handler(req, res) {
       return res.status(404).json({ message: 'No email generated' });
     }
 
-    const { Email } = result[0];
-    if (!Email) {
+    const { Email, IsLastSubmission } = result[0];
+    if (!Email && !IsLastSubmission) {
       return res.status(400).json({ message: 'No valid email found in result' });
     }
 
     if (approve) {
+      if (IsLastSubmission) {
+        // Last submission: do not send email, just return success message
+        return res.status(200).json({ message: 'Last submission successful', email: null });
+      }
+
       // Prepare email content
       const emailHtmlPath = path.resolve('./public/email_message.html');
       let emailHtmlContent;

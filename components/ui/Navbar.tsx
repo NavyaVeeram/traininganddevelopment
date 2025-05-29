@@ -39,10 +39,7 @@ const training: { title: string; href: string }[] = [
   //   title: "view / edit / upload",
   //   href: "/vieweditupload",
   // },
-  {
-    title: "Training Record - IATF/HSE",
-    href: "/trainingrecord",
-  },
+
    {
     title: "Approval Form",
     href: "/approvalform",
@@ -115,7 +112,10 @@ const masterreport: { title: string; href: string }[] = [
     title: "Training Agencies",
     href: "/trainingagencies",
   },
-  
+    {
+    title: "Training Record - IATF/HSE",
+    href: "/trainingrecord",
+  },
 ]
 // const trainingagencies: { title: string; href: string }[] = [
 //   {
@@ -156,7 +156,7 @@ const [department, setDepartment] = useState('');
 const [username, setUsername] = useState('');
 const [employeeId, setEmployeeId] = useState('');
 const [accessRole, setAccessRole] = useState(null);
-const [isAuthorized, setIsAuthorized] = useState(false);
+const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
 
 // Removed unused trainingData state
 // const [trainingData,setTrainingData] = useState([]);
@@ -170,13 +170,9 @@ const [isAuthorized, setIsAuthorized] = useState(false);
   };
  
   useEffect(() => {
-  const storedDepartment = localStorage.getItem('department');
-  const storedUsername = localStorage.getItem('username');
   const storedEmployeeId = localStorage.getItem('employeeId');
 
-  if (storedDepartment && storedUsername && storedEmployeeId) {
-    setDepartment(storedDepartment);
-    setUsername(storedUsername);
+  if (storedEmployeeId) {
     setEmployeeId(storedEmployeeId);
   } else {
     window.location.href = '/';
@@ -220,7 +216,10 @@ const [isAuthorized, setIsAuthorized] = useState(false);
     }
     // Removed fetchData and trainingData usage as trainingData state is unused
   }, [department, username, employeeId]);
-    if (!isAuthorized) {
+ if (isAuthorized === null) return null;
+
+  // 🔒 Unauthorized view
+  if (isAuthorized === false) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
         <div className="bg-white p-10 rounded shadow text-center">
@@ -261,58 +260,85 @@ const [isAuthorized, setIsAuthorized] = useState(false);
               </svg>
             )}
           </button>
-          {/* <ProfileDropdown username={username} /> */}
         </div>
 
         {/* Navigation Menu for Desktop and Toggleable for Mobile */}
-        <NavigationMenu>
+        <NavigationMenu className="mx-10">
         <NavigationMenuList
           className={cn(
             "flex space-x-4 overflow-hidden",
             isMenuOpen ? "flex-col mt-4 space-y-2 md:flex-row md:mt-0 md:space-y-0" : "hidden md:flex"
           )}
         >
+      
 <NavigationMenuItem className="bg-gray-100 position-relative Z-10">
   <NavigationMenuTrigger className="hover:text-sky-400">Training Calendar</NavigationMenuTrigger>
-  <NavigationMenuContent className="grid gap-2 p-1 md:w-[300px] max-h-[300px]">
+  <NavigationMenuContent className="grid gap-2 p-1 md:w-[280px] max-h-[280px]">
     <ul className="grid gap-2 ">
-      {training.map((component) => (
-        <ListItem key={component.title} title={component.title} href={component.href} />
-      ))}
+   {training.map((component) => {
+   
+    if (component.title ===  "Annual Training Calender - IATF/HSE" && accessRole !== "HR_Res" && accessRole !== "HR_Hod" ) {
+    return null; // skip
+  }
+  if (component.title === "Requirement - IATF/HSE" && accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HR_Res" ) {
+      return null; // skip if not Employee or HOS
+  }
+ if (component.title === "Approval Form" && accessRole !== "HOS" && accessRole !== "HOD"  && accessRole !== "HR_Res"  && accessRole !== "HOD" && accessRole !== "HR_Hod") {
+      return null; 
+  }
+
+  return (
+    <ListItem key={component.title} title={component.title} href={component.href} />
+  );
+})}
     </ul>
   </NavigationMenuContent>
 </NavigationMenuItem>
 
+{accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HOD" && (
 <NavigationMenuItem className="bg-gray-100">
               <NavigationMenuTrigger className="hover:text-sky-400" >Transaction</NavigationMenuTrigger>
               <NavigationMenuContent className="grid gap-2 p-1 md:w-[250px] px-3 max-h-[300px] ">
                 <ul className="grid gap-2 p-1">
-                  {transaction.map((component) => (
+                  {transaction.map((component) => {
+                     if (component.title === "Training Attendance Entry" && accessRole !== "HOS" && accessRole !== "HOD" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
+                     return null; // skip if not Employee or HOS
+                  }
+
+                    if (component.title === "Monthly Training Particulars" && accessRole !== "HOS" && accessRole !== "HOD" && accessRole !== "HR_Res" && accessRole !== "HR_Hod" ) {
+                    return null; 
+                 }
+                         if (component.title === "Temporary to regular" && accessRole !== "HOS" && accessRole !== "HOD"  && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
+                    return null; 
+                 }
+                 
+          return(
                     <ListItem key={component.title} title={component.title} href={component.href} />
-                  ))}
+          );
+})}
                 </ul>
               </NavigationMenuContent>
             </NavigationMenuItem>
+            )}
+{accessRole !== "Res_Person" && (
 <NavigationMenuItem className="bg-gray-100">
-              <NavigationMenuTrigger className="hover:text-sky-400">TET</NavigationMenuTrigger>
+              <NavigationMenuTrigger className="hover:text-sky-400">Training Effectiveness</NavigationMenuTrigger>
               <NavigationMenuContent className="grid gap-2 p-1 md:w-[200px] max-h-[300px] ">
                 <ul className="grid gap-2 p-1">
-                  {tet.map((component) => (
+                  {tet.map((component) => {
+                        if (component.title === "TET forms Generate" && accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HOD" && accessRole !== "HR_Res"  && accessRole !== "HR_Hod") {
+                    return null; 
+                 }
+                 
+          return(
                     <ListItem key={component.title} title={component.title} href={component.href} />
-                  ))}
+          );
+                  })}
                 </ul>
               </NavigationMenuContent>
             </NavigationMenuItem>
-            <NavigationMenuItem className="bg-gray-100 position-relative z-10">
-              <NavigationMenuTrigger className="hover:text-sky-400">Master Report</NavigationMenuTrigger>
-              <NavigationMenuContent className="grid gap-2 p-1 md:w-[200px] max-h-[300px] ">
-                <ul className="grid gap-2 p-1">
-                  {masterreport.map((component) => (
-                    <ListItem key={component.title} title={component.title} href={component.href} />
-                  ))}
-                </ul>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
+)}
+       
           {/* <NavigationMenuItem>
             <NavigationMenuTrigger>Training Agencies</NavigationMenuTrigger>
             <NavigationMenuContent>
@@ -323,6 +349,7 @@ const [isAuthorized, setIsAuthorized] = useState(false);
               </ul>
             </NavigationMenuContent>
           </NavigationMenuItem> */}
+          {accessRole !== "Res_Person" && accessRole !== "HOS"  && accessRole !== "HOD" &&(
           <NavigationMenuItem className="bg-gray-100">
             <NavigationMenuTrigger className="hover:text-sky-400">Training certificates</NavigationMenuTrigger>
             <NavigationMenuContent
@@ -331,16 +358,20 @@ const [isAuthorized, setIsAuthorized] = useState(false);
             >
               <ul className="grid w-[150px] gap-1 p-1 md:w-[200px] md:grid-cols lg:w-[200px]">
                 {trainingcertificates.map((component) => {
-  if (component.title === "Upload Certificates" && accessRole !== "HR_Res") {
-    return null;
-  }
-  return <ListItem key={component.title} title={component.title} href={component.href} />;
+                     if (component.title === "Upload Certificates" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
+                    return null; 
+                 }
+                 
+          return(
+                    <ListItem key={component.title} title={component.title} href={component.href} />
+          );
 })}
 
               </ul>
             </NavigationMenuContent>
           </NavigationMenuItem>
-
+          )}
+          {accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HOD" &&(
           <NavigationMenuItem className="bg-gray-100 hover:bg-gray-200 hover:text-sky-400 focus:bg-gray-300 transition-all duration-300">
             <NavigationMenuTrigger className="hover:text-sky-400">Training Materials</NavigationMenuTrigger>
             <NavigationMenuContent
@@ -348,15 +379,53 @@ const [isAuthorized, setIsAuthorized] = useState(false);
               style={{ "--radix-navigation-menu-viewport-height": "auto" } as React.CSSProperties}
             >
               <ul className="grid w-[100px] gap-1 p-1 md:w-[150px] md:grid-cols lg:w-[150px] ">
-                {trainingmaterials.map((component) => (
-                  <ListItem key={component.title} title={component.title} href={component.href} />
-                ))}
+                {trainingmaterials.map((component) =>  {
+                     if (component.title === "Upload Materials" && accessRole !== "HR_Res" && accessRole !== "HR_Hod" ) {
+                    return null; 
+                 }
+                 
+          return(
+                    <ListItem key={component.title} title={component.title} href={component.href} />
+          );
+})}
               </ul>
             </NavigationMenuContent>
           </NavigationMenuItem>
-          <NavigationMenuItem className="bg-gray-100 hover:bg-gray-200 hover:text-sky-400 focus:bg-gray-300 transition-all duration-300">
-          <ProfileDropdown username={username} />
+          )}
+            {accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HOD" && (
+            <NavigationMenuItem className="bg-gray-100 position-relative z-10">
+              <NavigationMenuTrigger className="hover:text-sky-400">Master Report</NavigationMenuTrigger>
+              <NavigationMenuContent className="grid gap-2 p-1 md:w-[200px] max-h-[300px] ">
+                <ul className="grid gap-2 p-1">
+                  {masterreport.map((component) => {
+                     if (component.title === "Employee History" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
+                     return null; // skip if not Employee or HOS
+                  }
+                    if (component.title === "Qualified Trainers List" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
+                    return null; 
+                 }
+                  if (component.title === "Training Cost/Budget" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
+                    return null; 
+                 }
+                   if (component.title === "Training Agencies" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
+                    return null; 
+                 }
+                  if (component.title === "Training Record - IATF/HSE" && accessRole !== "HR_Res" &&  accessRole !== "HR_Hod" ) {
+    return null; // skip
+  }
+          return(
+                    <ListItem key={component.title} title={component.title} href={component.href} />
+          );
+                  })}
+                </ul>
+              </NavigationMenuContent>
             </NavigationMenuItem>
+            )}
+          <NavigationMenuItem className="bg-gray-100 hover:bg-gray-200 hover:text-sky-400 focus:bg-gray-300 transition-all duration-300">
+            <div className="mx-5">  <ProfileDropdown  username={username} /></div>
+        
+            </NavigationMenuItem>
+
           </NavigationMenuList>
 
         </NavigationMenu>
@@ -507,4 +576,3 @@ const ListItem = React.forwardRef<React.ElementRef<"a">, React.ComponentPropsWit
 )
 
 ListItem.displayName = "ListItem"
-

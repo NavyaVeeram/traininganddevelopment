@@ -51,8 +51,7 @@ export default function Requirement() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const [originalData, setOriginalData] = useState([]);
-  const [accessRole, setAccessRole] = useState(null);
-  const [isAuthorized, setIsAuthorized] = useState(false);
+
   // Synchronize data and originalData with trainingData to keep hooks consistent
   useEffect(() => {
     setData(trainingData);
@@ -86,39 +85,6 @@ export default function Requirement() {
     setSelectedOptions([]); // Reset selected options for months if needed
     setMessage(''); // Reset any messages displayed
   };
-  useEffect(() => {
-    const storedEmployeeId = localStorage.getItem('employeeId');
-  
-    if (!storedEmployeeId) {
-      window.location.href = '/';
-      return;
-    }
-  
-    setEmployeeId(storedEmployeeId);
-    setFormData(prevData => ({
-      ...prevData,
-      CreatedBy: storedEmployeeId,
-    }));
-  
-    const fetchAccessRole = async () => {
-      try {
-        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-        const data = await res.json();
-  
-        if (res.ok && (data.Access_Role === 'Employee' || data.Access_Role === 'HOS')) {
-          setAccessRole(data.Access_Role);
-          setIsAuthorized(true);
-        } else {
-          setIsAuthorized(false);
-        }
-      } catch (error) {
-        console.error('Error fetching access role:', error);
-        setIsAuthorized(false);
-      }
-    };
-  
-    fetchAccessRole();
-  }, []);
   
   useEffect(() => {
     // Retrieve the department, username, and employeeId from localStorage
@@ -498,17 +464,6 @@ const programOptions = programs.map(program => ({
           (currentPage - 1) * rowsPerPage,
           currentPage * rowsPerPage
         );
-  // 🔒 Unauthorized view
-  if (!isAuthorized) {
-    return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
-        <div className="bg-white p-10 rounded shadow text-center">
-          <h2 className="text-2xl font-bold">Unauthorized</h2>
-          <p className="mt-2">You do not have access to view this page.</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-full mx-auto bg-white p-2 w-full">
@@ -837,7 +792,7 @@ const programOptions = programs.map(program => ({
       }
     }}
     className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-64"      
- aria-required />
+ aria-required  autoComplete="off"/>
 </div>
    {/* Buttons */}
 <div>

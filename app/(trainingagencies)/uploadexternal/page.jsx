@@ -106,17 +106,17 @@ const TrainingAgencies = () => {
     
     if (!validateEmail(email)) {
       setError("Please enter a valid email address.");
-      setTimeout(() => setError(""), 3000);
       return;
     }
     
-    setFormData((prev) => ({ ...prev, Mailid: email }));
+  // ✅ Use updatedFormData here
+  const updatedFormData = { ...formData, Mailid: email };
     
     try {
       const res = await fetch("/api/insert_agencies", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(updatedFormData),
       });
 
       const data = await res.json();
