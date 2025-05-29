@@ -590,8 +590,7 @@ const TetReportsClient = () => {
   <>
   <span className="font-semibold text-[#f8e111]"> {'(' + programName + ')'}</span>
   </>
-)}
-        </h1>
+)}   </h1>
          {/* <marquee dir="right" className="text-red-600">After filling all the forms refresh to download!</marquee> */}
         <div className="flex mt-2 lg:mt-0 w-full lg:w-auto justify-start">
           <button
@@ -646,14 +645,10 @@ const TetReportsClient = () => {
   }}
   className="w-[400px]"
 />
-
 </div>
 </div>
-{/* 
-      </div> */}
-     
+{/*     </div> */}
         {/* Personal Info */}
-    
       {loading && <p>Loading...</p>}
       {errorMessage && <p>{errorMessage}</p>}
       {employeeDetails && (
@@ -707,8 +702,7 @@ const TetReportsClient = () => {
     : "N/A"}
 </td>
       </tr>
-        </tbody>
-            
+        </tbody>     
     </table>
     </div>
     <div className="border mb-6 overflow-x-auto">
@@ -724,7 +718,6 @@ const TetReportsClient = () => {
     <div className="mx-4">5️⃣ Excellent</div>
   </div>
 </div>
-
   <table className="w-full table-auto text-sm">
     <thead>
       <tr className="bg-gray-100">
@@ -760,18 +753,15 @@ const TetReportsClient = () => {
     </tbody>
   </table>
 </div>
-
         <div className="mt-4 flex justify-between border p-2">
         <div className="font-bold">Overall Rating</div>
         {/* <div className="text-lg">{averageRating}</div> */}
         <input name="Overall" type="number" value={formData.Overall ?? 0} readOnly className="bg-gray-100" />      </div>
-
         <div className="mt-4 flex justify-between border p-2">
             <div className="font-bold">Percentage</div>
             <input name="Percentage" type="number" value={formData.Percentage ?? 0} readOnly className="bg-gray-100" />
             {/* <div className="text-lg">{percentage}%</div> */}
           </div>
-
         {/* Score Range */}
         <div className="border mt-4 p-4">
           <table className="w-full table-auto border-collapse text-sm">
@@ -794,7 +784,6 @@ const TetReportsClient = () => {
               </tr>
             </tbody>
           </table>
-
           <div className="mt-2 text-sm">Note: Retraining will be conducted if percentage is below 50</div>
         </div>
         {/* Remarks */}
@@ -809,7 +798,6 @@ const TetReportsClient = () => {
             onChange={handleInputChange}
           ></textarea>
         </div>
-
      {/* Footer */}
       <div className="flex justify-between text-xs text-gray-600 mt-6">
               <div>
@@ -821,22 +809,17 @@ const TetReportsClient = () => {
              <div className="flex justify-end text-xs text-gray-600 gap-90">
                  <div>Greentech Industries (India) Pvt. Ltd.</div>
                  <div className="text-xs text-gray-600"> HR-040-3</div>
-             </div>
-          
+             </div>         
 <div className="flex justify-end">
 <button
        type="submit"
        className="px-6 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"          >
     submit</button>
 </div>
-   
     </form>
     </div>
       )}
-
     </div>
-
-
   );
 };
 
