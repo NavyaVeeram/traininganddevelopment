@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { FaSearch, FaTrash, FaEdit } from "react-icons/fa";
 import Select from "react-select";
-import MonthlyCalender from "../calender/page"
+import MonthlyCalender from "../calendar/page"
 import EmailApproval from "../email/page";
 export default function TrainingDataTable() {
 const [trainingData, setTrainingData] = useState([]);
@@ -600,6 +600,7 @@ className="border p-2 w-70 rounded-md"
 </div>
    <div className="p-6">
       <h1 className="text-sky-400 font-bold">Approved Data:</h1>
+      <div className="overflow-x-auto">
       <table    className="min-w-full overf border relative z-0  bg-card text-foreground"
         style={{
           tableLayout: "fixed",
@@ -626,6 +627,7 @@ className="border p-2 w-70 rounded-md"
           ))}
         </tbody>
       </table>
+      </div>
     </div>
 </div>
 );

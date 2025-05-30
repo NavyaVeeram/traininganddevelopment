@@ -395,7 +395,7 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
             {accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HOD" && (
             <NavigationMenuItem className="bg-gray-100 position-relative z-10">
               <NavigationMenuTrigger className="hover:text-sky-400">Master Report</NavigationMenuTrigger>
-              <NavigationMenuContent className="grid gap-2 p-1 md:w-[200px] max-h-[300px] ">
+              <NavigationMenuContent className="grid gap-2 p-1 md:w-[250px] max-h-[300px] ">
                 <ul className="grid gap-2 p-1">
                   {masterreport.map((component) => {
                      if (component.title === "Employee History" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
