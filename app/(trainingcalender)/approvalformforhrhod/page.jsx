@@ -4,7 +4,6 @@ import axios from "axios";
 import { FaSearch, FaTrash, FaEdit } from "react-icons/fa";
 import Select from "react-select";
 import MonthlyCalender from "../calendar/page";
-import EmailApproval from "../email/EmailApproval";
 import EmailRejection from "../email/EmailRejection";
 import EmailApprovalWeek from "../email/EmailApprovalforhrhod";
 export default function TrainingDataTable() {
@@ -63,6 +62,42 @@ const fetchData = async () => {
 };
 
 fetchData();
+}, []);
+  useEffect(() => {
+  const storedEmployeeId = localStorage.getItem('employeeId');
+
+  if (storedEmployeeId) {
+    setEmployeeId(storedEmployeeId);
+  } else {
+    window.location.href = '/';
+    return;
+  }
+
+  const fetchAccessRole = async () => {
+    try {
+      const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+      const data = await res.json();
+
+      if (res.ok && data.Access_Role) {
+        // Restrict access for HR_Res and HR_HOD roles
+        if (data.Access_Role === "HR_Res" || data.Access_Role === "HR_HOD") {
+          setIsAuthorized(false);
+          // Optionally redirect to unauthorized page
+          // window.location.href = '/unauthorized';
+          return;
+        }
+        setAccessRole(data.Access_Role);
+        setIsAuthorized(true);
+      } else {
+        setIsAuthorized(false);
+      }
+    } catch (error) {
+      console.error('Error fetching access role:', error);
+      setIsAuthorized(false);
+    }
+  };
+
+  fetchAccessRole();
 }, []);
   useEffect(() => {
   const storedEmployeeId = localStorage.getItem('employeeId');
@@ -188,9 +223,7 @@ const updatedList = trainingData.map((item) =>
 item.Program_Id === programId ? { ...item, ...editingData } : item
 );
 setTrainingData(updatedList);
-const month = selectedDate.getMonth() + 1; // Get the current month
-const year = selectedDate.getFullYear(); // Get the current year
-fetchData(month, year); // Refresh the list after updating
+// Removed fetchData call to fix modal closing issue
 setIsModalOpen(false); // Close the modal
 setError(""); // Clear any previous error messages
 } else {
@@ -466,9 +499,14 @@ className="px-3 py-1 border rounded">
 
    <div className="flex justify-end mt-6 gap-x-2">
 
-   <EmailApprovalWeek validateWeek={() => {
-     // Check if any item in trainingData has a non-empty Week value
-     return trainingData.some(item => item.Week && item.Week.trim() !== '');
+<EmailApprovalWeek validateWeek={() => {
+     // Check if every item in trainingData has a non-empty Week value
+     for (const item of trainingData) {
+       if (!item.Week || item.Week.trim() === '') {
+         return false;
+       }
+     }
+     return true;
    }} />
 <EmailRejection/>
   </div>

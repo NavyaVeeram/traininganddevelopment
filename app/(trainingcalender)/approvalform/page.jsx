@@ -344,46 +344,46 @@ onChange={(e) => setSearchQuery(e.target.value)}
 {paginatedData.length > 0 ? (
 paginatedData.map((item) => (
 <tr key={item.Program_Id} className="hover:bg-gray-50">
-<td className="border p-2 text-center">
+<td className="border p-2 text-left">
 {item.Training_Name}
 </td>
-<td className="border p-2 text-center">
+<td className="border p-2 text-left">
 {item.Year_No}
 </td>
-<td className="border p-2 text-center">
+<td className="border p-2 text-left">
 {item.Department}
 </td>
-<td className="border p-2 text-center">
+<td className="border p-2 text-left">
 {item.Section}
 </td>
 <td className="border p-2 text-left">
 {item.Program_Name}
 </td>
-<td className="border p-2 text-center">
+<td className="border p-2 text-left">
 {item.Train_Mode}
 </td>
 <td className="border p-2 text-left">
 {item.Train_Purpose}
 </td>
-<td className="border p-2 text-right">
+<td className="border p-2 text-left">
 {item.Persons}
 </td>
-<td className="border p-2 text-right">
+<td className="border p-2 text-left">
 {item.No_Hrs}
 </td>
-<td className="border p-2 text-right">
+<td className="border p-2 text-left">
 {item.No_Times}
 </td>
-<td className="border p-2 text-right">
+<td className="border p-2 text-left">
 {item.Req_Months}
 </td>
 {/* <td className="border p-2 text-center">
 {item.Week}
 </td> */}
-<td className="border p-2 text-right">
+<td className="border p-2 text-left">
 {item.Evaluation_Period}
 </td>
-<td className="border p-2 text-center">
+<td className="border p-2 text-left">
 <div className="flex items-center justify-center gap-2">
 <input
 type="checkbox"

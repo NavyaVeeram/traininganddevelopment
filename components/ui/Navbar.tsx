@@ -47,6 +47,10 @@ const training: { title: string; href: string }[] = [
     {
     title: "Approval Form ",
     href: "/approvalformforhrhod",
+  },
+  {
+    title: "Approved Data",
+    href: "/approveddata"
   }
 ]
 
@@ -263,10 +267,13 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
   if (component.title === "Requirement - IATF/HSE" && accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HR_Res" ) {
       return null; // skip if not Employee or HOS
   }
- if (component.title === "Approval Form" && accessRole !== "HOS" && accessRole !== "HOD"  && accessRole !== "HR_Res") {
+ if (component.title === "Approval Form" && accessRole !== "HOS" && accessRole !== "HOD") {
       return null; 
   }
- if (component.title === "Approval Form " && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
+ if (component.title === "Approval Form " && accessRole !== "HR_Res" && accessRole !== "HR_Hod" ) {
+      return null; 
+  }
+   if (component.title === "Approved Data" && accessRole !== "HOS" && accessRole !== "HOD"  && accessRole !== "HR_Res" && accessRole !== "HR_Hod" ) {
       return null; 
   }
   return (
