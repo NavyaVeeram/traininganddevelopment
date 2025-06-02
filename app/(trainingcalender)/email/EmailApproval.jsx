@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useRef } from 'react';
 
-export default function EmailApproval({ validateWeek }) {
+export default function EmailApproval() {
   const [employeeId, setEmployeeId] = useState('');
   const [email, setEmail] = useState(null);
   const [loading, setLoading] = useState(false);

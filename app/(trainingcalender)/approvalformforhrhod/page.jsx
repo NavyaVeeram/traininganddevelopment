@@ -19,7 +19,7 @@ const [employeeId, setEmployeeId] = useState('');
 const [isModalOpen, setIsModalOpen] = useState(false);
 const [editingData, setEditingData] = useState(null);
 const [error, setError] = useState('');
-  const [data, setData] = useState([]);
+const [data, setData] = useState([]);
 const [accessRole, setAccessRole] = useState(null);
 const [isAuthorized, setIsAuthorized] = useState(null);
 
@@ -80,7 +80,7 @@ fetchData();
 
       if (res.ok && data.Access_Role) {
         // Restrict access for HR_Res and HR_HOD roles
-        if (data.Access_Role === "HR_Res" || data.Access_Role === "HR_HOD") {
+        if (data.Access_Role === "HOS" || data.Access_Role === "HOD" || data.Access_Role === "Res_Person") {
           setIsAuthorized(false);
           // Optionally redirect to unauthorized page
           // window.location.href = '/unauthorized';
@@ -99,35 +99,7 @@ fetchData();
 
   fetchAccessRole();
 }, []);
-  useEffect(() => {
-  const storedEmployeeId = localStorage.getItem('employeeId');
 
-  if (storedEmployeeId) {
-    setEmployeeId(storedEmployeeId);
-  } else {
-    window.location.href = '/';
-    return;
-  }
-
-  const fetchAccessRole = async () => {
-    try {
-      const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-      const data = await res.json();
-
-      if (res.ok && data.Access_Role) {
-        setAccessRole(data.Access_Role);
-        setIsAuthorized(true);
-      } else {
-        setIsAuthorized(false);
-      }
-    } catch (error) {
-      console.error('Error fetching access role:', error);
-      setIsAuthorized(false);
-    }
-  };
-
-  fetchAccessRole();
-}, []);
 
 const monthOptions = [
 { value: "Jan", label: "Jan" },
@@ -192,10 +164,13 @@ setIsModalOpen(false); // Close the modal
 };
 
 const handleInputChange = (e, key) => {
-setEditingData(prevData => ({
-...prevData,
-[key]: e.target.value
-}));
+setEditingData(prevData => {
+  const newData = {
+    ...prevData,
+    [key]: e.target.value
+  };
+  return newData;
+});
 };
 
 const handleUpdate = async () => {
@@ -209,7 +184,7 @@ console.log('Updating with data:', editingData);
 // Add CreatedBy field with employeeId from state
 const updatedDataWithCreatedBy = { ...editingData, CreatedBy: employeeId };
 
-const res = await fetch(`/api/update_approval_form?Program_Id=${programId}`, {
+const res = await fetch(`/api/update_approval_form_week?Program_Id=${programId}`, {
 method: 'POST',
 headers: { 'Content-Type': 'application/json' },
 body: JSON.stringify(updatedDataWithCreatedBy), // Send updated data with CreatedBy
@@ -223,6 +198,7 @@ const updatedList = trainingData.map((item) =>
 item.Program_Id === programId ? { ...item, ...editingData } : item
 );
 setTrainingData(updatedList);
+console.log('Updated trainingData:', updatedList);
 // Removed fetchData call to fix modal closing issue
 setIsModalOpen(false); // Close the modal
 setError(""); // Clear any previous error messages
@@ -499,15 +475,8 @@ className="px-3 py-1 border rounded">
 
    <div className="flex justify-end mt-6 gap-x-2">
 
-<EmailApprovalWeek validateWeek={() => {
-     // Check if every item in trainingData has a non-empty Week value
-     for (const item of trainingData) {
-       if (!item.Week || item.Week.trim() === '') {
-         return false;
-       }
-     }
-     return true;
-   }} />
+   <EmailApprovalWeek 
+   />
 <EmailRejection/>
   </div>
 )}
