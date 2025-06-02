@@ -547,7 +547,7 @@ const programOptions = programs.map(program => ({
       {/* Training */}
       <div className="space-y-0.5">
         <label htmlFor="Training_Name" className="block text-sm font-medium text-gray-900">
-    Training Name
+             Training Name
         </label>
         <div className="relative">
           <select
@@ -858,7 +858,7 @@ const programOptions = programs.map(program => ({
               <th
                 key={key}
                 onClick={() => handleSort(key)}
-                className="cursor-pointer px-4 py-2 border text-left"
+        className="cursor-pointer px-4 py-2 border text-left"
               >
                 {key}{" "}
                 {sortConfig.key === columnKeyMap[key] ? (
