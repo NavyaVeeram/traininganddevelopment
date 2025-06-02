@@ -1,20 +1,25 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { CalendarDays } from "lucide-react";
 import Select from "react-select";
-import {CalendarDays, CalenderDays} from "lucide-react"
-const MonthlyCalendar = () => {
-  const [year, setYear] = useState(null);
-  const [month, setMonth] = useState(null);
+import { motion } from "framer-motion";
+
+const FullYearCalendar = () => {
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [month, setMonth] = useState(new Date().getMonth());
   const [showCalendar, setShowCalendar] = useState(false);
   const calendarRef = useRef(null);
 
-  useEffect(() => {
-    const now = new Date();
-    setYear(now.getFullYear());
-    setMonth(now.getMonth());
-  }, []);
+  const monthOptions = Array.from({ length: 12 }, (_, i) => ({
+    value: i,
+    label: new Date(0, i).toLocaleString("default", { month: "long" }),
+  }));
 
-  // 🔍 Detect click outside
+  const yearOptions = Array.from({ length: 50 }, (_, i) => {
+    const value = 2000 + i;
+    return { value, label: value.toString() };
+  });
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (calendarRef.current && !calendarRef.current.contains(event.target)) {
@@ -25,23 +30,20 @@ const MonthlyCalendar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  if (year === null || month === null) return null;
-
+  // ✅ Fixed Week Number Calculation (starts Sunday, Week 1 begins at Jan 1)
   const getWeekNumber = (date) => {
-    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    const dayNum = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    const startOfYear = new Date(date.getFullYear(), 0, 1);
+    const diffInDays = Math.floor((date - startOfYear) / (1000 * 60 * 60 * 24));
+    const weekNo = Math.floor((diffInDays + startOfYear.getDay()) / 7) + 1;
     return weekNo;
   };
 
-  const generateMonth = () => {
+  const generateMonth = (year, month) => {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
 
     const days = [];
-    let startDay = firstDay.getDay();
+    let startDay = firstDay.getDay(); // 0 (Sun) - 6 (Sat)
     let day = 1 - startDay;
 
     while (day <= lastDay.getDate()) {
@@ -54,82 +56,73 @@ const MonthlyCalendar = () => {
     return days;
   };
 
-  const weeks = generateMonth();
-  const yearOptions = Array.from({ length: 20 }, (_, i) => {
-    const value = 2010 + i;
-    return { value, label: value.toString() };
-  });
-
-  const monthOptions = Array.from({ length: 12 }, (_, i) => ({
-    value: i,
-    label: new Date(0, i).toLocaleString("default", { month: "long" }),
-  }));
+  const weeks = generateMonth(year, month);
 
   return (
-    <div className="relative w-max">
-      {/* Toggle Button */}
+    <div>
       <button
+        className="z-50 p-2 bg-sky-500 text-white rounded-full hover:bg-sky-600"
         onClick={() => setShowCalendar((prev) => !prev)}
-
       >
         <CalendarDays />
       </button>
 
-      {/* Calendar Dropdown */}
       {showCalendar && (
-        <div
+        <motion.div
           ref={calendarRef}
-          className="absolute z-50 top-0 right-full mr-2 bg-white border shadow-lg rounded-md p-2 w-80"
+          initial={{ x: "100%", opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: "100%", opacity: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className="fixed top-16 right-4 z-40 bg-white shadow-xl border rounded-md p-4 w-[350px]"
         >
-          {/* Controls */}
-          <div className="flex flex-row gap-2 mb-3">
-            <div className="w-1/2">
-              <Select
-                options={yearOptions}
-                value={yearOptions.find((option) => option.value === year)}
-                onChange={(option) => setYear(option.value)}
-                placeholder="Year"
-                className="text-sm"
-              />
-            </div>
-            <div className="w-1/2">
-              <Select
-                options={monthOptions}
-                value={monthOptions.find((option) => option.value === month)}
-                onChange={(option) => setMonth(option.value)}
-                placeholder="Month"
-                className="text-sm"
-              />
-            </div>
+          <div className="flex justify-between gap-2 mb-4">
+            <Select
+              options={yearOptions}
+              value={yearOptions.find((option) => option.value === year)}
+              onChange={(option) => setYear(option.value)}
+              className="w-1/2 text-sm"
+            />
+            <Select
+              options={monthOptions}
+              value={monthOptions.find((option) => option.value === month)}
+              onChange={(option) => setMonth(option.value)}
+              className="w-1/2 text-sm"
+            />
           </div>
 
-          {/* Calendar Table */}
-          <table className="w-full text-center text-xs border-collapse rounded overflow-hidden shadow-sm">
+          <table className="w-full text-center text-xs border-collapse">
             <thead>
-              <tr className="bg-gray-100 text-gray-700 uppercase text-[10px]">
-                <th className="border border-gray-300 p-1 font-medium">WK</th>
-                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                  <th key={day} className="border border-gray-300 p-1 font-medium">
-                    {day}
+              <tr className="bg-gray-100 text-gray-700">
+                <th className="p-1 border">WK</th>
+                {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
+                  <th key={d} className="p-1 border font-medium">
+                    {d}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {weeks.map((week, idx) => {
-                const firstValidDay = week.find((d) => d);
-                const date = firstValidDay ? new Date(year, month, firstValidDay) : new Date(year, month, 1);
-                const weekNum = getWeekNumber(date);
+                // Find first valid day of the week to get accurate week number
+                const dayIndex = week.findIndex((day) => day !== "");
+                let currentWeekNum = "";
+
+                if (dayIndex !== -1) {
+                  const day = week[dayIndex];
+                  const date = new Date(year, month, day);
+                  currentWeekNum = getWeekNumber(date);
+                }
 
                 return (
                   <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                    <td className="border border-gray-300 font-semibold text-gray-600 text-xs py-2 px-1 bg-gray-100">
-                      {weekNum}
+                    <td className="border bg-gray-100 font-semibold text-gray-600 p-1">
+                      {currentWeekNum}
                     </td>
                     {week.map((day, i) => (
                       <td
                         key={i}
-                        className={`border border-gray-300 h-8 w-8 text-xs text-gray-800 hover:bg-blue-100 transition duration-200 ${
+                        className={`border h-8 w-8 text-xs text-gray-800 hover:bg-sky-200 transition duration-200 ${
                           day === "" ? "bg-gray-100 text-gray-400" : "bg-white"
                         }`}
                       >
@@ -141,10 +134,10 @@ const MonthlyCalendar = () => {
               })}
             </tbody>
           </table>
-        </div>
+        </motion.div>
       )}
     </div>
   );
 };
 
-export default MonthlyCalendar;
+export default FullYearCalendar;

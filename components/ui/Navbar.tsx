@@ -43,6 +43,10 @@ const training: { title: string; href: string }[] = [
    {
     title: "Approval Form",
     href: "/approvalform",
+  },
+    {
+    title: "Approval Form ",
+    href: "/approvalformforhrhod",
   }
 ]
 
@@ -76,30 +80,6 @@ const masterreport: { title: string; href: string }[] = [
     title: "Employee History",
     href: "/emphistory",
   },
-  // {
-  //   title: "Monthly Training Particulars",
-  //   href: "/montrainpar",
-  // },
-  // {
-  //   title: "Total Training Hrs",
-  //   href: "/tottrainhrs",
-  // },
-  // {
-  //   title: "Dept wise Training Hrs",
-  //   href: "/deptwisetrainhrs",
-  // },
-  // {
-  //   title: "HSE Head Count",
-  //   href: "/hseheadcount",
-  // },
-  // {
-  //   title: "HSE Teams List Forklift, Boom Lift, First Aid, ERT, SCBA & Work Permit Issuers",
-  //   href: "/hseteams",
-  // },
-  // {
-  //   title: "Training Attendance Mail to HOD's Every 3 months",
-  //   href: "/trainingattendancetohod",
-  // },
   {
     title: "Qualified Trainers List",
     href: "/quatrainlist",
@@ -113,7 +93,7 @@ const masterreport: { title: string; href: string }[] = [
     href: "/trainingagencies",
   },
     {
-    title: "Training Record - IATF/HSE",
+    title: "Add Training Record",
     href: "/trainingrecord",
   },
 ]
@@ -283,10 +263,12 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
   if (component.title === "Requirement - IATF/HSE" && accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HR_Res" ) {
       return null; // skip if not Employee or HOS
   }
- if (component.title === "Approval Form" && accessRole !== "HOS" && accessRole !== "HOD"  && accessRole !== "HR_Res"  && accessRole !== "HOD" && accessRole !== "HR_Hod") {
+ if (component.title === "Approval Form" && accessRole !== "HOS" && accessRole !== "HOD"  && accessRole !== "HR_Res") {
       return null; 
   }
-
+ if (component.title === "Approval Form " && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
+      return null; 
+  }
   return (
     <ListItem key={component.title} title={component.title} href={component.href} />
   );
@@ -394,8 +376,8 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
           )}
             {accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HOD" && (
             <NavigationMenuItem className="bg-gray-100 position-relative z-10">
-              <NavigationMenuTrigger className="hover:text-sky-400">Master Report</NavigationMenuTrigger>
-              <NavigationMenuContent className="grid gap-2 p-1 md:w-[250px] max-h-[300px] ">
+              <NavigationMenuTrigger className="hover:text-sky-400">T & D Report</NavigationMenuTrigger>
+              <NavigationMenuContent className="grid gap-2 p-1 md:w-[200px] max-h-[250px] ">
                 <ul className="grid gap-2 p-1">
                   {masterreport.map((component) => {
                      if (component.title === "Employee History" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
@@ -410,7 +392,7 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
                    if (component.title === "Training Agencies" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
                     return null; 
                  }
-                  if (component.title === "Training Record - IATF/HSE" && accessRole !== "HR_Res" &&  accessRole !== "HR_Hod" ) {
+                  if (component.title === "Add Training Record" && accessRole !== "HR_Res" &&  accessRole !== "HR_Hod" ) {
     return null; // skip
   }
           return(

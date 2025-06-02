@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useRef } from 'react';
 
-export default function EmailApproval({ validateWeek }) {
+export default function EmailApprovalWeek({ validateWeek }) {
   const [employeeId, setEmployeeId] = useState('');
   const [email, setEmail] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -19,6 +19,10 @@ export default function EmailApproval({ validateWeek }) {
   const handleApprove = async () => {
     if (isCallingApi.current || !employeeId) return;
 
+    if (validateWeek && !validateWeek()) {
+      alert('please enter the week');
+      return;
+    }
 
     isCallingApi.current = true;
     setLoading(true);

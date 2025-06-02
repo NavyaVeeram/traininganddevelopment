@@ -34,7 +34,7 @@
     "date-fns": "^3.6.0",
     "dayjs": "^1.11.13",
     "fontkit": "^2.0.4",
-    "framer-motion": "^12.6.3",
+    "framer-motion": "^12.15.0",
     "fs": "^0.0.1-security",
     "json2csv": "^6.0.0-alpha.2",
     "lucide-react": "^0.487.0",

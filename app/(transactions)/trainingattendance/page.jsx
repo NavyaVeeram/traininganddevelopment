@@ -557,7 +557,7 @@ const TrainingAttendanceForm = () => {
       mergedPdf.registerFontkit(fontkit);
 
       // const font = await mergedPdf.embedFont(StandardFonts.HelveticaBold);
-const fontBytes = await fetch("/fonts/CALIBRI.TTF").then(res => res.arrayBuffer());
+const fontBytes = await fetch("/fonts/Cambria-01.ttf").then(res => res.arrayBuffer());
 
 // Embed it in the PDF
 const font = await mergedPdf.embedFont(fontBytes);
