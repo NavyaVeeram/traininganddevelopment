@@ -6,6 +6,7 @@ import Select from "react-select";
 import makeAnimated from "react-select/animated";
 import React from "react";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import fontkit from '@pdf-lib/fontkit';
 
 const TetReportsClient = () => {
   const parameters = [
@@ -183,13 +184,20 @@ const [employeeId, setEmployeeId] = useState(null);
   const [response, setResponse] = useState(null);
 
   // Generate PDF based on the filtered employee data
-    async function generatePdfForEmployees(programId) {
+async function generatePdfForEmployees(programId) {
       const templatePath = "/Training_Effect_Tracing_Form.pdf";
       const label = "Training_Effectiveness_Filtered_Employees.pdf";
       const templateBytes = await fetch(templatePath).then((res) => res.arrayBuffer());
       const mergedPdf = await PDFDocument.create();
-      const font = await mergedPdf.embedFont(StandardFonts.HelveticaBold);
 
+      // Register fontkit to embed custom fonts
+      mergedPdf.registerFontkit(fontkit);
+
+      // const font = await mergedPdf.embedFont(StandardFonts.HelveticaBold);
+const fontBytes = await fetch("/fonts/Cambria-01.ttf").then(res => res.arrayBuffer());
+
+// Embed it in the PDF
+const font = await mergedPdf.embedFont(fontBytes);
       // Embed tick image 
       const tickImageBytes = await fetch("/assets/tick.png").then(res => res.arrayBuffer());
       const tickImage = await mergedPdf.embedPng(tickImageBytes);
@@ -220,24 +228,20 @@ const [employeeId, setEmployeeId] = useState(null);
 
         copiedPages.forEach((page, index) => {
           const height = page.getSize().height;
-          const startY = height - 100; // starting Y position
-          const rowHeight = 25; // space between rows
-          const startX = 100; // start of the rating columns
-          const cellWidth = 38; // space between rating columns
-          
+        
           if (index === 0) {
             // Customize on the first page
             page.drawText(emp.Username || "", {
               x: 170,
               y: height - 55,
-              size: 8,
+              size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(emp.EmployeeId || "", {
               x: 170,
               y: height - 75,
-              size: 8,
+              size: 9,
               font,
               color: rgb(0, 0, 0),
             });
@@ -245,42 +249,42 @@ const [employeeId, setEmployeeId] = useState(null);
             page.drawText(emp.Designation || "", {
               x: 170,
               y: height - 98,
-              size: 8,
+              size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(emp.Section || "", {
               x: 170,
               y: height - 118,
-              size: 8,
+              size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(emp.Department || "", {
               x: 170,
               y: height - 140,
-              size: 8,
+              size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(emp.Venue || "", {
               x: 170,
               y: height - 160,
-              size: 8,
+              size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(emp.Program_Name || "", {
               x: 385,
               y: height - 55,
-              size: 8,
+              size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(emp.Trainer || "", {
               x: 385,
               y: height - 75,
-              size: 8,
+              size: 9,
               font,
               color: rgb(0, 0, 0),
             });
@@ -308,7 +312,7 @@ const [employeeId, setEmployeeId] = useState(null);
             page.drawText(String(emp.No_Hrs +""+ "hrs") || "", {
               x: 385,
               y: height - 118,
-              size: 8,
+              size: 9,
               font,
               color: rgb(0, 0, 0),
             });
@@ -324,110 +328,109 @@ const [employeeId, setEmployeeId] = useState(null);
             page.drawText(String(formattedTrainingDate) || "", {
               x: 385,
               y: height - 140,
-              size: 8,
+              size:9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(formattedEvaluationDate) || "", {
               x: 385,
               y: height - 160,
-              size: 8,
+              size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_1) || "", {
               x: 530,
               y: height -225, 
-              size: 8,
+              size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_2) || "", {
               x: 530,
               y: height -252, 
-              size: 8,
+              size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_3) || "", {
               x: 530,
               y: height -275, 
-              size: 8,
+              size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_4) || "", {
               x: 530,
               y: height -300, 
-              size: 8,
+              size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_5) || "", {
               x: 530,
               y: height -324, 
-              size: 8,
+              size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_6) || "", {
               x: 530,
               y: height -347, 
-              size: 8,
+              size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_7) || "", {
               x: 530,
               y: height -373, 
-              size: 8,
+              size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_8) || "", {
               x: 530,
               y: height -397, 
-              size: 8,
+              size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_9) || "", {
               x: 530,
               y: height -420, 
-              size: 8,
+              size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_10) || "", {
               x: 530,
               y: height -445, 
-              size: 8,
+              size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Overall) || "", {
               x: 530,
               y: height - 468, 
-              size: 8,
+              size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Percentage) || "", {
               x: 530,
               y: height - 485, 
-              size: 8,
+              size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(emp.Remarks || "", {
               x: 100,
               y: height - 580, 
-              size: 8,
+              size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             let ratingYPositions = [226, 253, 276, 300.5, 324.5, 347.5, 373, 397, 420.5, 444];
-
                       for (let idx = 0; idx < 10; idx++) {
         const rating = emp[`Q_${idx + 1}`];
         let rowY = height - ratingYPositions[idx];

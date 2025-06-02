@@ -6,11 +6,12 @@ import Select from "react-select";
 import MonthlyCalender from "../calendar/page";
 import EmailApproval from "../email/EmailApproval";
 import EmailRejection from "../email/EmailRejection";
+import EmailApprovalWeek from "../email/EmailApprovalforhrhod";
 export default function TrainingDataTable() {
 const [trainingData, setTrainingData] = useState([]);
 const [searchQuery, setSearchQuery] = useState('');
 const [currentPage, setCurrentPage] = useState(1);
-const [rowsPerPage, setRowsPerPage] = useState(10);
+const [rowsPerPage, setRowsPerPage] = useState(5);
 const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
 const [loading, setLoading] = useState(true);
 const [department, setDepartment] = useState('');
@@ -163,49 +164,41 @@ setEditingData(prevData => ({
 };
 
 const handleUpdate = async () => {
-  try {
-    const programId = editingData?.Program_Id;
-    console.log('Program_Id:', programId);
+try {
+const programId = editingData?.Program_Id;
+console.log('Program_Id:', programId);
 
-    // Log the data to check if all fields are present
-    console.log('Updating with data:', editingData);
+// Log the data to check if all fields are present
+console.log('Updating with data:', editingData);
 
-    // Add CreatedBy field with employeeId from state
-    // Convert Persons to string and Evaluation_Period to integer or null
-    // Convert No_Hrs to integer
-    const updatedDataWithCreatedBy = {
-      ...editingData,
-      CreatedBy: employeeId,
-      Persons: editingData.Persons !== undefined && editingData.Persons !== null ? String(editingData.Persons) : null,
-      No_Hrs: editingData.No_Hrs !== undefined && editingData.No_Hrs !== null ? parseInt(editingData.No_Hrs, 10) : null,
-      Evaluation_Period: editingData.Evaluation_Period ? parseInt(editingData.Evaluation_Period, 10) : null,
-    };
+// Add CreatedBy field with employeeId from state
+const updatedDataWithCreatedBy = { ...editingData, CreatedBy: employeeId };
 
-    const res = await fetch(`/api/update_approval_form?Program_Id=${programId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updatedDataWithCreatedBy), // Send updated data with CreatedBy
-    });
-    const responseData = await res.json();
-    if (res.ok) {
-      alert(` ${responseData.message}`);
+const res = await fetch(`/api/update_approval_form?Program_Id=${programId}`, {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify(updatedDataWithCreatedBy), // Send updated data with CreatedBy
+});
+const responseData = await res.json();
+if (res.ok) {
+alert(` ${responseData.message}`);
 
-      // ✅ Optimistically update the local trainingData array
-      const updatedList = trainingData.map((item) =>
-        item.Program_Id === programId ? { ...item, ...editingData } : item
-      );
-      setTrainingData(updatedList);
-
-      // Removed usage of selectedDate and fetchData as they are undefined
-      // setIsModalOpen(false); // Close the modal
-      setIsModalOpen(false);
-      setError(""); // Clear any previous error messages
-    } else {
-      alert(`Error: ${responseData.message || 'Unknown error'}`);
-    }
-  } catch (err) {
-    setError('Failed to update the record');
-  }
+// ✅ Optimistically update the local trainingData array
+const updatedList = trainingData.map((item) =>
+item.Program_Id === programId ? { ...item, ...editingData } : item
+);
+setTrainingData(updatedList);
+const month = selectedDate.getMonth() + 1; // Get the current month
+const year = selectedDate.getFullYear(); // Get the current year
+fetchData(month, year); // Refresh the list after updating
+setIsModalOpen(false); // Close the modal
+setError(""); // Clear any previous error messages
+} else {
+alert(`Error: ${responseData.message || 'Unknown error'}`);
+}
+} catch (err) {
+setError('Failed to update the record');
+}
 };
 
 const handleActiveToggle = async (programId, currentStatus) => {
@@ -335,7 +328,10 @@ onChange={(e) => setSearchQuery(e.target.value)}
 <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("No_Hrs")}>Hours {sortConfig.key === "No_Hrs" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
 <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("No_Times")}>Times {sortConfig.key === "No_Times" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
 <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Req_Months")}>Months {sortConfig.key === "Req_Months" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
+<th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Week")}>Week {sortConfig.key === "Week" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
+ {accessRole !== "Res_Person" && accessRole !== "HOS" &&  accessRole !== "HOD" &&(
  <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Evaluation_Period")}>Evaluation Period {sortConfig.key === "Evaluation_Period" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
+ )}
 <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("IsActive")}>IsActive {sortConfig.key === "IsActive" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
 <th className="border p-2 text-left">Actions</th>
 </tr>
@@ -356,31 +352,31 @@ paginatedData.map((item) => (
 <td className="border p-2 text-center">
 {item.Section}
 </td>
-<td className="border p-2 text-left">
+<td className="border p-2 text-center">
 {item.Program_Name}
 </td>
 <td className="border p-2 text-center">
 {item.Train_Mode}
 </td>
-<td className="border p-2 text-left">
+<td className="border p-2 text-center">
 {item.Train_Purpose}
 </td>
-<td className="border p-2 text-right">
+<td className="border p-2 text-center">
 {item.Persons}
 </td>
-<td className="border p-2 text-right">
+<td className="border p-2 text-center">
 {item.No_Hrs}
 </td>
-<td className="border p-2 text-right">
+<td className="border p-2 text-center">
 {item.No_Times}
 </td>
-<td className="border p-2 text-right">
+<td className="border p-2 text-center">
 {item.Req_Months}
 </td>
-{/* <td className="border p-2 text-center">
+<td className="border p-2 text-center">
 {item.Week}
-</td> */}
-<td className="border p-2 text-right">
+</td>
+<td className="border p-2 text-center">
 {item.Evaluation_Period}
 </td>
 <td className="border p-2 text-center">
@@ -470,7 +466,10 @@ className="px-3 py-1 border rounded">
 
    <div className="flex justify-end mt-6 gap-x-2">
 
-    <EmailApproval />
+   <EmailApprovalWeek validateWeek={() => {
+     // Check if any item in trainingData has a non-empty Week value
+     return trainingData.some(item => item.Week && item.Week.trim() !== '');
+   }} />
 <EmailRejection/>
   </div>
 )}
@@ -622,7 +621,7 @@ width: '282px', // Control the width of the select dropdown
 }}
 />
 </div>
-{/* <div>
+<div>
 <label className="block font-semibold ">Week No</label>
 <input
 type="text"
@@ -631,7 +630,7 @@ onChange={(e) => handleInputChange(e, 'Week')}
 className="border p-2 w-70 rounded-md"
 autoComplete="off"
  required/>
-</div> */}
+</div>
 <div>
 <label className="block font-semibold ">Evaluation Period</label>
 <input

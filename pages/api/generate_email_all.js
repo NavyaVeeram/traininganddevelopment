@@ -21,15 +21,21 @@ export default async function handler(req, res) {
     const result = await prisma.$queryRawUnsafe(`
       EXEC Generate_Email_All '${employeeId}'
     `);
+if (!result || result.length === 0) {
+  // Maybe it's the last submission, but no email is needed
+  return res.status(200).json({ message: 'Last submission successful', email: null });
+}
 
-    if (!result || result.length === 0) {
-      return res.status(404).json({ message: 'No email generated' });
-    }
+const { Email, IsLastSubmission } = result[0];
 
-    const { Email, IsLastSubmission } = result[0];
-    if (!Email && !IsLastSubmission) {
-      return res.status(400).json({ message: 'No valid email found in result' });
-    }
+if (!Email && IsLastSubmission) {
+  return res.status(200).json({ message: 'Last submission successful', email: null });
+}
+
+if (!Email) {
+  return res.status(400).json({ message: 'No valid email found in result' });
+}
+
 
     if (approve) {
       if (IsLastSubmission) {
