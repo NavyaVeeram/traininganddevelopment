@@ -12,6 +12,7 @@ import makeAnimated from "react-select/animated";
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import fontkit from '@pdf-lib/fontkit';
 const animatedComponents = makeAnimated();
 
 const TrainingAttendanceForm = () => {
@@ -551,9 +552,15 @@ const TrainingAttendanceForm = () => {
     const templateBytes = await fetch(templatePath).then((res) =>
       res.arrayBuffer()
     );
-    const mergedPdf = await PDFDocument.create();
-    const font = await mergedPdf.embedFont(StandardFonts.HelveticaBold);
+          const mergedPdf = await PDFDocument.create();
+  // Register fontkit to embed custom fonts
+      mergedPdf.registerFontkit(fontkit);
 
+      // const font = await mergedPdf.embedFont(StandardFonts.HelveticaBold);
+const fontBytes = await fetch("/fonts/Cambria-01.ttf").then(res => res.arrayBuffer());
+
+// Embed it in the PDF
+const font = await mergedPdf.embedFont(fontBytes);
     // Fetch data from API for PDF generation
     const apiUrl = `/api/get_tet_form_emp_details_for_report?programId=${Program_Id}`;
     let employees = [];
@@ -589,7 +596,7 @@ const TrainingAttendanceForm = () => {
           page.drawText(emp.Username || "", {
             x: 170,
             y: height - 68,
-            size: 8,
+            size: 11,
             font,
             color: rgb(0, 0, 0),
           });
@@ -597,49 +604,49 @@ const TrainingAttendanceForm = () => {
           page.drawText(emp.EmployeeId || "", {
             x: 170,
             y: height - 102,
-            size: 8,
+            size: 11,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(emp.Designation || "", {
             x: 170,
             y: height - 136,
-            size: 8,
+            size: 11,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(emp.Section || "", {
             x: 170,
             y: height - 171,
-            size: 8,
+            size: 11,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(emp.Department || "", {
             x: 170,
             y: height - 206,
-            size: 8,
+            size: 11,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(emp.Program_Name || "", {
             x: 385,
             y: height - 68,
-            size: 8,
+            size: 9,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(emp.Trainer || "", {
             x: 385,
             y: height - 102,
-            size: 8,
+            size: 11,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(emp.Train_Mode || "", {
             x: 385,
             y: height - 137,
-            size: 8,
+            size: 11,
             font,
             color: rgb(0, 0, 0),
           });
@@ -647,7 +654,7 @@ const TrainingAttendanceForm = () => {
           page.drawText(String(emp.No_Hrs + "hr") || "", {
             x: 385,
             y: height - 171,
-            size: 8,
+            size: 11,
             font,
             color: rgb(0, 0, 0),
           });
@@ -659,7 +666,7 @@ const TrainingAttendanceForm = () => {
           page.drawText(String(formattedTrainingDate) || "", {
             x: 385,
             y: height - 206,
-            size: 8,
+            size: 11,
             font,
             color: rgb(0, 0, 0),
           });
