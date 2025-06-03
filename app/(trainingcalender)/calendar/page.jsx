@@ -20,6 +20,7 @@ const FullYearCalendar = () => {
     return { value, label: value.toString() };
   });
 
+  // Close calendar if clicked outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (calendarRef.current && !calendarRef.current.contains(event.target)) {
@@ -30,28 +31,40 @@ const FullYearCalendar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // ISO 8601 Week Number Calculation
   const getWeekNumber = (date) => {
-    const startOfYear = new Date(date.getFullYear(), 0, 1);
-    const dayOfYear = Math.floor((date - startOfYear) / 86400000);
-    const janFirstDay = (startOfYear.getDay() + 6) % 7; // Monday = 0
-    return 1 + Math.floor((dayOfYear + janFirstDay) / 7);
+    const target = new Date(date);
+    target.setHours(0, 0, 0, 0);
+
+    // Adjust to Thursday of this week
+    target.setDate(target.getDate() + 3 - ((target.getDay() + 6) % 7));
+
+    const firstThursday = new Date(target.getFullYear(), 0, 4);
+    firstThursday.setDate(firstThursday.getDate() + 3 - ((firstThursday.getDay() + 6) % 7));
+
+    const weekNumber = 1 + Math.round((target - firstThursday) / (7 * 24 * 60 * 60 * 1000));
+    return weekNumber;
   };
 
+  // Generate Month Grid (weeks starting Monday)
   const generateMonth = (year, month) => {
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
     const days = [];
-    let startDay = (firstDay.getDay() + 6) % 7; // Monday = 0
-    let day = 1 - startDay;
 
-    while (day <= lastDay.getDate()) {
+    // Calculate the weekday of the first day, with Monday=0 ... Sunday=6
+    let startDay = (firstDayOfMonth.getDay() + 6) % 7;
+
+    let day = 1 - startDay; // Start from Monday of the first week grid
+
+    while (day <= lastDayOfMonth.getDate()) {
       const week = [];
       for (let i = 0; i < 7; i++, day++) {
-        week.push(day > 0 && day <= lastDay.getDate() ? day : "");
+        week.push(day > 0 && day <= lastDayOfMonth.getDate() ? day : "");
       }
       days.push(week);
     }
+
     return days;
   };
 
@@ -60,7 +73,7 @@ const FullYearCalendar = () => {
   return (
     <div>
       <button
-        className="p-2 bg-sky-500 text-white rounded-full hover:bg-sky-600"
+        className="z-50 p-2 bg-sky-500 text-white rounded-full hover:bg-sky-600"
         onClick={() => setShowCalendar((prev) => !prev)}
       >
         <CalendarDays />
@@ -73,7 +86,7 @@ const FullYearCalendar = () => {
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: "100%", opacity: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className=" z-40 bg-white shadow-xl border rounded-md p-4 "
+          className="fixed top-16 right-4 z-40 bg-white shadow-xl border rounded-md p-4 w-[350px]"
         >
           <div className="flex justify-between gap-2 mb-4">
             <Select
@@ -94,7 +107,7 @@ const FullYearCalendar = () => {
             <thead>
               <tr className="bg-gray-100 text-gray-700">
                 <th className="p-1 border">WK</th>
-                {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((d) => (
+                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
                   <th key={d} className="p-1 border font-medium">
                     {d}
                   </th>
@@ -103,13 +116,21 @@ const FullYearCalendar = () => {
             </thead>
             <tbody>
               {weeks.map((week, idx) => {
-                const firstValidDay = week.find((d) => d);
-                const date = firstValidDay ? new Date(year, month, firstValidDay) : new Date(year, month, 1);
-                const weekNum = getWeekNumber(date);
+                // Find the first day in the week to get the week number (skip empty)
+                const dayIndex = week.findIndex((day) => day !== "");
+                let currentWeekNum = "";
+
+                if (dayIndex !== -1) {
+                  const day = week[dayIndex];
+                  const date = new Date(year, month, day);
+                  currentWeekNum = getWeekNumber(date);
+                }
 
                 return (
                   <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                    <td className="border bg-gray-100 font-semibold text-gray-600 p-1">{weekNum}</td>
+                    <td className="border bg-gray-100 font-semibold text-gray-600 p-1">
+                      {currentWeekNum}
+                    </td>
                     {week.map((day, i) => (
                       <td
                         key={i}

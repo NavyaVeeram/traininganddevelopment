@@ -64,7 +64,7 @@ export default function EmailApprovalWeek({ weeks }) {
         disabled={loading || !employeeId }
         title= "Please update all changes before approving"
       >
-        {loading ? 'Processing...' : 'Approve'}
+        {loading ? 'Processing...' : 'Send for Approval'}
       </button>
       {/* {email && (
         <div>
