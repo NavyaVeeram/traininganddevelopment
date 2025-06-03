@@ -3,15 +3,15 @@ const prisma = new PrismaClient();
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
-    const { month, year } = req.query;
+    const {  year } = req.query;
 
-    if (!month || !year) {
-      return res.status(400).json({ message: "Month and Year are required" });
+    if ( !year) {
+      return res.status(400).json({ message: " Year is required" });
     }
 
     try {
       const employeeDetails = await prisma.$queryRaw`
-        EXEC [dbo].[Get_TET_Form_Data] @Month_No=${parseInt(month)}, @Year_No=${parseInt(year)}
+        EXEC [dbo].[Get_TET_Form_Data] @Year_No=${parseInt(year)}
       `;
 
       if (!employeeDetails || employeeDetails.length === 0) {

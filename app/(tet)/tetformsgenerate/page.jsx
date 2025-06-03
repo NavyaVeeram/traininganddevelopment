@@ -6,7 +6,7 @@ import { FaSearch } from "react-icons/fa";
 import Link from "next/link";
 
 const TETForms = () => {
-  const [selectedDate, setSelectedDate] = useState(null);
+const [selectedDate, setSelectedDate] = useState(new Date());
   const [trainingData, setTrainingData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [tableSearchTerm, setTableSearchTerm] = useState("");
@@ -18,6 +18,7 @@ const TETForms = () => {
 
   const getMonthNumber = (date) => (date ? date.getMonth() + 1 : null);
 
+
   const fetchData = async (date) => {
     if (!date) return;
 
@@ -27,19 +28,17 @@ const TETForms = () => {
 
     try {
       const response = await fetch(
-        `/api/get_tet_form_data?month=${getMonthNumber(
-          date
-        )}&year=${date.getFullYear()}`
+        `/api/get_tet_form_data?year=${date}`
       );
 
       if (!response.ok) {
-        throw new Error("No training data available for the selected month.");
+        throw new Error("No training data available for the selected Year.");
       }
 
       const data = await response.json();
 
       if (data && data.length === 0) {
-        setError("No training data available for the selected month.");
+        setError("No training data available for the selected Year.");
         setFilteredData([]);
       } else {
         setTrainingData(data);
@@ -53,21 +52,23 @@ const TETForms = () => {
     }
   };
 
-  useEffect(() => {
-    if (selectedDate) fetchData(selectedDate);
-  }, [selectedDate]);
+  // useEffect(() => {
+  //   if (selectedDate) fetchData(selectedDate);
+  // }, [selectedDate]);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [rowsPerPage, filteredData]);
 
-  useEffect(() => {
-    if (selectedDate) {
-      fetchData(selectedDate);
-      setRowsPerPage(10);
-      setCurrentPage(1);
-    }
-  }, [selectedDate]);
+useEffect(() => {
+  if (selectedDate) {
+    const year = selectedDate.getFullYear();
+    fetchData(year);
+    setRowsPerPage(10);
+    setCurrentPage(1);
+  }
+}, [selectedDate]);
+
   const handleSort = (key) => {
     let direction = "asc";
     if (sortConfig.key === key && sortConfig.direction === "asc") {
@@ -104,6 +105,8 @@ const TETForms = () => {
     } else {
       const filtered = trainingData.filter((trainer) =>
         [
+          "Year_No",
+          "Department",
           "Program_Name",
           "Evaluation_Date",
           "Training_Date",
@@ -127,13 +130,13 @@ const TETForms = () => {
       </div>
       <div className="my-4 relative z-50">
         <div className="flex items-center space-x-2">
-          <label className="text-sm font-medium">Month</label>
+          <label className="text-sm font-medium">Year</label>
           <DatePicker
             selected={selectedDate}
             onChange={(date) => setSelectedDate(date)}
-            dateFormat="MM/yyyy"
-            showMonthYearPicker
-            placeholderText="Select Month and Year"
+            dateFormat="yyyy"
+            showYearPicker
+            placeholderText="Select Year"
             className="p-2 border border-gray-300 rounded-lg"
             calendarClassName="z-50"
             popperPlacement="top-start"
@@ -202,6 +205,8 @@ const TETForms = () => {
                   <thead className="bg-muted sticky top-0">
                     <tr>
                       {[
+                        { key: "Year_No", label: "Year" },
+                        { key: "Department", label: "Department" },
                         { key: "Program_Name", label: "Program Name" },
                         { key: "Training_Name", label: "Type" },
                         { key: "Training_Date", label: "Training Date" },
@@ -232,6 +237,8 @@ const TETForms = () => {
                     {filteredData.length > 0 ? (
                       paginatedData.map((item, index) => (
                         <tr key={index} className="hover:bg-gray-100 border">
+                          <td className="px-4 py-2 border">{item.Year_No}</td>
+                          <td className="px-4 py-2 border">{item.Department}</td>
                           <td className="px-4 py-2 border">
                             {item.Program_Name}
                           </td>

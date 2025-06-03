@@ -3,14 +3,14 @@ import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { FaSearch, FaTrash, FaEdit } from "react-icons/fa";
 import Select from "react-select";
-import MonthlyCalender from "../calendar/page";
 import EmailRejection from "../email/EmailRejection";
 import EmailApprovalWeek from "../email/EmailApprovalforhrhod";
+import FullYearCalendar from "../calendar/page";
 export default function TrainingDataTable() {
 const [trainingData, setTrainingData] = useState([]);
 const [searchQuery, setSearchQuery] = useState('');
 const [currentPage, setCurrentPage] = useState(1);
-const [rowsPerPage, setRowsPerPage] = useState(5);
+const [rowsPerPage, setRowsPerPage] = useState(10);
 const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
 const [loading, setLoading] = useState(true);
 const [department, setDepartment] = useState('');
@@ -174,40 +174,46 @@ setEditingData(prevData => {
 };
 
 const handleUpdate = async () => {
-try {
-const programId = editingData?.Program_Id;
-console.log('Program_Id:', programId);
+  // Validation for Week field
+  if (!editingData?.Week || editingData.Week.trim() === "") {
+    alert("Week field should not be empty.");
+    setError("Week field is required and cannot be empty.");
+    return;
+  }
+  try {
+    const programId = editingData?.Program_Id;
+    console.log('Program_Id:', programId);
 
-// Log the data to check if all fields are present
-console.log('Updating with data:', editingData);
+    // Log the data to check if all fields are present
+    console.log('Updating with data:', editingData);
 
-// Add CreatedBy field with employeeId from state
-const updatedDataWithCreatedBy = { ...editingData, CreatedBy: employeeId };
+    // Add CreatedBy field with employeeId from state
+    const updatedDataWithCreatedBy = { ...editingData, CreatedBy: employeeId };
 
-const res = await fetch(`/api/update_approval_form_week?Program_Id=${programId}`, {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify(updatedDataWithCreatedBy), // Send updated data with CreatedBy
-});
-const responseData = await res.json();
-if (res.ok) {
-alert(` ${responseData.message}`);
+    const res = await fetch(`/api/update_approval_form_week?Program_Id=${programId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedDataWithCreatedBy), // Send updated data with CreatedBy
+    });
+    const responseData = await res.json();
+    if (res.ok) {
+      alert(` ${responseData.message}`);
 
-// ✅ Optimistically update the local trainingData array
-const updatedList = trainingData.map((item) =>
-item.Program_Id === programId ? { ...item, ...editingData } : item
-);
-setTrainingData(updatedList);
-console.log('Updated trainingData:', updatedList);
-// Removed fetchData call to fix modal closing issue
-setIsModalOpen(false); // Close the modal
-setError(""); // Clear any previous error messages
-} else {
-alert(`Error: ${responseData.message || 'Unknown error'}`);
-}
-} catch (err) {
-setError('Failed to update the record');
-}
+      // ✅ Optimistically update the local trainingData array
+      const updatedList = trainingData.map((item) =>
+        item.Program_Id === programId ? { ...item, ...editingData } : item
+      );
+      setTrainingData(updatedList);
+      console.log('Updated trainingData:', updatedList);
+      // Removed fetchData call to fix modal closing issue
+      setIsModalOpen(false); // Close the modal
+      setError(""); // Clear any previous error messages
+    } else {
+      alert(`Error: ${responseData.message || 'Unknown error'}`);
+    }
+  } catch (err) {
+    setError('Failed to update the record');
+  }
 };
 
 const handleActiveToggle = async (programId, currentStatus) => {
@@ -296,11 +302,7 @@ className="border rounded p-1"
 <span>entries</span>
 </div>
 <div className="flex items-center gap-2 text-sm">
-  <div>
-    {accessRole !== "Res_Person" && accessRole !== "HOS" &&  accessRole !== "HOD" &&(
-    <MonthlyCalender/>
-)}
-  </div>
+
 
 <div className="relative">
 
@@ -313,7 +315,12 @@ onChange={(e) => setSearchQuery(e.target.value)}
 />
 <FaSearch className="absolute left-2 top-2 text-gray-400" />
 </div>
-
+  <div>
+    {accessRole !== "Res_Person" && accessRole !== "HOS" &&  accessRole !== "HOD" &&(
+    // <MonthlyCalender/>
+    <FullYearCalendar/>
+)}
+  </div>
 </div>
 </div>
 
@@ -476,6 +483,7 @@ className="px-3 py-1 border rounded">
    <div className="flex justify-end mt-6 gap-x-2">
 
    <EmailApprovalWeek 
+     weeks={paginatedData.map(item => item.Week)}
    />
 <EmailRejection/>
   </div>
@@ -636,7 +644,7 @@ value={editingData.Week ?? ''}
 onChange={(e) => handleInputChange(e, 'Week')}
 className="border p-2 w-70 rounded-md"
 autoComplete="off"
- required/>
+ required />
 </div>
 <div>
 <label className="block font-semibold ">Evaluation Period</label>

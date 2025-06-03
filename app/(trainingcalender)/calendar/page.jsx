@@ -31,22 +31,18 @@ const FullYearCalendar = () => {
   }, []);
 
   const getWeekNumber = (date) => {
-    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    const dayNum = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-    return weekNo;
+    const startOfYear = new Date(date.getFullYear(), 0, 1);
+    const dayOfYear = Math.floor((date - startOfYear) / 86400000);
+    const janFirstDay = (startOfYear.getDay() + 6) % 7; // Monday = 0
+    return 1 + Math.floor((dayOfYear + janFirstDay) / 7);
   };
 
   const generateMonth = (year, month) => {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
 
-    let startDay = firstDay.getDay();
-    startDay = startDay === 0 ? 6 : startDay - 1; // Shift Sunday(0) to 6, Monday(1) to 0
-
     const days = [];
+    let startDay = (firstDay.getDay() + 6) % 7; // Monday = 0
     let day = 1 - startDay;
 
     while (day <= lastDay.getDate()) {
@@ -61,13 +57,10 @@ const FullYearCalendar = () => {
 
   const weeks = generateMonth(year, month);
 
-  // Start week number for display
-  let displayedWeekNum = getWeekNumber(new Date(year, month, 1));
-
   return (
     <div>
       <button
-        className="z-50 p-2 bg-sky-500 text-white rounded-full hover:bg-sky-600"
+        className="p-2 bg-sky-500 text-white rounded-full hover:bg-sky-600"
         onClick={() => setShowCalendar((prev) => !prev)}
       >
         <CalendarDays />
@@ -80,7 +73,7 @@ const FullYearCalendar = () => {
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: "100%", opacity: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="fixed top-16 right-4 z-40 bg-white shadow-xl border rounded-md p-4 w-[350px]"
+          className=" z-40 bg-white shadow-xl border rounded-md p-4 "
         >
           <div className="flex justify-between gap-2 mb-4">
             <Select
@@ -110,13 +103,13 @@ const FullYearCalendar = () => {
             </thead>
             <tbody>
               {weeks.map((week, idx) => {
-                const currentWeekNum = displayedWeekNum++;
+                const firstValidDay = week.find((d) => d);
+                const date = firstValidDay ? new Date(year, month, firstValidDay) : new Date(year, month, 1);
+                const weekNum = getWeekNumber(date);
 
                 return (
                   <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                    <td className="border bg-gray-100 font-semibold text-gray-600 p-1">
-                      {currentWeekNum}
-                    </td>
+                    <td className="border bg-gray-100 font-semibold text-gray-600 p-1">{weekNum}</td>
                     {week.map((day, i) => (
                       <td
                         key={i}

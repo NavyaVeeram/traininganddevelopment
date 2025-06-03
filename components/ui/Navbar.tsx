@@ -273,9 +273,7 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
  if (component.title === "Approval Form " && accessRole !== "HR_Res" && accessRole !== "HR_Hod" ) {
       return null; 
   }
-   if (component.title === "Approved Data" && accessRole !== "HOS" && accessRole !== "HOD"  && accessRole !== "HR_Res" && accessRole !== "HR_Hod" ) {
-      return null; 
-  }
+
   return (
     <ListItem key={component.title} title={component.title} href={component.href} />
   );
@@ -367,7 +365,7 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
               className="overflow-hidden"
               style={{ "--radix-navigation-menu-viewport-height": "auto" } as React.CSSProperties}
             >
-              <ul className="grid w-[100px] gap-1 p-1 md:w-[150px] md:grid-cols lg:w-[150px] ">
+              <ul className="grid w-[100px] gap-1 p-1 md:w-[200px] md:grid-cols lg:w-[200px] ">
                 {trainingmaterials.map((component) =>  {
                      if (component.title === "Upload Materials" && accessRole !== "HR_Res" && accessRole !== "HR_Hod" ) {
                     return null; 
