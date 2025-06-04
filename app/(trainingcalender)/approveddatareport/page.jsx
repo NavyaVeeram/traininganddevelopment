@@ -1,71 +1,43 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState, useMemo } from "react";
 
-export default function TrainingDataTable() {
+export default function ApprovedDataReport() {
+  const searchParams = useSearchParams();
+
+  const idParam = searchParams.get("id") || searchParams.get("Program_Id") || searchParams.get("programid") || searchParams.get("program_id");
+
+  const [programId, setProgramId] = useState(null);
+  const [reportData, setReportData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState([]);
+  const [error, setError] = useState(null);
 
   // Pagination, sorting, and search states
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const [searchQuery, setSearchQuery] = useState("");
-  const [yearNo, setYearNo] = useState(new Date().getFullYear());
-
-  // Mapping of raw column names to user-friendly display names
-  const columnNameMap = {
-    "programid": "Program ID",
-    "training_name":'Training Name',
-    "year_no":"Year No",
-    "program_name":"Program Name",
-    "train_mode":"Training Mode ",
-    "train_purpose":"Purpose",
-    "no_hrs":"No Hours",
-    "no_times":"No Times",
-    "req_months":"Req Months",
-    "evaluation_period":"Evaluation Period",
-    "emp_send": "Res Person Status",
-    "hos": "HOS Status",
-    "hod": "HOD Status",
-    "hr_res": "HR Res Status",
-    "hr_hod": "HR HOD Status",
-    "isactive": "Status",
-    "email_status": "Email Status",
-    // Add other mappings as needed
-  };
 
   useEffect(() => {
-    const storedEmployeeId = localStorage.getItem("employeeId");
-
-    if (!storedEmployeeId) {
-      alert("Employee ID not found in localStorage");
+    if (!idParam) {
+      setError("No program ID provided.");
+      setLoading(false);
       return;
     }
 
-    if (!yearNo) {
-      alert("Please select a year");
-      return;
-    }
+    setProgramId(idParam);
 
-    fetch("/api/view_approval_form_submit_data", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ employeeId: storedEmployeeId, year_No: yearNo }),
-    })
+    fetch(`/api/approval_form_data_view?programId=${idParam}`)
       .then((res) => res.json())
       .then((data) => {
-        if (data.data && data.data.length > 0) {
-          console.log("Data keys:", Object.keys(data.data[0]));
-          console.log("First row data:", data.data[0]);
-        }
-        setData(data.data);
+        setReportData(data);
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Error fetching approval data:", err);
+        setError("Failed to fetch report data.");
         setLoading(false);
       });
-  }, [yearNo]);
+  }, [idParam]);
 
   // Sorting handler
   const handleSort = (key) => {
@@ -81,9 +53,9 @@ export default function TrainingDataTable() {
 
   // Sorted data
   const sortedData = useMemo(() => {
-    if (!sortConfig.key) return data;
+    if (!sortConfig.key) return reportData;
 
-    const sorted = [...data].sort((a, b) => {
+    const sorted = [...reportData].sort((a, b) => {
       const aValue = a[sortConfig.key];
       const bValue = b[sortConfig.key];
 
@@ -101,7 +73,7 @@ export default function TrainingDataTable() {
     });
 
     return sorted;
-  }, [data, sortConfig]);
+  }, [reportData, sortConfig]);
 
   // Filtered data by search query
   const filteredData = useMemo(() => {
@@ -126,46 +98,30 @@ export default function TrainingDataTable() {
           currentPage * rowsPerPage
         );
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div>Loading report...</div>;
+  if (error) return <div className="text-red-600">{error}</div>;
 
-  // Generate year options for dropdown (e.g., last 10 years)
-  const currentYear = new Date().getFullYear();
-  const yearOptions = [];
-  for (let y = currentYear; y >= currentYear - 10; y--) {
-    yearOptions.push(y);
-  }
-
-  // Filter out "programid" from columns to display
-  const columnsToDisplay = data.length > 0
-    ? Object.keys(data[0]).filter((key) => key.toLowerCase() !== "programid" && key.toLowerCase() !== "program_id")
-    : [];
+  // Mapping of raw column names to user-friendly display names
+  const columnNameMap = {
+    EmployeeId: "Employee ID",
+    Username: "Username",
+    Department: "Department",
+    Train_Mode: "Training Mode",
+    Section: "Section",
+    Training_Date: "Training Date",
+    Schedule_Type: "Schedule Type",
+    Trainer: "Trainer",
+    Venue: "Venue",
+    Training_Status: "Training Status",
+  };
 
   return (
     <div className="max-w-full mx-auto bg-white p-2 w-full">
       <div className="bg-sky-400 text-white p-2 flex justify-between rounded-t-lg">
-        <h1 className="font-bold">Approved Data</h1>
+        <h1 className="font-bold">Approved Data Report - Program ID: {programId}</h1>
       </div>
 
-      {/* Year dropdown */}
-      <div className="my-2">
-        <label htmlFor="yearSelect" className="mr-2 font-semibold">
-          Select Year:
-        </label>
-        <select
-          id="yearSelect"
-          value={yearNo}
-          onChange={(e) => setYearNo(parseInt(e.target.value))}
-          className="border rounded p-1"
-        >
-          {yearOptions.map((year) => (
-            <option key={year} value={year}>
-              {year}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {data.length > 0 && (
+      {reportData.length > 0 && (
         <>
           {/* Search and Rows per page controls */}
           <div className="flex justify-between items-center my-2">
@@ -201,7 +157,7 @@ export default function TrainingDataTable() {
         </>
       )}
 
-      {data.length > 0 ? (
+      {reportData.length > 0 ? (
         <div className="overflow-x-auto">
           <table
             className="min-w-full border relative z-0 bg-card text-foreground"
@@ -216,13 +172,13 @@ export default function TrainingDataTable() {
           >
             <thead className="bg-muted sticky top-0 z-10">
               <tr className="bg-gray-100">
-                {columnsToDisplay.map((key) => (
+                {Object.keys(reportData[0]).map((key) => (
                   <th
                     key={key}
                     className="cursor-pointer px-4 py-2 border text-left select-none"
                     onClick={() => handleSort(key)}
                   >
-                    {columnNameMap[key.toLowerCase()] || key}{" "}
+                    {columnNameMap[key] || key}{" "}
                     {sortConfig.key === key ? (
                       sortConfig.direction === "asc" ? (
                         "▲"
@@ -234,75 +190,29 @@ export default function TrainingDataTable() {
                     )}
                   </th>
                 ))}
-                <th className="cursor-default px-4 py-2 border text-left select-none">
-                  Actions
-                </th>
               </tr>
             </thead>
             <tbody>
               {paginatedData.length > 0 ? (
                 paginatedData.map((row, idx) => (
-                  <tr key={row.programid || idx} className="border hover:bg-muted">
-                    {Object.entries(row)
-                      .filter(([key]) => key.toLowerCase() !== "programid" && key.toLowerCase() !== "program_id")
-                  .map(([key, value], index) => {
-                    let displayValue = value;
-                    const approvedFields = [
-                      "emp_send",
-                      "hos",
-                      "hod",
-                      "hr_res",
-                      "hr_hod",
-                    ];
-                    const keyLower = key.toLowerCase();
-                    if (keyLower === "isactive") {
-                      if (value === 1 || value === true) displayValue = "Active";
-                      else if (value === 0 || value === false) displayValue = "InActive";
-                    } else if (keyLower === "email_status") {
-                      if (value === 1 || value === true) displayValue = "Accepted";
-                      else if (value === 0 || value === false || value === null) displayValue = "Rejected";
-                    } else if (approvedFields.includes(keyLower)) {
-                      if (value === 1 || value === true) displayValue = "Approved";
-                      else if (value === 0 || value === false || value === null) displayValue = "Waiting";
-                    }
-                    return (
-                      <td key={index} className="px-4 py-2 border">
-                        {(displayValue === "Approved" && (
-                          <span className="text-green-600 font-semibold">{displayValue}</span>
-                        )) ||
-                          (displayValue === "Waiting" && (
-                            <span className="text-blue-600 font-semibold">{displayValue}</span>
-                          )) ||
-                          (displayValue === "Accepted" && (
-                          <span className="text-green-600 font-semibold">{displayValue}</span>
-                        )) ||
-                          (displayValue === "Rejected" && (
-                            <span className="text-red-600 font-semibold">{displayValue}</span>
-                          )) ||
-                          (displayValue === "Active" && (
-                            <span className="text-green-600 font-semibold">{displayValue}</span>
-                          )) ||
-                          (displayValue === "InActive" && (
-                            <span className="text-red-600 font-semibold">{displayValue}</span>
-                          )) || <>{displayValue?.toString()}</>}
-                      </td>
-                    );
-                  })}
-                  <td className="px-4 py-2 border text-blue-600 underline">
-                    <a
-                      href={`/approveddatareport?id=${row.Program_Id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 underline"
-                    >
-                      View Report
-                    </a>
-                  </td>
+                  <tr key={row.EmployeeId || idx} className="border hover:bg-muted">
+                    {Object.entries(row).map(([key, value], index) => {
+                      let displayValue = value;
+                      const keyLower = key.toLowerCase();
+                      if (keyLower === "training_date" && value) {
+                        displayValue = new Date(value).toLocaleDateString();
+                      }
+                      return (
+                        <td key={index} className="px-4 py-2 border">
+                          {displayValue?.toString()}
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={columnsToDisplay.length} className="text-center p-4">
+                  <td colSpan={Object.keys(reportData[0]).length} className="text-center p-4">
                     No data found.
                   </td>
                 </tr>
@@ -311,10 +221,8 @@ export default function TrainingDataTable() {
           </table>
         </div>
       ) : (
-        <div className="text-center p-4">No records found.</div>
+        !loading && <div className="text-center p-4">No records found.</div>
       )}
-
-      {/* Pagination controls */}
       {rowsPerPage !== "All" && filteredData.length > 0 && (
         <div className="flex justify-between items-center mt-4 text-sm">
           <span>

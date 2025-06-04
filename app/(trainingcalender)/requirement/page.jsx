@@ -21,6 +21,9 @@ export default function Requirement() {
   const [department, setDepartment] = useState('');
   const [section,setSection] = useState('');
   const [username, setUsername] = useState('');
+   
+const [accessRole, setAccessRole] = useState(null);
+  const [isAuthorized, setIsAuthorized] = useState(null);
   const [employeeId, setEmployeeId] = useState('');
   const [trainingData, setTrainingData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -85,6 +88,44 @@ export default function Requirement() {
     setSelectedOptions([]); // Reset selected options for months if needed
     setMessage(''); // Reset any messages displayed
   };
+  useEffect(() => {
+    const storedEmployeeId = localStorage.getItem('employeeId');
+  
+    if (storedEmployeeId) {
+      setEmployeeId(storedEmployeeId);
+    } else {
+      window.location.href = '/';
+      return;
+    }
+  
+    const fetchAccessRole = async () => {
+      try {
+        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+        const data = await res.json();
+  
+        if (res.ok && data.Access_Role) {
+          
+          if (data.Access_Role === "HOD" || data.Access_Role === "HR_Hod") {
+            setIsAuthorized(false);
+            // Optionally redirect to unauthorized page
+            // window.location.href = '/unauthorized';
+            return;
+          }
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+        }
+      } catch (error) {
+        console.error('Error fetching access role:', error);
+        setIsAuthorized(false);
+      }
+    };
+  
+    fetchAccessRole();
+  }, []);
+    
+    
   
   useEffect(() => {
     // Retrieve the department, username, and employeeId from localStorage
@@ -464,6 +505,17 @@ const programOptions = programs.map(program => ({
           (currentPage - 1) * rowsPerPage,
           currentPage * rowsPerPage
         );
+        
+  if (!isAuthorized) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+        <div className="bg-white p-10 rounded shadow text-center">
+          <h2 className="text-2xl font-bold">Unauthorized</h2>
+          <p className="mt-2">You do not have access to view this page.</p>
+        </div>
+</div>
+);
+}
 
   return (
     <div className="max-w-full mx-auto bg-white p-2 w-full">
