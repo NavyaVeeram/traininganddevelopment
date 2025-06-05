@@ -21,7 +21,7 @@ export default async function handler(req, res) {
 
   try {
     const result = await prisma.$queryRawUnsafe(`
-      EXEC dbo.Approval_Form_Data_View @ProgramId = ${programId}
+      EXEC dbo.Approval_Form_Report_View @ProgramId = ${programId}
     `);
 
     res.status(200).json(result);
