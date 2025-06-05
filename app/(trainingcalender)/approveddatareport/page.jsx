@@ -35,7 +35,7 @@ useEffect(() => {
     setError(null);
 
     Promise.all([
-      fetch(`/api/approval_form_data_view?programId=${programId}`),
+      fetch(`/api/approval_form_report_view?programId=${programId}`),
       fetch(`/api/get_tet_form_program_name?id=${programId}`)
     ])
       .then(async ([reportRes, nameRes]) => {
@@ -70,7 +70,7 @@ useEffect(() => {
 
     setProgramId(idParam);
 
-    fetch(`/api/approval_form_data_view?programId=${idParam}`)
+    fetch(`/api/approval_form_report_view?programId=${idParam}`)
       .then((res) => res.json())
       .then((data) => {
         setReportData(data);

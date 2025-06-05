@@ -85,7 +85,7 @@ export default function TrainingDataTable() {
       await Promise.all(
         uniqueProgramIds.map(async (programId) => {
           try {
-            const res = await fetch(`/api/approval_form_data_view?programId=${programId}`);
+            const res = await fetch(`/api/approval_form_report_view?programId=${programId}`);
             if (res.ok) {
               const result = await res.json();
               counts[programId] = Array.isArray(result) ? result.length : 0;
@@ -379,7 +379,7 @@ const columnsToDisplay = data.length > 0
                           href={`/approveddatareport?id=${programId}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`underline ${isDisabled ? "text-gray-400 pointer-events-none" : "text-blue-600"}`}
+                          className={`underline ${isDisabled ? "text-gray-400  cursor-not-allowed" : "text-blue-600"}`}
                         >
                           View Report
                         </a>
