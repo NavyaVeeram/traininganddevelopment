@@ -1,9 +1,11 @@
 "use client";
+
 import React, { useState, useEffect, useMemo } from "react";
 
 export default function TrainingDataTable() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState([]);
+  const [recordCounts, setRecordCounts] = useState({}); // New state for record counts
 
   // Pagination, sorting, and search states
   const [currentPage, setCurrentPage] = useState(1);
@@ -66,6 +68,41 @@ export default function TrainingDataTable() {
         setLoading(false);
       });
   }, [yearNo]);
+
+  // New effect to fetch record counts for each programId
+  useEffect(() => {
+    if (!data || data.length === 0) {
+      setRecordCounts({});
+      return;
+    }
+
+    const uniqueProgramIds = Array.from(
+      new Set(data.map((item) => item.programid || item.Program_Id))
+    );
+
+    const fetchCounts = async () => {
+      const counts = {};
+      await Promise.all(
+        uniqueProgramIds.map(async (programId) => {
+          try {
+            const res = await fetch(`/api/approval_form_data_view?programId=${programId}`);
+            if (res.ok) {
+              const result = await res.json();
+              counts[programId] = Array.isArray(result) ? result.length : 0;
+            } else {
+              counts[programId] = 0;
+            }
+          } catch (error) {
+            console.error(`Error fetching count for programId ${programId}:`, error);
+            counts[programId] = 0;
+          }
+        })
+      );
+      setRecordCounts(counts);
+    };
+
+    fetchCounts();
+  }, [data]);
 
   // Sorting handler
   const handleSort = (key) => {
@@ -136,8 +173,11 @@ export default function TrainingDataTable() {
   }
 
   // Filter out "programid" from columns to display
-  const columnsToDisplay = data.length > 0
-    ? Object.keys(data[0]).filter((key) => key.toLowerCase() !== "programid" && key.toLowerCase() !== "program_id")
+const columnsToDisplay = data.length > 0
+    ? Object.keys(data[0]).filter((key) => {
+        const lowerKey = key.toLowerCase();
+        return lowerKey !== "programid" && lowerKey !== "program_id" && lowerKey !== "year_no" && lowerKey !== "train_purpose" && lowerKey !== "no_times" && lowerKey !== "isactive" && lowerKey !== "email_status";
+      })
     : [];
 
   return (
@@ -241,65 +281,112 @@ export default function TrainingDataTable() {
             </thead>
             <tbody>
               {paginatedData.length > 0 ? (
-                paginatedData.map((row, idx) => (
-                  <tr key={row.programid || idx} className="border hover:bg-muted">
-                    {Object.entries(row)
-                      .filter(([key]) => key.toLowerCase() !== "programid" && key.toLowerCase() !== "program_id")
-                  .map(([key, value], index) => {
-                    let displayValue = value;
-                    const approvedFields = [
-                      "emp_send",
-                      "hos",
-                      "hod",
-                      "hr_res",
-                      "hr_hod",
-                    ];
-                    const keyLower = key.toLowerCase();
-                    if (keyLower === "isactive") {
-                      if (value === 1 || value === true) displayValue = "Active";
-                      else if (value === 0 || value === false) displayValue = "InActive";
-                    } else if (keyLower === "email_status") {
-                      if (value === 1 || value === true) displayValue = "Accepted";
-                      else if (value === 0 || value === false || value === null) displayValue = "Rejected";
-                    } else if (approvedFields.includes(keyLower)) {
-                      if (value === 1 || value === true) displayValue = "Approved";
-                      else if (value === 0 || value === false || value === null) displayValue = "Waiting";
-                    }
-                    return (
-                      <td key={index} className="px-4 py-2 border">
-                        {(displayValue === "Approved" && (
-                          <span className="text-green-600 font-semibold">{displayValue}</span>
-                        )) ||
-                          (displayValue === "Waiting" && (
-                            <span className="text-blue-600 font-semibold">{displayValue}</span>
-                          )) ||
-                          (displayValue === "Accepted" && (
-                          <span className="text-green-600 font-semibold">{displayValue}</span>
-                        )) ||
-                          (displayValue === "Rejected" && (
-                            <span className="text-red-600 font-semibold">{displayValue}</span>
-                          )) ||
-                          (displayValue === "Active" && (
-                            <span className="text-green-600 font-semibold">{displayValue}</span>
-                          )) ||
-                          (displayValue === "InActive" && (
-                            <span className="text-red-600 font-semibold">{displayValue}</span>
-                          )) || <>{displayValue?.toString()}</>}
+                paginatedData.map((row, idx) => {
+                  const programId = row.programid || row.Program_Id;
+                  const count = recordCounts[programId] || 0;
+                  const isDisabled = count === 0;
+                  return (
+                    <tr key={programId || idx} className="border hover:bg-muted">
+{Object.entries(row)
+  .filter(([key]) => columnsToDisplay.includes(key))
+  .map(([key, value], index) => {
+                          let displayValue = value;
+                          // Map actual data keys to lowercase for consistent access
+                          const keyMap = {};
+                          Object.keys(row).forEach(k => {
+                            keyMap[k.toLowerCase()] = k;
+                          });
+
+                          const approvedFields = [
+                            "emp_send",
+                            "hos",
+                            "hod",
+                            "hr_res",
+                            "hr_hod",
+                          ];
+                          const keyLower = key.toLowerCase();
+
+                          // Get email_status value from row for conditional display
+                          let emailStatus = row[keyMap["email_status"]] ?? null;
+                          // Log emailStatus and value for debugging
+                          console.log("emailStatus:", emailStatus, "key:", keyLower, "value:", value);
+                          console.log("Full row data:", row);
+                          // emailStatus = emailStatus !== null ? Number(emailStatus) : null;
+
+                          if (keyLower === "isactive") {
+                            if (value === 1 || value === true) displayValue = "Active";
+                            else if (value === 0 || value === false) displayValue = "InActive";
+                          } else if (keyLower === "email_status") {
+                            if (value === true) displayValue = "Accepted";
+                            else if (value === false || value === null) displayValue = "Rejected";
+                          } else if (approvedFields.includes(keyLower)) {
+                            if (emailStatus === false) {
+                              // If email_status is false, display "Rejected" for the first null field only, others empty
+                              const approvalFieldsOrder = ["emp_send", "hos", "hod", "hr_res", "hr_hod"];
+                              const firstNullField = approvalFieldsOrder.find(field => {
+                                const val = row[keyMap[field]] ?? row[keyMap[field.charAt(0).toUpperCase() + field.slice(1)]];
+                                return val === null || val === undefined;
+                              });
+                              console.log("firstNullField:", firstNullField, "keyLower:", keyLower);
+                              if ((value === null || value === undefined) && keyLower === firstNullField) {
+                                displayValue = "Rejected";
+                              } else if ((value === null || value === undefined) && keyLower !== firstNullField) {
+                                displayValue = "";
+                              } else if (value === 1 || value === true) {
+                                displayValue = "Approved";
+                              } else {
+                                displayValue = "";
+                              }
+                            } else if (emailStatus === true) {
+                              // If email_status is true, display these fields as Waiting if null
+                              if (value === null || value === undefined) {
+                                displayValue = "Waiting";
+                              } else if (value === 1 || value === true) {
+                                displayValue = "Approved";
+                              } else {
+                                displayValue = "Waiting";
+                              }
+                            } else {
+                              if (value === 1 || value === true) displayValue = "Approved";
+                              else if (value === 0 || value === false || value === null) displayValue = "Waiting";
+                            }
+                          }
+                          return (
+                            <td key={index} className="px-4 py-2 border">
+                              {(displayValue === "Approved" && (
+                                <span className="text-green-600 font-semibold">{displayValue}</span>
+                              )) ||
+                                (displayValue === "Waiting" && (
+                                  <span className="text-blue-600 font-semibold">{displayValue}</span>
+                                )) ||
+                                (displayValue === "Accepted" && (
+                                <span className="text-green-600 font-semibold">{displayValue}</span>
+                              )) ||
+                                (displayValue === "Rejected" && (
+                                  <span className="text-red-600 font-semibold">{displayValue}</span>
+                                )) ||
+                                (displayValue === "Active" && (
+                                  <span className="text-green-600 font-semibold">{displayValue}</span>
+                                )) ||
+                                (displayValue === "InActive" && (
+                                  <span className="text-red-600 font-semibold">{displayValue}</span>
+                                )) || <>{displayValue?.toString()}</>}
+                            </td>
+                          );
+                        })}
+                      <td className="px-4 py-2 border">
+                        <a
+                          href={`/approveddatareport?id=${programId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`underline ${isDisabled ? "text-gray-400 pointer-events-none" : "text-blue-600"}`}
+                        >
+                          View Report
+                        </a>
                       </td>
-                    );
-                  })}
-                  <td className="px-4 py-2 border text-blue-600 underline">
-                    <a
-                      href={`/approveddatareport?id=${row.Program_Id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 underline"
-                    >
-                      View Report
-                    </a>
-                  </td>
-                  </tr>
-                ))
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan={columnsToDisplay.length} className="text-center p-4">

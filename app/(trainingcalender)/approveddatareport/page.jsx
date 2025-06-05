@@ -15,9 +15,52 @@ export default function ApprovedDataReport() {
   // Pagination, sorting, and search states
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [programName, setProgramName] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const [searchQuery, setSearchQuery] = useState("");
+useEffect(() => {
+    if (!idParam) {
+      setError("No program ID provided.");
+      setLoading(false);
+      return;
+    }
 
+    setProgramId(idParam);
+  }, [idParam]);
+
+  useEffect(() => {
+    if (!programId) return;
+
+    setLoading(true);
+    setError(null);
+
+    Promise.all([
+      fetch(`/api/approval_form_data_view?programId=${programId}`),
+      fetch(`/api/get_tet_form_program_name?id=${programId}`)
+    ])
+      .then(async ([reportRes, nameRes]) => {
+        if (!reportRes.ok) {
+          throw new Error("Failed to fetch report data.");
+        }
+        if (!nameRes.ok) {
+          throw new Error("Failed to fetch program name.");
+        }
+        const reportDataJson = await reportRes.json();
+        const nameDataJson = await nameRes.json();
+
+        setReportData(reportDataJson);
+        if (nameDataJson && nameDataJson.length > 0 && nameDataJson[0].Program_Name) {
+          setProgramName(nameDataJson[0].Program_Name);
+        } else {
+          setProgramName('');
+        }
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, [programId]);
   useEffect(() => {
     if (!idParam) {
       setError("No program ID provided.");
@@ -118,7 +161,14 @@ export default function ApprovedDataReport() {
   return (
     <div className="max-w-full mx-auto bg-white p-2 w-full">
       <div className="bg-sky-400 text-white p-2 flex justify-between rounded-t-lg">
-        <h1 className="font-bold">Approved Data Report - Program ID: {programId}</h1>
+        <h1 className="font-bold">Approved Data Report - {programName&&(
+          <>
+          <span className="font-semibold text-[#f8e111]">{'(' + programName + ')'}</span>
+          </>
+        )
+      }
+        
+        </h1>
       </div>
 
       {reportData.length > 0 && (
