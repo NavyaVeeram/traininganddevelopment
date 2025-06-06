@@ -305,7 +305,7 @@ const TrainingAttendanceForm = () => {
     }
   };
 
-  const handleMonthYearChange = async (date) => {
+const handleMonthYearChange = async (date) => {
     if (!date) return;
     setSelectedDate(date);
 
@@ -322,7 +322,11 @@ const TrainingAttendanceForm = () => {
       );
       const data = await res.json();
       if (res.ok) {
-        setOptions(data);
+        if (data.length === 0) {
+          resetForm();
+        } else {
+          setOptions(data);
+        }
       } else {
         throw new Error(data.error || "Error fetching data");
       }
@@ -330,36 +334,39 @@ const TrainingAttendanceForm = () => {
       setError(err.message);
     }
   };
-     useEffect(() => {
-    const storedEmployeeId = localStorage.getItem('employeeId');
+   useEffect(() => {
+   const storedEmployeeId = localStorage.getItem('employeeId');
+ 
+   if (storedEmployeeId) {
+     setEmployeeId(storedEmployeeId);
+   }
   
-    if (storedEmployeeId) {
-      setEmployeeId(storedEmployeeId);
-    } else {
-      window.location.href = '/';
-      return;
-    }
-  
-    const fetchAccessRole = async () => {
-      try {
-        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-        const data = await res.json();
-  
-        if (res.ok && data.Access_Role) {
-          setAccessRole(data.Access_Role);
-          setIsAuthorized(true);
-        } else {
-          setIsAuthorized(false);
-        }
-      } catch (error) {
-        console.error('Error fetching access role:', error);
-        setIsAuthorized(false);
-      }
-    };
-  
-    fetchAccessRole();
-  }, []);
-
+   const fetchAccessRole = async () => {
+     try {
+       const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+       const data = await res.json();
+ 
+       if (res.ok && data.Access_Role) {
+         // Restrict access for HR_Res and HR_HOD roles
+         if (data.Access_Role === "HOS" || data.Access_Role === "HOD" || data.Access_Role === "Res_Person") {
+           setIsAuthorized(false);
+           // Optionally redirect to unauthorized page
+           // window.location.href = '/unauthorized';
+           return;
+         }
+         setAccessRole(data.Access_Role);
+         setIsAuthorized(true);
+       } else {
+         setIsAuthorized(false);
+       }
+     } catch (error) {
+       console.error('Error fetching access role:', error);
+       setIsAuthorized(false);
+     }
+   };
+ 
+   fetchAccessRole();
+ }, []);
   const handleProgramChange = async (e) => {
     const selectedProgramId = e.target.value;
     if (!selectedProgramId) return;
@@ -595,7 +602,7 @@ const font = await mergedPdf.embedFont(fontBytes);
         if (index === 0) {
           page.drawText(emp.Username || "", {
             x: 170,
-            y: height - 68,
+            y: height - 70,
             size: 11,
             font,
             color: rgb(0, 0, 0),
@@ -603,49 +610,66 @@ const font = await mergedPdf.embedFont(fontBytes);
           // Customize on first page
           page.drawText(emp.EmployeeId || "", {
             x: 170,
-            y: height - 102,
+            y: height - 104,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(emp.Designation || "", {
             x: 170,
-            y: height - 136,
+            y: height - 138,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(emp.Section || "", {
             x: 170,
-            y: height - 171,
+            y: height - 173,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(emp.Department || "", {
             x: 170,
-            y: height - 206,
+            y: height - 208,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
-          page.drawText(emp.Program_Name || "", {
+          // Split Program_Name into two lines for drawing
+          const programName = emp.Program_Name || "";
+          const maxLength = Math.ceil(programName.length / 2);
+          let splitIndex = programName.indexOf(" ", maxLength);
+          if (splitIndex === -1) splitIndex = maxLength;
+          const line1 = programName.substring(0, splitIndex);
+          const line2 = programName.substring(splitIndex).trim();
+
+          page.drawText(line1, {
             x: 385,
-            y: height - 68,
-            size: 9,
+            y: height - 70,
+            size: 10,
             font,
             color: rgb(0, 0, 0),
           });
+          if (line2.length > 0) {
+            page.drawText(line2, {
+              x: 385,
+              y: height - 82, // Adjust line height as needed
+              size: 10,
+              font,
+              color: rgb(0, 0, 0),
+            });
+          }
           page.drawText(emp.Trainer || "", {
             x: 385,
-            y: height - 102,
+            y: height - 104,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(emp.Train_Mode || "", {
             x: 385,
-            y: height - 137,
+            y: height - 139,
             size: 11,
             font,
             color: rgb(0, 0, 0),
@@ -653,7 +677,7 @@ const font = await mergedPdf.embedFont(fontBytes);
 
           page.drawText(String(emp.No_Hrs + "hr") || "", {
             x: 385,
-            y: height - 171,
+            y: height - 173,
             size: 11,
             font,
             color: rgb(0, 0, 0),
@@ -665,7 +689,7 @@ const font = await mergedPdf.embedFont(fontBytes);
 
           page.drawText(String(formattedTrainingDate) || "", {
             x: 385,
-            y: height - 206,
+            y: height - 208,
             size: 11,
             font,
             color: rgb(0, 0, 0),
@@ -705,7 +729,17 @@ const programOptions = options.map((option) => ({
   value: option.Value,
   label: option.Text,
 }));
- 
+
+     // 🔒 Unauthorized view
+  if (isAuthorized === null) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+        <div className="bg-white p-10 rounded shadow text-center">
+          <h2 className="text-2xl font-bold">loading...</h2>
+        </div>
+      </div>
+    );
+  }
     // 🔒 Unauthorized view
   if (isAuthorized === false) {
     return (

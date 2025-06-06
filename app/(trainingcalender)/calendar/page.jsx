@@ -15,12 +15,11 @@ const FullYearCalendar = () => {
     label: new Date(0, i).toLocaleString("default", { month: "long" }),
   }));
 
-  const yearOptions = Array.from({ length: 50 }, (_, i) => {
+  const yearOptions = Array.from({ length: 100 }, (_, i) => {
     const value = 2000 + i;
     return { value, label: value.toString() };
   });
 
-  // Close calendar if clicked outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (calendarRef.current && !calendarRef.current.contains(event.target)) {
@@ -31,50 +30,52 @@ const FullYearCalendar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ISO 8601 Week Number Calculation
+  // Calculate week number of the year for a date (Monday as first day of week)
   const getWeekNumber = (date) => {
-    const target = new Date(date);
-    target.setHours(0, 0, 0, 0);
-
-    // Adjust to Thursday of this week
-    target.setDate(target.getDate() + 3 - ((target.getDay() + 6) % 7));
-
-    const firstThursday = new Date(target.getFullYear(), 0, 4);
-    firstThursday.setDate(firstThursday.getDate() + 3 - ((firstThursday.getDay() + 6) % 7));
-
-    const weekNumber = 1 + Math.round((target - firstThursday) / (7 * 24 * 60 * 60 * 1000));
-    return weekNumber;
+    const startOfYear = new Date(date.getFullYear(), 0, 1);
+    // Adjust so Monday=0, Sunday=6
+    const startDay = (startOfYear.getDay() + 6) % 7;
+    // Days since start of year
+    const diffDays = Math.floor((date - startOfYear) / (24 * 60 * 60 * 1000));
+    // Calculate week number
+    return Math.floor((diffDays + startDay) / 7) + 1;
   };
 
-  // Generate Month Grid (weeks starting Monday)
-  const generateMonth = (year, month) => {
-    const firstDayOfMonth = new Date(year, month, 1);
-    const lastDayOfMonth = new Date(year, month + 1, 0);
+  // Generate weeks for the selected month
+  const generateMonthWeeks = (year, month) => {
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+
     const days = [];
+    // Number of empty cells before first day (Monday as first day of week)
+    const leadingEmptyDays = (firstDay.getDay() + 6) % 7;
+    for (let i = 0; i < leadingEmptyDays; i++) days.push(null);
 
-    // Calculate the weekday of the first day, with Monday=0 ... Sunday=6
-    let startDay = (firstDayOfMonth.getDay() + 6) % 7;
-
-    let day = 1 - startDay; // Start from Monday of the first week grid
-
-    while (day <= lastDayOfMonth.getDate()) {
-      const week = [];
-      for (let i = 0; i < 7; i++, day++) {
-        week.push(day > 0 && day <= lastDayOfMonth.getDate() ? day : "");
-      }
-      days.push(week);
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+      days.push(new Date(year, month, day));
     }
 
-    return days;
+    // Fill trailing empty cells so total cells divisible by 7
+    while (days.length % 7 !== 0) {
+      days.push(null);
+    }
+
+    // Chunk into weeks
+    const weeks = [];
+    for (let i = 0; i < days.length; i += 7) {
+      weeks.push(days.slice(i, i + 7));
+    }
+    return weeks;
   };
 
-  const weeks = generateMonth(year, month);
+  const weeks = generateMonthWeeks(year, month);
 
   return (
-    <div>
+    <div className="relative z-50">
       <button
-        className="z-50 p-2 bg-sky-500 text-white rounded-full hover:bg-sky-600"
+        className="p-2 bg-sky-500 text-white rounded-full hover:bg-sky-600"
         onClick={() => setShowCalendar((prev) => !prev)}
+        aria-label="Toggle calendar"
       >
         <CalendarDays />
       </button>
@@ -86,7 +87,7 @@ const FullYearCalendar = () => {
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: "100%", opacity: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="fixed top-16 right-4 z-40 bg-white shadow-xl border rounded-md p-4 w-[350px]"
+          className="fixed top-16 right-4 z-40 bg-white shadow-2xl border rounded-lg p-4 w-[360px]"
         >
           <div className="flex justify-between gap-2 mb-4">
             <Select
@@ -106,7 +107,7 @@ const FullYearCalendar = () => {
           <table className="w-full text-center text-xs border-collapse">
             <thead>
               <tr className="bg-gray-100 text-gray-700">
-                <th className="p-1 border">WK</th>
+                <th className="p-1 border">Week</th>
                 {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
                   <th key={d} className="p-1 border font-medium">
                     {d}
@@ -116,29 +117,29 @@ const FullYearCalendar = () => {
             </thead>
             <tbody>
               {weeks.map((week, idx) => {
-                // Find the first day in the week to get the week number (skip empty)
-                const dayIndex = week.findIndex((day) => day !== "");
-                let currentWeekNum = "";
-
-                if (dayIndex !== -1) {
-                  const day = week[dayIndex];
-                  const date = new Date(year, month, day);
-                  currentWeekNum = getWeekNumber(date);
-                }
+                // Find first non-null day in this week to get date for week number
+                const firstDayInWeek = week.find((day) => day !== null);
+                const weekDate = firstDayInWeek || new Date(year, month, 1);
+                const weekNumber = getWeekNumber(weekDate);
 
                 return (
-                  <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                  <tr
+                    key={idx}
+                    className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                  >
                     <td className="border bg-gray-100 font-semibold text-gray-600 p-1">
-                      {currentWeekNum}
+                      {weekNumber}
                     </td>
                     {week.map((day, i) => (
                       <td
                         key={i}
-                        className={`border h-8 w-8 text-xs text-gray-800 hover:bg-sky-200 transition duration-200 ${
-                          day === "" ? "bg-gray-100 text-gray-400" : "bg-white"
+                        className={`border h-8 w-8 text-xs transition duration-200 ${
+                          !day
+                            ? "bg-white"
+                            : "text-gray-800 hover:bg-sky-200 bg-white"
                         }`}
                       >
-                        {day}
+                        {day ? day.getDate() : ""}
                       </td>
                     ))}
                   </tr>

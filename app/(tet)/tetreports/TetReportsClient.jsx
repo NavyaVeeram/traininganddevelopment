@@ -269,18 +269,35 @@ const font = await mergedPdf.embedFont(fontBytes);
             });
             page.drawText(emp.Venue || "", {
               x: 170,
-              y: height - 160,
+              y: height - 162,
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
-            page.drawText(emp.Program_Name || "", {
-              x: 385,
-              y: height - 55,
-              size: 9,
-              font,
-              color: rgb(0, 0, 0),
-            });
+               // Split Program_Name into two lines for drawing
+                    const programName = emp.Program_Name || "";
+                    const maxLength = Math.ceil(programName.length / 2);
+                    let splitIndex = programName.indexOf(" ", maxLength);
+                    if (splitIndex === -1) splitIndex = maxLength;
+                    const line1 = programName.substring(0, splitIndex);
+                    const line2 = programName.substring(splitIndex).trim();
+          
+                    page.drawText(line1, {
+                      x: 385,
+                      y: height - 46,
+                      size: 9,
+                      font,
+                      color: rgb(0, 0, 0),
+                    });
+                    if (line2.length > 0) {
+                      page.drawText(line2, {
+                        x: 385,
+                        y: height - 55, // Adjust line height as needed
+                        size: 9,
+                        font,
+                        color: rgb(0, 0, 0),
+                      });
+                    }
             page.drawText(emp.Trainer || "", {
               x: 385,
               y: height - 75,
@@ -327,124 +344,124 @@ const font = await mergedPdf.embedFont(fontBytes);
 
             page.drawText(String(formattedTrainingDate) || "", {
               x: 385,
-              y: height - 140,
+              y: height - 142,
               size:9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(formattedEvaluationDate) || "", {
               x: 385,
-              y: height - 160,
+              y: height - 164,
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_1) || "", {
-              x: 530,
-              y: height -225, 
+              x: 538,
+              y: height -230, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_2) || "", {
-              x: 530,
-              y: height -252, 
+              x: 538,
+              y: height -255, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_3) || "", {
-              x: 530,
-              y: height -275, 
+              x: 538,
+              y: height -278, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_4) || "", {
-              x: 530,
-              y: height -300, 
+              x: 538,
+              y: height -303, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_5) || "", {
-              x: 530,
-              y: height -324, 
+              x: 538,
+              y: height -327, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_6) || "", {
-              x: 530,
-              y: height -347, 
+              x: 538,
+              y: height -350, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_7) || "", {
-              x: 530,
-              y: height -373, 
+              x: 538,
+              y: height -376, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_8) || "", {
-              x: 530,
-              y: height -397, 
+              x: 538,
+              y: height -400, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_9) || "", {
-              x: 530,
-              y: height -420, 
+              x: 538,
+              y: height -423, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_10) || "", {
-              x: 530,
-              y: height -445, 
+              x: 538,
+              y: height -448, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Overall) || "", {
-              x: 530,
-              y: height - 468, 
+              x: 538,
+              y: height - 474, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Percentage) || "", {
-              x: 530,
-              y: height - 485, 
+              x: 538,
+              y: height - 491, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(emp.Remarks || "", {
-              x: 100,
-              y: height - 580, 
+              x: 105,
+              y: height - 585, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
-            let ratingYPositions = [226, 253, 276, 300.5, 324.5, 347.5, 373, 397, 420.5, 444];
+            let ratingYPositions = [229, 256, 281, 305.5, 329.5, 353.5, 378, 403, 427, 452];
                       for (let idx = 0; idx < 10; idx++) {
         const rating = emp[`Q_${idx + 1}`];
         let rowY = height - ratingYPositions[idx];
-        let xOffset = 388 + (rating - 1) * 10;
+        let xOffset = 385 + (rating - 1) * 10;
         if (rating === 1) {
-          xOffset = 389;
+          xOffset = 390;
         } else if (rating === 2) {
-          xOffset = 421;
+          xOffset = 424;
         } else if (rating === 3) {
-          xOffset = 447;
+          xOffset = 453;
         } else if (rating === 4) {
-          xOffset = 475;
+          xOffset = 480;
         } else if (rating === 5) {
-          xOffset = 503;
+          xOffset = 509;
         }
         if (rating > 0) {
           page.drawImage(tickImage, { x: xOffset, y: rowY, width: tickImageDims.width, height: tickImageDims.height });

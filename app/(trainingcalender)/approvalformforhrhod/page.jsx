@@ -253,7 +253,7 @@ console.error('Error updating status:', error);
 
   // if (data.length === 0) return <div>No records found.</div>;
     // 🔒 Unauthorized view
-  if (isAuthorized === false) {
+  if (!isAuthorized) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
         <div className="bg-white p-10 rounded shadow text-center">
