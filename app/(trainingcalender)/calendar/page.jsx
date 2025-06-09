@@ -30,37 +30,30 @@ const FullYearCalendar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Calculate week number of the year for a date (Monday as first day of week)
-  const getWeekNumber = (date) => {
-    const startOfYear = new Date(date.getFullYear(), 0, 1);
-    // Adjust so Monday=0, Sunday=6
-    const startDay = (startOfYear.getDay() + 6) % 7;
-    // Days since start of year
-    const diffDays = Math.floor((date - startOfYear) / (24 * 60 * 60 * 1000));
-    // Calculate week number
-    return Math.floor((diffDays + startDay) / 7) + 1;
+  // ISO 8601 Week Number Calculation
+  const getISOWeekNumber = (date) => {
+    const target = new Date(date.valueOf());
+    const dayNr = (date.getDay() + 6) % 7;
+    target.setDate(target.getDate() - dayNr + 3);
+    const firstThursday = new Date(target.getFullYear(), 0, 4);
+    const firstDayNr = (firstThursday.getDay() + 6) % 7;
+    firstThursday.setDate(firstThursday.getDate() - firstDayNr + 3);
+    const weekNumber = 1 + Math.floor((target - firstThursday) / (7 * 24 * 60 * 60 * 1000));
+    return weekNumber;
   };
 
-  // Generate weeks for the selected month
   const generateMonthWeeks = (year, month) => {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
-
     const days = [];
-    // Number of empty cells before first day (Monday as first day of week)
     const leadingEmptyDays = (firstDay.getDay() + 6) % 7;
     for (let i = 0; i < leadingEmptyDays; i++) days.push(null);
-
     for (let day = 1; day <= lastDay.getDate(); day++) {
       days.push(new Date(year, month, day));
     }
-
-    // Fill trailing empty cells so total cells divisible by 7
     while (days.length % 7 !== 0) {
       days.push(null);
     }
-
-    // Chunk into weeks
     const weeks = [];
     for (let i = 0; i < days.length; i += 7) {
       weeks.push(days.slice(i, i + 7));
@@ -117,12 +110,11 @@ const FullYearCalendar = () => {
             </thead>
             <tbody>
               {weeks.map((week, idx) => {
-                // Find first non-null day in this week to get date for week number
                 const firstDayInWeek = week.find((day) => day !== null);
                 const weekDate = firstDayInWeek || new Date(year, month, 1);
-                const weekNumber = getWeekNumber(weekDate);
+                const weekNumber = getISOWeekNumber(weekDate);
 
-                return (
+                return weekNumber <= 52 ? (
                   <tr
                     key={idx}
                     className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
@@ -143,7 +135,7 @@ const FullYearCalendar = () => {
                       </td>
                     ))}
                   </tr>
-                );
+                ) : null;
               })}
             </tbody>
           </table>

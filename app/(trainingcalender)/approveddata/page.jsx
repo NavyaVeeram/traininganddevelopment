@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 export default function TrainingDataTable() {
   const [loading, setLoading] = useState(true);
@@ -35,6 +37,7 @@ export default function TrainingDataTable() {
     "email_status": "Email Status",
     // Add other mappings as needed
   };
+
 
   useEffect(() => {
     const storedEmployeeId = localStorage.getItem("employeeId");
@@ -191,18 +194,22 @@ const columnsToDisplay = data.length > 0
         <label htmlFor="yearSelect" className="mr-2 font-semibold">
           Select Year:
         </label>
-        <select
-          id="yearSelect"
-          value={yearNo}
-          onChange={(e) => setYearNo(parseInt(e.target.value))}
-          className="border rounded p-1"
-        >
-          {yearOptions.map((year) => (
-            <option key={year} value={year}>
-              {year}
-            </option>
-          ))}
-        </select>
+        <DatePicker
+          selected={new Date(yearNo, 0, 1)}
+          onChange={(date) => setYearNo(date.getFullYear())}
+          dateFormat="yyyy"
+          showYearPicker
+          placeholderText="Select Year"
+          className="p-2 border border-gray-300 rounded-lg"
+          calendarClassName="z-50"
+          popperPlacement="top-start"
+          popperModifiers={{
+            preventOverflow: {
+              enabled: true,
+              boundariesElement: "viewport",
+            },
+          }}
+        />
       </div>
 
       {data.length > 0 && (
