@@ -253,7 +253,7 @@ console.error('Error updating status:', error);
 
   // if (data.length === 0) return <div>No records found.</div>;
     // 🔒 Unauthorized view
-  if (isAuthorized === false) {
+  if (!isAuthorized) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
         <div className="bg-white p-10 rounded shadow text-center">
@@ -624,6 +624,7 @@ handleInputChange({ target: { value: selectedMonth } }, 'Req_Months');
 placeholder="Select Month"
 isClearable
 className="text-sm"
+menuPortalTarget={document.body}
 styles={{
 control: (base) => ({
 ...base,
@@ -633,6 +634,7 @@ minHeight: "2rem",
 borderRadius: "0.5rem",
 width: '282px', // Control the width of the select dropdown
 }),
+menuPortal: base => ({ ...base, zIndex: 9999 }),
 }}
 />
 </div>
