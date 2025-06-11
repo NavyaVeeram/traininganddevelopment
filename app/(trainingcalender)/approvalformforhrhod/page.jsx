@@ -454,7 +454,7 @@ className="px-3 py-1 border rounded">
 {[...Array(totalPages)].map((_, i) => (
 <button
 key={i}
-className={`px-3 py-1 border rounded ${currentPage === i + 1 ? "bg-primary text-primary-foreground" : ""
+className={`px-3 py-1 border rounded ${currentPage === i + 1 ? "bg-black text-primary-foreground" : ""
 }`}
 onClick={() => setCurrentPage(i + 1)}
 type="button"

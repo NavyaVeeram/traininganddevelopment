@@ -704,7 +704,7 @@ const programOptions = options.map((option) => ({
                       <button
                         key={i}
                         className={`px-3 py-1 border rounded ${
-                          currentPage === i + 1 ? "bg-primary text-white" : ""
+                          currentPage === i + 1 ? "bg- text-white" : ""
                         }`}
                         onClick={() => setCurrentPage(i + 1)}
                       >

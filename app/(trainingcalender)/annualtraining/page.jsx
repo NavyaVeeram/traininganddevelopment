@@ -33,41 +33,42 @@ const AnnualTraining = () => {
   const tableRef = useRef(null);
 
   useEffect(() => {
-    const storedEmployeeId = localStorage.getItem("employeeId");
-    if (storedEmployeeId) {
-      setEmployeeId(storedEmployeeId);
-    }
+  const storedEmployeeId = localStorage.getItem('employeeId');
 
-    const fetchAccessRole = async () => {
-      try {
-        const res = await fetch(
-          "/api/get_access_role?employeeId=" + storedEmployeeId
-        );
-        const data = await res.json();
+  if (storedEmployeeId) {
+    setEmployeeId(storedEmployeeId);
+  } else {
+    window.location.href = '/';
+    return;
+  }
 
-        if (res.ok && data.Access_Role) {
-          if (
-            data.Access_Role === "Res_Person" ||
-            data.Access_Role === "HOS" ||
-            data.Access_Role === "HOD" ||
-            data.Access_Role === "HR_Hod"
-          ) {
-            setIsAuthorized(false);
-            return;
-          }
-          setAccessRole(data.Access_Role);
-          setIsAuthorized(true);
-        } else {
+  const fetchAccessRole = async () => {
+    try {
+      const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+      const data = await res.json();
+
+      if (res.ok && data.Access_Role) {
+        // Restrict access for HR_Res and HR_HOD roles
+        if ( data.Access_Role === "Res_Person" || data.Access_Role === "HOS" || data.Access_Role === "HOD" ) {
           setIsAuthorized(false);
+          // Optionally redirect to unauthorized page
+          // window.location.href = '/unauthorized';
+          return;
         }
-      } catch (error) {
-        console.error("Error fetching access role:", error);
+        setAccessRole(data.Access_Role);
+        setIsAuthorized(true);
+      } else {
         setIsAuthorized(false);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching access role:', error);
+      setIsAuthorized(false);
+    }
+  };
 
-    fetchAccessRole();
-  }, []);
+  fetchAccessRole();
+}, []);
+
 
   useEffect(() => {
     if (isAuthorized) {

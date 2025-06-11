@@ -627,7 +627,7 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
                       <button
                         key={i}
                         className={`px-3 py-1 border rounded ${
-                          currentPage === i + 1 ? "bg-primary text-white" : ""
+                          currentPage === i + 1 ? "bg-black text-white" : ""
                         }`}
                         onClick={() => setCurrentPage(i + 1)}
                       >

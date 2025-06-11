@@ -994,7 +994,7 @@ const programOptions = programs.map(program => ({
               key={i}
               type="button"
               className={`px-3 py-1 border rounded ${
-                currentPage === i + 1 ? "bg-primary text-primary-foreground" : ""
+                currentPage === i + 1 ? "bg-black text-primary-foreground" : ""
               }`}
               onClick={() => setCurrentPage(i + 1)}
             >
