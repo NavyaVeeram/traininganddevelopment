@@ -93,14 +93,11 @@ const AnnualTraining = () => {
 
   if (isAuthorized === null) {
     return (
-      <div>
-    Loading...
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+        <div className="bg-white p-10 rounded shadow text-center">
+          <h2 className="text-2xl font-bold">Loading...</h2>
+        </div>
       </div>
-        // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
-      //   <div className="bg-white p-10 rounded shadow text-center">
-      //     <h2 className="text-2xl font-bold">Loading...</h2>
-      //   </div>
-      // </div>
     );
   }
 
@@ -385,7 +382,7 @@ const AnnualTraining = () => {
                   Weeks
                 </td>
               </tr>
-              {monthsInData.map((month, index) => {
+              {monthsInData.map((month) => {
                 const monthKey = monthAbbrMap[month].toLowerCase();
                 const weeks = dynamicWeeksByMonth[month] || [];
                 const weeksToShow = weeks.slice(0, 5);
@@ -435,7 +432,6 @@ const AnnualTraining = () => {
                   </React.Fragment>
                 );
               })}
-   
             </tbody>
           </table>
         </>

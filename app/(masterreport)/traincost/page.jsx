@@ -200,11 +200,11 @@ const TrainingBudget = () => {
       width: '10%',
     },
   ];
-const isYearEnabled = (date) => {
-  const year = date.getFullYear();
-  const currentYear = new Date().getFullYear();
-  return [currentYear, currentYear + 1].includes(year);
-};
+// const isYearEnabled = (date) => {
+//   const year = date.getFullYear();
+//   const currentYear = new Date().getFullYear();
+//   return [currentYear, currentYear + 1].includes(year);
+// };
  if (isAuthorized === null) {
     return (
       <div>Loading...</div>
@@ -268,7 +268,7 @@ const isYearEnabled = (date) => {
                   boundariesElement: "viewport",
                 },
               }}
-              filterDate={isYearEnabled}
+              // filterDate={isYearEnabled}
             />
           </div>
         </div>

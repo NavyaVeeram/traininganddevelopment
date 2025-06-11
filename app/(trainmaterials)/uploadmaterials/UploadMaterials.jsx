@@ -373,11 +373,14 @@ const programOptions = options.map((option) => ({
   // 🔒 Unauthorized view
   if (isAuthorized === null) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
-        <div className="bg-white p-10 rounded shadow text-center">
-          <h2 className="text-2xl font-bold">Loading...</h2>
-        </div>
+      <div>
+        Loading...
       </div>
+      // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+      //   <div className="bg-white p-10 rounded shadow text-center">
+      //     <h2 className="text-2xl font-bold">Loading...</h2>
+      //   </div>
+      // </div>
     );
   }
 
@@ -544,7 +547,7 @@ const programOptions = options.map((option) => ({
         <div className="text-center py-4">Loading data...</div>
       ) : error ? (
         <div className="text-center py-4 text-red-500">{error}</div>
-      ) : uploadedData.length > 0 ? (
+      ) : (
         <div className="card-body p-0 overflow-x-auto pb-3">
           <div className="card-body p-0 overflow-x-auto pb-3">
             <div className="p-4 bg-card">
@@ -729,10 +732,6 @@ const programOptions = options.map((option) => ({
               }
             </div>
           </div>
-        </div>
-      ) : (
-        <div className="text-center py-4 text-gray-500">
-          No Files Uploaded Yet.
         </div>
       )}
     </div>

@@ -726,7 +726,7 @@ const font = await mergedPdf.embedFont(fontBytes);
     </div>
     <form onSubmit={handleSubmit}>
             <div className="overflow-x-auto mb-6">
-         <table className="table-auto w-full border text-sm">
+         <table className="table-fixed w-full border text-sm">
             <tbody>
           <tr>
           <td className="border px-4 py-2 font-semibold">Employee Name</td>
@@ -788,11 +788,11 @@ const font = await mergedPdf.embedFont(fontBytes);
   </div>
 </div>
 
-  <table className="w-full table-auto text-sm">
+  <table className="w-full table-fixed text-sm">
     <thead>
       <tr className="bg-gray-100">
         <th className="border p-2" rowSpan="2">S.No</th>
-        <th className="border p-2" rowSpan="2">Parameters</th>
+        <th className="border p-2 w-64" rowSpan="2">Parameters</th>
         <th className="border p-2" colSpan="5">Rating</th>
         <th className="border p-2" rowSpan="2">Selected</th>
       </tr>
@@ -837,7 +837,7 @@ const font = await mergedPdf.embedFont(fontBytes);
 
         {/* Score Range */}
         <div className="border mt-4 p-4">
-          <table className="w-full table-auto border-collapse text-sm">
+          <table className="w-full border-collapse text-sm">
             <thead>
               <tr>
                 <th className="border p-2">&lt;35</th>

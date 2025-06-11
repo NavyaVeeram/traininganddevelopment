@@ -11,7 +11,7 @@ export default function TrainingDataTable() {
 
   // Pagination, sorting, and search states
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState("10");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const [searchQuery, setSearchQuery] = useState("");
   const [yearNo, setYearNo] = useState(new Date().getFullYear());
@@ -154,16 +154,24 @@ export default function TrainingDataTable() {
     );
   }, [sortedData, searchQuery]);
 
+  // Helper to get rowsPerPage as number for calculations
+  const getRowsPerPageNumber = () => {
+    if (rowsPerPage === "All") return filteredData.length;
+    return parseInt(rowsPerPage) || 10;
+  };
+
+  const rowsPerPageNumber = getRowsPerPageNumber();
+
   // Pagination calculations
   const totalPages =
-    rowsPerPage === "All" ? 1 : Math.ceil(filteredData.length / rowsPerPage);
+    rowsPerPage === "All" ? 1 : Math.ceil(filteredData.length / rowsPerPageNumber);
 
   const paginatedData =
     rowsPerPage === "All"
       ? filteredData
       : filteredData.slice(
-          (currentPage - 1) * rowsPerPage,
-          currentPage * rowsPerPage
+          (currentPage - 1) * rowsPerPageNumber,
+          currentPage * rowsPerPageNumber
         );
 
   if (loading) return <div>Loading...</div>;
@@ -221,13 +229,13 @@ const columnsToDisplay = data.length > 0
               <select
                 value={rowsPerPage}
                 onChange={(e) => {
-                  setRowsPerPage(e.target.value === "All" ? "All" : parseInt(e.target.value));
+                  setRowsPerPage(e.target.value);
                   setCurrentPage(1);
                 }}
                 className="border rounded p-1"
               >
                 {[10, 20, 30, 40, 100, "All"].map((val) => (
-                  <option key={val} value={val}>
+                  <option key={val} value={val.toString()}>
                     {val}
                   </option>
                 ))}
@@ -409,18 +417,18 @@ const columnsToDisplay = data.length > 0
       )}
 
       {/* Pagination controls */}
-      {rowsPerPage !== "All" && filteredData.length > 0 && (
+      {filteredData.length > 0 && (
         <div className="flex justify-between items-center mt-4 text-sm">
-          <span>
-            Showing{" "}
-            {filteredData.length > 0
-              ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
-                  currentPage * rowsPerPage,
-                  filteredData.length
-                )} of ${filteredData.length}`
-              : "0"}{" "}
-            entries
-          </span>
+      <span>
+        Showing{" "}
+        {filteredData.length > 0
+          ? `${(currentPage - 1) * rowsPerPageNumber + 1} to ${Math.min(
+              currentPage * rowsPerPageNumber,
+              filteredData.length
+            )} of ${filteredData.length}`
+          : "0"}{" "}
+        entries
+      </span>
           <div className="flex gap-1">
             <button
               onClick={() => setCurrentPage(1)}
@@ -440,7 +448,7 @@ const columnsToDisplay = data.length > 0
               <button
                 key={i}
                 className={`px-3 py-1 border rounded ${
-                  currentPage === i + 1 ? "bg-primary text-primary-foreground" : ""
+                  currentPage === i + 1 ? "bg-black text-primary-foreground" : ""
                 }`}
                 onClick={() => setCurrentPage(i + 1)}
                 type="button"

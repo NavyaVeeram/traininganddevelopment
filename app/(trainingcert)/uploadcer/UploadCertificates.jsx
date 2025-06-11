@@ -295,17 +295,25 @@ useEffect(() => {
 
   const safeFilteredData = Array.isArray(filteredData) ? filteredData : [];
 
+  // Helper to get rowsPerPage as number for calculations
+  const getRowsPerPageNumber = () => {
+    if (rowsPerPage === "All") return safeFilteredData.length;
+    return Number(rowsPerPage) || 10;
+  };
+
+  const rowsPerPageNumber = getRowsPerPageNumber();
+
   const totalPages =
     rowsPerPage === "All"
       ? 1
-      : Math.ceil(safeFilteredData.length / rowsPerPage);
+      : Math.ceil(safeFilteredData.length / rowsPerPageNumber);
 
   const paginatedData =
     rowsPerPage === "All"
       ? safeFilteredData
       : safeFilteredData.slice(
-          (currentPage - 1) * rowsPerPage,
-          currentPage * rowsPerPage
+          (currentPage - 1) * rowsPerPageNumber,
+          currentPage * rowsPerPageNumber
         );
   const handleTableSearchChange = (e) => {
     const searchQuery = e.target.value;
@@ -680,8 +688,8 @@ Loading...
                   <div>
                     Showing{" "}
                     {filteredData.length > 0
-                      ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
-                          currentPage * rowsPerPage,
+                      ? `${(currentPage - 1) * rowsPerPageNumber + 1} to ${Math.min(
+                          currentPage * rowsPerPageNumber,
                           filteredData.length
                         )} of ${filteredData.length} entries`
                       : "0 entries"}

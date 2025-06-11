@@ -90,11 +90,12 @@ export default function TrainingRecord() {
   // ✅ Authorized view
     if (isAuthorized === null) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
-        <div className="bg-white p-10 rounded shadow text-center">
-          <h2 className="text-2xl font-bold">Loading...</h2>
-        </div>
-      </div>
+      // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+      //   <div className="bg-white p-10 rounded shadow text-center">
+      //     <h2 className="text-2xl font-bold">Loading...</h2>
+      //   </div>
+      // </div>
+      <div>Loading...</div>
     );
   }
 
