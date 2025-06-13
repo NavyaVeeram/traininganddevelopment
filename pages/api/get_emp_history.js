@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     const { EmployeeId} = req.query;
 
     if (!EmployeeId) {
-      return res.status(400).json({ message: "EmployeeId and Year_No are required" });
+      return res.status(400).json({ message: "EmployeeId IS required" });
     }
 
     try {
