@@ -40,7 +40,7 @@ const Access = () => {
     const fetchInitialData = async () => {
       try {
         const [empRes, desigRes] = await Promise.all([
-          fetch("/api/user_dropdown"),
+          fetch("/api/access_user_dropdown"),
           fetch("/api/access_role_dropdown"),
         ]);
 

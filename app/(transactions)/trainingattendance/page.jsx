@@ -609,90 +609,95 @@ const font = await mergedPdf.embedFont(fontBytes);
           // });
           //      // Split Program_Name into two lines for drawing
           const Username = emp.Username || "";
-          const maxLengthuser = Math.ceil(Username.length / 2);
-          let splitIndexuser = Username.indexOf(" ", maxLengthuser);
-          if (splitIndexuser === -1) splitIndexuser = maxLengthuser;
-          const line1user = Username.substring(0, splitIndexuser);
-          const line2user = Username.substring(splitIndexuser).trim();
-
-          page.drawText(line1user, {
-            x: 150,
-            y: height - 85,
-            size: 10,
-            font,
-            color: rgb(0, 0, 0),
-          });
-          if (line2user.length > 0) {
-            page.drawText(line2user, {
-              x: 150,
-              y: height - 70, // Adjust line height as needed
-              size: 10,
-              font,
-              color: rgb(0, 0, 0),
-            });
-          }
+                                const words = Username.split(" ").filter(Boolean);
+                                if (words.length > 4) {
+                                  // Draw all words in one line lower
+                                  page.drawText(Username, {
+                                    x: 140,
+                                    y: height - 85,
+                                    size: 11,
+                                    font,
+                                    color: rgb(0, 0, 0),
+                                  });
+                                } else {
+                                  // Draw all words in one line at top
+                                  page.drawText(Username, {
+                                    x: 140,
+                                    y: height - 70,
+                                    size: 11,
+                                    font,
+                                    color: rgb(0, 0, 0),
+                                  });
+                                }
           // Customize on first page
           page.drawText(emp.EmployeeId || "", {
-            x: 150,
+            x: 140,
             y: height - 104,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(emp.Designation || "", {
-            x: 150,
+            x: 140,
             y: height - 138,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(emp.Section || "", {
-            x: 150,
+            x: 140,
             y: height - 173,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(emp.Department || "", {
-            x: 150,
+            x: 140,
             y: height - 208,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
           // Split Program_Name into two lines for drawing
-          const programName = emp.Program_Name || "";
-          const maxLength = Math.ceil(programName.length / 2);
-          let splitIndex = programName.indexOf(" ", maxLength);
-          if (splitIndex === -1) splitIndex = maxLength;
-          const line1 = programName.substring(0, splitIndex);
-          const line2 = programName.substring(splitIndex).trim();
-
-          page.drawText(line1, {
-            x: 385,
-            y: height - 70,
-            size: 10,
-            font,
-            color: rgb(0, 0, 0),
-          });
-          if (line2.length > 0) {
-            page.drawText(line2, {
-              x: 385,
-              y: height - 82, // Adjust line height as needed
-              size: 10,
-              font,
-              color: rgb(0, 0, 0),
-            });
-          }
+        // Split Program_Name into two lines for drawing
+                            const programName = emp.Program_Name || "";
+                            const wordss = programName.split(" ").filter(Boolean);
+                            if (wordss.length > 4) {
+                              const mid = Math.ceil(wordss.length / 2);
+                              const line1 = wordss.slice(0, mid).join(" ");
+                              const line2 = wordss.slice(mid).join(" ");
+                              page.drawText(line1, {
+                                x: 375,
+                                y: height - 70,
+                                size: 11,
+                                font,
+                                color: rgb(0, 0, 0),
+                              });
+                              page.drawText(line2, {
+                                x: 375,
+                                y: height - 85, // Adjust line height as needed
+                                size: 11,
+                                font,
+                                color: rgb(0, 0, 0),
+                              });
+                            } else {
+                              page.drawText(programName, {
+                                x: 375,
+                                y: height - 70,
+                                size: 11,
+                                font,
+                                color: rgb(0, 0, 0),
+                              });
+                            }
           page.drawText(emp.Trainer || "", {
-            x: 385,
+            x: 375,
             y: height - 104,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(emp.Train_Mode || "", {
-            x: 385,
+            x: 375,
             y: height - 139,
             size: 11,
             font,
@@ -700,7 +705,7 @@ const font = await mergedPdf.embedFont(fontBytes);
           });
 
           page.drawText(String(emp.No_Hrs + "hr") || "", {
-            x: 385,
+            x: 375,
             y: height - 173,
             size: 11,
             font,
@@ -712,7 +717,7 @@ const font = await mergedPdf.embedFont(fontBytes);
             : "";
 
           page.drawText(String(formattedTrainingDate) || "", {
-            x: 385,
+            x: 375,
             y: height - 208,
             size: 11,
             font,

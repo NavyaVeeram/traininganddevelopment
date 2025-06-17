@@ -455,18 +455,17 @@ const font = await mergedPdf.embedFont(fontBytes);
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Overall) || "", {
-              x: 538,
+              x: 534,
               y: height - 474, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Percentage) || "", {
-              x: 538,
+              x: 534,
               y: height - 491, 
               size: 9,
               font,
-              color: rgb(0, 0, 0),
             });
             page.drawText(emp.Remarks || "", {
               x: 105,
