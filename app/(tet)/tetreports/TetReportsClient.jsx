@@ -231,68 +231,96 @@ const font = await mergedPdf.embedFont(fontBytes);
         
           if (index === 0) {
             // Customize on the first page
-            page.drawText(emp.Username || "", {
-              x: 170,
-              y: height - 55,
-              size: 9,
-              font,
-              color: rgb(0, 0, 0),
-            });
+            // page.drawText(emp.Username || "", {
+            //   x: 170,
+            //   y: height - 55,
+            //   size: 9,
+            //   font,
+            //   color: rgb(0, 0, 0),
+            // });
+             // Split  into two lines for drawing
+                              const Username = emp.Username || "";
+                              const words = Username.split(" ").filter(Boolean);
+                              if (words.length > 4) {
+                                // Draw all words in one line lower
+                                page.drawText(Username, {
+                                  x: 165,
+                                  y: height - 55,
+                                  size: 9,
+                                  font,
+                                  color: rgb(0, 0, 0),
+                                });
+                              } else {
+                                // Draw all words in one line at top
+                                page.drawText(Username, {
+                                  x: 165,
+                                  y: height - 55,
+                                  size: 9,
+                                  font,
+                                  color: rgb(0, 0, 0),
+                                });
+                              }
             page.drawText(emp.EmployeeId || "", {
-              x: 170,
-              y: height - 75,
+              x: 165,
+              y: height - 77,
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
   
             page.drawText(emp.Designation || "", {
-              x: 170,
-              y: height - 98,
+              x: 165,
+              y: height - 100,
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(emp.Section || "", {
-              x: 170,
-              y: height - 118,
+              x: 165,
+              y: height - 120,
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(emp.Department || "", {
-              x: 170,
-              y: height - 140,
+              x: 165,
+              y: height - 142,
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(emp.Venue || "", {
-              x: 170,
-              y: height - 162,
+              x: 165,
+              y: height - 165,
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
                // Split Program_Name into two lines for drawing
                     const programName = emp.Program_Name || "";
-                    const maxLength = Math.ceil(programName.length / 2);
-                    let splitIndex = programName.indexOf(" ", maxLength);
-                    if (splitIndex === -1) splitIndex = maxLength;
-                    const line1 = programName.substring(0, splitIndex);
-                    const line2 = programName.substring(splitIndex).trim();
-          
-                    page.drawText(line1, {
-                      x: 385,
-                      y: height - 46,
-                      size: 9,
-                      font,
-                      color: rgb(0, 0, 0),
-                    });
-                    if (line2.length > 0) {
+                    const wordss = programName.split(" ").filter(Boolean);
+                    if (wordss.length > 4) {
+                      const mid = Math.ceil(wordss.length / 2);
+                      const line1 = wordss.slice(0, mid).join(" ");
+                      const line2 = wordss.slice(mid).join(" ");
+                      page.drawText(line1, {
+                        x: 385,
+                        y: height - 46,
+                        size: 9,
+                        font,
+                        color: rgb(0, 0, 0),
+                      });
                       page.drawText(line2, {
                         x: 385,
                         y: height - 55, // Adjust line height as needed
+                        size: 9,
+                        font,
+                        color: rgb(0, 0, 0),
+                      });
+                    } else {
+                      page.drawText(programName, {
+                        x: 385,
+                        y: height - 55,
                         size: 9,
                         font,
                         color: rgb(0, 0, 0),
@@ -328,7 +356,7 @@ const font = await mergedPdf.embedFont(fontBytes);
 
             page.drawText(String(emp.No_Hrs +""+ "hrs") || "", {
               x: 385,
-              y: height - 118,
+              y: height - 120,
               size: 9,
               font,
               color: rgb(0, 0, 0),
@@ -344,14 +372,14 @@ const font = await mergedPdf.embedFont(fontBytes);
 
             page.drawText(String(formattedTrainingDate) || "", {
               x: 385,
-              y: height - 142,
+              y: height - 143,
               size:9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(formattedEvaluationDate) || "", {
               x: 385,
-              y: height - 164,
+              y: height - 165,
               size: 9,
               font,
               color: rgb(0, 0, 0),

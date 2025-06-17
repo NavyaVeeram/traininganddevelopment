@@ -600,37 +600,61 @@ const font = await mergedPdf.embedFont(fontBytes);
         const height = page.getSize().height;
 
         if (index === 0) {
-          page.drawText(emp.Username || "", {
-            x: 170,
-            y: height - 70,
-            size: 11,
+          // page.drawText(emp.Username || "", {
+          //   x: 180,
+          //   y: height - 70,
+          //   size: 11,
+          //   font,
+          //   color: rgb(0, 0, 0),
+          // });
+          //      // Split Program_Name into two lines for drawing
+          const Username = emp.Username || "";
+          const maxLengthuser = Math.ceil(Username.length / 2);
+          let splitIndexuser = Username.indexOf(" ", maxLengthuser);
+          if (splitIndexuser === -1) splitIndexuser = maxLengthuser;
+          const line1user = Username.substring(0, splitIndexuser);
+          const line2user = Username.substring(splitIndexuser).trim();
+
+          page.drawText(line1user, {
+            x: 150,
+            y: height - 85,
+            size: 10,
             font,
             color: rgb(0, 0, 0),
           });
+          if (line2user.length > 0) {
+            page.drawText(line2user, {
+              x: 150,
+              y: height - 70, // Adjust line height as needed
+              size: 10,
+              font,
+              color: rgb(0, 0, 0),
+            });
+          }
           // Customize on first page
           page.drawText(emp.EmployeeId || "", {
-            x: 170,
+            x: 150,
             y: height - 104,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(emp.Designation || "", {
-            x: 170,
+            x: 150,
             y: height - 138,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(emp.Section || "", {
-            x: 170,
+            x: 150,
             y: height - 173,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(emp.Department || "", {
-            x: 170,
+            x: 150,
             y: height - 208,
             size: 11,
             font,
