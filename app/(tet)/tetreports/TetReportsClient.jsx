@@ -356,7 +356,7 @@ const font = await mergedPdf.embedFont(fontBytes);
 
             page.drawText(String(emp.No_Hrs +""+ "hrs") || "", {
               x: 385,
-              y: height - 120,
+              y: height - 118,
               size: 9,
               font,
               color: rgb(0, 0, 0),
@@ -372,14 +372,14 @@ const font = await mergedPdf.embedFont(fontBytes);
 
             page.drawText(String(formattedTrainingDate) || "", {
               x: 385,
-              y: height - 143,
+              y: height - 142,
               size:9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(formattedEvaluationDate) || "", {
               x: 385,
-              y: height - 165,
+              y: height - 164,
               size: 9,
               font,
               color: rgb(0, 0, 0),
@@ -455,17 +455,18 @@ const font = await mergedPdf.embedFont(fontBytes);
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Overall) || "", {
-              x: 534,
+              x: 538,
               y: height - 474, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Percentage) || "", {
-              x: 534,
+              x: 538,
               y: height - 491, 
               size: 9,
               font,
+              color: rgb(0, 0, 0),
             });
             page.drawText(emp.Remarks || "", {
               x: 105,

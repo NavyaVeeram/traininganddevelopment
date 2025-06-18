@@ -488,12 +488,18 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900">Status</label>
-            <div
-              className="w-full p-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-900"
-            >
-              {((trainingDetails.IsActive) === 1) ? "Active" : ((trainingDetails.IsActive) === 0 ? "Inactive" : "Inactive")}
-            </div>
+              <label className="block text-sm font-medium text-gray-900">Status</label>
+            <input
+              type="text"
+              value={(() => {
+                if (trainingDetails.IsActive === 1 || trainingDetails.IsActive === "1") return "Active";
+                if (trainingDetails.IsActive === 0 || trainingDetails.IsActive === "0") return "Inactive";
+                return "";
+              })()}
+              readOnly
+              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
+            />
+
           </div>
         </div>
 
