@@ -591,7 +591,7 @@ const font = await mergedPdf.embedFont(fontBytes);
       // Adjust dropdown options to show EmployeeId as value and include EmployeeId in label with Username + Department
       const formattedOptions = data.map((item) => ({
         value: item.Value,
-        label: `${item.Value} | ${item.Text}`, // Show EmployeeId along with Username + Department
+        label: `${item.Text}`, // Show EmployeeId along with Username + Department
       }));
 
       setOptions(formattedOptions);

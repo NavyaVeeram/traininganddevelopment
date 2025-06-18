@@ -35,11 +35,6 @@ const training: { title: string; href: string }[] = [
     title: "Requirement - IATF/HSE",
     href: "requirement",
   },
-  // {
-  //   title: "view / edit / upload",
-  //   href: "/vieweditupload",
-  // },
-
    {
     title: "Approval Form",
     href: "/approvalform",
@@ -74,10 +69,6 @@ const tet: { title: string; href: string }[] = [
     title: " Generate Forms",
     href: "tetformsgenerate",
   },
-  // {
-  //   title: "TET Reports",
-  //   href: "tetreports",
-  // },
 ]
 const masterreport: { title: string; href: string }[] = [
   {
@@ -101,35 +92,17 @@ const masterreport: { title: string; href: string }[] = [
     href: "/trainingrecord",
   },
 ]
-// const trainingagencies: { title: string; href: string }[] = [
-//   {
-//     title: "Upload External Training Agency details",
-//     href: "/uploadexternal",
-//   },
-//   // {
-//   //   title:"List of External Training Agencies",
-//   //   href: "/listofexternal",
-//   // },
-// ]
 const trainingcertificates: { title: string; href: string }[] = [
   {
     title: "Upload Certificates",
     href: "/uploadcer",
   },
-  // {
-  //   title: "View Certificates",
-  //   href: "/viewcer",
-  // },
 ]
 const trainingmaterials: { title: string; href: string }[] = [
   {
     title: "Upload Materials",
     href: "/uploadmaterials",
   },
-  // {
-  //   title: "View Materials",
-  //   href: "/viewmaterials",
-  // },
 ]
 
 export default function NavigationMenuDemo() {
@@ -142,9 +115,6 @@ const [employeeId, setEmployeeId] = useState('');
 const [accessRole, setAccessRole] = useState(null);
 const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
 
-// Removed unused trainingData state
-// const [trainingData,setTrainingData] = useState([]);
-  
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
   }
@@ -255,9 +225,9 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
           )}
         >
       
-<NavigationMenuItem className="bg-gray-100 position-relative Z-10">
+<NavigationMenuItem className="bg-gray-100 position-relative cursor-pointer Z-10">
   <NavigationMenuTrigger className="hover:text-sky-400">Training Calendar</NavigationMenuTrigger>
-  <NavigationMenuContent className="grid gap-2 p-1 md:w-[280px] max-h-[280px]">
+  <NavigationMenuContent className="grid gap-2 p-1 md:w-[280px] max-h-[280px] cursor-pointer">
     <ul className="grid gap-2 ">
    {training.map((component) => {
    
@@ -381,7 +351,7 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
           )}
             {accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HOD" && (
             <NavigationMenuItem className="bg-gray-100 position-relative z-10">
-              <NavigationMenuTrigger className="hover:text-sky-400">T & D Report</NavigationMenuTrigger>
+              <NavigationMenuTrigger className="hover:text-sky-400  cursor-pointer focus:outline-none">T & D Report</NavigationMenuTrigger>
               <NavigationMenuContent className="grid gap-2 p-1 md:w-[200px] max-h-[250px] ">
                 <ul className="grid gap-2 p-1">
                   {masterreport.map((component) => {
