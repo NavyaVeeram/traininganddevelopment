@@ -1,0 +1,54 @@
+1.Annual Training calendar 
+-> External and Internal programe names should display the different colours 
+-> the forwarded programs also another colour 
+-> If there is 2 weeks in two months it is displaying all the programs in the first week but want to display the programs based on the particular week 
+2.Requirement 
+-
+3.Approval form 
+-
+4.Approved Data 
+-Add the another dropdown IATF and HSE 
+5.Training Attendance entry
+-If the user enter the employee Ids in the form then automatically the number persons want to change .
+- Also change the font displaying in the form printing
+6.Monthly training particulars 
+- Add the date format as DD/MM/YYYY for conducted date 
+- And display the Conducted date in the date wise 
+- Add the date in the Training Status forwarded
+7.Generate forms 
+-Here also Change the Date format to  DD/MM/YYYY training date and evaluation date 
+-display the dropdown IATF AND HSE with the dates
+-status is not required here 
+-After clicking the view report if the employee submitted the data show the green tick for that particular employee in  the dropdown
+- Change the form heading to Training Effectiveness Evaluation
+- Print Option is not necessary 
+- HR-040-4 (in future)
+- Here the Status of the program should display not the status of employee active .show the program active or Inactive 
+8.Upload Certificates
+- For each employee enable or create a new column for attaching the certificates for the individual employee
+- Add the Certifications for that particular employee to verify the certificates of that employee 
+9.Upload Materials
+-
+10.Emp history 
+- 
+11.qualified trainers list 
+- Here Add the email approval option 
+- Take the date of joining to check the 3 or 5 years experience to disable the form automatically based on the DOJ 
+- Display the qualifiers list as if they qualified yes and if they not qualified no and also give the edit option to change the yes to no that means not qualified to qualified and qualified to not qualified .
+
+12.training cost
+-
+13.training agencies 
+-don't give the @gmail.com format
+14.training record 
+-
+15.Login page:
+->Heading as Greentech Industries and Training and developement
+->At the bottom Greentech Industries as a footer 
+Additional 
+Change the text colour in the navbar for every header
+Additional Screens:New screens for the MONTHS as heading and showing the table data as internal and external and displaying the programs count for each month.
+
+1,7-navya
+4,5,6 - Anjali
+13,15 - cahndu
