@@ -367,21 +367,21 @@ const AnnualTraining = () => {
             <tbody>
               <tr>
                 <td
-                  className="border border-gray-300 px-2 py-1 font-semibold w-12  bg-blue-100 text-center align-middle whitespace-nowrap"
+                  className="border border-gray-300 px-2 py-1 font-semibold  bg-blue-100 text-center align-middle whitespace-nowrap"
                   colSpan={6}
                 >
                   Annual Training Calendar for {trainingName}
                 </td>
               </tr>
               <tr>
-                <td
-                  className="border border-gray-300 px-2 py-1 font-semibold w-12  bg-blue-200 text-center align-middle whitespace-nowrap"
-                >
-                  Months
-                </td>
+<th
+  className="border border-gray-300 px-2 py-1 font-semibold w-[60px] special-width bg-blue-200 text-center align-middle"
+ style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}>
+  Months
+</th>
                 <td
                   className="border border-gray-300 px-1 py-1 w-24 text-center font-semibold bg-orange-200"
-                  colSpan={5}
+                  colSpan={6}
                 >
                   Weeks
                 </td>
@@ -393,12 +393,13 @@ const AnnualTraining = () => {
                 return (
                   <React.Fragment key={month}>
                     <tr>
-                      <td
-                        className="border border-gray-300 px-2 py-1 font-semibold w-12 h-12 bg-blue-100 text-center align-middle whitespace-nowrap"
-                        rowSpan={2}
-                      >
-                        {month}
-                      </td>
+<td
+  className="border border-gray-300 px-2 py-1 font-semibold w-[60px] bg-blue-100 text-center align-middle whitespace-nowrap"
+  rowSpan={2}
+   style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}
+>
+  {month}
+</td>
                       {weeksToShow.map((week) => (
                         <td
                           key={`${month}-week-header-${week}`}
@@ -414,20 +415,22 @@ const AnnualTraining = () => {
                         return (
                           <td
                             key={`${month}-week-data-${week}`}
-                            className={`border border-gray-300 px-4 py-3 w-24 break-words whitespace-normal max-w-24 ${bgColor}`}
+                            className={`border border-gray-300 px-4 py-3 w-12 break-words whitespace-normal max-w-12 ${bgColor}`}
                           >
-                            {groupedData[monthKey] &&
+{groupedData[monthKey] &&
                             groupedData[monthKey][week]
-                              ? groupedData[monthKey][week].map(
-                                  (program, idx) => (
-                                    <div
+                              ? (
+                                <ul className="list-disc list-inside m-0 p-0">
+                                  {groupedData[monthKey][week].map((program, idx) => (
+                                    <li
                                       key={idx}
-                                      className="mb-1 break-words whitespace-normal max-w-full inline-block"
+                                      className="mb-1 break-words whitespace-normal max-w-full"
                                     >
                                       {program}
-                                    </div>
-                                  )
-                                )
+                                    </li>
+                                  ))}
+                                </ul>
+                              )
                               : "-"}
                           </td>
                         );
