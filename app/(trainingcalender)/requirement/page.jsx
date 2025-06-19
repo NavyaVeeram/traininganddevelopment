@@ -275,24 +275,24 @@ export default function Requirement() {
     });
   };
   
-    useEffect(() => {
-    const storedEmployeeId = localStorage.getItem('employeeId');
-  
+  useEffect(() => {
+    const storedEmployeeId = localStorage.getItem("employeeId");
     if (storedEmployeeId) {
       setEmployeeId(storedEmployeeId);
     }
-   
+
     const fetchAccessRole = async () => {
       try {
-        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+        const res = await fetch(
+          "/api/get_access_role?employeeId=" + storedEmployeeId
+        );
         const data = await res.json();
-  
+
         if (res.ok && data.Access_Role) {
-          // Restrict access for HR_HOD 
-          if (data.Access_Role === "HR_Hod") {
+          if (
+            data.Access_Role === "HR_Hod"
+          ) {
             setIsAuthorized(false);
-            // Optionally redirect to unauthorized page
-            // window.location.href = '/unauthorized';
             return;
           }
           setAccessRole(data.Access_Role);
@@ -301,14 +301,13 @@ export default function Requirement() {
           setIsAuthorized(false);
         }
       } catch (error) {
-        console.error('Error fetching access role:', error);
+        console.error("Error fetching access role:", error);
         setIsAuthorized(false);
       }
     };
-  
+
     fetchAccessRole();
   }, []);
-  
 
   useEffect(() => {
     // Update No. of Times based on selected months

@@ -33,39 +33,41 @@ const AnnualTraining = () => {
   const tableRef = useRef(null);
 
   useEffect(() => {
-  const storedEmployeeId = localStorage.getItem('employeeId');
+    const storedEmployeeId = localStorage.getItem("employeeId");
+    if (storedEmployeeId) {
+      setEmployeeId(storedEmployeeId);
+    }
 
-  if (storedEmployeeId) {
-    setEmployeeId(storedEmployeeId);
-  } else {
-    window.location.href = '/';
-    return;
-  }
+    const fetchAccessRole = async () => {
+      try {
+        const res = await fetch(
+          "/api/get_access_role?employeeId=" + storedEmployeeId
+        );
+        const data = await res.json();
 
-  const fetchAccessRole = async () => {
-    try {
-      const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-      const data = await res.json();
-
-      if (res.ok && data.Access_Role) {
-        if ( data.Access_Role === "Res_Person" || data.Access_Role === "HOS" || data.Access_Role === "HOD" ) {
+        if (res.ok && data.Access_Role) {
+          if (
+            data.Access_Role === "Res_Person" ||
+            data.Access_Role === "HOS" ||
+            data.Access_Role === "HOD" ||
+            data.Access_Role === "HR_Hod"
+          ) {
+            setIsAuthorized(false);
+            return;
+          }
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
           setIsAuthorized(false);
-          return;
         }
-        setAccessRole(data.Access_Role);
-        setIsAuthorized(true);
-      } else {
+      } catch (error) {
+        console.error("Error fetching access role:", error);
         setIsAuthorized(false);
       }
-    } catch (error) {
-      console.error('Error fetching access role:', error);
-      setIsAuthorized(false);
-    }
-  };
+    };
 
-  fetchAccessRole();
-}, []);
-
+    fetchAccessRole();
+  }, []);
 
   useEffect(() => {
     if (isAuthorized) {
@@ -91,14 +93,11 @@ const AnnualTraining = () => {
 
   if (isAuthorized === null) {
     return (
-      <div>
-    Loading...
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+        <div className="bg-white p-10 rounded shadow text-center">
+          <h2 className="text-2xl font-bold">Loading...</h2>
+        </div>
       </div>
-        // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
-      //   <div className="bg-white p-10 rounded shadow text-center">
-      //     <h2 className="text-2xl font-bold">Loading...</h2>
-      //   </div>
-      // </div>
     );
   }
 
@@ -188,96 +187,83 @@ const AnnualTraining = () => {
 
   const generatePDF = async () => {
     const input = tableRef.current;
+    if (!input) {
+      alert("No content to print");
+      return;
+    }
 
-    // Clone node and remove classes
+    // Clone the node to avoid modifying the original DOM
     const clonedNode = input.cloneNode(true);
 
-    // Remove all class attributes and override styles with safe CSS
+    // Remove all class attributes and apply inline styles for PDF
     const elementsWithClasses = clonedNode.querySelectorAll("[class]");
     elementsWithClasses.forEach((el) => {
       el.removeAttribute("class");
-      // Override all styles that might cause problems with PDF export
       el.style.backgroundColor = "white";
       el.style.color = "black";
-      // Set border for <td> elements, remove border for inner divs inside <td>
       if (el.tagName.toLowerCase() === "td") {
-        el.style.border = "1px solid #ccc";
+        el.style.border = "1px solid #000";
+        el.style.padding = "6px";
+        el.style.fontSize = "12px";
+        el.style.textAlign = "center";
       } else if (
-        el.tagName.toLowerCase() === "div" &&
-        el.parentElement &&
-        el.parentElement.tagName.toLowerCase() === "td"
+        el.tagName.toLowerCase() === "th"
       ) {
-        el.style.border = "none";
+        el.style.border = "1px solid #000";
+        el.style.padding = "8px";
+        el.style.fontSize = "13px";
+        el.style.fontWeight = "bold";
+        el.style.textAlign = "center";
+        el.style.backgroundColor = "#f0f0f0";
       } else {
-        el.style.border = "1px solid #ccc";
+        el.style.border = "1px solid #000";
+        el.style.padding = "6px";
+        el.style.fontSize = "12px";
+        el.style.textAlign = "center";
       }
-      el.style.padding = "4px";
-      el.style.Margin = "3px"
-      el.style.fontSize = "11px";
       el.style.boxSizing = "border-box";
-      el.style.textAlign = "center";
-      // Remove potentially problematic CSS variables or color functions
-      el.style.removeProperty("color");
-      el.style.removeProperty("background-color");
-      // Explicitly set safe colors after removing
-      el.style.color = "black";
-      el.style.backgroundColor = "white";
     });
 
-    // Remove explicit bottom border styling on last row and last td elements
-    // const tbody = clonedNode.querySelector("tbody");
-    // if (tbody) {
-    //   const rows = tbody.querySelectorAll("tr");
-    //   if (rows.length > 0) {
-    //     const lastRow = rows[rows.length - 1];
-    //     lastRow.style.borderBottom = "1px solid #ccc";
-    //     const tds = lastRow.querySelectorAll("td");
-    //     tds.forEach((td) => {
-    //       td.style.borderBottom = "1px solid #ccc";
-    //     });
-    //   }
-    // }
-
-    // Also apply the same styles to the cloned root element itself
+    // Style the cloned root element
     clonedNode.style.backgroundColor = "white";
     clonedNode.style.color = "black";
-    clonedNode.style.border = "1px solid #ccc";
     clonedNode.style.borderCollapse = "collapse";
-    clonedNode.style.padding = "4px";
-    clonedNode.style.fontSize = "11px";
-    clonedNode.style.boxSizing = "border-box";
-    clonedNode.style.textAlign = "center";
+    clonedNode.style.border = "1px solid #000";
+    clonedNode.style.width = "100%";
 
-    // Wrap in offscreen container with fixed width and padding for margin
+    // Create a wrapper div offscreen to hold the cloned node
     const wrapper = document.createElement("div");
     wrapper.style.position = "fixed";
     wrapper.style.top = "-10000px";
     wrapper.style.left = "0";
     wrapper.style.width = "1122px"; // A4 landscape width at 96 DPI
-    wrapper.style.height = "854px"; // Increased height by 60px for bottom margin
-    wrapper.style.padding = "20px 20px 40px 20px"; // Add padding bottom for margin
-    wrapper.style.overflow = "hidden";
+    wrapper.style.padding = "20px";
+    wrapper.style.backgroundColor = "white";
     wrapper.appendChild(clonedNode);
     document.body.appendChild(wrapper);
 
-    // Adjust clonedNode width to account for padding
-    clonedNode.style.width = "1082px"; // 1122 - 2*20 padding
-    clonedNode.style.maxWidth = "1082px";
+    // Adjust clonedNode width for padding
+    clonedNode.style.width = "1082px";
 
     try {
       const canvas = await html2canvas(clonedNode, {
         backgroundColor: "#fff",
-        scale: 2,
+        scale: 3,
         useCORS: true,
         width: 1082,
-        height: 820, // Increased height by 60px for bottom margin
+        height: clonedNode.scrollHeight,
       });
 
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF("l", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      // Add image with margin offset (10mm)
-      pdf.addImage(imgData, "PNG", 10, 10, 277, 210); // Keep height at full 210mm
+      // Calculate image height to maintain aspect ratio
+      const imgProps = pdf.getImageProperties(imgData);
+      const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, imgHeight);
       pdf.save("annual_training_calendar.pdf");
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -344,6 +330,7 @@ const AnnualTraining = () => {
             title="Download Annual Calendar"
           >
             <FaPrint />
+            <span className="ml-1">Print</span>
           </button>
         </div>
       </div>
@@ -364,39 +351,38 @@ const AnnualTraining = () => {
             <tbody>
               <tr>
                 <td
-                  className="border border-gray-300 px-2 py-1 font-semibold  bg-blue-100 text-center align-middle whitespace-nowrap"
+                  className="border border-gray-300 px-2 py-1 font-semibold w-12  bg-blue-100 text-center align-middle whitespace-nowrap"
                   colSpan={6}
                 >
                   Annual Training Calendar for {trainingName}
                 </td>
               </tr>
               <tr>
-<th
-  className="border border-gray-300 px-2 py-1 font-semibold w-[60px] special-width bg-blue-200 text-center align-middle"
- style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}>
-  Months
-</th>
+                <td
+                  className="border border-gray-300 px-2 py-1 font-semibold w-12  bg-blue-200 text-center align-middle whitespace-nowrap"
+                >
+                  Months
+                </td>
                 <td
                   className="border border-gray-300 px-1 py-1 w-24 text-center font-semibold bg-orange-200"
-                  colSpan={6}
+                  colSpan={5}
                 >
                   Weeks
                 </td>
               </tr>
-              {monthsInData.map((month, index) => {
+              {monthsInData.map((month) => {
                 const monthKey = monthAbbrMap[month].toLowerCase();
                 const weeks = dynamicWeeksByMonth[month] || [];
                 const weeksToShow = weeks.slice(0, 5);
                 return (
                   <React.Fragment key={month}>
                     <tr>
-<td
-  className="border border-gray-300 px-2 py-1 font-semibold w-[60px] bg-blue-100 text-center align-middle whitespace-nowrap"
-  rowSpan={2}
-   style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}
->
-  {month}
-</td>
+                      <td
+                        className="border border-gray-300 px-2 py-1 font-semibold w-12 h-12 bg-blue-100 text-center align-middle whitespace-nowrap"
+                        rowSpan={2}
+                      >
+                        {month}
+                      </td>
                       {weeksToShow.map((week) => (
                         <td
                           key={`${month}-week-header-${week}`}
@@ -412,22 +398,20 @@ const AnnualTraining = () => {
                         return (
                           <td
                             key={`${month}-week-data-${week}`}
-                            className={`border border-gray-300 px-4 py-3 w-12 break-words whitespace-normal max-w-12 ${bgColor}`}
+                            className={`border border-gray-300 px-4 py-3 w-24 break-words whitespace-normal max-w-24 ${bgColor}`}
                           >
-{groupedData[monthKey] &&
+                            {groupedData[monthKey] &&
                             groupedData[monthKey][week]
-                              ? (
-                                <ul className="list-disc list-inside m-0 p-0">
-                                  {groupedData[monthKey][week].map((program, idx) => (
-                                    <li
+                              ? groupedData[monthKey][week].map(
+                                  (program, idx) => (
+                                    <div
                                       key={idx}
-                                      className="mb-1 break-words whitespace-normal max-w-full"
+                                      className="mb-1 break-words whitespace-normal max-w-full inline-block"
                                     >
                                       {program}
-                                    </li>
-                                  ))}
-                                </ul>
-                              )
+                                    </div>
+                                  )
+                                )
                               : "-"}
                           </td>
                         );
@@ -436,7 +420,6 @@ const AnnualTraining = () => {
                   </React.Fragment>
                 );
               })}
-   
             </tbody>
           </table>
         </>

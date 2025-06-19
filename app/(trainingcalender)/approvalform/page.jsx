@@ -73,29 +73,6 @@ fetchData();
     return;
   }
 
-  const fetchAccessRole = async () => {
-    try {
-      const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-      const data = await res.json();
-
-      if (res.ok && data.Access_Role) {
-        // Restrict access for HR_Res and HR_HOD roles
-        if (data.Access_Role === "HR_Res" || data.Access_Role === "HR_Hod" || data.Access_Role === "Res_Person") {
-          setIsAuthorized(false);
-          // Optionally redirect to unauthorized page
-          // window.location.href = '/unauthorized';
-          return;
-        }
-        setAccessRole(data.Access_Role);
-        setIsAuthorized(true);
-      } else {
-        setIsAuthorized(false);
-      }
-    } catch (error) {
-      console.error('Error fetching access role:', error);
-      setIsAuthorized(false);
-    }
-  };
 
   fetchAccessRole();
 }, []);
