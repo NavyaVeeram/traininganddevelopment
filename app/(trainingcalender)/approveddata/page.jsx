@@ -7,7 +7,8 @@ import "react-datepicker/dist/react-datepicker.css";
 export default function TrainingDataTable() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState([]);
-  const[trainingName,setTrainingName]=useState("")
+ const [selectedDate, setSelectedDate] = useState(new Date());
+  const [trainingName, setTrainingName] = useState("IATF");
   const [recordCounts, setRecordCounts] = useState({}); // New state for record counts
 
   // Pagination, sorting, and search states
@@ -199,39 +200,45 @@ const columnsToDisplay = data.length > 0
       </div>
 
       {/* Year dropdown */}
-      <div className="my-2 flex items-center space-x-4">
-        <label htmlFor="yearSelect" className="font-semibold w-32">
-          Select Year:
-        </label>
-        <DatePicker
-          selected={new Date(yearNo, 0, 1)}
-          onChange={(date) => setYearNo(date.getFullYear())}
-          dateFormat="yyyy"
-          showYearPicker
-          placeholderText="Select Year"
-          className="p-2 border border-gray-300 rounded-lg w-40"
-          calendarClassName="z-50"
-          popperPlacement="top-start"
-          popperModifiers={{
-            preventOverflow: {
-              enabled: true,
-              boundariesElement: "viewport",
-            },
-          }}
-        />
-         <label className="flex items-center space-x-2 w-40">
-            <span className="w-32 whitespace-nowrap">Training Name:</span>
+      <div className="flex mt-3">
+          <div>
+            <label htmlFor="year-select" className="mr-2 font-semibold">
+              Select Year:
+            </label>
+            <DatePicker
+              selected={selectedDate}
+              onChange={(date) => setSelectedDate(date)}
+              dateFormat="yyyy"
+              showYearPicker
+              placeholderText="Select Year"
+              className="p-2 border border-gray-300 rounded-lg"
+              calendarClassName="z-50"
+              popperPlacement="top-start"
+              popperModifiers={{
+                preventOverflow: {
+                  enabled: true,
+                  boundariesElement: "viewport",
+                },
+              }}
+            />
+          </div>
+          <div className="mx-2">
+            <label htmlFor="training-select" className="mr-2 font-semibold">
+              Select Training:
+            </label>
             <select
+              id="training-select"
               value={trainingName}
               onChange={(e) => setTrainingName(e.target.value)}
-              className="border border-gray-300 rounded px-2 py-1 w-96"
+              className="p-2 border border-gray-300 rounded-lg"
             >
-              <option value="">Select training</option>
-              <option value="IATF">IATF</option>
-              <option value="HSE">HSE</option>
+              <option value="IATF">
+                IATF (International Automotive Task Force)
+              </option>
+              <option value="HSE">HSE (Health, Safety, and Environment)</option>
             </select>
-          </label>
-      </div>
+          </div>
+        </div>
 
       {data.length > 0 && (
         <>
