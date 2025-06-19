@@ -1,15 +1,18 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 export default function TrainingDataTable() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState([]);
+  const[trainingName,setTrainingName]=useState("")
   const [recordCounts, setRecordCounts] = useState({}); // New state for record counts
 
   // Pagination, sorting, and search states
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState("10");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const [searchQuery, setSearchQuery] = useState("");
   const [yearNo, setYearNo] = useState(new Date().getFullYear());
@@ -36,6 +39,7 @@ export default function TrainingDataTable() {
     // Add other mappings as needed
   };
 
+
   useEffect(() => {
     const storedEmployeeId = localStorage.getItem("employeeId");
 
@@ -52,7 +56,7 @@ export default function TrainingDataTable() {
     fetch("/api/view_approval_form_submit_data", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ employeeId: storedEmployeeId, year_No: yearNo }),
+      body: JSON.stringify({ employeeId: storedEmployeeId, year_No: yearNo, trainingName: trainingName }),
     })
       .then((res) => res.json())
       .then((data) => {
@@ -67,7 +71,7 @@ export default function TrainingDataTable() {
         console.error("Error fetching approval data:", err);
         setLoading(false);
       });
-  }, [yearNo]);
+  }, [yearNo, trainingName]);
 
   // New effect to fetch record counts for each programId
   useEffect(() => {
@@ -85,7 +89,7 @@ export default function TrainingDataTable() {
       await Promise.all(
         uniqueProgramIds.map(async (programId) => {
           try {
-            const res = await fetch(`/api/approval_form_report_view?programId=${programId}`);
+            const res = await fetch(`/api/approval_form_data_view?programId=${programId}`);
             if (res.ok) {
               const result = await res.json();
               counts[programId] = Array.isArray(result) ? result.length : 0;
@@ -151,16 +155,24 @@ export default function TrainingDataTable() {
     );
   }, [sortedData, searchQuery]);
 
+  // Helper to get rowsPerPage as number for calculations
+  const getRowsPerPageNumber = () => {
+    if (rowsPerPage === "All") return filteredData.length;
+    return parseInt(rowsPerPage) || 10;
+  };
+
+  const rowsPerPageNumber = getRowsPerPageNumber();
+
   // Pagination calculations
   const totalPages =
-    rowsPerPage === "All" ? 1 : Math.ceil(filteredData.length / rowsPerPage);
+    rowsPerPage === "All" ? 1 : Math.ceil(filteredData.length / rowsPerPageNumber);
 
   const paginatedData =
     rowsPerPage === "All"
       ? filteredData
       : filteredData.slice(
-          (currentPage - 1) * rowsPerPage,
-          currentPage * rowsPerPage
+          (currentPage - 1) * rowsPerPageNumber,
+          currentPage * rowsPerPageNumber
         );
 
   if (loading) return <div>Loading...</div>;
@@ -187,22 +199,38 @@ const columnsToDisplay = data.length > 0
       </div>
 
       {/* Year dropdown */}
-      <div className="my-2">
-        <label htmlFor="yearSelect" className="mr-2 font-semibold">
+      <div className="my-2 flex items-center space-x-4">
+        <label htmlFor="yearSelect" className="font-semibold w-32">
           Select Year:
         </label>
-        <select
-          id="yearSelect"
-          value={yearNo}
-          onChange={(e) => setYearNo(parseInt(e.target.value))}
-          className="border rounded p-1"
-        >
-          {yearOptions.map((year) => (
-            <option key={year} value={year}>
-              {year}
-            </option>
-          ))}
-        </select>
+        <DatePicker
+          selected={new Date(yearNo, 0, 1)}
+          onChange={(date) => setYearNo(date.getFullYear())}
+          dateFormat="yyyy"
+          showYearPicker
+          placeholderText="Select Year"
+          className="p-2 border border-gray-300 rounded-lg w-40"
+          calendarClassName="z-50"
+          popperPlacement="top-start"
+          popperModifiers={{
+            preventOverflow: {
+              enabled: true,
+              boundariesElement: "viewport",
+            },
+          }}
+        />
+         <label className="flex items-center space-x-2 w-40">
+            <span className="w-32 whitespace-nowrap">Training Name:</span>
+            <select
+              value={trainingName}
+              onChange={(e) => setTrainingName(e.target.value)}
+              className="border border-gray-300 rounded px-2 py-1 w-96"
+            >
+              <option value="">Select training</option>
+              <option value="IATF">IATF</option>
+              <option value="HSE">HSE</option>
+            </select>
+          </label>
       </div>
 
       {data.length > 0 && (
@@ -214,13 +242,13 @@ const columnsToDisplay = data.length > 0
               <select
                 value={rowsPerPage}
                 onChange={(e) => {
-                  setRowsPerPage(e.target.value === "All" ? "All" : parseInt(e.target.value));
+                  setRowsPerPage(e.target.value);
                   setCurrentPage(1);
                 }}
                 className="border rounded p-1"
               >
                 {[10, 20, 30, 40, 100, "All"].map((val) => (
-                  <option key={val} value={val}>
+                  <option key={val} value={val.toString()}>
                     {val}
                   </option>
                 ))}
@@ -379,7 +407,7 @@ const columnsToDisplay = data.length > 0
                           href={`/approveddatareport?id=${programId}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`underline ${isDisabled ? "text-gray-400  cursor-not-allowed" : "text-blue-600"}`}
+                          className={`underline ${isDisabled ? "text-gray-400 pointer-events-none" : "text-blue-600"}`}
                         >
                           View Report
                         </a>
@@ -402,18 +430,18 @@ const columnsToDisplay = data.length > 0
       )}
 
       {/* Pagination controls */}
-      {rowsPerPage !== "All" && filteredData.length > 0 && (
+      {filteredData.length > 0 && (
         <div className="flex justify-between items-center mt-4 text-sm">
-          <span>
-            Showing{" "}
-            {filteredData.length > 0
-              ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
-                  currentPage * rowsPerPage,
-                  filteredData.length
-                )} of ${filteredData.length}`
-              : "0"}{" "}
-            entries
-          </span>
+      <span>
+        Showing{" "}
+        {filteredData.length > 0
+          ? `${(currentPage - 1) * rowsPerPageNumber + 1} to ${Math.min(
+              currentPage * rowsPerPageNumber,
+              filteredData.length
+            )} of ${filteredData.length}`
+          : "0"}{" "}
+        entries
+      </span>
           <div className="flex gap-1">
             <button
               onClick={() => setCurrentPage(1)}
@@ -433,7 +461,7 @@ const columnsToDisplay = data.length > 0
               <button
                 key={i}
                 className={`px-3 py-1 border rounded ${
-                  currentPage === i + 1 ? "bg-primary text-primary-foreground" : ""
+                  currentPage === i + 1 ? "bg-black text-primary-foreground" : ""
                 }`}
                 onClick={() => setCurrentPage(i + 1)}
                 type="button"
