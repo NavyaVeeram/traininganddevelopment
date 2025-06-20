@@ -901,22 +901,24 @@ const programOptions = options.map((option) => ({
             </div>
 
             {/* Number of Persons */}
-            <div>
-              <label className="block font-medium">Number of Persons:</label>
-              <input
-                type="text"
-                name="Persons"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={formData.Persons}
-                onChange={handleFormDataChange}
-                autoComplete="off"
-                step="1"
-                min="1"
-                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none"
-                required
-              />
-            </div>
+           <div>
+           <label htmlFor="Persons" className="block font-medium">
+            Number of Persons:
+           </label>
+            <input
+             type="number"
+             id="Persons"
+             name="Persons"
+             inputMode="numeric"
+             pattern="[0-9]*"
+             value={formData.Persons}
+             onChange={handleFormDataChange}
+             step="1"
+             min="1"
+             className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
+             required
+             />
+           </div>
 
             {/* Select Date Field */}
             <div>
@@ -1006,8 +1008,7 @@ const programOptions = options.map((option) => ({
         </div>
         <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mt-2">
           {/* Schedule Type */}
-
-          <div>
+        <div>
             <label className="block font-medium">Schedule Type:</label>
             <div className="mt-2">
               <label className="inline-flex items-center">
@@ -1157,77 +1158,78 @@ const programOptions = options.map((option) => ({
               }`}
             />
           </div>
-          <div>
-            <label htmlFor="EmployeeIds" className="block font-medium">
-              Employee IDs:
-            </label>
-            <div className="relative">
-              <Select
-                id="EmployeeIds"
-                name="EmployeeIds"
-                closeMenuOnSelect={false}
-                components={animatedComponents}
-                isMulti
-                options={employeeOptions}
-                value={employeeOptions.filter((opt) =>
-                  (formData.EmployeeIds || []).includes(opt.value)
-                )}
-                onChange={(selectedOptions) => {
-                  const selectedValues = selectedOptions.map(
-                    (opt) => opt.value
-                  );
-                  setFormData((prev) => ({
-                    ...prev,
-                    EmployeeIds: selectedValues,
-                  }));
-                }}
-                isDisabled={!!formData.selectedMonth}
-                getOptionLabel={(e) => e.label}
-                formatOptionLabel={(data, { context }) =>
-                  context === "menu" ? data.label : data.value
-                }
-                required
-                autoComplete="off"
-                className={`w-[400px] text-gray-900 bg-white`}
-                styles={{
-                  control: (base, state) => ({
-                    ...base,
-                    backgroundColor: formData.selectedMonth ? "#f3f4f6" : "#fff",
-                    cursor: formData.selectedMonth ? "not-allowed" : "default",
-                    borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
-                    boxShadow: state.isFocused
-                      ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
-                      : "none",
-                    padding: "1px",
-                    borderRadius: "0.5rem",
-                    minHeight: "2rem",
-                    display: "flex",
-                    alignItems: "center",
-                  }),
-                  menu: (base) => ({
-                    ...base,
-                    zIndex: 50,
-                  }),
-                  multiValue: (base) => ({
-                    ...base,
-                    backgroundColor: "#f3f4f6",
-                  }),
-                  multiValueLabel: (base) => ({
-                    ...base,
-                    color: "#111827",
-                  }),
-                  multiValueRemove: (base) => ({
-                    ...base,
-                    color: "#6b7280",
-                    ":hover": {
-                      backgroundColor: "#e5e7eb",
-                      color: "#111827",
-                    },
-                  }),
-                }}
-              />
-            </div>
-          </div>
+       <div>
+  <label htmlFor="EmployeeIds" className="block font-medium mb-1">
+    Employee IDs:
+  </label>
+  <div className="relative">
+    <Select
+      id="EmployeeIds"
+      name="EmployeeIds"
+      closeMenuOnSelect={false}
+      components={animatedComponents}
+      isMulti
+      options={employeeOptions}
+      value={employeeOptions.filter((opt) =>
+        (formData.EmployeeIds || []).includes(opt.value)
+      )}
+      onChange={(selectedOptions) => {
+        const selectedValues = selectedOptions.map((opt) => opt.value);
+
+        // Auto-update Persons count based on selected EmployeeIds
+        setFormData((prev) => ({
+          ...prev,
+          EmployeeIds: selectedValues,
+          Persons: selectedValues.length.toString(), // auto-updating
+        }));
+      }}
+      isDisabled={!!formData.selectedMonth}
+      getOptionLabel={(e) => e.label}
+      formatOptionLabel={(data, { context }) =>
+        context === "menu" ? data.label : data.value
+      }
+      required
+      autoComplete="off"
+      className="w-[400px] text-gray-900 bg-white"
+      styles={{
+        control: (base, state) => ({
+          ...base,
+          backgroundColor: formData.selectedMonth ? "#f3f4f6" : "#fff",
+          cursor: formData.selectedMonth ? "not-allowed" : "default",
+          borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
+          boxShadow: state.isFocused
+            ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
+            : "none",
+          padding: "1px",
+          borderRadius: "0.5rem",
+          minHeight: "2rem",
+          display: "flex",
+          alignItems: "center",
+        }),
+        menu: (base) => ({
+          ...base,
+          zIndex: 50,
+        }),
+        multiValue: (base) => ({
+          ...base,
+          backgroundColor: "#f3f4f6",
+        }),
+        multiValueLabel: (base) => ({
+          ...base,
+          color: "#111827",
+        }),
+        multiValueRemove: (base) => ({
+          ...base,
+          color: "#6b7280",
+          ":hover": {
+            backgroundColor: "#e5e7eb",
+            color: "#111827",
+          },
+        }),
+      }}
+    />
+  </div>
+</div>
         </div>{" "}
         <br></br>
         <div className="flex justify-end mt-1" style={{ marginRight: "100px" }}>

@@ -24,43 +24,94 @@ const EmployeeHistoryList = () => {
   const [error, setError] = useState(null);
   const [tableSearchTerm, setTableSearchTerm] = useState("");
   const dropdownRef = useRef(null);
-const [selectedEmployee, setSelectedEmployee] = useState(null);
-    const [accessRole, setAccessRole] = useState(null);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [accessRole, setAccessRole] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(null);
-   useEffect(() => {
-       const storedEmployeeId = localStorage.getItem('employeeId');
-     
-       if (storedEmployeeId) {
-         setEmployeeId(storedEmployeeId);
-       }
-      
-       const fetchAccessRole = async () => {
-         try {
-           const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-           const data = await res.json();
-     
-           if (res.ok && data.Access_Role) {
-             // Restrict access for HR_Res and HR_HOD roles
-             if (data.Access_Role === "Res_Person" || data.Access_Role === "HOS" || data.Access_Role === "HOD") {
-               setIsAuthorized(false);
-               // Optionally redirect to unauthorized page
-               // window.location.href = '/unauthorized';
-               return;
-             }
-             setAccessRole(data.Access_Role);
-             setIsAuthorized(true);
-           } else {
-             setIsAuthorized(false);
-           }
-         } catch (error) {
-           console.error('Error fetching access role:', error);
-           setIsAuthorized(false);
-         }
-       };
-     
-       fetchAccessRole();
-     }, []);
-     
+  const [certificates, setCertificates] = useState({});
+  const handleFileChange = (e, index, programId) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Upload file to backend
+      handleFileUpload(file, programId);
+
+      // Optionally, update state locally
+      setCertificates((prev) => ({
+        ...prev,
+        [index]: file,
+      }));
+    }
+  };
+  const handleFileUpload = async (file, programId) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("program_id", programId);
+
+    try {
+      const response = await fetch("/api/emp_certificates", {
+        // your API route
+        method: "POST",
+        body: formData, // IMPORTANT: no JSON stringify, no content-type header here
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log("File uploaded successfully:", data.fileUrl);
+        // You can save the fileUrl in your state or update UI accordingly
+      } else {
+        console.error("Upload failed:", data.message);
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+    }
+  };
+
+  useEffect(() => {
+    const storedEmployeeId = localStorage.getItem("employeeId");
+
+    if (storedEmployeeId) {
+      setEmployeeId(storedEmployeeId);
+    }
+    const handleFileChange = (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        setCertificates(file);
+      }
+    };
+
+    const fetchAccessRole = async () => {
+      try {
+        const res = await fetch(
+          `/api/get_access_role?employeeId=${storedEmployeeId}`
+        );
+        const data = await res.json();
+
+        if (res.ok && data.Access_Role) {
+          // Restrict access for HR_Res and HR_HOD roles
+          if (
+            data.Access_Role === "Res_Person" ||
+            data.Access_Role === "HOS" ||
+            data.Access_Role === "HOD"
+          ) {
+            setIsAuthorized(false);
+            // Optionally redirect to unauthorized page
+            // window.location.href = '/unauthorized';
+            return;
+          }
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+        }
+      } catch (error) {
+        console.error("Error fetching access role:", error);
+        setIsAuthorized(false);
+      }
+    };
+
+    fetchAccessRole();
+  }, []);
+
   // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(event) {
@@ -123,19 +174,31 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
   const filteredData = sortedData.filter(
     (trainer) =>
       tableSearchTerm === "" ||
-      trainer.EmployeeId?.toLowerCase().includes(tableSearchTerm.toLowerCase()) ||
-      trainer.Training_Name?.toLowerCase().includes(tableSearchTerm.toLowerCase()) ||
-      trainer.Program_Name?.toLowerCase().includes(tableSearchTerm.toLowerCase()) ||
-      trainer.Train_Mode?.toLowerCase().includes(tableSearchTerm.toLowerCase()) ||
+      trainer.EmployeeId?.toLowerCase().includes(
+        tableSearchTerm.toLowerCase()
+      ) ||
+      trainer.Training_Name?.toLowerCase().includes(
+        tableSearchTerm.toLowerCase()
+      ) ||
+      trainer.Program_Name?.toLowerCase().includes(
+        tableSearchTerm.toLowerCase()
+      ) ||
+      trainer.Train_Mode?.toLowerCase().includes(
+        tableSearchTerm.toLowerCase()
+      ) ||
       trainer.No_Hrs?.toString().includes(tableSearchTerm) ||
       trainer.Training_Date?.toString().includes(tableSearchTerm)
   );
 
-  const totalPages = rowsPerPage === "All" ? 1 : Math.ceil(filteredData.length / rowsPerPage);
+  const totalPages =
+    rowsPerPage === "All" ? 1 : Math.ceil(filteredData.length / rowsPerPage);
   const paginatedData =
     rowsPerPage === "All"
       ? filteredData
-      : filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+      : filteredData.slice(
+          (currentPage - 1) * rowsPerPage,
+          currentPage * rowsPerPage
+        );
 
   useEffect(() => {
     const fetchEmployeeOptions = async () => {
@@ -189,9 +252,11 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             const day = String(d.getDate()).padStart(2, "0");
             return `${year}-${month}-${day}`;
           };
-          const formattedData = data.map(item => ({
+          const formattedData = data.map((item) => ({
             ...item,
-            Training_DateFormatted: item.Training_Date ? formatDateYYYYMMDD(item.Training_Date) : "",
+            Training_DateFormatted: item.Training_Date
+              ? formatDateYYYYMMDD(item.Training_Date)
+              : "",
           }));
           setQualifiedTrainers(formattedData);
           if (data.length === 0) {
@@ -256,7 +321,9 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`/api/get_emp_history?EmployeeId=${selectedEmployeeId}`);
+        const res = await fetch(
+          `/api/get_emp_history?EmployeeId=${selectedEmployeeId}`
+        );
         const data = await res.json();
 
         if (res.status === 200) {
@@ -338,7 +405,10 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
     },
     {
       name: "Training Date",
-      selector: (row) => (row.Training_Date ? new Date(row.Training_Date).toLocaleDateString() : ""),
+      selector: (row) =>
+        row.Training_Date
+          ? new Date(row.Training_Date).toLocaleDateString()
+          : "",
       sortable: true,
     },
   ];
@@ -349,7 +419,7 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
     selectAllRowsItem: true,
     selectAllRowsItemText: "All",
   };
- if (isAuthorized === null) {
+  if (isAuthorized === null) {
     return (
       <div>Loading..</div>
       // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
@@ -380,40 +450,47 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
         <br />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label htmlFor="employee" className="block text-sm font-medium text-gray-900">Select EmployeeId:</label>
+            <label
+              htmlFor="employee"
+              className="block text-sm font-medium text-gray-900"
+            >
+              Select EmployeeId:
+            </label>
             <div>
-                   <Select
-               options={options}
-               value={options.find((o) => o.value === EmployeeId) || null}
-               onChange={handleEmployeeIdChange}
-               placeholder="Select EmployeeId"
-               styles={{
-                control: (base, state) => ({   
-                  ...base,
-                  borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
-                  boxShadow: state.isFocused
-                    ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
-                    : "none",
-                  borderRadius: "0.5rem",
-                  minHeight: "2rem",
-                  display: "flex",
-                  alignItems: "center",
-                }),
-                menu: (base) => ({
-                  ...base,
-                  zIndex: 50,
-                }),
-                menuPortal: (base) => ({
-                  ...base,
-                  zIndex: 9999,
-                }),
-              }}
-            />
-          </div>
+              <Select
+                options={options}
+                value={options.find((o) => o.value === EmployeeId) || null}
+                onChange={handleEmployeeIdChange}
+                placeholder="Select EmployeeId"
+                styles={{
+                  control: (base, state) => ({
+                    ...base,
+                    borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
+                    boxShadow: state.isFocused
+                      ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
+                      : "none",
+                    borderRadius: "0.5rem",
+                    minHeight: "2rem",
+                    display: "flex",
+                    alignItems: "center",
+                  }),
+                  menu: (base) => ({
+                    ...base,
+                    zIndex: 50,
+                  }),
+                  menuPortal: (base) => ({
+                    ...base,
+                    zIndex: 9999,
+                  }),
+                }}
+              />
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900">Username</label>
+            <label className="block text-sm font-medium text-gray-900">
+              Username
+            </label>
             <input
               type="text"
               value={trainingDetails.Username || ""}
@@ -422,7 +499,9 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900">Department</label>
+            <label className="block text-sm font-medium text-gray-900">
+              Department
+            </label>
             <input
               type="text"
               value={trainingDetails.Department || ""}
@@ -431,7 +510,9 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900">Section</label>
+            <label className="block text-sm font-medium text-gray-900">
+              Section
+            </label>
             <input
               type="text"
               value={trainingDetails.Section || ""}
@@ -443,7 +524,9 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-2">
           <div>
-            <label className="block text-sm font-medium text-gray-900">Designation</label>
+            <label className="block text-sm font-medium text-gray-900">
+              Designation
+            </label>
             <input
               type="text"
               value={trainingDetails.Designation || ""}
@@ -452,7 +535,9 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900">Emp Type</label>
+            <label className="block text-sm font-medium text-gray-900">
+              Emp Type
+            </label>
             <input
               type="text"
               value={trainingDetails.Emp_Type || ""}
@@ -461,7 +546,9 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900">Emp Category</label>
+            <label className="block text-sm font-medium text-gray-900">
+              Emp Category
+            </label>
             <input
               type="text"
               value={trainingDetails.Emp_Category || ""}
@@ -470,7 +557,9 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900">Total Hrs</label>
+            <label className="block text-sm font-medium text-gray-900">
+              Total Hrs
+            </label>
             <input
               type="text"
               value={trainingDetails.No_Hrs}
@@ -479,7 +568,9 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900">DOJ</label>
+            <label className="block text-sm font-medium text-gray-900">
+              DOJ
+            </label>
             <input
               type="text"
               value={trainingDetails.DOJFormatted || ""}
@@ -488,28 +579,38 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             />
           </div>
           <div>
-              <label className="block text-sm font-medium text-gray-900">Status</label>
+            <label className="block text-sm font-medium text-gray-900">
+              Status
+            </label>
             <input
               type="text"
               value={(() => {
-                if (trainingDetails.IsActive === 1 || trainingDetails.IsActive === "1") return "Active";
-                if (trainingDetails.IsActive === 0 || trainingDetails.IsActive === "0") return "Inactive";
+                if (
+                  trainingDetails.IsActive === 1 ||
+                  trainingDetails.IsActive === "1"
+                )
+                  return "Active";
+                if (
+                  trainingDetails.IsActive === 0 ||
+                  trainingDetails.IsActive === "0"
+                )
+                  return "Inactive";
                 return "";
               })()}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
-
           </div>
         </div>
-
         <br />
         {EmployeeId && (
           <div className="card rounded-lg  mt-6">
             <div className="card-header  text-black rounded-t-lg py-3 px-3">
               <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center">
                 <div className="flex flex-col">
-                  <h2 className="text-sm font-bold">Employee Training History</h2>
+                  <h2 className="text-sm font-bold">
+                    Employee Training History
+                  </h2>
                 </div>
               </div>
             </div>
@@ -523,7 +624,11 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
                       className="border p-1 rounded bg-secondary"
                       value={rowsPerPage}
                       onChange={(e) => {
-                        setRowsPerPage(e.target.value === "All" ? "All" : parseInt(e.target.value));
+                        setRowsPerPage(
+                          e.target.value === "All"
+                            ? "All"
+                            : parseInt(e.target.value)
+                        );
                         setCurrentPage(1);
                       }}
                     >
@@ -563,6 +668,7 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
                           { key: "Train_Mode", label: "Training Mode" },
                           { key: "No_Hrs", label: "Hours" },
                           { key: "Training_Date", label: "Training Date" },
+                          { key: "Certificates", label: "Certificates" },
                         ].map(({ key, label }, index) => (
                           <th
                             key={key}
@@ -572,28 +678,83 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
                             onClick={() => handleSort(key)}
                           >
                             {label}{" "}
-                            {sortConfig.key === key ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}
+                            {sortConfig.key === key
+                              ? sortConfig.direction === "asc"
+                                ? "▲"
+                                : "▼"
+                              : "↕"}
                           </th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {paginatedData.length > 0 ? (
-                        paginatedData.map((item, index) => (
-                          <tr key={index} className="hover:bg-muted border">
-                            <td className="px-4 py-2 border left-0 bg-white z-10">{item.EmployeeId}</td>
-                            <td className="px-4 py-2 border">{item.Training_Name}</td>
-                            <td className="px-4 py-2 border">{item.Program_Name}</td>
-                            <td className="px-4 py-2 border">{item.Train_Mode}</td>
-                            <td className="px-4 py-2 border">{item.No_Hrs}</td>
-                            <td className="px-4 py-2 border">
-                              {item.Training_Date ? item.Training_DateFormatted : ""}
-                            </td>
-                          </tr>
-                        ))
+                        paginatedData.map((item, index) => {
+                          const certificate = certificates[index];
+                          return (
+                            <tr key={index} className="hover:bg-muted border">
+                              <td className="px-4 py-2 border left-0 bg-white z-10">
+                                {item.EmployeeId}
+                              </td>
+                              <td className="px-4 py-2 border">
+                                {item.Training_Name}
+                              </td>
+                              <td className="px-4 py-2 border">
+                                {item.Program_Name}
+                              </td>
+                              <td className="px-4 py-2 border">
+                                {item.Train_Mode}
+                              </td>
+                              <td className="px-4 py-2 border">
+                                {item.No_Hrs}
+                              </td>
+                              <td className="px-4 py-2 border">
+                                {item.Training_DateFormatted || ""}
+                              </td>
+                              <td className="px-4 py-2 border text-center">
+                                {certificate ? (
+                                  <div className="flex flex-col items-center gap-2">
+                                    <button
+                                      className="text-blue-600 underline text-sm hover:text-blue-800"
+                                      onClick={() => {
+                                        const url =
+                                          URL.createObjectURL(certificate);
+                                        window.open(url, "_blank");
+                                      }}
+                                    >
+                                      View
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div className="flex flex-col items-center  gap-1">
+                                    <label
+                                      htmlFor={`uploadCertificate-${index}`}
+                                      className="cursor-pointer px-3 py-1  rounded text-gray-500 hover:text-neutral-700 text-sm"
+                                    >
+                                      Upload
+                                    </label>
+                                    <input
+                                      type="file"
+                                      id={`uploadCertificate-${index}`}
+                                      accept="*/*"
+                                      className="hidden"
+                                      onChange={(e) =>
+                                        handleFileChange(
+                                          e,
+                                          index,
+                                          item.Program_Id
+                                        )
+                                      } // send program id here
+                                    />
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })
                       ) : (
                         <tr>
-                          <td colSpan="6" className="text-center py-4">
+                          <td colSpan="7" className="text-center py-4">
                             No results found.
                           </td>
                         </tr>
@@ -601,7 +762,6 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
                     </tbody>
                   </table>
                 </div>
-
                 <div className="flex flex-wrap justify-between items-center mt-4 text-sm">
                   <div>
                     Showing{" "}
@@ -641,7 +801,9 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
                     ))}
                     <button
                       className="px-3 py-1 border rounded"
-                      onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                      onClick={() =>
+                        setCurrentPage((p) => Math.min(p + 1, totalPages))
+                      }
                       disabled={currentPage === totalPages}
                     >
                       {">"}
