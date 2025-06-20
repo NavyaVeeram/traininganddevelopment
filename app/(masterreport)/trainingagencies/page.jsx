@@ -136,73 +136,78 @@ const Upload = () => {
   };
 
   const validatePhoneNumber = (number) => /^\d{10}$/.test(number);
-  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setSuccessMessage("");
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
+  setSuccessMessage("");
 
-    // Validate phone numbers
-    if (
-      !validatePhoneNumber(formData.Contact_1) ||
-      !validatePhoneNumber(formData.Contact_2)
-    ) {
-      setError("Please enter valid 10-digit phone numbers.");
-      setTimeout(() => setError(""), 3000);
-      return;
-    }
+  // Validate phone numbers
+  if (
+    !validatePhoneNumber(formData.Contact_1) ||
+    !validatePhoneNumber(formData.Contact_2)
+  ) {
+    setError("Please enter valid 10-digit phone numbers.");
+    setTimeout(() => setError(""), 3000);
+    return;
+  }
 
-    // Ensure email ends with @gmail.com
-    let email = formData.Mailid.trim();
-    if (!email.includes("@")) {
-      email = `${email}@gmail.com`; // Only append if there's no @ at all
-    }
+  // Trim and validate email
+  let email = formData.Mailid.trim();
 
-    if (!validateEmail(email)) {
-      setError("Please enter a valid email address.");
-      setTimeout(() => setError(""), 3000);
-      return;
-    }
+  // Check if email contains both "@" and "."
+  if (!email.includes("@") || !email.includes(".")) {
+    alert("Please enter an mail that includes both '@' and '.'");
+    return;
+  }
 
-    setFormData((prev) => ({ ...prev, Mailid: email }));
+  // Check against full valid email format
+  if (!validateEmail(email)) {
+    setError("Please enter a valid email address.");
+    setTimeout(() => setError(""), 3000);
+    return;
+  }
 
-    // Update CreatedBy with current employeeId before submission
-    const submissionData = { ...formData, CreatedBy: employeeId };
+  // Save cleaned email back
+  setFormData((prev) => ({ ...prev, Mailid: email }));
 
-    try {
-      const res = await fetch("/api/insert_agencies", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(submissionData),
+  // Add CreatedBy field
+  const submissionData = { ...formData, CreatedBy: employeeId };
+
+  try {
+    const res = await fetch("/api/insert_agencies", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(submissionData),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      setFormData({
+        Agency_name: "",
+        Contact_person: "",
+        Location: "",
+        Contact_1: "",
+        Contact_2: "",
+        Mailid: "",
+        Website: "",
+        CreatedBy: "",
       });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        setFormData({
-          Agency_name: "",
-          Contact_person: "",
-          Location: "",
-          Contact_1: "",
-          Contact_2: "",
-          Mailid: "",
-          Website: "",
-          CreatedBy: "",
-        });
-        fetchAgencies();
-        alert("Data Submitted Successfully");
-      } else {
-        setError(data.error || "Submission failed.");
-      }
-    } catch {
-      setError("An error occurred while submitting.");
+      fetchAgencies();
+      alert("Data Submitted Successfully");
+    } else {
+      setError(data.error || "Submission failed.");
     }
+  } catch {
+    setError("An error occurred while submitting.");
+  }
 
-    setTimeout(() => {
-      setError("");
-    }, 3000);
-  };
+  setTimeout(() => {
+    setError("");
+  }, 3000);
+};
 
   const filteredAgencies = agencies.filter((agency) =>
     Object.values(agency).some((val) =>
@@ -377,12 +382,7 @@ const Upload = () => {
                 placeholder="Enter your email"
                 className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
               />
-              {/* Show @gmail.com if not in email */}
-              {!formData.Mailid.includes("@") && (
-                <span className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-500">
-                  @gmail.com
-                </span>
-              )}
+         
             </div>
           </div>
 

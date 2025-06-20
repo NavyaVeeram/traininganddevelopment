@@ -2,6 +2,7 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FaPrint, FaSearch } from "react-icons/fa";
+import { FaCheckCircle } from "react-icons/fa";  // Import green tick icon
 import Select from "react-select";
 import makeAnimated from "react-select/animated";
 import React from "react";
@@ -9,6 +10,18 @@ import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import fontkit from '@pdf-lib/fontkit';
 
 const TetReportsClient = () => {
+  // Helper function to format date as DD-MMM-YYYY (e.g., 01-Jan-2000)
+  const formatDateDDMMMYYYY = (dateString) => {
+    if (!dateString) return "N/A";
+    const d = new Date(dateString);
+    if (isNaN(d)) return "N/A";
+    const day = String(d.getDate()).padStart(2, '0');
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const month = monthNames[d.getMonth()];
+    const year = d.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
   const parameters = [
     "Benefit to the person/employee",
     "Benefit to the team",
@@ -49,6 +62,58 @@ const TetReportsClient = () => {
 const [accessRole, setAccessRole] = useState(null);
 const [isAuthorized, setIsAuthorized] = useState(null);
 const [employeeId, setEmployeeId] = useState(null);
+const [submittedEmployeeIds, setSubmittedEmployeeIds] = useState([]);
+
+useEffect(() => {
+  const fetchSubmittedEmployees = async () => {
+    if (!programId) return;
+    try {
+      const res = await fetch(`/api/get_tet_form_emp_details_for_report?programId=${programId}`);
+      if (!res.ok) {
+        setSubmittedEmployeeIds([]);
+        return;
+      }
+      const data = await res.json();
+      if (!Array.isArray(data)) {
+        setSubmittedEmployeeIds([]);
+        return;
+      }
+      // Filter employees who have submitted (all Q_1 to Q_10 > 0)
+      const submittedIdsFromApi = data
+        .filter(emp => {
+          for (let i = 1; i <= 10; i++) {
+            const key = `Q_${i}`;
+            if (!emp[key] || emp[key] <= 0) {
+              return false;
+            }
+          }
+          return true;
+        })
+        .map(emp => emp.EmployeeId);
+
+      // Also get submitted IDs from localStorage
+      let storedIds = [];
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("submittedEmployeeIds");
+        storedIds = stored ? JSON.parse(stored) : [];
+      }
+
+      // Merge and deduplicate
+      const mergedIds = Array.from(new Set([...submittedIdsFromApi, ...storedIds]));
+
+      setSubmittedEmployeeIds(mergedIds);
+
+      // Update localStorage with merged IDs
+      if (typeof window !== "undefined") {
+        localStorage.setItem("submittedEmployeeIds", JSON.stringify(mergedIds));
+      }
+    } catch (error) {
+      setSubmittedEmployeeIds([]);
+    }
+  };
+
+  fetchSubmittedEmployees();
+}, [programId]);
   // Set Program_Id dynamically when programId changes
   React.useEffect(() => {
     if (programId) {
@@ -122,6 +187,13 @@ const [employeeId, setEmployeeId] = useState(null);
     // After successful submission, re-check if all forms are filled to enable print button dynamically
     if (res.ok) {
       checkAllFormsFilled(programId);
+      setSubmittedEmployeeIds((prev) => {
+        const newIds = prev.includes(selectedEmployee?.value) ? prev : [...prev, selectedEmployee?.value];
+        if (typeof window !== "undefined") {
+          localStorage.setItem("submittedEmployeeIds", JSON.stringify(newIds));
+        }
+        return newIds;
+      });
     }
   };
   useEffect(() => {
@@ -680,8 +752,8 @@ const font = await mergedPdf.embedFont(fontBytes);
   </>
 )}
         </h1>
-         
-        <div className="flex mt-2 lg:mt-0 w-full lg:w-auto justify-start">
+        {/* important code dont delete it  */}
+        {/* <div className="flex mt-2 lg:mt-0 w-full lg:w-auto justify-start">
 {accessRole === "HR_Res" && (
   <button
     type="button"
@@ -703,12 +775,12 @@ const font = await mergedPdf.embedFont(fontBytes);
     <FaPrint />
   </button>
 )}
-        </div>
+        </div> */}
       </div>
         <div className="my-4 relative z-0">
           <div className="flex items-center space-x-2">
             <label className="text-sm font-medium">Select EmpId</label>
-      <Select
+  <Select
   options={options}
   onChange={(selectedOption) => {
     setSelectedEmployee(selectedOption);
@@ -736,6 +808,19 @@ const font = await mergedPdf.embedFont(fontBytes);
     }),
   }}
   className="w-[400px]"
+  components={{
+    Option: (props) => {
+      const { data, innerRef, innerProps } = props;
+      return (
+        <div ref={innerRef} {...innerProps} className="flex items-center justify-between px-2 py-1">
+          <div>{data.label}</div>
+          {submittedEmployeeIds.includes(data.value) && (
+            <FaCheckCircle className="text-green-500" />
+          )}
+        </div>
+      );
+    },
+  }}
 />
 
 </div>
@@ -750,7 +835,7 @@ const font = await mergedPdf.embedFont(fontBytes);
       {employeeDetails && (
         <div className="max-w-5xl mx-auto p-6">
         <div className="bg-sky-400 text-white p-2 rounded-t-lg">
-          <h1 className="text-center font-bold text-xl">Training Effectiveness Tracing Form</h1>
+          <h1 className="text-center font-bold text-xl">Training Effectiveness Evaluation</h1>
     </div>
     <form onSubmit={handleSubmit}>
             <div className="overflow-x-auto mb-6">
@@ -784,19 +869,13 @@ const font = await mergedPdf.embedFont(fontBytes);
         <td className="border px-4 py-2 font-semibold">Department</td>
         <td className="border px-4 py-2">{employeeDetails.Department}</td>
         <td className="border px-4 py-2 font-semibold">Date of Training</td>
-        <td className="border px-4 py-2">{employeeDetails.Training_Date
-    ? new Date(employeeDetails.Training_Date).toISOString().slice(0, 10)
-    : "N/A"}
-</td>
+<td className="border px-4 py-2">{formatDateDDMMMYYYY(employeeDetails.Training_Date)}</td>
       </tr>
       <tr>
         <td className="border px-4 py-2 font-semibold">Place of Training</td>
         <td className="border px-4 py-2">{employeeDetails.Venue}</td>
         <td className="border px-4 py-2 font-semibold">Date of Evaluation</td>
-        <td className="border px-4 py-2"> {employeeDetails.Evaluation_Date
-    ? new Date(employeeDetails.Evaluation_Date).toISOString().slice(0, 10)
-    : "N/A"}
-</td>
+<td className="border px-4 py-2">{formatDateDDMMMYYYY(employeeDetails.Evaluation_Date)}</td>
       </tr>
         </tbody>
             

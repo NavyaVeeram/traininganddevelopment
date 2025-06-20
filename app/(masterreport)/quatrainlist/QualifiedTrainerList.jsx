@@ -25,6 +25,20 @@ const QualifiedTrainerList = () => {
     Gender: "",
     DOJ: "",
   });
+
+  // Computed variable to check if DOJ is less than 3 years ago
+  const isDOJLessThan3Years = useMemo(() => {
+    if (!trainingDetails.DOJ) return false;
+    const dojDate = new Date(trainingDetails.DOJ);
+    if (isNaN(dojDate)) return false;
+    const today = new Date();
+    const threeYearsAgo = new Date(
+      today.getFullYear() - 3,
+      today.getMonth(),
+      today.getDate()
+    );
+    return dojDate > threeYearsAgo;
+  }, [trainingDetails.DOJ]);
   const [qualifiedTrainers, setQualifiedTrainers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -551,6 +565,7 @@ const QualifiedTrainerList = () => {
                   onChange={() => setTrainingName("IATF")}
                   className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
                   required
+                  disabled={isDOJLessThan3Years}
                 />
                 <span>IATF</span>
               </label>
@@ -563,6 +578,7 @@ const QualifiedTrainerList = () => {
                   onChange={() => setTrainingName("HSE")}
                   className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
                   required
+                  disabled={isDOJLessThan3Years}
                 />
                 <span>HSE</span>
               </label>
@@ -582,6 +598,7 @@ const QualifiedTrainerList = () => {
                 handleCheckboxChange(setCertified, certified, "certified")
               }
               className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+              disabled={isDOJLessThan3Years}
             />
           </div>
 
@@ -594,6 +611,7 @@ const QualifiedTrainerList = () => {
               checked={exp5Yr}
               onChange={() => handleCheckboxChange(setExp5Yr, exp5Yr, "exp5Yr")}
               className="h-4 w-4 "
+              disabled={isDOJLessThan3Years}
             />
           </div>
 
@@ -606,6 +624,7 @@ const QualifiedTrainerList = () => {
               checked={exp3Yr}
               onChange={() => handleCheckboxChange(setExp3Yr, exp3Yr, "exp3Yr")}
               className="h-4 w-4 "
+              disabled={isDOJLessThan3Years}
             />
           </div>
 
@@ -618,6 +637,7 @@ const QualifiedTrainerList = () => {
               checked={hodRec}
               onChange={() => handleCheckboxChange(setHodRec, hodRec, "hodRec")}
               className="h-4 w-4"
+              disabled={isDOJLessThan3Years}
             />
           </div>
 
@@ -629,7 +649,7 @@ const QualifiedTrainerList = () => {
               type="checkbox"
               checked={qualified}
               required
-              disabled
+              disabled={isDOJLessThan3Years || true}
               className="h-4 w-4"
             />
           </div>
@@ -638,6 +658,7 @@ const QualifiedTrainerList = () => {
             <button
               type="submit"
               className="px-6 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
+              disabled={isDOJLessThan3Years}
             >
               Submit
             </button>

@@ -58,10 +58,10 @@ const transaction: { title: string; href: string }[] = [
     title: "Monthly Training Particulars",
     href: "/montrainparticulars",
   },
-  {
-    title: "Temporary to regular",
-    href: "/temptoreg",
-  },
+  // {
+  //   title: "Temporary to regular",
+  //   href: "/temptoreg",
+  // },
 ]
 
 const tet: { title: string; href: string }[] = [

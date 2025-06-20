@@ -7,6 +7,7 @@ import Link from "next/link";
 
 const TETForms = () => {
 const [selectedDate, setSelectedDate] = useState(new Date());
+const [trainingName, setTrainingName] = useState("IATF");
   const [trainingData, setTrainingData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [tableSearchTerm, setTableSearchTerm] = useState("");
@@ -15,12 +16,33 @@ const [selectedDate, setSelectedDate] = useState(new Date());
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
-    const [accessRole, setAccessRole] = useState(null);
+  const [submittedStatusMap, setSubmittedStatusMap] = useState({});
+  const [submittedStatusLoading, setSubmittedStatusLoading] = useState(false);
+  const [accessRole, setAccessRole] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(null);
   const getMonthNumber = (date) => (date ? date.getMonth() + 1 : null);
 const [EmployeeId,setEmployeeId] = useState(null);
 
-  const fetchData = async (date) => {
+
+const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+// Helper function to format date as DD-MMM-YYYY
+const formatDateDDMMMYYYY = (dateString) => {
+  if (!dateString) return "";
+  // Check if dateString is already in DD-MMM-YYYY format
+  const ddmmmyyyyRegex = /^(\d{2})-(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-(\d{4})$/;
+  if (ddmmmyyyyRegex.test(dateString)) {
+    return dateString;
+  }
+  const date = new Date(dateString);
+  if (isNaN(date)) return "";
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = monthNames[date.getMonth()];
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
+};
+
+  const fetchData = async (date, trainingName) => {
     if (!date) return;
 
     setLoading(true);
@@ -29,7 +51,7 @@ const [EmployeeId,setEmployeeId] = useState(null);
 
     try {
       const response = await fetch(
-        `/api/get_tet_form_data?year=${date}`
+        `/api/get_tet_form_data?year=${date}&training_name=${encodeURIComponent(trainingName)}`
       );
 
       if (!response.ok) {
@@ -44,12 +66,58 @@ const [EmployeeId,setEmployeeId] = useState(null);
       } else {
         setTrainingData(data);
         setFilteredData(data);
+        // Fetch submitted status map for all Program_Ids
+        fetchSubmittedStatusMap(data);
       }
     } catch (err) {
       setError(err.message || "An error occurred while fetching data.");
       setFilteredData([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSubmittedStatusMap = async (trainingData) => {
+    if (!trainingData || trainingData.length === 0) {
+      setSubmittedStatusMap({});
+      return;
+    }
+    setSubmittedStatusLoading(true);
+    const programIds = [...new Set(trainingData.map(item => item.Program_Id))];
+    const statusMap = {};
+    try {
+      const fetchPromises = programIds.map(async (programId) => {
+        try {
+          const res = await fetch(`/api/get_tet_form_emp_details_for_report?programId=${programId}`);
+          if (!res.ok) {
+            statusMap[programId] = false;
+            return;
+          }
+          const data = await res.json();
+          // Check if all employees have all Q_1 to Q_10 > 0 (all dropdowns ticked)
+          // Determine number of dropdowns dynamically from keys starting with "Q_"
+          const dropdownKeys = Object.keys(data[0] || {}).filter(key => key.startsWith("Q_"));
+          const allTicked = data.every(emp => {
+            for (let i = 0; i < dropdownKeys.length; i++) {
+              const key = dropdownKeys[i];
+              if (!emp[key] || emp[key] <= 0) {
+                return false;
+              }
+            }
+            return true;
+          });
+          statusMap[programId] = allTicked;
+        } catch (error) {
+          statusMap[programId] = false;
+        }
+      });
+      await Promise.all(fetchPromises);
+    } catch (error) {
+      // In case of unexpected error, clear status map
+      setSubmittedStatusMap({});
+    } finally {
+      setSubmittedStatusMap(statusMap);
+      setSubmittedStatusLoading(false);
     }
   };
 
@@ -60,6 +128,15 @@ const [EmployeeId,setEmployeeId] = useState(null);
   useEffect(() => {
     setCurrentPage(1);
   }, [rowsPerPage, filteredData]);
+
+  useEffect(() => {
+    if (selectedDate) {
+      const year = selectedDate.getFullYear();
+      fetchData(year, trainingName);
+      setRowsPerPage(10);
+      setCurrentPage(1);
+    }
+  }, [selectedDate, trainingName]);
    useEffect(() => {
      const storedEmployeeId = localStorage.getItem('employeeId');
    
@@ -94,14 +171,6 @@ const [EmployeeId,setEmployeeId] = useState(null);
      fetchAccessRole();
    }, []);
 
-useEffect(() => {
-  if (selectedDate) {
-    const year = selectedDate.getFullYear();
-    fetchData(year);
-    setRowsPerPage(10);
-    setCurrentPage(1);
-  }
-}, [selectedDate]);
 
   const handleSort = (key) => {
     let direction = "asc";
@@ -181,7 +250,7 @@ useEffect(() => {
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
         <h1 className="font-semibold">TET Forms</h1>
       </div>
-      <div className="my-4 relative z-50">
+      <div className="my-4 flex relative z-50">
         <div className="flex items-center space-x-2">
           <label className="text-sm font-medium">Year</label>
           <DatePicker
@@ -201,6 +270,24 @@ useEffect(() => {
             }}
           />
         </div>
+   <div className="flex mx-2 items-center space-x-2">
+        <label htmlFor="Training_Name" className="text-sm font-medium">
+    Training Name
+        </label>
+        <div className="relative">
+          <select
+            id="Training_Name"
+            name="Training_Name"
+            value={trainingName}
+            onChange={(e) => setTrainingName(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
+            required 
+          >
+            <option value="IATF">International Automotive Task Force - (IATF)</option>
+            <option value="HSE">Health, Safety, and Environment - (HSE)</option>
+          </select>
+        </div>
+      </div>
       </div>
       {loading && <p>Loading...</p>}
 
@@ -299,21 +386,19 @@ useEffect(() => {
                             {item.Training_Name}
                           </td>
                           <td className="px-4 py-2 border">
-                            {item.Training_Date
-                              ? new Date(
-                                  item.Training_Date
-                                ).toLocaleDateString()
-                              : ""}
+                            {formatDateDDMMMYYYY(item.Training_Date)}
                           </td>
                           <td className="px-4 py-2 border">
-                            {item.Evaluation_Date
-                              ? new Date(
-                                  item.Evaluation_Date
-                                ).toLocaleDateString()
-                              : ""}
+                            {formatDateDDMMMYYYY(item.Evaluation_Date)}
                           </td>
                           <td className="px-4 py-2 border">
-                            {item.IsActive ? "Active" : "Inactive"}
+                            {submittedStatusLoading && submittedStatusMap[item.Program_Id] === undefined ? (
+                              <span>Loading...</span>
+                            ) : (
+                              <span className={submittedStatusMap[item.Program_Id] ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
+                                {submittedStatusMap[item.Program_Id] ? "Completed" : "Pending"}
+                              </span>
+                            )}
                           </td>
                           <td className="px-4 py-2 border text-blue-600 underline">
                             <Link
