@@ -24,10 +24,10 @@ export default function UploadCertificates() {
   const [options, setOptions] = useState([]);
   const [fileUrl, setFileUrl] = useState(null);
   const [department, setDepartment] = useState('');
-  const [employeeId, setEmployeeId] = useState(null);
+  const [username, setUsername] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
   const [accessRole, setAccessRole] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(null);
-  const [username, setUsername] = useState('');
   const [formData, setFormData] = useState({
     Program_Id: "",
     Training_Name: "",
@@ -74,44 +74,6 @@ export default function UploadCertificates() {
     label: trainer.Text,
   }));
 
- useEffect(() => {
-   const storedEmployeeId = localStorage.getItem('employeeId');
- 
-   if (storedEmployeeId) {
-     setEmployeeId(storedEmployeeId);
-   } else {
-     window.location.href = '/';
-     return;
-   }
- 
-   const fetchAccessRole = async () => {
-     try {
-       const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-       const data = await res.json();
- 
-       if (res.ok && data.Access_Role) {
-         // Restrict access for HR_Res and HR_HOD roles
-         if (data.Access_Role === "HOS" || data.Access_Role === "HOD" || data.Access_Role === "Res_Person") {
-           setIsAuthorized(false);
-           // Optionally redirect to unauthorized page
-           // window.location.href = '/unauthorized';
-           return;
-         }
-         setAccessRole(data.Access_Role);
-         setIsAuthorized(true);
-       } else {
-         setIsAuthorized(false);
-       }
-     } catch (error) {
-       console.error('Error fetching access role:', error);
-       setIsAuthorized(false);
-     }
-   };
- 
-   fetchAccessRole();
- }, []);
-  
-
 useEffect(() => {
     const fetchTrainers = async () => {
       try {
@@ -125,6 +87,39 @@ useEffect(() => {
 
     fetchTrainers();
   }, []);
+  useEffect(() => {
+  const storedEmployeeId = localStorage.getItem('employeeId');
+
+  if (storedEmployeeId) {
+    setEmployeeId(storedEmployeeId);
+  }
+ 
+  const fetchAccessRole = async () => {
+    try {
+      const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+      const data = await res.json();
+
+      if (res.ok && data.Access_Role) {
+        // Restrict access for HR_Res and HR_HOD roles
+        if (data.Access_Role === "HOS" || data.Access_Role === "HOD" || data.Access_Role === "Res_Person") {
+          setIsAuthorized(false);
+          // Optionally redirect to unauthorized page
+          // window.location.href = '/unauthorized';
+          return;
+        }
+        setAccessRole(data.Access_Role);
+        setIsAuthorized(true);
+      } else {
+        setIsAuthorized(false);
+      }
+    } catch (error) {
+      console.error('Error fetching access role:', error);
+      setIsAuthorized(false);
+    }
+  };
+
+  fetchAccessRole();
+}, []);
 
   useEffect(() => {
     if (formData.Program_Id) {
@@ -167,7 +162,6 @@ useEffect(() => {
       setError(err.message);
     }
   };
-  
 
   const handleMonthYearChange = async (date) => {
     if (!date) return;
@@ -301,17 +295,25 @@ useEffect(() => {
 
   const safeFilteredData = Array.isArray(filteredData) ? filteredData : [];
 
+  // Helper to get rowsPerPage as number for calculations
+  const getRowsPerPageNumber = () => {
+    if (rowsPerPage === "All") return safeFilteredData.length;
+    return Number(rowsPerPage) || 10;
+  };
+
+  const rowsPerPageNumber = getRowsPerPageNumber();
+
   const totalPages =
     rowsPerPage === "All"
       ? 1
-      : Math.ceil(safeFilteredData.length / rowsPerPage);
+      : Math.ceil(safeFilteredData.length / rowsPerPageNumber);
 
   const paginatedData =
     rowsPerPage === "All"
       ? safeFilteredData
       : safeFilteredData.slice(
-          (currentPage - 1) * rowsPerPage,
-          currentPage * rowsPerPage
+          (currentPage - 1) * rowsPerPageNumber,
+          currentPage * rowsPerPageNumber
         );
   const handleTableSearchChange = (e) => {
     const searchQuery = e.target.value;
@@ -376,6 +378,30 @@ const programOptions = options.map((option) => ({
   value: option.Value,
   label: option.Text,
 }));
+  if (isAuthorized === null) {
+    return (
+      <div>
+Loading...
+         {/* // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+      //   <div className="bg-white p-10 rounded shadow text-center">
+      //     <h2 className="text-2xl font-bold">Loading...</h2>
+      //   </div>
+      // </div> */}
+      </div>
+     
+    );
+  }
+
+  if (isAuthorized === false) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+        <div className="bg-white p-10 rounded shadow text-center">
+          <h2 className="text-2xl font-bold">Unauthorized</h2>
+          <p className="mt-2">You do not have access to view this page.</p>
+        </div>
+      </div>
+    );
+  }
   // useEffect(() => {
   //   fetch(`/api/get_file_by_program_id?id=${formData.Program_Id}`)
   //     .then(res => res.json())
@@ -388,19 +414,6 @@ const programOptions = options.map((option) => ({
   //       console.error("Failed to fetch file", err);
   //     });
   // }, [formData.Program_Id]);
- 
-  
-  
-  if (!isAuthorized) {
-    return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
-        <div className="bg-white p-10 rounded shadow text-center">
-          <h2 className="text-2xl font-bold">Unauthorized</h2>
-          <p className="mt-2">You do not have access to view this page.</p>
-        </div>
-</div>
-);
-}
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
@@ -675,8 +688,8 @@ const programOptions = options.map((option) => ({
                   <div>
                     Showing{" "}
                     {filteredData.length > 0
-                      ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
-                          currentPage * rowsPerPage,
+                      ? `${(currentPage - 1) * rowsPerPageNumber + 1} to ${Math.min(
+                          currentPage * rowsPerPageNumber,
                           filteredData.length
                         )} of ${filteredData.length} entries`
                       : "0 entries"}
@@ -699,9 +712,10 @@ const programOptions = options.map((option) => ({
                     </button>
                     {Array.from({ length: totalPages }, (_, i) => (
                       <button
+                      type="button"
                         key={i}
                         className={`px-3 py-1 border rounded ${
-                          currentPage === i + 1 ? "bg-primary text-white" : ""
+                          currentPage === i + 1 ? "bg-black text-white" : ""
                         }`}
                         onClick={() => setCurrentPage(i + 1)}
                       >

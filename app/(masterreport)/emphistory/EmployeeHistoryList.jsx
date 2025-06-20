@@ -24,7 +24,43 @@ const EmployeeHistoryList = () => {
   const [error, setError] = useState(null);
   const [tableSearchTerm, setTableSearchTerm] = useState("");
   const dropdownRef = useRef(null);
-
+const [selectedEmployee, setSelectedEmployee] = useState(null);
+    const [accessRole, setAccessRole] = useState(null);
+  const [isAuthorized, setIsAuthorized] = useState(null);
+   useEffect(() => {
+       const storedEmployeeId = localStorage.getItem('employeeId');
+     
+       if (storedEmployeeId) {
+         setEmployeeId(storedEmployeeId);
+       }
+      
+       const fetchAccessRole = async () => {
+         try {
+           const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+           const data = await res.json();
+     
+           if (res.ok && data.Access_Role) {
+             // Restrict access for HR_Res and HR_HOD roles
+             if (data.Access_Role === "Res_Person" || data.Access_Role === "HOS" || data.Access_Role === "HOD") {
+               setIsAuthorized(false);
+               // Optionally redirect to unauthorized page
+               // window.location.href = '/unauthorized';
+               return;
+             }
+             setAccessRole(data.Access_Role);
+             setIsAuthorized(true);
+           } else {
+             setIsAuthorized(false);
+           }
+         } catch (error) {
+           console.error('Error fetching access role:', error);
+           setIsAuthorized(false);
+         }
+       };
+     
+       fetchAccessRole();
+     }, []);
+     
   // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(event) {
@@ -135,55 +171,51 @@ const EmployeeHistoryList = () => {
   };
 
   const fetchQualifiedTrainers = async (empId) => {
-    if (!empId) return;
-    setLoading(true);
-    setError(null);
+  if (!empId) return;
+  setLoading(true);
+  setError(null);
 
-    try {
-      const url = `/api/get_employee_history_table?EmployeeId=${empId}`;
-      const res = await fetch(url);
-      const data = await res.json();
+  try {
+    const url = `/api/get_employee_history_table?EmployeeId=${empId}`;
+    const res = await fetch(url);
+    const data = await res.json();
 
-      if (res.status === 200) {
-        if (Array.isArray(data)) {
-          const formatDateYYYYMMDD = (date) => {
-            const d = new Date(date);
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, "0");
-            const day = String(d.getDate()).padStart(2, "0");
-            return `${year}-${month}-${day}`;
-          };
-          const formattedData = data.map(item => ({
-            ...item,
-            Training_DateFormatted: item.Training_Date ? formatDateYYYYMMDD(item.Training_Date) : "",
-          }));
-          setQualifiedTrainers(formattedData);
-          if (data.length === 0) {
-            setError("No data found for the selected employee.");
-          }
-        } else if (Object.keys(data).length === 0) {
-          setQualifiedTrainers([]);
+    if (res.status === 200) {
+      if (Array.isArray(data)) {
+        const formattedData = data.map(item => ({
+          ...item,
+          Training_DateFormatted: item.Training_Date || "", // Use the formatted string directly
+        }));
+
+        setQualifiedTrainers(formattedData);
+
+        if (data.length === 0) {
           setError("No data found for the selected employee.");
-        } else {
-          console.error("Unexpected response:", data);
-          setQualifiedTrainers([]);
-          setError(data.message || "Error fetching qualified trainers data");
         }
-      } else if (res.status === 404) {
+      } else if (Object.keys(data).length === 0) {
         setQualifiedTrainers([]);
-        setError(null);
+        setError("No data found for the selected employee.");
       } else {
         console.error("Unexpected response:", data);
         setQualifiedTrainers([]);
         setError(data.message || "Error fetching qualified trainers data");
       }
-    } catch (err) {
-      console.error("Fetch error:", err);
-      setError("Failed to fetch qualified trainers data");
-    } finally {
-      setLoading(false);
+    } else if (res.status === 404) {
+      setQualifiedTrainers([]);
+      setError(null);
+    } else {
+      console.error("Unexpected response:", data);
+      setQualifiedTrainers([]);
+      setError(data.message || "Error fetching qualified trainers data");
     }
-  };
+  } catch (err) {
+    console.error("Fetch error:", err);
+    setError("Failed to fetch qualified trainers data");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleEmployeeIdChange = async (selectedOption) => {
     if (!selectedOption) {
@@ -313,7 +345,27 @@ const EmployeeHistoryList = () => {
     selectAllRowsItem: true,
     selectAllRowsItemText: "All",
   };
+ if (isAuthorized === null) {
+    return (
+      <div>Loading..</div>
+      // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+      //   <div className="bg-white p-10 rounded shadow text-center">
+      //     <h2 className="text-2xl font-bold">Loading...</h2>
+      //   </div>
+      // </div>
+    );
+  }
 
+  if (isAuthorized === false) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+        <div className="bg-white p-10 rounded shadow text-center">
+          <h2 className="text-2xl font-bold">Unauthorized</h2>
+          <p className="mt-2">You do not have access to view this page.</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div>
       <div className="max-w-full mx-auto bg-white p-2 rounded-lg w-full">
@@ -432,13 +484,18 @@ const EmployeeHistoryList = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900">Status</label>
+              <label className="block text-sm font-medium text-gray-900">Status</label>
             <input
               type="text"
-              value={trainingDetails.IsActive || ""}
+              value={(() => {
+                if (trainingDetails.IsActive === 1 || trainingDetails.IsActive === "1") return "Active";
+                if (trainingDetails.IsActive === 0 || trainingDetails.IsActive === "0") return "Inactive";
+                return "";
+              })()}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
+
           </div>
         </div>
 
@@ -502,6 +559,8 @@ const EmployeeHistoryList = () => {
                           { key: "Train_Mode", label: "Training Mode" },
                           { key: "No_Hrs", label: "Hours" },
                           { key: "Training_Date", label: "Training Date" },
+                           { key: "", label: "Upload" },
+                            { key: "  ", label: "View" },
                         ].map(({ key, label }, index) => (
                           <th
                             key={key}
@@ -528,6 +587,8 @@ const EmployeeHistoryList = () => {
                             <td className="px-4 py-2 border">
                               {item.Training_Date ? item.Training_DateFormatted : ""}
                             </td>
+                            <td className="px-4 py-2 border"></td>
+                            <td className="px-4 py-2 border"></td>
                           </tr>
                         ))
                       ) : (
@@ -571,7 +632,7 @@ const EmployeeHistoryList = () => {
                       <button
                         key={i}
                         className={`px-3 py-1 border rounded ${
-                          currentPage === i + 1 ? "bg-primary text-white" : ""
+                          currentPage === i + 1 ? "bg-black text-white" : ""
                         }`}
                         onClick={() => setCurrentPage(i + 1)}
                       >

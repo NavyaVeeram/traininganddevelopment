@@ -100,7 +100,7 @@ const [accessRole, setAccessRole] = useState(null);
   
     const fetchAccessRole = async () => {
       try {
-        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`); 
         const data = await res.json();
   
         if (res.ok && data.Access_Role) {

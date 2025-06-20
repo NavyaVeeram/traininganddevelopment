@@ -37,7 +37,7 @@ const MonthlyTrainingParticulars = () => {
 
       if (data && data.length === 0) {
         setError("No training data available for the selected month.");
-        setFilteredData([]); 
+        setFilteredData([]);
       } else {
         setTrainingData(data);
         setFilteredData(data);
@@ -46,7 +46,7 @@ const MonthlyTrainingParticulars = () => {
       setError(err.message || "An error occurred while fetching data.");
       setFilteredData([]);
     } finally {
-      setLoading(false); 
+      setLoading(false);
     }
   };
 
@@ -57,7 +57,7 @@ const MonthlyTrainingParticulars = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [rowsPerPage, filteredData]);
-  
+
   useEffect(() => {
     if (selectedDate) {
       fetchData(selectedDate);
@@ -116,28 +116,28 @@ const MonthlyTrainingParticulars = () => {
       </div>
 
       {/* Display only month dropdown initially */}
-      
-        <div className="my-4 relative z-30">
-          <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium">Month</label>
-            <DatePicker
-              selected={selectedDate}
-              onChange={(date) => setSelectedDate(date)}
-              dateFormat="MM/yyyy"
-              showMonthYearPicker
-              placeholderText="Select Month and Year"
-              className="p-2 border border-gray-300 rounded-lg"
-              calendarClassName="z-50" 
-              popperPlacement="top-start"
-              popperModifiers={{
-                preventOverflow: {
-                  enabled: true,
-                  boundariesElement: "viewport",
-                },
-              }}
-            />
-          </div>
+
+      <div className="my-4 relative z-30">
+        <div className="flex items-center space-x-2">
+          <label className="text-sm font-medium">Month</label>
+          <DatePicker
+            selected={selectedDate}
+            onChange={(date) => setSelectedDate(date)}
+            dateFormat="MM/yyyy"
+            showMonthYearPicker
+            placeholderText="Select Month and Year"
+            className="p-2 border border-gray-300 rounded-lg"
+            calendarClassName="z-50"
+            popperPlacement="top-start"
+            popperModifiers={{
+              preventOverflow: {
+                enabled: true,
+                boundariesElement: "viewport",
+              },
+            }}
+          />
         </div>
+      </div>
 
       {/* Display loading and error messages */}
       {loading && <p>Loading...</p>}
@@ -186,66 +186,66 @@ const MonthlyTrainingParticulars = () => {
             </div>
 
             <div className="overflow-x-auto ">
-                <table className="min-w-full border relative z-0 bg-card text-sm " 
-                style={{ 
-                  tableLayout: "fixed", 
-                  fontSize: "13px" , 
+              <table className="min-w-full border relative z-0 bg-card text-sm "
+                style={{
+                  tableLayout: "fixed",
+                  fontSize: "13px",
                   padding: "1px",
-                  whiteSpace: "nowrap", 
-                  overflow: "hidden",   
-                  textOverflow: "ellipsis", }} >
-                  <thead className="bg-muted top-0 z-0" >
-                    <tr>
-                      {[{ key: "Program_Name", label: "Training Name" },
-                        { key: "Req_Months", label: "Scheduled Month" },
-                        { key: "Training_Date", label: "Conducted Date" },
-                        { key: "Training_Name", label: "Type" },
-                        { key: "Train_Mode", label: "Mode" },
-                        { key: "Schedule_Type", label: "Schedule Type" },
-                        { key: "Training_Status", label: "Training Status" }]
-                        .map(({ key, label }, index) => (
-                          <th
-                            key={key}
-                            className={`px-4 py-2 border text-left cursor-pointer ${index === 0 ? "sticky left-0 bg-muted z-20" : ""}`}
-                            onClick={() => handleSort(key)}
-                          >
-                            {label}{" "}
-                            {sortConfig.key === key
-                              ? sortConfig.direction === "asc"
-                                ? "▲"
-                                : "▼"
-                              : "↕"}
-                          </th>
-                        ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredData.length > 0 ? (
-                      paginatedData.map((item, index) => (
-                        <tr key={index} className="hover:bg-gray-100 border">
-                          <td className="px-4 py-2 border">{item.Program_Name}</td>
-                          <td className="px-4 py-2 border">{item.Req_Months}</td>
-                          <td className="px-4 py-2 border">
-                            {item.Training_Date
-                              ? new Date(item.Training_Date).toLocaleDateString()
-                              : ""}
-                          </td>
-                          <td className="px-4 py-2 border">{item.Training_Name}</td>
-                          <td className="px-4 py-2 border">{item.Train_Mode}</td>
-                          <td className="px-4 py-2 border">{item.Schedule_Type}</td>
-                          <td className="px-4 py-2 border">{item.Training_Status}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="7" className="py-4 text-center text-gray-500">
-                          No matching training data available.
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }} >
+                <thead className="bg-muted top-0 z-0" >
+                  <tr>
+                    {[{ key: "Program_Name", label: "Training Name" },
+                    { key: "Req_Months", label: "Scheduled Month" },
+                    { key: "Training_Date", label: "Conducted Date" },
+                    { key: "Training_Name", label: "Type" },
+                    { key: "Train_Mode", label: "Mode" },
+                    { key: "Schedule_Type", label: "Schedule Type" },
+                    { key: "Training_Status", label: "Training Status" }]
+                      .map(({ key, label }, index) => (
+                        <th
+                          key={key}
+                          className={`px-4 py-2 border text-left cursor-pointer ${index === 0 ? "sticky left-0 bg-muted z-20" : ""}`}
+                          onClick={() => handleSort(key)}
+                        >
+                          {label}{" "}
+                          {sortConfig.key === key
+                            ? sortConfig.direction === "asc"
+                              ? "▲"
+                              : "▼"
+                            : "↕"}
+                        </th>
+                      ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredData.length > 0 ? (
+                    paginatedData.map((item, index) => (
+                      <tr key={index} className="hover:bg-gray-100 border">
+                        <td className="px-4 py-2 border">{item.Program_Name}</td>
+                        <td className="px-4 py-2 border">{item.Req_Months}</td>
+                        <td className="px-4 py-2 border">
+                          {item.Training_Date || ""}
                         </td>
+
+                        <td className="px-4 py-2 border">{item.Training_Name}</td>
+                        <td className="px-4 py-2 border">{item.Train_Mode}</td>
+                        <td className="px-4 py-2 border">{item.Schedule_Type}</td>
+                        <td className="px-4 py-2 border">{item.Training_Status}</td>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
-            
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="7" className="py-4 text-center text-gray-500">
+                        No matching training data available.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+
             </div>
 
             {(
@@ -253,9 +253,9 @@ const MonthlyTrainingParticulars = () => {
                 <div>
                   Showing {filteredData.length > 0
                     ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
-                        currentPage * rowsPerPage,
-                        filteredData.length
-                      )} of ${filteredData.length} entries`
+                      currentPage * rowsPerPage,
+                      filteredData.length
+                    )} of ${filteredData.length} entries`
                     : "0 entries"}
                 </div>
 
