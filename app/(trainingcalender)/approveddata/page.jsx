@@ -7,7 +7,7 @@ import "react-datepicker/dist/react-datepicker.css";
 export default function TrainingDataTable() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState([]);
- const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [trainingName, setTrainingName] = useState("IATF");
   const [recordCounts, setRecordCounts] = useState({}); // New state for record counts
 
@@ -17,6 +17,15 @@ export default function TrainingDataTable() {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const [searchQuery, setSearchQuery] = useState("");
   const [yearNo, setYearNo] = useState(new Date().getFullYear());
+
+  // Auto refresh and reset yearNo to current year every 30 seconds
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setYearNo(new Date().getFullYear());
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   // Mapping of raw column names to user-friendly display names
   const columnNameMap = {
@@ -61,11 +70,13 @@ export default function TrainingDataTable() {
     })
       .then((res) => res.json())
       .then((data) => {
-        if (data.data && data.data.length > 0) {
+        if (Array.isArray(data.data) && data.data.length > 0) {
           console.log("Data keys:", Object.keys(data.data[0]));
           console.log("First row data:", data.data[0]);
+          setData(data.data);
+        } else {
+          setData([]);
         }
-        setData(data.data);
         setLoading(false);
       })
       .catch((err) => {
@@ -205,22 +216,25 @@ const columnsToDisplay = data.length > 0
             <label htmlFor="year-select" className="mr-2 font-semibold">
               Select Year:
             </label>
-            <DatePicker
-              selected={selectedDate}
-              onChange={(date) => setSelectedDate(date)}
-              dateFormat="yyyy"
-              showYearPicker
-              placeholderText="Select Year"
-              className="p-2 border border-gray-300 rounded-lg"
-              calendarClassName="z-50"
-              popperPlacement="top-start"
-              popperModifiers={{
-                preventOverflow: {
-                  enabled: true,
-                  boundariesElement: "viewport",
-                },
-              }}
-            />
+      <DatePicker
+        selected={new Date(yearNo, 0, 1)}
+        onChange={(date) => {
+          setSelectedDate(date);
+          setYearNo(date.getFullYear());
+        }}
+        dateFormat="yyyy"
+        showYearPicker
+        placeholderText="Select Year"
+        className="p-2 border border-gray-300 rounded-lg"
+        calendarClassName="z-50"
+        popperPlacement="top-start"
+        popperModifiers={{
+          preventOverflow: {
+            enabled: true,
+            boundariesElement: "viewport",
+          },
+        }}
+      />
           </div>
           <div className="mx-2">
             <label htmlFor="training-select" className="mr-2 font-semibold">

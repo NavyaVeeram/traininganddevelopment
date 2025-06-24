@@ -1,336 +1,442 @@
-"use client";
-import React, { useState, useEffect } from "react";
-import "./styles.css";
-import CalendarMonthYearSelector from "../components/CalendarMonthYearSelector";
+"use client"
+import React, { useState, useEffect, useRef } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { FaPrint } from "react-icons/fa";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
-const months = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
+const monthsOrder = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
-const monthAbbrToNumber = {
-  Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6,
-  Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12,
-};
-
-function getISOWeek(date) {
-  const target = new Date(date.valueOf());
-  const dayNr = (date.getDay() + 6) % 7;
-  target.setDate(target.getDate() - dayNr + 3);
-  const firstThursday = target.valueOf();
-  target.setMonth(0, 1);
-  if (target.getDay() !== 4) {
-    target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
-  }
-  const weekNumber = 1 + Math.ceil((firstThursday - target) / 604800000);
-  return weekNumber;
-}
-
-function getWeeksInMonthISO(year, monthIndex) {
-  // Calculate weeks in the month, but only include weeks where majority of days belong to the month
-  const weekDayCount = {};
-  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
-
-  for (let day = 1; day <= daysInMonth; day++) {
-    const date = new Date(year, monthIndex, day);
-    const week = getISOWeek(date);
-    weekDayCount[week] = (weekDayCount[week] || 0) + 1;
-  }
-
-  // Filter weeks where majority of days are in the month (at least 4 days)
-  const weeks = Object.entries(weekDayCount)
-    .filter(([week, count]) => count >= 4)
-    .map(([week]) => parseInt(week));
-
-  return weeks.sort((a, b) => a - b);
-}
-
-export default function AnnualCalendar() {
-  const [year, setYear] = useState(new Date());
+const AnnualTraining = () => {
+  const [employeeId, setEmployeeId] = useState("");
+  const [accessRole, setAccessRole] = useState(null);
+  const [isAuthorized, setIsAuthorized] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [trainingName, setTrainingName] = useState("");
-  const [data, setData] = useState({});
+  const [trainingName, setTrainingName] = useState("IATF");
+  const [trainingData, setTrainingData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [username, setUsername] = useState('');
+  const [error, setError] = useState(null);
+  const tableRef = useRef(null);
 
   useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
+    const storedEmployeeId = localStorage.getItem("employeeId");
+    if (storedEmployeeId) {
+      setEmployeeId(storedEmployeeId);
+    }
+
+    const fetchAccessRole = async () => {
       try {
-        const res = await fetch(`/api/annual_calendar?year=${year.getFullYear()}&trainingName=${encodeURIComponent(trainingName)}`);
-        const result = await res.json();
-        const calendar = {};
-        result.forEach(({ Req_Months, Week, Program_Name }) => {
-          const monthNum = monthAbbrToNumber[Req_Months];
-          if (!monthNum) return;
-          if (!calendar[monthNum]) calendar[monthNum] = {};
-          if (!calendar[monthNum][`Week${Week}`]) {
-            calendar[monthNum][`Week${Week}`] = [];
-          }
-          calendar[monthNum][`Week${Week}`].push(Program_Name);
-        });
-        setData(calendar);
-      } catch (error) {
-        console.error("Fetch error:", error);
-        setData({});
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, [year, trainingName]);
+        const res = await fetch(
+          "/api/get_access_role?employeeId=" + storedEmployeeId
+        );
+        const data = await res.json();
 
-  useEffect(() => {
-    const storedUsername = localStorage.getItem('username');
-    if (storedUsername) {
-      setUsername(storedUsername);
-    } else {
-      window.location.href = '/';
-    }
+        if (res.ok && data.Access_Role) {
+          if (
+            data.Access_Role === "Res_Person" ||
+            data.Access_Role === "HOS" ||
+            data.Access_Role === "HOD" ||
+            data.Access_Role === "HR_Hod"
+          ) {
+            setIsAuthorized(false);
+            return;
+          }
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+        }
+      } catch (error) {
+        console.error("Error fetching access role:", error);
+        setIsAuthorized(false);
+      }
+    };
+
+    fetchAccessRole();
   }, []);
 
-  function isYearEnabled(date) {
-    // Allow all years for now, can customize if needed
-    return true;
+  useEffect(() => {
+    if (isAuthorized) {
+      setLoading(true);
+      setError(null);
+      fetch(
+        `/api/get_annual_training_calendar?year=${selectedDate.getFullYear()}&trainingName=${trainingName}`
+      )
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to fetch training calendar");
+          return res.json();
+        })
+        .then((data) => {
+          setTrainingData(data);
+          setLoading(false);
+        })
+        .catch((err) => {
+          setError(err.message);
+          setLoading(false);
+        });
+    }
+  }, [selectedDate, trainingName, isAuthorized]);
+
+  if (isAuthorized === null) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+        <div className="bg-white p-10 rounded shadow text-center">
+          <h2 className="text-2xl font-bold">Loading...</h2>
+        </div>
+      </div>
+    );
   }
 
-  const monthWeekMap = (() => {
-    const map = {};
-    const maxWeeks = 53;
-    for (let i = 0; i < 12; i++) {
-      let isoWeeks = getWeeksInMonthISO(year.getFullYear(), i);
-      // Ensure exactly 5 weeks per month except December (month 11)
-      if (i !== 11) {
-        if (isoWeeks.length > 5) {
-          isoWeeks = isoWeeks.slice(0, 5);
-        } else if (isoWeeks.length < 5) {
-          // Add weeks from next month to make total 5 weeks
-          let nextMonth = i + 1;
-          while (isoWeeks.length < 5 && nextMonth < 12) {
-            const nextMonthWeeks = getWeeksInMonthISO(year.getFullYear(), nextMonth);
-            for (let w of nextMonthWeeks) {
-              if (isoWeeks.length >= 5) break;
-              if (!isoWeeks.includes(w)) {
-                isoWeeks.push(w);
-              }
-            }
-            nextMonth++;
-          }
-          // If still less than 5, try previous month
-          let prevMonth = i - 1;
-          while (isoWeeks.length < 5 && prevMonth >= 0) {
-            const prevMonthWeeks = getWeeksInMonthISO(year.getFullYear(), prevMonth);
-            for (let w of prevMonthWeeks) {
-              if (isoWeeks.length >= 5) break;
-              if (!isoWeeks.includes(w)) {
-                isoWeeks.push(w);
-              }
-            }
-            prevMonth--;
-          }
-          isoWeeks.sort((a, b) => a - b);
-        }
-      }
-      const weeks = [];
-      for (let w of isoWeeks) {
-        if (w > maxWeeks) break;
-        weeks.push(`Week${w}`);
-      }
-      map[i + 1] = weeks;
-    }
-    return map;
-  })();
+  if (isAuthorized === false) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+        <div className="bg-white p-10 rounded shadow text-center">
+          <h2 className="text-2xl font-bold">Unauthorized</h2>
+          <p className="mt-2">You do not have access to view this page.</p>
+        </div>
+      </div>
+    );
+  }
 
-  const totalWeeks = Object.values(monthWeekMap).reduce(
-    (acc, wks) => acc + wks.length,
-    0
-  );
+  const groupedData = {};
+  trainingData.forEach((item) => {
+    const month = item.Req_Months.toLowerCase();
+    const week = item.Week;
+    const program = item.Program_Name;
+
+    if (!groupedData[month]) {
+      groupedData[month] = {};
+    }
+    if (!groupedData[month][week]) {
+      groupedData[month][week] = [];
+    }
+    groupedData[month][week].push(program);
+  });
+
+  const monthsInData = monthsOrder;
+
+  const monthAbbrMap = {
+    January: "jan",
+    February: "feb",
+    March: "mar",
+    April: "apr",
+    May: "may",
+    June: "jun",
+    July: "jul",
+    August: "aug",
+    September: "sep",
+    October: "oct",
+    November: "nov",
+    December: "dec",
+  };
+
+  function getISOWeekNumber(date) {
+    const target = new Date(date.valueOf());
+    const dayNr = (date.getDay() + 6) % 7;
+    target.setDate(target.getDate() - dayNr + 3);
+    const firstThursday = new Date(target.getFullYear(), 0, 4);
+    const firstDayNr = (firstThursday.getDay() + 6) % 7;
+    firstThursday.setDate(firstThursday.getDate() - firstDayNr + 3);
+    const weekNumber =
+      1 + Math.floor((target - firstThursday) / (7 * 24 * 60 * 60 * 1000));
+    return weekNumber;
+  }
+
+  const dynamicWeeksByMonth = {};
+  monthsInData.forEach((month, index) => {
+    const monthNum = index;
+    const weeks = new Set();
+    const daysInMonth = new Date(
+      selectedDate.getFullYear(),
+      monthNum + 1,
+      0
+    ).getDate();
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(selectedDate.getFullYear(), monthNum, day);
+      let weekNum = getISOWeekNumber(date);
+      if (weekNum > 52) {
+        weekNum = 52;
+      }
+      weeks.add(weekNum);
+    }
+    dynamicWeeksByMonth[month] = Array.from(weeks).sort((a, b) => {
+      if (a < 10 && b > 40) {
+        return 1;
+      }
+      if (a > 40 && b < 10) {
+        return -1;
+      }
+      return a - b;
+    });
+  });
+
+  const generatePDF = async () => {
+    const input = tableRef.current;
+
+    // Clone node and remove classes
+    const clonedNode = input.cloneNode(true);
+
+    // Remove all class attributes and override styles with safe CSS
+    const elementsWithClasses = clonedNode.querySelectorAll("[class]");
+    elementsWithClasses.forEach((el) => {
+      el.removeAttribute("class");
+      // Override all styles that might cause problems with PDF export
+      el.style.backgroundColor = "white";
+      el.style.color = "black";
+      // Set border for <td> elements, remove border for inner divs inside <td>
+      if (el.tagName.toLowerCase() === "td") {
+        el.style.border = "1px solid #ccc";
+      } else if (
+        el.tagName.toLowerCase() === "div" &&
+        el.parentElement &&
+        el.parentElement.tagName.toLowerCase() === "td"
+      ) {
+        el.style.border = "none";
+      } else {
+        el.style.border = "1px solid #ccc";
+      }
+      el.style.padding = "4px";
+      el.style.Margin = "3px"
+      el.style.fontSize = "11px";
+      el.style.boxSizing = "border-box";
+      el.style.textAlign = "center";
+      // Remove potentially problematic CSS variables or color functions
+      el.style.removeProperty("color");
+      el.style.removeProperty("background-color");
+      // Explicitly set safe colors after removing
+      el.style.color = "black";
+      el.style.backgroundColor = "white";
+    });
+
+    // Remove explicit bottom border styling on last row and last td elements
+    // const tbody = clonedNode.querySelector("tbody");
+    // if (tbody) {
+    //   const rows = tbody.querySelectorAll("tr");
+    //   if (rows.length > 0) {
+    //     const lastRow = rows[rows.length - 1];
+    //     lastRow.style.borderBottom = "1px solid #ccc";
+    //     const tds = lastRow.querySelectorAll("td");
+    //     tds.forEach((td) => {
+    //       td.style.borderBottom = "1px solid #ccc";
+    //     });
+    //   }
+    // }
+
+    // Also apply the same styles to the cloned root element itself
+    clonedNode.style.backgroundColor = "white";
+    clonedNode.style.color = "black";
+    clonedNode.style.border = "1px solid #ccc";
+    clonedNode.style.borderCollapse = "collapse";
+    clonedNode.style.padding = "4px";
+    clonedNode.style.fontSize = "11px";
+    clonedNode.style.boxSizing = "border-box";
+    clonedNode.style.textAlign = "center";
+
+    // Wrap in offscreen container with fixed width and padding for margin
+    const wrapper = document.createElement("div");
+    wrapper.style.position = "fixed";
+    wrapper.style.top = "-10000px";
+    wrapper.style.left = "0";
+    wrapper.style.width = "1122px"; // A4 landscape width at 96 DPI
+    wrapper.style.height = "854px"; // Increased height by 60px for bottom margin
+    wrapper.style.padding = "20px 20px 40px 20px"; // Add padding bottom for margin
+    wrapper.style.overflow = "hidden";
+    wrapper.appendChild(clonedNode);
+    document.body.appendChild(wrapper);
+
+    // Adjust clonedNode width to account for padding
+    clonedNode.style.width = "1082px"; // 1122 - 2*20 padding
+    clonedNode.style.maxWidth = "1082px";
+
+    try {
+      const canvas = await html2canvas(clonedNode, {
+        backgroundColor: "#fff",
+        scale: 2,
+        useCORS: true,
+        width: 1082,
+        height: 820, // Increased height by 60px for bottom margin
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("l", "mm", "a4");
+
+      // Add image with margin offset (10mm)
+      pdf.addImage(imgData, "PNG", 10, 10, 277, 210); // Keep height at full 210mm
+      pdf.save("annual_training_calendar.pdf");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("Failed to generate PDF due to unexpected error.");
+    } finally {
+      document.body.removeChild(wrapper);
+    }
+  };
 
   return (
     <div className="max-w-full mx-auto bg-white p-2 w-full">
-      <style>
-        {`
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          #print-section, #print-section * {
-            visibility: visible;
-          }
-          #print-section {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-          }
-        }
-        `}
-      </style>
-
       <div className="bg-sky-400 text-white p-2 flex justify-between rounded-t-lg">
         <p className="font-semibold">Annual Training Calendar</p>
-        <div className="flex justify-end mx-3">
-          {username ? (
-            <p className="font-bold">{username}</p>
-          ) : (
-            <p>Loading the Username</p>
-          )}
-        </div>
       </div>
-
-      <div className="flex justify-between items-center ml-5 mt-4">
-        <div className="flex items-center space-x-6">
-          <label className="flex items-center space-x-2">
-            <span>Year:</span>
+      <div className="mb-4 mt-2 flex justify-between items-center space-x-4">
+        <div className="flex">
+          <div>
+            <label htmlFor="year-select" className="mr-2 font-semibold">
+              Select Year:
+            </label>
             <DatePicker
               selected={selectedDate}
-              onChange={(date) => {
-                setSelectedDate(date);
-                if (date) {
-                  setYear(new Date(date.getFullYear(), 0, 1));
-                }
-              }}
+              onChange={(date) => setSelectedDate(date)}
               dateFormat="yyyy"
               showYearPicker
+              placeholderText="Select Year"
               className="p-2 border border-gray-300 rounded-lg"
               calendarClassName="z-50"
               popperPlacement="top-start"
-              isClearable
-              isSearchable
-              required
               popperModifiers={{
                 preventOverflow: {
                   enabled: true,
                   boundariesElement: "viewport",
                 },
               }}
-              filterDate={isYearEnabled}
             />
-          </label>
-
-          <label className="flex items-center space-x-2">
-            <span>Training Name:</span>
+          </div>
+          <div className="mx-2">
+            <label htmlFor="training-select" className="mr-2 font-semibold">
+              Select Training:
+            </label>
             <select
+              id="training-select"
               value={trainingName}
               onChange={(e) => setTrainingName(e.target.value)}
-              className="border border-gray-300 rounded px-2 py-1"
+              className="p-2 border border-gray-300 rounded-lg"
             >
-              <option value="">Select training</option>
-              <option value="IATF">IATF</option>
-              <option value="HSE">HSE</option>
+              <option value="IATF">
+                IATF (International Automotive Task Force)
+              </option>
+              <option value="HSE">HSE (Health, Safety, and Environment)</option>
             </select>
-          </label>
+          </div>
         </div>
 
-        <button
-          onClick={() => window.print()}
-          className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded bg-white hover:bg-gray-100"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            fill="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path d="M19 7H5c-1.1 0-2 .9-2 2v6h4v4h10v-4h4v-6c0-1.1-.9-2-2-2zM17 17H7v-5h10v5zm-5-9c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2z" />
-          </svg>
-          <span>Print</span>
-        </button>
-      </div>
-
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <div id="print-section"> {/* ✅ Only this will print */}
-          <table
-            className="annual-training-table"
-            border="1"
-            cellPadding="8"
-            cellSpacing="0"
-            style={{
-              borderCollapse: "collapse",
-              width: "100%",
-              marginTop: 20,
-              textAlign: "center",
-              fontSize: "0.9rem",
-              fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-              border: "1px solid #ccc"
+        <div>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              generatePDF();
             }}
+            className="ml-2 flex items-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-1 px-3 rounded"
+            aria-label="Download Annual Calendar"
+            title="Download Annual Calendar"
           >
-            <thead>
-              <tr style={{ backgroundColor: "#f4a261", borderBottom: "2px solid #e76f51" }}>
-                <th rowSpan={2} style={{ backgroundColor: "#2a9d8f", color: "white", width: "50px", borderRight: "2px solid #e76f51" }}>
-                  Months
-                </th>
-                <th colSpan={5} style={{ backgroundColor: "#e9c46a", padding: "10px", borderRight: "2px solid #e76f51", fontWeight: "bold", fontSize: "1rem" }}>
-                   {trainingName} Annual Training Plan - {year.getFullYear()}
-                </th>
-              </tr>
-              {/* Removed the empty week header row to avoid extra line */}
-              {/* <tr style={{ backgroundColor: "#f4a261", borderBottom: "2px solid #e76f51" }}>
-                {[...Array(5)].map((_, i) => (
-                  <th key={`week-header-${i}`} style={{ backgroundColor: "#e9c46a", padding: "10px", borderRight: i < 4 ? "1px solid #ddd" : "none" }}>
-                  </th>
-                ))} 
-              </tr> */}
-            </thead>
+            <FaPrint />
+          </button>
+        </div>
+      </div>
+      {loading && <p>Loading training calendar...</p>}
+      {error && <p className="text-red-600">Error: {error}</p>}
+
+      {!loading && !error && trainingData.length === 0 && (
+        <p>No training data available for the selected year.</p>
+      )}
+
+      {!loading && !error && trainingData.length > 0 && (
+        <>
+          <table
+            ref={tableRef}
+            id="annual-training-table"
+            className="min-w-full border border-gray-300 table-fixed"
+          >
             <tbody>
-              {months.map((month, idx) => {
-                const monthIndex = idx + 1;
-                const weeks = monthWeekMap[monthIndex] || [];
-                const monthData = data[monthIndex] || {};
+              <tr>
+                <td
+                  className="border border-gray-300 px-2 py-1 font-semibold w-12  bg-blue-100 text-center align-middle whitespace-nowrap"
+                  colSpan={6}
+                >
+                  Annual Training Calendar for {trainingName}
+                </td>
+              </tr>
+              <tr>
+                <td
+                  className="border border-gray-300 px-2 py-1 font-semibold w-12  bg-blue-200 text-center align-middle whitespace-nowrap"
+                >
+                  Months
+                </td>
+                <td
+                  className="border border-gray-300 px-1 py-1 w-24 text-center font-semibold bg-orange-200"
+                  colSpan={5}
+                >
+                  Weeks
+                </td>
+              </tr>
+              {monthsInData.map((month) => {
+                const monthKey = monthAbbrMap[month].toLowerCase();
+                const weeks = dynamicWeeksByMonth[month] || [];
+                const weeksToShow = weeks.slice(0, 5);
                 return (
-                  <tr key={month} style={{ height: "80px", borderBottom: "1px solid #ddd" }}>
-                    <td style={{
-                      backgroundColor: "#2a9d8f",
-                      color: "white",
-                      fontWeight: "bold",
-                      textAlign: "center",
-                      padding: "10px",
-                      borderRight: "2px solid #e76f51"
-                    }}>
-                      {month}
-                    </td>
-                    {[0,1,2,3,4].map((weekIdx) => {
-                      const weekKey = weeks[weekIdx];
-                      const programs = weekKey && Array.isArray(monthData[weekKey]) ? monthData[weekKey] : [];
-                      return (
-                        <td key={`${month}-week${weekIdx+1}`} style={{
-                          fontWeight: "normal",
-                          padding: "8px",
-                          fontSize: "0.8rem",
-                          wordBreak: "break-word",
-                          whiteSpace: "normal",
-                          verticalAlign: "top",
-                          minWidth: "140px",
-                          maxWidth: "160px",
-                          backgroundColor: weekIdx % 2 === 0 ? "#f9f5f0" : "#ffffff",
-                          borderRight: weekIdx < 4 ? "1px solid #ddd" : "none"
-                        }}>
-                          {weekKey && <div style={{ fontWeight: "bold", marginBottom: "6px", color: "#264653" }}>{weekKey}</div>}
-                          {programs.length > 0 ? (
-                            programs.map((program, idx) => (
-                              <div key={idx} style={{ marginBottom: "4px", lineHeight: "1.2" }}>{program}</div>
-                            ))
-                          ) : (
-                            <div style={{ color: "#999", fontStyle: "italic" }}> </div>
-                          )}
+                  <React.Fragment key={month}>
+                    <tr>
+                      <td
+                        className="border border-gray-300 px-2 py-1 font-semibold w-16 max-w-[60px] bg-blue-100 text-center align-middle break-words"
+                        rowSpan={2}
+                      >
+                        {month}
+                      </td>
+                      {weeksToShow.map((week) => (
+                        <td
+                          key={`${month}-week-header-${week}`}
+                          className="border border-gray-300 px-1 py-1 w-24  text-center font-semibold bg-orange-100"
+                        >
+                          Week {week}
                         </td>
-                      );
-                    })}
-                  </tr>
+                      ))}
+                    </tr>
+                    <tr>
+                      {weeksToShow.map((week) => {
+                        let bgColor = "bg-white";
+                        return (
+                          <td
+                            key={`${month}-week-data-${week}`}
+                            className={`border border-gray-300 px-4 py-3 w-24 break-words whitespace-normal max-w-24 ${bgColor}`}
+                          >
+                            {groupedData[monthKey] && groupedData[monthKey][week] ? (
+                              <ul className="list-disc pl-4 space-y-1">
+                                {groupedData[monthKey][week].map((program, idx) => (
+                                  <li key={idx} className="break-words whitespace-normal">
+                                    {program}
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              "-"
+                            )}
+
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  </React.Fragment>
                 );
               })}
             </tbody>
           </table>
-          <div className="print-footer">
-  Greentech Industries(India) Pvt. Ltd.
-</div>
-
-        </div>
+        </>
       )}
     </div>
   );
-}
+};
+
+export default AnnualTraining;
