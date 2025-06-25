@@ -169,7 +169,7 @@ const Dashboard = () => {
 
   const renderPieChart = (data, title, colorSet) => {
     return (
-      <div className="flex flex-col xl:flex-row items-start justify-between gap-6 rounded-xl bg-white p-6 shadow">
+      <div className="flex flex-col xl:flex-row items-start justify-between gap-6 rounded-xl  p-6 shadow">
         <div className="w-full xl:w-2/3">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
             {title}
