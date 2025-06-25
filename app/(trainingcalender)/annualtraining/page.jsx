@@ -188,101 +188,168 @@ const AnnualTraining = () => {
   const generatePDF = async () => {
     const input = tableRef.current;
 
-    // Clone node and remove classes
-    const clonedNode = input.cloneNode(true);
-
-    // Remove all class attributes and override styles with safe CSS
-    const elementsWithClasses = clonedNode.querySelectorAll("[class]");
-    elementsWithClasses.forEach((el) => {
-      el.removeAttribute("class");
-      // Override all styles that might cause problems with PDF export
-      el.style.backgroundColor = "white";
-      el.style.color = "black";
-      // Set border for <td> elements, remove border for inner divs inside <td>
-      if (el.tagName.toLowerCase() === "td") {
-        el.style.border = "1px solid #ccc";
-      } else if (
-        el.tagName.toLowerCase() === "div" &&
-        el.parentElement &&
-        el.parentElement.tagName.toLowerCase() === "td"
-      ) {
-        el.style.border = "none";
-      } else {
-        el.style.border = "1px solid #ccc";
-      }
-      el.style.padding = "4px";
-      el.style.Margin = "3px"
-      el.style.fontSize = "11px";
-      el.style.boxSizing = "border-box";
-      el.style.textAlign = "center";
-      // Remove potentially problematic CSS variables or color functions
-      el.style.removeProperty("color");
-      el.style.removeProperty("background-color");
-      // Explicitly set safe colors after removing
-      el.style.color = "black";
-      el.style.backgroundColor = "white";
-    });
-
-    // Remove explicit bottom border styling on last row and last td elements
-    // const tbody = clonedNode.querySelector("tbody");
-    // if (tbody) {
-    //   const rows = tbody.querySelectorAll("tr");
-    //   if (rows.length > 0) {
-    //     const lastRow = rows[rows.length - 1];
-    //     lastRow.style.borderBottom = "1px solid #ccc";
-    //     const tds = lastRow.querySelectorAll("td");
-    //     tds.forEach((td) => {
-    //       td.style.borderBottom = "1px solid #ccc";
-    //     });
-    //   }
-    // }
-
-    // Also apply the same styles to the cloned root element itself
-    clonedNode.style.backgroundColor = "white";
-    clonedNode.style.color = "black";
-    clonedNode.style.border = "1px solid #ccc";
-    clonedNode.style.borderCollapse = "collapse";
-    clonedNode.style.padding = "4px";
-    clonedNode.style.fontSize = "11px";
-    clonedNode.style.boxSizing = "border-box";
-    clonedNode.style.textAlign = "center";
-
-    // Wrap in offscreen container with fixed width and padding for margin
-    const wrapper = document.createElement("div");
-    wrapper.style.position = "fixed";
-    wrapper.style.top = "-10000px";
-    wrapper.style.left = "0";
-    wrapper.style.width = "1122px"; // A4 landscape width at 96 DPI
-    wrapper.style.height = "854px"; // Increased height by 60px for bottom margin
-    wrapper.style.padding = "20px 20px 40px 20px"; // Add padding bottom for margin
-    wrapper.style.overflow = "hidden";
-    wrapper.appendChild(clonedNode);
-    document.body.appendChild(wrapper);
-
-    // Adjust clonedNode width to account for padding
-    clonedNode.style.width = "1082px"; // 1122 - 2*20 padding
-    clonedNode.style.maxWidth = "1082px";
-
     try {
-      const canvas = await html2canvas(clonedNode, {
-        backgroundColor: "#fff",
-        scale: 2,
-        useCORS: true,
-        width: 1082,
-        height: 820, // Increased height by 60px for bottom margin
+      // Create a completely new table structure with inline styles only
+      const newTable = document.createElement("table");
+      newTable.style.cssText = `
+        border-collapse: collapse;
+        width: 100%;
+        font-family: Arial, sans-serif;
+        font-size: 11px;
+        color: black;
+        background-color: white;
+        border: 1px solid black;
+      `;
+
+      // Get the original table data
+      const originalRows = input.querySelectorAll("tr");
+      
+      originalRows.forEach((originalRow, rowIndex) => {
+        const newRow = document.createElement("tr");
+        const originalCells = originalRow.querySelectorAll("td, th");
+        
+        originalCells.forEach((originalCell, cellIndex) => {
+          const newCell = document.createElement("td");
+          
+          // Copy attributes
+          if (originalCell.hasAttribute("colspan")) {
+            newCell.setAttribute("colspan", originalCell.getAttribute("colspan"));
+          }
+          if (originalCell.hasAttribute("rowspan")) {
+            newCell.setAttribute("rowspan", originalCell.getAttribute("rowspan"));
+          }
+
+          // Set safe inline styles based on content and position
+          let cellStyles = `
+            border: 1px solid black;
+            padding: 4px;
+            text-align: center;
+            vertical-align: middle;
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            color: black;
+            background-color: white;
+          `;
+
+          const textContent = originalCell.textContent || "";
+          
+          // Apply background colors based on content
+          if (textContent.includes("Annual Training Calendar")) {
+            cellStyles += "background-color: #cce7ff; font-weight: bold;";
+          } else if (textContent === "Months") {
+            cellStyles += "background-color: #b3d9ff; font-weight: bold;";
+          } else if (textContent === "Weeks") {
+            cellStyles += "background-color: #ffe0b3; font-weight: bold;";
+          } else if (textContent.includes("Week ")) {
+            cellStyles += "background-color: #fff0d9; font-weight: bold;";
+          } else if (originalCell.hasAttribute("rowspan") && originalCell.getAttribute("rowspan") === "2") {
+            cellStyles += "background-color: #f0f0f0; font-weight: bold;";
+          }
+
+          newCell.style.cssText = cellStyles;
+
+          // Copy content, handling lists specially
+          const ulElements = originalCell.querySelectorAll("ul");
+          if (ulElements.length > 0) {
+            ulElements.forEach(ul => {
+              const newUl = document.createElement("ul");
+              newUl.style.cssText = `
+                margin: 0;
+                padding-left: 16px;
+                list-style-type: disc;
+                text-align: left;
+              `;
+              
+              const liElements = ul.querySelectorAll("li");
+              liElements.forEach(li => {
+                const newLi = document.createElement("li");
+                newLi.style.cssText = `
+                  margin-bottom: 2px;
+                  color: black;
+                  font-family: Arial, sans-serif;
+                  font-size: 11px;
+                `;
+                newLi.textContent = li.textContent;
+                newUl.appendChild(newLi);
+              });
+              
+              newCell.appendChild(newUl);
+            });
+          } else {
+            newCell.textContent = textContent;
+          }
+
+          newRow.appendChild(newCell);
+        });
+        
+        newTable.appendChild(newRow);
       });
 
-      const imgData = canvas.toDataURL("image/png");
+      // Create wrapper with explicit dimensions and no external CSS
+      const wrapper = document.createElement("div");
+      wrapper.style.cssText = `
+        position: fixed;
+        top: -10000px;
+        left: 0;
+        width: 1200px;
+        height: 900px;
+        padding: 20px;
+        background-color: white;
+        font-family: Arial, sans-serif;
+        overflow: hidden;
+      `;
+      
+      wrapper.appendChild(newTable);
+      document.body.appendChild(wrapper);
+
+      // Generate canvas with restrictive options
+      const canvas = await html2canvas(newTable, {
+        backgroundColor: "white",
+        scale: 1.5,
+        useCORS: false,
+        allowTaint: false,
+        width: 1160,
+        height: 860,
+        logging: false,
+        removeContainer: false,
+        foreignObjectRendering: false,
+        imageTimeout: 0,
+        onclone: (clonedDoc) => {
+          // Remove all stylesheets from cloned document to prevent CSS interference
+          const stylesheets = clonedDoc.querySelectorAll('link[rel="stylesheet"], style');
+          stylesheets.forEach(sheet => sheet.remove());
+        },
+        ignoreElements: (element) => {
+          return element.tagName === "SCRIPT" || 
+                 element.tagName === "STYLE" || 
+                 element.tagName === "LINK";
+        }
+      });
+
+      const imgData = canvas.toDataURL("image/png", 1.0);
       const pdf = new jsPDF("l", "mm", "a4");
 
-      // Add image with margin offset (10mm)
-      pdf.addImage(imgData, "PNG", 10, 10, 277, 210); // Keep height at full 210mm
-      pdf.save("annual_training_calendar.pdf");
+      // Calculate dimensions to fit A4 landscape with margins
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      const availableWidth = pdfWidth - (2 * margin);
+      const availableHeight = pdfHeight - (2 * margin);
+
+      // Add image to PDF
+      pdf.addImage(imgData, "PNG", margin, margin, availableWidth, availableHeight);
+      pdf.save(`annual_training_calendar_${trainingName}_${selectedDate.getFullYear()}.pdf`);
+      
+      console.log("PDF generated successfully");
+      
+      // Clean up
+      if (document.body.contains(wrapper)) {
+        document.body.removeChild(wrapper);
+      }
+      
     } catch (error) {
       console.error("Error generating PDF:", error);
-      alert("Failed to generate PDF due to unexpected error.");
-    } finally {
-      document.body.removeChild(wrapper);
+      alert("Failed to generate PDF. Error: " + error.message);
     }
   };
 
