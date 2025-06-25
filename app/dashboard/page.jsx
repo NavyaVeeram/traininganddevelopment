@@ -354,7 +354,7 @@ const Dashboard = () => {
         </div>
 
         <div className="mt-20  max-w-7xl " >
-          {renderMonthWiseBudgetChart(fillMissingMonthsBudget(monthWiseBudgetIatfData), "Month Wise Budget ")}
+          {renderMonthWiseBudgetChart(fillMissingMonthsBudget(monthWiseBudgetIatfData), "Training Cost ")}
         </div>
       </div>
     </div>
