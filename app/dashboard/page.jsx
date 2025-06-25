@@ -3,11 +3,10 @@ import { useState, useEffect, useRef } from "react";
 import DatePicker from "react-datepicker";
 import {
   BookOpen,
-  Target,
   Calendar,
   TrendingUp,
-  Award,
 } from "lucide-react";
+import { GiArrowScope } from "react-icons/gi";
 
 import "react-datepicker/dist/react-datepicker.css";
 import {
@@ -19,10 +18,16 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 import {
   ChartContainer,
 } from "@/components/ui/chart";
+
+const BLUE_COLORS = ["#1d4ed8", "#3b82f6", "#60a5fa", "#93c5fd", "#bfdbfe"];
+const GREEN_COLORS = ["#4ade80", "#22c55e", "#16a34a", "#15803d", "#166534"];
 
 const Dashboard = () => {
   const [department, setDepartment] = useState("");
@@ -33,6 +38,8 @@ const Dashboard = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [iatfData, setIatfData] = useState([]);
   const [hseData, setHseData] = useState([]);
+  const [iatfDeptData, setIatfDeptData] = useState([]);
+  const [hseDeptData, setHseDeptData] = useState([]);
 
   useEffect(() => {
     const storedDepartment = localStorage.getItem("department");
@@ -71,6 +78,16 @@ const Dashboard = () => {
       .then((res) => res.json())
       .then((data) => setHseData(data))
       .catch(() => setHseData([]));
+
+    fetch(`/api/dept_wise_programs_iatf?year=${selectedYear}`)
+      .then((res) => res.json())
+      .then((data) => setIatfDeptData(data))
+      .catch(() => setIatfDeptData([]));
+
+    fetch(`/api/dept_wise_programs_hse?year=${selectedYear}`)
+      .then((res) => res.json())
+      .then((data) => setHseDeptData(data))
+      .catch(() => setHseDeptData([]));
   }, [selectedYear]);
 
   const computeStats = (data) => {
@@ -92,7 +109,7 @@ const Dashboard = () => {
     }));
 
     return (
-      <div key={title} className="bg-white rounded-xl shadow p-6">
+      <div key={title} className="rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex gap-2 items-center">
             <TrendingUp className="text-gray-500 w-5 h-5" />
@@ -150,37 +167,91 @@ const Dashboard = () => {
     );
   };
 
+  const renderPieChart = (data, title, colorSet) => {
+    return (
+      <div className="flex flex-col xl:flex-row items-start justify-between gap-6 rounded-xl bg-white p-6 shadow">
+        <div className="w-full xl:w-2/3">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            {title}
+          </h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <PieChart>
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (!active || !payload || !payload.length) return null;
+                  const entry = payload[0];
+                  return (
+                    <div className="rounded-md border bg-white p-3 text-sm shadow-md">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="inline-block w-2 h-2 rounded-full"
+                          style={{ backgroundColor: entry.payload.fill }}
+                        />
+                        <span>{entry.payload.Department}:</span>
+                        <span className="font-medium">{entry.payload.Total_Programs}</span>
+                      </div>
+                    </div>
+                  );
+                }}
+              />
+              <Pie
+                data={data}
+                dataKey="Total_Programs"
+                nameKey="Department"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                isAnimationActive
+              >
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={colorSet[index % colorSet.length]} />
+                ))}
+              </Pie>
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="grid grid-cols-2 gap-2 xl:mt-14 xl:ml-4">
+          {data.map((entry, index) => (
+            <div key={index} className="flex items-center gap-2 text-sm">
+              <span
+                className="inline-block w-3 h-3 rounded-sm"
+                style={{ backgroundColor: colorSet[index % colorSet.length] }}
+              ></span>
+              <span>{entry.Department}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl md:text-4xl font-semibold text-center text-gray-800 mb-2">
-          Welcome, <span className="font-mono text-indigo-600">{typedUsername}</span>!
-        </h1>
-        
         <div className="flex mb-8">
-          <div className="bg-white shadow rounded-lg p-4 flex items-left gap-3 border">
-            <Calendar className="w-5 h-5 text-indigo-500" />
+          <div className="bg-gradient-to-r from-blue-300 to-green-400 shadow rounded-lg p-4 flex items-left gap-3 border">
+            <Calendar className="w-5 h-5 text-blue-600" />
             <DatePicker
               selected={new Date(selectedYear, 0, 1)}
               onChange={(d) => setSelectedYear(d.getFullYear())}
               showYearPicker
               dateFormat="yyyy"
-              className="border px-3 py-1 rounded focus:outline-none"
+              className="border px-3 py-1 rounded focus:outline-none bg-white text-blue-700"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {[
-            { label: "IATF Total", value: iatfStats.total  },
-            { label: "IATF Completed", value: iatfStats.completed },
-            { label: "HSE Total", value: hseStats.total },
-            { label: "HSE Completed", value: hseStats.completed },
-          ].map(({ label, value, icon }) => (
-            <div key={label} className="bg-white p-5 rounded-xl shadow flex justify-between items-center">
+            { label: "IATF Total", value: iatfStats.total, icon: <BookOpen className="w-8 h-8 text-white" />, bg: "bg-blue-400" },
+            { label: "IATF Completed", value: iatfStats.completed, icon: <GiArrowScope className="w-6 h-6 text-white" />, bg: "bg-blue-700" },
+            { label: "HSE Total", value: hseStats.total, icon: <BookOpen className="w-8 h-8 text-white" />, bg: "bg-green-400" },
+            { label: "HSE Completed", value: hseStats.completed, icon: <GiArrowScope className="w-6 h-6 text-white" />, bg: "bg-green-700" },
+          ].map(({ label, value, icon, bg }) => (
+            <div key={label} className={`p-5 rounded-xl shadow-md flex justify-between items-center text-white ${bg}`}>
               <div>
-                <p className="text-sm text-gray-500">{label}</p>
-                <p className="text-2xl font-bold text-gray-800">{value}</p>
+                <p className="text-sm font-medium">{label}</p>
+                <p className="text-2xl font-bold">{value}</p>
               </div>
               {icon}
             </div>
@@ -188,13 +259,14 @@ const Dashboard = () => {
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-10 mb-12">
-          {renderBarChart(iatfData, "IATF Monthly Training", iatfStats, "#c7d2fe", "#1e40af", "text-indigo-600")}
-          {renderBarChart(hseData, "HSE Monthly Training", hseStats, "#fdba74", "#c2410c", "text-orange-600")}
+          {renderBarChart(iatfData, "IATF Monthly Training", iatfStats, "#6cb0fc", "#1d4ed8", "text-blue-600")}
+          {renderBarChart(hseData, "HSE Monthly Training", hseStats, "#52eb87", "#15803d", "text-green-700")}
         </div>
 
-        <p className="text-center text-sm text-gray-500">
-          Dashboard updated for {selectedYear} • Training Progress Tracker
-        </p>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
+          {renderPieChart(iatfDeptData, "IATF by Department", BLUE_COLORS)}
+          {renderPieChart(hseDeptData, "HSE by Department", GREEN_COLORS)}
+        </div>
       </div>
     </div>
   );
