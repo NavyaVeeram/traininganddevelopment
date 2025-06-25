@@ -1,12 +1,11 @@
 "use client";
 import { FaSearch } from "react-icons/fa";
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import Select from "react-select";
 
 const EmployeeHistoryList = () => {
   const [EmployeeId, setEmployeeId] = useState(null);
   const [employeeOptions, setEmployeeOptions] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date());
   const [trainingDetails, setTrainingDetails] = useState({
     Username: "",
     Department: "",
@@ -20,229 +19,193 @@ const EmployeeHistoryList = () => {
     IsActive: "",
   });
   const [qualifiedTrainers, setQualifiedTrainers] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [tableSearchTerm, setTableSearchTerm] = useState("");
-  const dropdownRef = useRef(null);
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [accessRole, setAccessRole] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(null);
   const [certificates, setCertificates] = useState({});
-  const handleFileChange = (e, index, programId) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Upload file to backend
-      handleFileUpload(file, programId);
+  const [uploadStatus, setUploadStatus] = useState({});
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
 
-      // Optionally, update state locally
-      setCertificates((prev) => ({
-        ...prev,
-        [index]: file,
-      }));
-    }
-  };
-  const handleFileUpload = async (file, programId) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("program_id", programId);
-
-    try {
-      const response = await fetch("/api/emp_certificates", {
-        // your API route
-        method: "POST",
-        body: formData, // IMPORTANT: no JSON stringify, no content-type header here
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        console.log("File uploaded successfully:", data.fileUrl);
-        // You can save the fileUrl in your state or update UI accordingly
-      } else {
-        console.error("Upload failed:", data.message);
-      }
-    } catch (error) {
-      console.error("Error uploading file:", error);
-    }
-  };
-
+  // Fetch employee options and access role on mount
   useEffect(() => {
-    const storedEmployeeId = localStorage.getItem("employeeId");
-
-    if (storedEmployeeId) {
-      setEmployeeId(storedEmployeeId);
-    }
-    const handleFileChange = (e) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        setCertificates(file);
-      }
+    const fetchEmployeeOptions = async () => {
+      try {
+        const res = await fetch("/api/user_dropdown");
+        const data = await res.json();
+        if (res.status === 200) {
+          setEmployeeOptions(data);
+        }
+      } catch (err) {}
     };
 
     const fetchAccessRole = async () => {
       try {
-        const res = await fetch(
-          `/api/get_access_role?employeeId=${storedEmployeeId}`
-        );
+        const storedEmployeeId = localStorage.getItem("employeeId");
+        if (!storedEmployeeId) {
+          setIsAuthorized(false);
+          return;
+        }
+        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
         const data = await res.json();
-
         if (res.ok && data.Access_Role) {
-          // Restrict access for HR_Res and HR_HOD roles
           if (
             data.Access_Role === "Res_Person" ||
             data.Access_Role === "HOS" ||
             data.Access_Role === "HOD"
           ) {
             setIsAuthorized(false);
-            // Optionally redirect to unauthorized page
-            // window.location.href = '/unauthorized';
             return;
           }
-          setAccessRole(data.Access_Role);
           setIsAuthorized(true);
         } else {
           setIsAuthorized(false);
         }
       } catch (error) {
-        console.error("Error fetching access role:", error);
         setIsAuthorized(false);
       }
     };
 
+    fetchEmployeeOptions();
     fetchAccessRole();
   }, []);
 
-  // Close dropdown on outside click
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        // setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
-
-  const sortedData = useMemo(() => {
-    let sortableItems = [...qualifiedTrainers];
-    if (sortConfig.key) {
-      sortableItems.sort((a, b) => {
-        const aVal = a[sortConfig.key];
-        const bVal = b[sortConfig.key];
-        if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
-        if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
-        return 0;
-      });
-    }
-    return sortableItems;
-  }, [qualifiedTrainers, sortConfig]);
-
-  const handleSort = (key) => {
-    let direction = "asc";
-    if (sortConfig.key === key && sortConfig.direction === "asc") {
-      direction = "desc";
-    }
-    setSortConfig({ key, direction });
-  };
-  const handleClear = () => {
-    setEmployeeId(null);
-    setTrainingDetails({
-      Username: "",
-      Department: "",
-      Section: "",
-      Designation: "",
-      Emp_Type: "",
-      Emp_Category: "",
-      No_Hrs: "",
-      DOJ: "",
-      IsActive: "",
-    });
-  };
+  // Fetch qualified trainers when EmployeeId changes
   useEffect(() => {
     if (EmployeeId) {
       fetchQualifiedTrainers(EmployeeId);
       setRowsPerPage(10);
       setCurrentPage(1);
     }
-  }, [EmployeeId]);
+  }, [EmployeeId, fetchQualifiedTrainers]);
 
-  const filteredData = sortedData.filter(
-    (trainer) =>
-      tableSearchTerm === "" ||
-      trainer.EmployeeId?.toLowerCase().includes(
-        tableSearchTerm.toLowerCase()
-      ) ||
-      trainer.Training_Name?.toLowerCase().includes(
-        tableSearchTerm.toLowerCase()
-      ) ||
-      trainer.Program_Name?.toLowerCase().includes(
-        tableSearchTerm.toLowerCase()
-      ) ||
-      trainer.Train_Mode?.toLowerCase().includes(
-        tableSearchTerm.toLowerCase()
-      ) ||
-      trainer.No_Hrs?.toString().includes(tableSearchTerm) ||
-      trainer.Training_Date?.toString().includes(tableSearchTerm)
-  );
+  // Sorting logic
+  const sortedData = useMemo(() => {
+    let sortableItems = [...qualifiedTrainers];
+    if (sortConfig.key) {
+      sortableItems.sort((a, b) => {
+        if (a[sortConfig.key] < b[sortConfig.key]) {
+          return sortConfig.direction === "asc" ? -1 : 1;
+        }
+        if (a[sortConfig.key] > b[sortConfig.key]) {
+          return sortConfig.direction === "asc" ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [qualifiedTrainers, sortConfig]);
 
+  // Table search
+  const filteredData = useMemo(() => {
+    return sortedData.filter(
+      (trainer) =>
+        tableSearchTerm === "" ||
+        (trainer.EmployeeId && trainer.EmployeeId.toString().toLowerCase().includes(tableSearchTerm.toLowerCase())) ||
+        (trainer.Training_Name && trainer.Training_Name.toLowerCase().includes(tableSearchTerm.toLowerCase())) ||
+        (trainer.Program_Name && trainer.Program_Name.toLowerCase().includes(tableSearchTerm.toLowerCase())) ||
+        (trainer.Train_Mode && trainer.Train_Mode.toLowerCase().includes(tableSearchTerm.toLowerCase())) ||
+        (trainer.No_Hrs && trainer.No_Hrs.toString().includes(tableSearchTerm)) ||
+        (trainer.Training_Date && trainer.Training_Date.toString().includes(tableSearchTerm))
+    );
+  }, [sortedData, tableSearchTerm]);
+
+  // Pagination
   const totalPages =
     rowsPerPage === "All" ? 1 : Math.ceil(filteredData.length / rowsPerPage);
-  const paginatedData =
-    rowsPerPage === "All"
-      ? filteredData
-      : filteredData.slice(
-          (currentPage - 1) * rowsPerPage,
-          currentPage * rowsPerPage
+  const paginatedData = useMemo(
+    () =>
+      rowsPerPage === "All"
+        ? filteredData
+        : filteredData.slice(
+            (currentPage - 1) * rowsPerPage,
+            currentPage * rowsPerPage
+          ),
+    [filteredData, currentPage, rowsPerPage]
+  );
+
+  // Prevent infinite loop: store last fetched programIds
+  const lastFetchedProgramIds = useRef([]);
+
+  // Fetch upload statuses for paginated data (optimized)
+  const fetchUploadStatuses = useCallback(async () => {
+    const programIds = paginatedData.map((item) => item.Program_Id);
+
+    // Only fetch if programIds changed
+    if (
+      programIds.length === lastFetchedProgramIds.current.length &&
+      programIds.every((id, i) => id === lastFetchedProgramIds.current[i])
+    ) {
+      return;
+    }
+
+    lastFetchedProgramIds.current = programIds;
+
+    if (programIds.length === 0 || !EmployeeId) {
+      setUploadStatus({});
+      setCertificates({});
+      return;
+    }
+
+    try {
+      const statusPromises = programIds.map(async (programId) => {
+        const response = await fetch(
+          `/api/get_emp_certificate_status?ProgramId=${programId}&Employee_Id=${EmployeeId}`
         );
+        const result = await response.json();
+
+        let isUpload = 0;
+        let fileUrl = null;
+        if (Array.isArray(result.data) && result.data.length > 0) {
+          isUpload = result.data[0].IsUpload === 1 || result.data[0].IsUpload === "1" ? 1 : 0;
+          fileUrl = result.data[0].FileUrl || null;
+        }
+        return {
+          programId,
+          status: isUpload,
+          fileUrl,
+        };
+      });
+
+      const results = await Promise.all(statusPromises);
+
+      const updatedStatuses = {};
+      const updatedCertificates = {};
+
+      results.forEach(({ programId, status, fileUrl }) => {
+        updatedStatuses[programId] = status;
+        if (fileUrl) updatedCertificates[programId] = fileUrl;
+      });
+
+      setUploadStatus((prev) => {
+        const isSame =
+          Object.keys(prev).length === Object.keys(updatedStatuses).length &&
+          Object.keys(prev).every((k) => prev[k] === updatedStatuses[k]);
+        return isSame ? prev : updatedStatuses;
+      });
+
+      setCertificates((prev) => {
+        const isSame =
+          Object.keys(prev).length === Object.keys(updatedCertificates).length &&
+          Object.keys(prev).every((k) => prev[k] === updatedCertificates[k]);
+        return isSame ? prev : updatedCertificates;
+      });
+    } catch (error) {
+      console.error("Failed to fetch certificate upload statuses:", error);
+    }
+  }, [paginatedData, EmployeeId]);
 
   useEffect(() => {
-    const fetchEmployeeOptions = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch("/api/user_dropdown");
-        const data = await res.json();
-        if (res.status === 200) {
-          setEmployeeOptions(data);
-          fetchQualifiedTrainers();
-        } else {
-          setError(data.message || "Error fetching employee data");
-        }
-      } catch (err) {
-        setError("Failed to fetch employee data");
-      } finally {
-        setLoading(false);
-      }
-    };
+    fetchUploadStatuses();
+  }, [fetchUploadStatuses]);
 
-    fetchEmployeeOptions();
-  }, []);
-
-  const handleTableSearchChange = (e) => {
-    const searchQuery = e.target.value;
-    setTableSearchTerm(searchQuery);
-  };
-
-  const handleClearTableSearch = async () => {
-    setTableSearchTerm("");
-    await fetchQualifiedTrainers(EmployeeId);
-  };
-
-  const fetchQualifiedTrainers = async (empId) => {
+  // Fetch qualified trainers
+  const fetchQualifiedTrainers = useCallback(async (empId) => {
     if (!empId) return;
-    setLoading(true);
-    setError(null);
-
     try {
       const url = `/api/get_employee_history_table?EmployeeId=${empId}`;
       const res = await fetch(url);
       const data = await res.json();
-
       if (res.status === 200) {
         if (Array.isArray(data)) {
           const formatDateYYYYMMDD = (date) => {
@@ -259,33 +222,18 @@ const EmployeeHistoryList = () => {
               : "",
           }));
           setQualifiedTrainers(formattedData);
-          if (data.length === 0) {
-            setError("No data found for the selected employee.");
-          }
-        } else if (Object.keys(data).length === 0) {
-          setQualifiedTrainers([]);
-          setError("No data found for the selected employee.");
         } else {
-          console.error("Unexpected response:", data);
           setQualifiedTrainers([]);
-          setError(data.message || "Error fetching qualified trainers data");
         }
-      } else if (res.status === 404) {
-        setQualifiedTrainers([]);
-        setError(null);
       } else {
-        console.error("Unexpected response:", data);
         setQualifiedTrainers([]);
-        setError(data.message || "Error fetching qualified trainers data");
       }
     } catch (err) {
-      console.error("Fetch error:", err);
-      setError("Failed to fetch qualified trainers data");
-    } finally {
-      setLoading(false);
+      setQualifiedTrainers([]);
     }
-  };
+  }, []);
 
+  // Handle employee select
   const handleEmployeeIdChange = async (selectedOption) => {
     if (!selectedOption) {
       setEmployeeId(null);
@@ -298,6 +246,7 @@ const EmployeeHistoryList = () => {
         Emp_Category: "",
         No_Hrs: "",
         DOJ: "",
+        DOJFormatted: "",
         IsActive: "",
       });
       setQualifiedTrainers([]);
@@ -314,12 +263,11 @@ const EmployeeHistoryList = () => {
       Emp_Category: "",
       No_Hrs: "",
       DOJ: "",
+      DOJFormatted: "",
       IsActive: "",
     });
 
     if (selectedEmployeeId) {
-      setLoading(true);
-      setError(null);
       try {
         const res = await fetch(
           `/api/get_emp_history?EmployeeId=${selectedEmployeeId}`
@@ -347,8 +295,7 @@ const EmployeeHistoryList = () => {
             DOJFormatted: formattedDOJ,
             IsActive: data.IsActive || "",
           });
-          setError(null);
-        } else if (res.status === 404) {
+        } else {
           setTrainingDetails({
             Username: "",
             Department: "",
@@ -358,76 +305,116 @@ const EmployeeHistoryList = () => {
             Emp_Category: "",
             No_Hrs: "",
             DOJ: "",
+            DOJFormatted: "",
             IsActive: "",
           });
-          setError(null);
-        } else {
-          setError(data.message || "Error fetching employee details");
         }
       } catch (err) {
-        setError("Failed to fetch employee data");
-      } finally {
-        setLoading(false);
+        setTrainingDetails({
+          Username: "",
+          Department: "",
+          Section: "",
+          Designation: "",
+          Emp_Type: "",
+          Emp_Category: "",
+          No_Hrs: "",
+          DOJ: "",
+          DOJFormatted: "",
+          IsActive: "",
+        });
       }
     }
   };
-  const options = employeeOptions.map((option) => ({
-    value: option.Value,
-    label: option.Text,
-  }));
+
+  // Handles file upload for certificate
+  const handleFileChange = (e, programId) => {
+    const file = e.target.files?.[0];
+    const year = new Date().getFullYear();
+
+    if (file && EmployeeId && programId) {
+      handleFileUpload(file, programId, EmployeeId, year);
+    } else {
+      alert("Missing file, EmployeeId, or ProgramId");
+    }
+    if (e.target) e.target.value = "";
+  };
+
+  const handleFileUpload = async (file, programId, employeeId, year) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("program_id", programId);
+    formData.append("EmployeeId", employeeId);
+    formData.append("Year", year);
+
+    try {
+      const response = await fetch("/api/emp_certificates", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert(data.message || "File uploaded successfully.");
+        await updateUploadStatus(programId, 1);
+        setTimeout(() => {
+          fetchUploadStatuses();
+        }, 500);
+      } else if (response.status === 409) {
+        alert("File already exists");
+      } else {
+        alert("Upload failed: " + (data.message || "Unknown error"));
+      }
+    } catch (error) {
+      alert("Error uploading file: " + error.message);
+    }
+  };
+
+  const updateUploadStatus = async (programId, isUpload) => {
+    const storedEmployeeId = localStorage.getItem("employeeId");
+    if (!storedEmployeeId) return;
+
+    try {
+      await fetch("/api/insert_emp_certificates_status", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          Program_Id: programId,
+          Employee_Id: EmployeeId,
+          IsUpload: isUpload,
+          CreatedBy: storedEmployeeId,
+        }),
+      });
+    } catch (error) {
+      console.error("Failed to update upload status:", error);
+    }
+  };
+
+  // Sorting handler
+  const handleSort = (key) => {
+    setSortConfig((prev) => {
+      if (prev.key === key) {
+        return { key, direction: prev.direction === "asc" ? "desc" : "asc" };
+      }
+      return { key, direction: "asc" };
+    });
+  };
+
+  // Table columns
   const columns = [
-    {
-      name: "Employee ID",
-      selector: (row) => row.EmployeeId,
-      sortable: true,
-      width: "10%",
-    },
-    {
-      name: "Training Name",
-      selector: (row) => row.Training_Name,
-      sortable: true,
-    },
-    {
-      name: "Program Name",
-      selector: (row) => row.Program_Name,
-      sortable: true,
-    },
-    {
-      name: "Training Mode",
-      selector: (row) => row.Train_Mode,
-      sortable: true,
-    },
-    {
-      name: "Hours",
-      selector: (row) => row.No_Hrs,
-      sortable: true,
-      width: "8%",
-    },
-    {
-      name: "Training Date",
-      selector: (row) =>
-        row.Training_Date
-          ? new Date(row.Training_Date).toLocaleDateString()
-          : "",
-      sortable: true,
-    },
+    { key: "EmployeeId", label: "Employee ID" },
+    { key: "Training_Name", label: "Training Name" },
+    { key: "Program_Name", label: "Program Name" },
+    { key: "Train_Mode", label: "Training Mode" },
+    { key: "No_Hrs", label: "Hours" },
+    { key: "Training_Date", label: "Training Date" },
+    { key: "Certificates", label: "Certificates" },
   ];
 
-  const paginationComponentOptions = {
-    rowsPerPageText: "Rows per page:",
-    rangeSeparatorText: "of ",
-    selectAllRowsItem: true,
-    selectAllRowsItemText: "All",
-  };
   if (isAuthorized === null) {
-    return (
-      <div>Loading..</div>
-      // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
-      //   <div className="bg-white p-10 rounded shadow text-center">
-      //     <h2 className="text-2xl font-bold">Loading...</h2>
-      //   </div>
-      // </div>
-    );
+    return <div>Loading..</div>;
   }
 
   if (isAuthorized === false) {
@@ -440,20 +427,22 @@ const EmployeeHistoryList = () => {
       </div>
     );
   }
+
+  const options = employeeOptions.map((option) => ({
+    value: option.Value,
+    label: option.Text,
+  }));
+
   return (
     <div>
       <div className="max-w-full mx-auto bg-white p-2 rounded-lg w-full">
         <div className="bg-sky-400 flex text-white justify-between p-2 rounded-t-lg">
           <div className="text-lg font-semibold">Employee History</div>
-          <div className="flex items-center space-x-2"></div>
         </div>
         <br />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label
-              htmlFor="employee"
-              className="block text-sm font-medium text-gray-900"
-            >
+            <label htmlFor="employee" className="block text-sm font-medium text-gray-900">
               Select EmployeeId:
             </label>
             <div>
@@ -483,14 +472,12 @@ const EmployeeHistoryList = () => {
                     zIndex: 9999,
                   }),
                 }}
+                menuPortalTarget={typeof window !== "undefined" ? document.body : null}
               />
             </div>
           </div>
-
           <div>
-            <label className="block text-sm font-medium text-gray-900">
-              Username
-            </label>
+            <label className="block text-sm font-medium text-gray-900">Username</label>
             <input
               type="text"
               value={trainingDetails.Username || ""}
@@ -499,9 +486,7 @@ const EmployeeHistoryList = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900">
-              Department
-            </label>
+            <label className="block text-sm font-medium text-gray-900">Department</label>
             <input
               type="text"
               value={trainingDetails.Department || ""}
@@ -510,9 +495,7 @@ const EmployeeHistoryList = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900">
-              Section
-            </label>
+            <label className="block text-sm font-medium text-gray-900">Section</label>
             <input
               type="text"
               value={trainingDetails.Section || ""}
@@ -521,12 +504,9 @@ const EmployeeHistoryList = () => {
             />
           </div>
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-2">
           <div>
-            <label className="block text-sm font-medium text-gray-900">
-              Designation
-            </label>
+            <label className="block text-sm font-medium text-gray-900">Designation</label>
             <input
               type="text"
               value={trainingDetails.Designation || ""}
@@ -535,9 +515,7 @@ const EmployeeHistoryList = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900">
-              Emp Type
-            </label>
+            <label className="block text-sm font-medium text-gray-900">Emp Type</label>
             <input
               type="text"
               value={trainingDetails.Emp_Type || ""}
@@ -546,9 +524,7 @@ const EmployeeHistoryList = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900">
-              Emp Category
-            </label>
+            <label className="block text-sm font-medium text-gray-900">Emp Category</label>
             <input
               type="text"
               value={trainingDetails.Emp_Category || ""}
@@ -557,9 +533,7 @@ const EmployeeHistoryList = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900">
-              Total Hrs
-            </label>
+            <label className="block text-sm font-medium text-gray-900">Total Hrs</label>
             <input
               type="text"
               value={trainingDetails.No_Hrs}
@@ -568,9 +542,7 @@ const EmployeeHistoryList = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900">
-              DOJ
-            </label>
+            <label className="block text-sm font-medium text-gray-900">DOJ</label>
             <input
               type="text"
               value={trainingDetails.DOJFormatted || ""}
@@ -579,24 +551,16 @@ const EmployeeHistoryList = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900">
-              Status
-            </label>
+            <label className="block text-sm font-medium text-gray-900">Status</label>
             <input
               type="text"
-              value={(() => {
-                if (
-                  trainingDetails.IsActive === 1 ||
-                  trainingDetails.IsActive === "1"
-                )
-                  return "Active";
-                if (
-                  trainingDetails.IsActive === 0 ||
-                  trainingDetails.IsActive === "0"
-                )
-                  return "Inactive";
-                return "";
-              })()}
+              value={
+                trainingDetails.IsActive === 1 || trainingDetails.IsActive === "1"
+                  ? "Active"
+                  : trainingDetails.IsActive === 0 || trainingDetails.IsActive === "0"
+                  ? "Inactive"
+                  : ""
+              }
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
@@ -608,13 +572,10 @@ const EmployeeHistoryList = () => {
             <div className="card-header  text-black rounded-t-lg py-3 px-3">
               <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center">
                 <div className="flex flex-col">
-                  <h2 className="text-sm font-bold">
-                    Employee Training History
-                  </h2>
+                  <h2 className="text-sm font-bold">Employee Training History</h2>
                 </div>
               </div>
             </div>
-
             <div className="card-body p-0 overflow-x-auto pb-3">
               <div className="p-4 bg-card">
                 <div className="flex flex-wrap justify-between items-center mb-4 space-y-2">
@@ -641,19 +602,17 @@ const EmployeeHistoryList = () => {
                     </select>
                     <span>entries</span>
                   </div>
-
                   <div className="relative">
                     <input
                       type="text"
                       className="border p-1 pt-[0.9] pl-8 rounded bg-secondary"
                       placeholder="Search..."
                       value={tableSearchTerm}
-                      onChange={handleTableSearchChange}
+                      onChange={(e) => setTableSearchTerm(e.target.value)}
                     />
                     <FaSearch className="absolute left-2 top-2 text-gray-400" />
                   </div>
                 </div>
-
                 <div className="overflow-x-auto">
                   <table
                     className="min-w-full border rounded-lg bg-card text-sm"
@@ -661,100 +620,75 @@ const EmployeeHistoryList = () => {
                   >
                     <thead className="bg-muted sticky top-0 z-10">
                       <tr>
-                        {[
-                          { key: "EmployeeId", label: "Employee ID" },
-                          { key: "Training_Name", label: "Training Name" },
-                          { key: "Program_Name", label: "Program Name" },
-                          { key: "Train_Mode", label: "Training Mode" },
-                          { key: "No_Hrs", label: "Hours" },
-                          { key: "Training_Date", label: "Training Date" },
-                          { key: "Certificates", label: "Certificates" },
-                        ].map(({ key, label }, index) => (
+                        {columns.map(({ key, label }, index) => (
                           <th
                             key={key}
                             className={`px-4 py-2 border text-left cursor-pointer ${
                               index === 0 ? "left-0 bg-muted z-20" : ""
                             }`}
-                            onClick={() => handleSort(key)}
+                            onClick={() => key !== "Certificates" && handleSort(key)}
                           >
                             {label}{" "}
-                            {sortConfig.key === key
+                            {sortConfig.key === key && key !== "Certificates"
                               ? sortConfig.direction === "asc"
                                 ? "▲"
                                 : "▼"
-                              : "↕"}
+                              : key !== "Certificates"
+                              ? "↕"
+                              : ""}
                           </th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {paginatedData.length > 0 ? (
-                        paginatedData.map((item, index) => {
-                          const certificate = certificates[index];
-                          return (
-                            <tr key={index} className="hover:bg-muted border">
-                              <td className="px-4 py-2 border left-0 bg-white z-10">
-                                {item.EmployeeId}
-                              </td>
-                              <td className="px-4 py-2 border">
-                                {item.Training_Name}
-                              </td>
-                              <td className="px-4 py-2 border">
-                                {item.Program_Name}
-                              </td>
-                              <td className="px-4 py-2 border">
-                                {item.Train_Mode}
-                              </td>
-                              <td className="px-4 py-2 border">
-                                {item.No_Hrs}
-                              </td>
-                              <td className="px-4 py-2 border">
-                                {item.Training_DateFormatted || ""}
-                              </td>
-                              <td className="px-4 py-2 border text-center">
-                                {certificate ? (
-                                  <div className="flex flex-col items-center gap-2">
-                                    <button
-                                      className="text-blue-600 underline text-sm hover:text-blue-800"
-                                      onClick={() => {
-                                        const url =
-                                          URL.createObjectURL(certificate);
-                                        window.open(url, "_blank");
-                                      }}
-                                    >
-                                      View
-                                    </button>
-                                  </div>
+                        paginatedData.map((item, index) => (
+                          <tr key={item.Program_Id || index} className="hover:bg-muted border">
+                            <td className="px-4 py-2 border">{item.EmployeeId}</td>
+                            <td className="px-4 py-2 border">{item.Training_Name}</td>
+                            <td className="px-4 py-2 border">{item.Program_Name}</td>
+                            <td className="px-4 py-2 border">{item.Train_Mode}</td>
+                            <td className="px-4 py-2 border">{item.No_Hrs}</td>
+                            <td className="px-4 py-2 border">
+                              {item.Training_Date
+                                ? new Date(item.Training_Date).toLocaleDateString()
+                                : ""}
+                            </td>
+                            <td className="px-4 py-2 border text-center">
+                              {uploadStatus[item.Program_Id] === 1 ? (
+                                certificates[item.Program_Id] ? (
+                                  <button
+                                    className="text-blue-600 underline text-sm hover:text-blue-800"
+                                    onClick={() => window.open(certificates[item.Program_Id], "_blank")}
+                                  >
+                                    View
+                                  </button>
                                 ) : (
-                                  <div className="flex flex-col items-center  gap-1">
-                                    <label
-                                      htmlFor={`uploadCertificate-${index}`}
-                                      className="cursor-pointer px-3 py-1  rounded text-gray-500 hover:text-neutral-700 text-sm"
-                                    >
-                                      Upload
-                                    </label>
-                                    <input
-                                      type="file"
-                                      id={`uploadCertificate-${index}`}
-                                      accept="*/*"
-                                      className="hidden"
-                                      onChange={(e) =>
-                                        handleFileChange(
-                                          e,
-                                          index,
-                                          item.Program_Id
-                                        )
-                                      } // send program id here
-                                    />
-                                  </div>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })
+                                  <span className="text-green-600 text-sm">Uploaded</span>
+                                )
+                              ) : (
+                                <>
+                                  <label
+                                    htmlFor={`uploadCertificate-${item.Program_Id}`}
+                                    className="cursor-pointer px-3 py-1 rounded text-gray-500 hover:text-neutral-700 text-sm"
+                                  >
+                                    Upload
+                                  </label>
+                                  <input
+                                    type="file"
+                                    id={`uploadCertificate-${item.Program_Id}`}
+                                    accept="application/pdf,image/*"
+                                    className="hidden"
+                                    onChange={(e) => handleFileChange(e, item.Program_Id)}
+                                  />
+                                </>
+                              )}
+                            </td>
+                          </tr>
+                        ))
                       ) : (
                         <tr>
-                          <td colSpan="7" className="text-center py-4">
+                          <td colSpan={columns.length} className="text-center py-4">
                             No results found.
                           </td>
                         </tr>
@@ -766,13 +700,12 @@ const EmployeeHistoryList = () => {
                   <div>
                     Showing{" "}
                     {filteredData.length > 0
-                      ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
-                          currentPage * rowsPerPage,
+                      ? `${(currentPage - 1) * (rowsPerPage === "All" ? filteredData.length : rowsPerPage) + 1} to ${Math.min(
+                          currentPage * (rowsPerPage === "All" ? filteredData.length : rowsPerPage),
                           filteredData.length
                         )} of ${filteredData.length} entries`
                       : "0 entries"}
                   </div>
-
                   <div className="flex space-x-1">
                     <button
                       className="px-3 py-1 border rounded"

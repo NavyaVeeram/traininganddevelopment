@@ -148,8 +148,9 @@ export default function Home() {
 
         {/* Footer ONLY for left panel */}
         <footer className="py-4 text-center">
-          <p className="text-gray-400 text-sm">© Greentech Industries v.1.0</p>
-        </footer>
+     <p className="text-gray-400 text-sm">© QA-MIS | Greentech Industries (v1.0)</p>
+      </footer>
+
       </div>
 
       {/* Right Image Panel */}

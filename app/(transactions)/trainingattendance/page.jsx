@@ -11,7 +11,7 @@ import Select from "react-select";
 import makeAnimated from "react-select/animated";
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { PDFDocument, rgb} from "pdf-lib";
 import fontkit from '@pdf-lib/fontkit';
 const animatedComponents = makeAnimated();
 
@@ -33,7 +33,7 @@ const TrainingAttendanceForm = () => {
     Forward: "",
     Trainer: "",
     Venue: "",
-    Training_Budget: "",
+    Actual_Budget: "",
     CreatedBy: "",
     EmployeeIds: [],
     selectedMonth: "",
@@ -77,7 +77,7 @@ const TrainingAttendanceForm = () => {
     Schedule_Type: "",
     Trainer: "",
     Venue: "",
-    Training_Budget: "",
+    Actual_Budget: "",
   });
   const monthOptions = [
     { value: "Jan", label: "Jan" },
@@ -126,7 +126,7 @@ const TrainingAttendanceForm = () => {
       Schedule_Type: "",
       Trainer: "",
       Venue: "",
-      Training_Budget: "",
+      Actual_Budget: "",
       CreatedBy: "",
       selectedMonth: "",
       EmployeeIds: "",
@@ -270,7 +270,7 @@ const TrainingAttendanceForm = () => {
         Schedule_Type: trainingData.Schedule_Type || "",
         Trainer: trainingData.Trainer || "",
         Venue: trainingData.Venue || "",
-        Training_Budget: trainingData.Training_Budget || "",
+      Actual_Budget: trainingData.Actual_Budget|| "",
         EmployeeIds: trainingData.EmployeeId
           ? trainingData.EmployeeId.split(",").map((id) => id.trim())
           : [],
@@ -434,7 +434,7 @@ const handleMonthYearChange = async (date) => {
         Schedule_Type: formData.Schedule_Type,
         Trainer: formData.Trainer,
         Venue: formData.Venue,
-        Training_Budget: formData.Training_Budget || null,
+        Actual_Budget: formData.Actual_Budget|| null,
         EmployeeIds: formData.EmployeeIds || null,
         CreatedBy: formData.CreatedBy,
       };
@@ -1143,11 +1143,11 @@ const programOptions = options.map((option) => ({
             </div>
           </div>
           <div>
-            <label className="block font-medium">Budget:</label>
+            <label className="block font-medium">Actual Budget:</label>
             <input
               type="number"
-              name="Training_Budget"
-              value={formData.Training_Budget}
+              name="Actual_Budget"
+              value={formData.Actual_Budget}
               onChange={handleFormDataChange}
               disabled={formData.Train_Mode === "Internal"}
               autoComplete="off"

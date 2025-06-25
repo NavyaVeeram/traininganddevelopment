@@ -13,7 +13,7 @@ export default async function handler(req, res) {
       Schedule_Type,
       Trainer,
       Venue,
-      Training_Budget,
+      Actual_Budget,
       CreatedBy
     } = req.body;
 
@@ -33,7 +33,7 @@ export default async function handler(req, res) {
         @Schedule_Type = ${Schedule_Type},
         @Trainer = ${Trainer},
         @Venue = ${Venue},
-        @Training_Budget = ${Training_Budget},
+        @Actual_Budget = ${Actual_Budget},
         @CreatedBy = ${CreatedBy}
       `;
          console.log('Calling stored procedure with parameters:', {
@@ -45,7 +45,7 @@ export default async function handler(req, res) {
   Schedule_Type,
   Trainer,
   Venue,
-  Training_Budget,
+  Actual_Budget,
   CreatedBy
       })
       console.log(result);

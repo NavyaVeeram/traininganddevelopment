@@ -151,6 +151,13 @@ const TrainingBudget = () => {
       width: '35%', 
     },
     {
+      name:'Department',
+      selector: row => row.Department,  
+      sortable: true,
+      searchable: true,
+      width: '10%',
+    },
+    {
       name: 'Scheduled Month',
       selector: row => row.Req_Months,
       sortable: true,
@@ -199,6 +206,14 @@ const TrainingBudget = () => {
       searchable: true,
       width: '10%',
     },
+    {
+      name:'Actual_Budget',
+      selector: row => row.Actual_Budget,
+      sortable: true, 
+      searchable: true,
+      width: '10%',
+
+    }
   ];
 // const isYearEnabled = (date) => {
 //   const year = date.getFullYear();
@@ -344,13 +359,15 @@ const TrainingBudget = () => {
                   <thead className="bg-muted sticky top-0" >
                     <tr>
                       {[{ key: "Program_Name", label: "Training Name" },
+                         {key:"Department", label: "Department"},
                         { key: "Req_Months", label: "Scheduled Month" },
                         { key: "Training_Date", label: "Conducted Date" },
                         { key: "Training_Name", label: "Type" },
                         { key: "Train_Mode", label: "Mode" },
                         { key: "Schedule_Type", label: "Schedule Type" },
                         { key: "Training_Status", label: "Training Status" },
-                        {key: "Training_Budget", label: "Budget"}]
+                        {key: "Training_Budget", label: "Estimated Budget"},
+                        { key: "Actual_Budget", label: "Actual Budget" }]
                         .map(({ key, label }, index) => (
                           <th
                             key={key}
@@ -374,6 +391,7 @@ const TrainingBudget = () => {
                         return (
                           <tr key={index} className={`border ${isTotalRow ? "bg-gray-200" : "hover:bg-gray-100"}`}>
                             <td className="px-4 py-2 border">{item.Program_Name}</td>
+                            <td className="px-4 py-2 border">{item.Department}</td>
                             <td className="px-4 py-2 border">{item.Req_Months}</td>
                             <td className="px-4 py-2 border">
                               {item.Training_Date
@@ -384,7 +402,8 @@ const TrainingBudget = () => {
                             <td className="px-4 py-2 border">{item.Train_Mode}</td>
                             <td className="px-4 py-2 border">{item.Schedule_Type}</td>
                             <td className="px-4 py-2 border">{item.Training_Status}</td>
-                            <td className="px-4 py-2 border">{item.Training_Budget}</td>
+                            <td className="px-4 py-2 border text-right">{item.Training_Budget}</td>
+                            <td className="px-4 py-2 border text-right">{item.Actual_Budget}</td>
                           </tr>
                         );
                       })
