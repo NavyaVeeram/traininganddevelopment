@@ -356,6 +356,56 @@ const TrainingBudget = () => {
               </div>
             </div>
           )}
+          <div className="flex justify-end mt-4">
+            <button
+              className="px-6 mt-2 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
+              onClick={async () => {
+                try {
+                  if (!selectedDate) {
+                    alert('Please select a year before saving.');
+                    return;
+                  }
+                  const response = await fetch('/api/insert_additional_budget', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                      Year_No: selectedDate.getFullYear(),
+                      Add_Budget: Number(additionalTrainingProgramsText) || 0,
+                      createdBy: employeeId || ''
+                    }),
+                  });
+                  if (!response.ok) {
+                    throw new Error('Failed to save additional budget');
+                  }
+                  alert('Additional budget saved successfully');
+                  // Do not clear the text field after successful save as per user request
+                  // Update trainingData and filteredData state directly to avoid full re-render
+                  setTrainingData((prevData) => {
+                    return prevData.map(item => {
+                      if (item.Program_Name?.toLowerCase().includes("additional")) {
+                        return { ...item, Training_Budget: Number(additionalTrainingProgramsText) || 0 };
+                      }
+                      return item;
+                    });
+                  });
+                  setFilteredData((prevData) => {
+                    return prevData.map(item => {
+                      if (item.Program_Name?.toLowerCase().includes("additional")) {
+                        return { ...item, Training_Budget: Number(additionalTrainingProgramsText) || 0 };
+                      }
+                      return item;
+                    });
+                  });
+                } catch (error) {
+                  alert('Error saving additional budget: ' + error.message);
+                }
+              }}
+            >
+              Save
+            </button>
+          </div>
         </>
       )}
 
