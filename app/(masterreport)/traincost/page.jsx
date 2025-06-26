@@ -205,7 +205,7 @@ const TrainingBudget = () => {
           <td className="px-4 py-2 border">{item.Program_Name}</td>
           <td className="px-4 py-2 border">{item.Department}</td>
           <td className="px-4 py-2 border">{item.Req_Months}</td>
-          <td className="px-4 py-2 border">{item.Training_Date ? new Date(item.Training_Date).toLocaleDateString() : ""}</td>
+          <td className="px-4 py-2 border">{item.Training_Date ?? ""}</td>
           <td className="px-4 py-2 border">{item.Training_Name}</td>
           <td className="px-4 py-2 border">{item.Train_Mode}</td>
           <td className="px-4 py-2 border">{item.Schedule_Type}</td>
@@ -213,11 +213,11 @@ const TrainingBudget = () => {
           <td className="px-4 py-2 border text-right">
             {isActualTab && item.Program_Name?.toLowerCase().includes("additional") ? (
               <input
-                type="text"
+                type="number"
                 value={additionalTrainingProgramsText}
                 onChange={(e) => setAdditionalTrainingProgramsText(e.target.value)}
                 className="w-full p-1 border border-gray-300 rounded"
-                placeholder="Enter additional training programs"
+                placeholder="Enter Training Budget"
               />
             ) : (
               item.Training_Budget
