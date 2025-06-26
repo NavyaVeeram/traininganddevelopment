@@ -16,7 +16,46 @@ const TrainingBudget = () => {
   // const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = "All";
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
+  const [accessRole, setAccessRole] = useState(null);
+  const [isAuthorized, setIsAuthorized] = useState(null);
+  const [employeeId,setEmployeeId] = useState(null);
 
+  // New state for additional training programs text field
+  const [additionalTrainingProgramsText, setAdditionalTrainingProgramsText] = useState("");
+   useEffect(() => {
+       const storedEmployeeId = localStorage.getItem('employeeId');
+     
+       if (storedEmployeeId) {
+         setEmployeeId(storedEmployeeId);
+       }
+      
+       const fetchAccessRole = async () => {
+         try {
+           const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+           const data = await res.json();
+     
+           if (res.ok && data.Access_Role) {
+             // Restrict access for HR_Res and HR_HOD roles
+             if (data.Access_Role === "Res_Person" || data.Access_Role === "HOS" || data.Access_Role === "HOD") {
+               setIsAuthorized(false);
+               // Optionally redirect to unauthorized page
+               // window.location.href = '/unauthorized';
+               return;
+             }
+             setAccessRole(data.Access_Role);
+             setIsAuthorized(true);
+           } else {
+             setIsAuthorized(false);
+           }
+         } catch (error) {
+           console.error('Error fetching access role:', error);
+           setIsAuthorized(false);
+         }
+       };
+     
+       fetchAccessRole();
+     }, []);
+     
   const fetchData = async (date) => {
     if (!date) {
       alert('Please select a year.');
@@ -115,6 +154,13 @@ const TrainingBudget = () => {
       width: '35%', 
     },
     {
+      name:'Department',
+      selector: row => row.Department,  
+      sortable: true,
+      searchable: true,
+      width: '10%',
+    },
+    {
       name: 'Scheduled Month',
       selector: row => row.Req_Months,
       sortable: true,
@@ -163,12 +209,41 @@ const TrainingBudget = () => {
       searchable: true,
       width: '10%',
     },
+    {
+      name:'Actual_Budget',
+      selector: row => row.Actual_Budget,
+      sortable: true, 
+      searchable: true,
+      width: '10%',
+
+    }
   ];
-const isYearEnabled = (date) => {
-  const year = date.getFullYear();
-  const currentYear = new Date().getFullYear();
-  return [currentYear, currentYear + 1].includes(year);
-};
+// const isYearEnabled = (date) => {
+//   const year = date.getFullYear();
+//   const currentYear = new Date().getFullYear();
+//   return [currentYear, currentYear + 1].includes(year);
+// };
+ if (isAuthorized === null) {
+    return (
+      <div>Loading...</div>
+      // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+      //   <div className="bg-white p-10 rounded shadow text-center">
+      //     <h2 className="text-2xl font-bold">Loading...</h2>
+      //   </div>
+      // </div>
+    );
+  }
+
+  if (isAuthorized === false) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+        <div className="bg-white p-10 rounded shadow text-center">
+          <h2 className="text-2xl font-bold">Unauthorized</h2>
+          <p className="mt-2">You do not have access to view this page.</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
@@ -211,7 +286,7 @@ const isYearEnabled = (date) => {
                   boundariesElement: "viewport",
                 },
               }}
-              filterDate={isYearEnabled}
+              // filterDate={isYearEnabled}
             />
           </div>
         </div>
@@ -287,13 +362,15 @@ const isYearEnabled = (date) => {
                   <thead className="bg-muted sticky top-0" >
                     <tr>
                       {[{ key: "Program_Name", label: "Training Name" },
+                         {key:"Department", label: "Department"},
                         { key: "Req_Months", label: "Scheduled Month" },
                         { key: "Training_Date", label: "Conducted Date" },
                         { key: "Training_Name", label: "Type" },
                         { key: "Train_Mode", label: "Mode" },
                         { key: "Schedule_Type", label: "Schedule Type" },
                         { key: "Training_Status", label: "Training Status" },
-                        {key: "Training_Budget", label: "Budget"}]
+                        {key: "Training_Budget", label: "Estimated Budget"},
+                        { key: "Actual_Budget", label: "Actual Budget" }]
                         .map(({ key, label }, index) => (
                           <th
                             key={key}
@@ -317,6 +394,7 @@ const isYearEnabled = (date) => {
                         return (
                           <tr key={index} className={`border ${isTotalRow ? "bg-gray-200" : "hover:bg-gray-100"}`}>
                             <td className="px-4 py-2 border">{item.Program_Name}</td>
+                            <td className="px-4 py-2 border">{item.Department}</td>
                             <td className="px-4 py-2 border">{item.Req_Months}</td>
                             <td className="px-4 py-2 border">
                               {item.Training_Date
@@ -327,7 +405,22 @@ const isYearEnabled = (date) => {
                             <td className="px-4 py-2 border">{item.Train_Mode}</td>
                             <td className="px-4 py-2 border">{item.Schedule_Type}</td>
                             <td className="px-4 py-2 border">{item.Training_Status}</td>
-                            <td className="px-4 py-2 border">{item.Training_Budget}</td>
+                          <td className="px-4 py-2 border text-right">
+                            {item.Program_Name?.toLowerCase().includes("additional") ? (
+                              <input
+                                type="text"
+                                value={additionalTrainingProgramsText}
+                                onChange={(e) => setAdditionalTrainingProgramsText(e.target.value)}
+                                className="w-full p-1 border border-gray-300 rounded"
+                                placeholder="Enter Training Cost"
+                              />
+                            ) : (
+                              item.Training_Budget
+                            )}
+                          </td>
+                          <td className="px-4 py-2 border text-right">
+                            {item.Actual_Budget}
+                          </td>
                           </tr>
                         );
                       })
