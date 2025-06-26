@@ -45,7 +45,6 @@ const TrainingAttendanceForm = () => {
   const [programDetails, setProgramDetails] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [qualifiedTrainers, setQualifiedTrainers] = useState([]);
-   
   const [tableSearchTerm, setTableSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -80,43 +79,6 @@ const TrainingAttendanceForm = () => {
     Venue: "",
     Training_Budget: "",
   });
-    useEffect(() => {
-    const storedEmployeeId = localStorage.getItem('employeeId');
-  
-    if (storedEmployeeId) {
-      setEmployeeId(storedEmployeeId);
-    } else {
-      window.location.href = '/';
-      return;
-    }
-  
-    const fetchAccessRole = async () => {
-      try {
-        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-        const data = await res.json();
-  
-        if (res.ok && data.Access_Role) {
-          // Restrict access for HR_Res and HR_HOD roles
-          if (data.Access_Role === "HOS" || data.Access_Role === "HOD" || data.Access_Role === "Res_Person") {
-            setIsAuthorized(false);
-            // Optionally redirect to unauthorized page
-            // window.location.href = '/unauthorized';
-            return;
-          }
-          setAccessRole(data.Access_Role);
-          setIsAuthorized(true);
-        } else {
-          setIsAuthorized(false);
-        }
-      } catch (error) {
-        console.error('Error fetching access role:', error);
-        setIsAuthorized(false);
-      }
-    };
-  
-    fetchAccessRole();
-  }, []);
-  
   const monthOptions = [
     { value: "Jan", label: "Jan" },
     { value: "Feb", label: "Feb" },
@@ -343,7 +305,7 @@ const TrainingAttendanceForm = () => {
     }
   };
 
-  const handleMonthYearChange = async (date) => {
+const handleMonthYearChange = async (date) => {
     if (!date) return;
     setSelectedDate(date);
 
@@ -360,7 +322,11 @@ const TrainingAttendanceForm = () => {
       );
       const data = await res.json();
       if (res.ok) {
-        setOptions(data);
+        if (data.length === 0) {
+          resetForm();
+        } else {
+          setOptions(data);
+        }
       } else {
         throw new Error(data.error || "Error fetching data");
       }
@@ -368,36 +334,39 @@ const TrainingAttendanceForm = () => {
       setError(err.message);
     }
   };
-     useEffect(() => {
-    const storedEmployeeId = localStorage.getItem('employeeId');
+   useEffect(() => {
+   const storedEmployeeId = localStorage.getItem('employeeId');
+ 
+   if (storedEmployeeId) {
+     setEmployeeId(storedEmployeeId);
+   }
   
-    if (storedEmployeeId) {
-      setEmployeeId(storedEmployeeId);
-    } else {
-      window.location.href = '/';
-      return;
-    }
-  
-    const fetchAccessRole = async () => {
-      try {
-        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-        const data = await res.json();
-  
-        if (res.ok && data.Access_Role) {
-          setAccessRole(data.Access_Role);
-          setIsAuthorized(true);
-        } else {
-          setIsAuthorized(false);
-        }
-      } catch (error) {
-        console.error('Error fetching access role:', error);
-        setIsAuthorized(false);
-      }
-    };
-  
-    fetchAccessRole();
-  }, []);
-
+   const fetchAccessRole = async () => {
+     try {
+       const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+       const data = await res.json();
+ 
+       if (res.ok && data.Access_Role) {
+         // Restrict access for HR_Res and HR_HOD roles
+         if (data.Access_Role === "HOS" || data.Access_Role === "HOD" || data.Access_Role === "Res_Person") {
+           setIsAuthorized(false);
+           // Optionally redirect to unauthorized page
+           // window.location.href = '/unauthorized';
+           return;
+         }
+         setAccessRole(data.Access_Role);
+         setIsAuthorized(true);
+       } else {
+         setIsAuthorized(false);
+       }
+     } catch (error) {
+       console.error('Error fetching access role:', error);
+       setIsAuthorized(false);
+     }
+   };
+ 
+   fetchAccessRole();
+ }, []);
   const handleProgramChange = async (e) => {
     const selectedProgramId = e.target.value;
     if (!selectedProgramId) return;
@@ -631,67 +600,113 @@ const font = await mergedPdf.embedFont(fontBytes);
         const height = page.getSize().height;
 
         if (index === 0) {
-          page.drawText(emp.Username || "", {
-            x: 170,
-            y: height - 68,
-            size: 11,
-            font,
-            color: rgb(0, 0, 0),
-          });
+          // page.drawText(emp.Username || "", {
+          //   x: 180,
+          //   y: height - 70,
+          //   size: 11,
+          //   font,
+          //   color: rgb(0, 0, 0),
+          // });
+          //      // Split Program_Name into two lines for drawing
+          const Username = emp.Username || "";
+                                const words = Username.split(" ").filter(Boolean);
+                                if (words.length > 4) {
+                                  // Draw all words in one line lower
+                                  page.drawText(Username, {
+                                    x: 140,
+                                    y: height - 85,
+                                    size: 11,
+                                    font,
+                                    color: rgb(0, 0, 0),
+                                  });
+                                } else {
+                                  // Draw all words in one line at top
+                                  page.drawText(Username, {
+                                    x: 140,
+                                    y: height - 70,
+                                    size: 11,
+                                    font,
+                                    color: rgb(0, 0, 0),
+                                  });
+                                }
           // Customize on first page
           page.drawText(emp.EmployeeId || "", {
-            x: 170,
-            y: height - 102,
+            x: 140,
+            y: height - 104,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(emp.Designation || "", {
-            x: 170,
-            y: height - 136,
+            x: 140,
+            y: height - 138,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(emp.Section || "", {
-            x: 170,
-            y: height - 171,
+            x: 140,
+            y: height - 173,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(emp.Department || "", {
-            x: 170,
-            y: height - 206,
+            x: 140,
+            y: height - 208,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
-          page.drawText(emp.Program_Name || "", {
-            x: 385,
-            y: height - 68,
-            size: 9,
-            font,
-            color: rgb(0, 0, 0),
-          });
+          // Split Program_Name into two lines for drawing
+        // Split Program_Name into two lines for drawing
+                            const programName = emp.Program_Name || "";
+                            const wordss = programName.split(" ").filter(Boolean);
+                            if (wordss.length > 4) {
+                              const mid = Math.ceil(wordss.length / 2);
+                              const line1 = wordss.slice(0, mid).join(" ");
+                              const line2 = wordss.slice(mid).join(" ");
+                              page.drawText(line1, {
+                                x: 375,
+                                y: height - 70,
+                                size: 11,
+                                font,
+                                color: rgb(0, 0, 0),
+                              });
+                              page.drawText(line2, {
+                                x: 375,
+                                y: height - 85, // Adjust line height as needed
+                                size: 11,
+                                font,
+                                color: rgb(0, 0, 0),
+                              });
+                            } else {
+                              page.drawText(programName, {
+                                x: 375,
+                                y: height - 70,
+                                size: 11,
+                                font,
+                                color: rgb(0, 0, 0),
+                              });
+                            }
           page.drawText(emp.Trainer || "", {
-            x: 385,
-            y: height - 102,
+            x: 375,
+            y: height - 104,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(emp.Train_Mode || "", {
-            x: 385,
-            y: height - 137,
+            x: 375,
+            y: height - 139,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
 
           page.drawText(String(emp.No_Hrs + "hr") || "", {
-            x: 385,
-            y: height - 171,
+            x: 375,
+            y: height - 173,
             size: 11,
             font,
             color: rgb(0, 0, 0),
@@ -702,8 +717,8 @@ const font = await mergedPdf.embedFont(fontBytes);
             : "";
 
           page.drawText(String(formattedTrainingDate) || "", {
-            x: 385,
-            y: height - 206,
+            x: 375,
+            y: height - 208,
             size: 11,
             font,
             color: rgb(0, 0, 0),
@@ -743,19 +758,32 @@ const programOptions = options.map((option) => ({
   value: option.Value,
   label: option.Text,
 }));
- 
+
+     // 🔒 Unauthorized view
+  if (isAuthorized === null) {
+    return (
+      <div>
+        Loading...
+        </div>
+
+      // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+      //   <div className="bg-white p-10 rounded shadow text-center">
+      //     <h2 className="text-2xl font-bold">loading...</h2>
+      //   </div>
+      // </div>
+    );
+  }
     // 🔒 Unauthorized view
-   
-   if (!isAuthorized) {
+  if (isAuthorized === false) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
         <div className="bg-white p-10 rounded shadow text-center">
           <h2 className="text-2xl font-bold">Unauthorized</h2>
           <p className="mt-2">You do not have access to view this page.</p>
         </div>
-</div>
-);
-}
+      </div>
+    );
+  }
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
       <div className="bg-sky-400 text-white p-2  rounded-t-lg">
@@ -1382,9 +1410,10 @@ const programOptions = options.map((option) => ({
                       </button>
                       {Array.from({ length: totalPages }, (_, i) => (
                         <button
+                        type="button"
                           key={i}
                           className={`px-3 py-1 border rounded ${
-                            currentPage === i + 1 ? "bg-primary text-white" : ""
+                            currentPage === i + 1 ? "bg-black text-white" : ""
                           }`}
                           onClick={() => setCurrentPage(i + 1)}
                         >

@@ -21,9 +21,6 @@ export default function Requirement() {
   const [department, setDepartment] = useState('');
   const [section,setSection] = useState('');
   const [username, setUsername] = useState('');
-   
-const [accessRole, setAccessRole] = useState(null);
-  const [isAuthorized, setIsAuthorized] = useState(null);
   const [employeeId, setEmployeeId] = useState('');
   const [trainingData, setTrainingData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -54,7 +51,8 @@ const [accessRole, setAccessRole] = useState(null);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const [originalData, setOriginalData] = useState([]);
-
+  const [accessRole, setAccessRole] = useState(null);
+  const [isAuthorized, setIsAuthorized] = useState(null);
   // Synchronize data and originalData with trainingData to keep hooks consistent
   useEffect(() => {
     setData(trainingData);
@@ -88,44 +86,6 @@ const [accessRole, setAccessRole] = useState(null);
     setSelectedOptions([]); // Reset selected options for months if needed
     setMessage(''); // Reset any messages displayed
   };
-  useEffect(() => {
-    const storedEmployeeId = localStorage.getItem('employeeId');
-  
-    if (storedEmployeeId) {
-      setEmployeeId(storedEmployeeId);
-    } else {
-      window.location.href = '/';
-      return;
-    }
-  
-    const fetchAccessRole = async () => {
-      try {
-        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`); 
-        const data = await res.json();
-  
-        if (res.ok && data.Access_Role) {
-          
-          if (data.Access_Role === "HOD" || data.Access_Role === "HR_Hod") {
-            setIsAuthorized(false);
-            // Optionally redirect to unauthorized page
-            // window.location.href = '/unauthorized';
-            return;
-          }
-          setAccessRole(data.Access_Role);
-          setIsAuthorized(true);
-        } else {
-          setIsAuthorized(false);
-        }
-      } catch (error) {
-        console.error('Error fetching access role:', error);
-        setIsAuthorized(false);
-      }
-    };
-  
-    fetchAccessRole();
-  }, []);
-    
-    
   
   useEffect(() => {
     // Retrieve the department, username, and employeeId from localStorage
@@ -315,7 +275,39 @@ const [accessRole, setAccessRole] = useState(null);
     });
   };
   
-  
+  useEffect(() => {
+    const storedEmployeeId = localStorage.getItem("employeeId");
+    if (storedEmployeeId) {
+      setEmployeeId(storedEmployeeId);
+    }
+
+    const fetchAccessRole = async () => {
+      try {
+        const res = await fetch(
+          "/api/get_access_role?employeeId=" + storedEmployeeId
+        );
+        const data = await res.json();
+
+        if (res.ok && data.Access_Role) {
+          if (
+            data.Access_Role === "HR_Hod"
+          ) {
+            setIsAuthorized(false);
+            return;
+          }
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+        }
+      } catch (error) {
+        console.error("Error fetching access role:", error);
+        setIsAuthorized(false);
+      }
+    };
+
+    fetchAccessRole();
+  }, []);
 
   useEffect(() => {
     // Update No. of Times based on selected months
@@ -362,8 +354,8 @@ const handleEdit = (data) => {
   setIsModalOpen(true); // Open the modal
 };
 const programOptions = programs.map(program => ({
-  value: program.Program_Name,
-  label: program.Program_Name,
+  value: program.value,
+  label: program.text,
 }));
 
 
@@ -505,18 +497,29 @@ const programOptions = programs.map(program => ({
           (currentPage - 1) * rowsPerPage,
           currentPage * rowsPerPage
         );
-        
-  if (!isAuthorized) {
+  if (isAuthorized === null) {
+    return (
+      // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+      //   <div className="bg-white p-10 rounded shadow text-center">
+      //     <h2 className="text-2xl font-bold">Loading...</h2>
+      //   </div>
+      // </div>
+      <div>
+        Loading...
+      </div>
+    );
+  }
+
+  if (isAuthorized === false) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
         <div className="bg-white p-10 rounded shadow text-center">
           <h2 className="text-2xl font-bold">Unauthorized</h2>
           <p className="mt-2">You do not have access to view this page.</p>
         </div>
-</div>
-);
-}
-
+      </div>
+    );
+  }
   return (
     <div className="max-w-full mx-auto bg-white p-2 w-full">
     <div className="bg-sky-400 text-white p-2  flex justify-between rounded-t-lg">
@@ -932,7 +935,9 @@ const programOptions = programs.map(program => ({
                 <td className="px-4 py-2 border">{training.Year_No}</td>
                 <td className="px-4 py-2 border">{training.Department}</td>
                 <td className="px-4 py-2 border">{training.Section}</td>
-                <td className="px-4 py-2 border">{training.Program_Name}</td>
+                <td className="px-4 py-2 border">
+                  {programs.find(program => program.value === training.Program_Name)?.text || training.Program_Name}
+                </td>
                 <td className="px-4 py-2 border">{training.Train_Mode}</td>
                 <td className="px-4 py-2 border">{training.Train_Purpose}</td>
                 <td className="px-4 py-2 border">{training.Persons}</td>
@@ -990,7 +995,7 @@ const programOptions = programs.map(program => ({
               key={i}
               type="button"
               className={`px-3 py-1 border rounded ${
-                currentPage === i + 1 ? "bg-primary text-primary-foreground" : ""
+                currentPage === i + 1 ? "bg-black text-primary-foreground" : ""
               }`}
               onClick={() => setCurrentPage(i + 1)}
             >

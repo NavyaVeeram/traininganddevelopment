@@ -185,7 +185,7 @@ export default function TrainingRecord() {
               className="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded"
             />
             <label htmlFor="confirmation" className="text-sm font-medium text-gray-900">
-              I confirm that all the information provided above is correct and accurate.
+           Special Position Training
             </label>
           </div>
         )}
