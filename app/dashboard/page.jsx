@@ -149,18 +149,18 @@ const Dashboard = () => {
               <Line
                 dataKey="Training_Budget"
                 type="monotone"
-                stroke="#60a5fa" // Light blue
+                stroke="#1d4ed8" 
                 strokeWidth={3}
-                dot={{ fill: "#60a5fa", strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, stroke: "#60a5fa", strokeWidth: 2 }}
+                dot={{ fill: "#1d4ed8", strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: "#1d4ed8", strokeWidth: 2 }}
               />
               <Line
                 dataKey="Actual_Budget"
                 type="monotone"
-                stroke="#1e40af" // Darker blue
+                stroke="#166534" // Darker blue
                 strokeWidth={3}
-                dot={{ fill: "#1e40af", strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, stroke: "#1e40af", strokeWidth: 2 }}
+                dot={{ fill: "#166534", strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: "#166534", strokeWidth: 2 }}
               />
             </LineChart>
           </ResponsiveContainer>
