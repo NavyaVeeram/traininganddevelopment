@@ -406,7 +406,7 @@ const TrainingBudget = () => {
                             <td className="px-4 py-2 border">{item.Schedule_Type}</td>
                             <td className="px-4 py-2 border">{item.Training_Status}</td>
                           <td className="px-4 py-2 border text-right">
-                            {item.Program_Name?.toLowerCase().includes("additional") ? (
+                            {item.Program_Name?.toLowerCase().includes("additional training programs") ? (
                               <input
                                 type="text"
                                 value={additionalTrainingProgramsText}
