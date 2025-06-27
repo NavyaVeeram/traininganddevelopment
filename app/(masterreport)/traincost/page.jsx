@@ -79,6 +79,13 @@ const TrainingBudget = () => {
       } else {
         setTrainingData(data);
         setFilteredData(data);
+        // Set additionalTrainingProgramsText from "additional" row if exists
+        const additionalRow = data.find(item => item.Program_Name?.toLowerCase().includes("additional"));
+        if (additionalRow) {
+          setAdditionalTrainingProgramsText(additionalRow.Training_Budget?.toString() || "");
+        } else {
+          setAdditionalTrainingProgramsText("");
+        }
       }
     } catch (err) {
       setError(err.message || "An error occurred while fetching data.");
