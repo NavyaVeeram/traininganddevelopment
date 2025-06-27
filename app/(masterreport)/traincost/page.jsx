@@ -82,7 +82,7 @@ const TrainingBudget = () => {
         // Set additionalTrainingProgramsText from "additional" row if exists
         const additionalRow = data.find(item => item.Program_Name?.toLowerCase().includes("additional"));
         if (additionalRow) {
-          setAdditionalTrainingProgramsText(additionalRow.Training_Budget?.toString() || "");
+          setAdditionalTrainingProgramsText(additionalRow.Training_Budget != null ? additionalRow.Training_Budget.toString() : "");
         } else {
           setAdditionalTrainingProgramsText("");
         }

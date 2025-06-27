@@ -7,6 +7,7 @@ import {
   TrendingUp,
   Target,
 } from "lucide-react";
+import { GiArrowScope } from "react-icons/gi";
 
 import "react-datepicker/dist/react-datepicker.css";
 import {
@@ -157,7 +158,7 @@ const Dashboard = () => {
               <Line
                 dataKey="Actual_Budget"
                 type="monotone"
-                stroke="#166534" // Darker blue
+                stroke="#166534" 
                 strokeWidth={3}
                 dot={{ fill: "#166534", strokeWidth: 2, r: 4 }}
                 activeDot={{ r: 6, stroke: "#166534", strokeWidth: 2 }}
@@ -329,9 +330,9 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {[
             { label: "IATF Total", value: iatfStats.total, icon: <BookOpen className="w-8 h-8 text-white" />, bg: "bg-blue-400" },
-            { label: "IATF Completed", value: iatfStats.completed, icon: <Target className="w-6 h-6 text-white" />, bg: "bg-blue-700" },
+            { label: "IATF Completed", value: iatfStats.completed, icon: <GiArrowScope className="w-6 h-6 text-white" />, bg: "bg-blue-700" },
             { label: "HSE Total", value: hseStats.total, icon: <BookOpen className="w-8 h-8 text-white" />, bg: "bg-green-400" },
-            { label: "HSE Completed", value: hseStats.completed, icon: <Target className="w-6 h-6 text-white" />, bg: "bg-green-700" },
+            { label: "HSE Completed", value: hseStats.completed, icon: <GiArrowScope className="w-6 h-6 text-white" />, bg: "bg-green-700" },
           ].map(({ label, value, icon, bg }) => (
             <div key={label} className={`p-5 rounded-xl shadow-md flex justify-between items-center text-white ${bg}`}>
               <div>
