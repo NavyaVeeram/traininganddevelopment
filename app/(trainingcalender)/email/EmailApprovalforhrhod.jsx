@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useRef } from 'react';
 
-export default function EmailApprovalWeek({ weeks }) {
+export default function EmailApprovalWeek({ weeks,Training_Budget}) {
   const [employeeId, setEmployeeId] = useState('');
   const [email, setEmail] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -18,10 +18,12 @@ export default function EmailApprovalWeek({ weeks }) {
 
   const handleApprove = async () => {
     if (isCallingApi.current || !employeeId) return;
+    // Check if any week or Budget is empty
+    const isWeekEmpty = weeks.some(week => week === null || week === undefined || week === '');
+    const isBudgetEmpty = Training_Budget.some(budget => budget === null || budget === undefined || budget === '');
 
-    // Check if any week is empty
-    if (weeks.some(week => week === null || week === undefined || week === '')) {
-      alert('please enter the week');
+    if (isWeekEmpty || isBudgetEmpty) {
+      alert('Please enter both the week and Training Budget');
       return;
     }
 

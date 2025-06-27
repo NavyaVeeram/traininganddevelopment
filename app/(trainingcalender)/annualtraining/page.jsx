@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import React, { useState, useEffect, useRef } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -33,39 +33,47 @@ const AnnualTraining = () => {
   const tableRef = useRef(null);
 
   useEffect(() => {
-  const storedEmployeeId = localStorage.getItem('employeeId');
+    const storedEmployeeId = localStorage.getItem("employeeId");
 
-  if (storedEmployeeId) {
-    setEmployeeId(storedEmployeeId);
-  } else {
-    window.location.href = '/';
-    return;
-  }
+    if (storedEmployeeId) {
+      setEmployeeId(storedEmployeeId);
+    } else {
+      window.location.href = "/";
+      return;
+    }
 
-  const fetchAccessRole = async () => {
-    try {
-      const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-      const data = await res.json();
+    const fetchAccessRole = async () => {
+      try {
+        const res = await fetch(
+          `/api/get_access_role?employeeId=${storedEmployeeId}`
+        );
+        const data = await res.json();
 
-      if (res.ok && data.Access_Role) {
-        if ( data.Access_Role === "Res_Person" || data.Access_Role === "HOS" || data.Access_Role === "HOD" ) {
+        if (res.ok && data.Access_Role) {
+          // Restrict access for HR_Res and HR_HOD roles
+          if (
+            data.Access_Role === "Res_Person" ||
+            data.Access_Role === "HOS" ||
+            data.Access_Role === "HOD"
+          ) {
+            setIsAuthorized(false);
+            // Optionally redirect to unauthorized page
+            // window.location.href = '/unauthorized';
+            return;
+          }
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
           setIsAuthorized(false);
-          return;
         }
-        setAccessRole(data.Access_Role);
-        setIsAuthorized(true);
-      } else {
+      } catch (error) {
+        console.error("Error fetching access role:", error);
         setIsAuthorized(false);
       }
-    } catch (error) {
-      console.error('Error fetching access role:', error);
-      setIsAuthorized(false);
-    }
-  };
+    };
 
-  fetchAccessRole();
-}, []);
-
+    fetchAccessRole();
+  }, []);
 
   useEffect(() => {
     if (isAuthorized) {
@@ -91,10 +99,8 @@ const AnnualTraining = () => {
 
   if (isAuthorized === null) {
     return (
-      <div>
-    Loading...
-      </div>
-        // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+      <div>Loading...</div>
+      // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
       //   <div className="bg-white p-10 rounded shadow text-center">
       //     <h2 className="text-2xl font-bold">Loading...</h2>
       //   </div>
@@ -125,7 +131,11 @@ const AnnualTraining = () => {
     if (!groupedData[month][week]) {
       groupedData[month][week] = [];
     }
-    groupedData[month][week].push(program);
+    groupedData[month][week].push({
+      Program_Name: item.Program_Name,
+      Is_External: item.Is_External === 1,
+      Special_Position: item.Special_Position === 1,
+    });
   });
 
   const monthsInData = monthsOrder;
@@ -187,104 +197,266 @@ const AnnualTraining = () => {
   });
 
   const generatePDF = async () => {
-    const input = tableRef.current;
+    const doc = new jsPDF("landscape", "mm", "a4");
+    const year = selectedDate.getFullYear();
+    const trainingType = trainingName;
+    const monthsPerPage = trainingType === "HSE" ? 6 : 3;
 
-    // Clone node and remove classes
-    const clonedNode = input.cloneNode(true);
+    for (
+      let pageIndex = 0;
+      pageIndex < monthsInData.length;
+      pageIndex += monthsPerPage
+    ) {
+      const chunk = monthsInData.slice(pageIndex, pageIndex + monthsPerPage);
 
-    // Remove all class attributes and override styles with safe CSS
-    const elementsWithClasses = clonedNode.querySelectorAll("[class]");
-    elementsWithClasses.forEach((el) => {
-      el.removeAttribute("class");
-      // Override all styles that might cause problems with PDF export
-      el.style.backgroundColor = "white";
-      el.style.color = "black";
-      // Set border for <td> elements, remove border for inner divs inside <td>
-      if (el.tagName.toLowerCase() === "td") {
-        el.style.border = "1px solid #ccc";
-      } else if (
-        el.tagName.toLowerCase() === "div" &&
-        el.parentElement &&
-        el.parentElement.tagName.toLowerCase() === "td"
-      ) {
-        el.style.border = "none";
-      } else {
-        el.style.border = "1px solid #ccc";
-      }
-      el.style.padding = "4px";
-      el.style.Margin = "3px"
-      el.style.fontSize = "11px";
-      el.style.boxSizing = "border-box";
-      el.style.textAlign = "center";
-      // Remove potentially problematic CSS variables or color functions
-      el.style.removeProperty("color");
-      el.style.removeProperty("background-color");
-      // Explicitly set safe colors after removing
-      el.style.color = "black";
-      el.style.backgroundColor = "white";
-    });
+      // Create hidden wrapper
+      const wrapper = document.createElement("div");
+      wrapper.style.position = "fixed";
+      wrapper.style.top = "-10000px";
+      wrapper.style.left = "0";
+      wrapper.style.padding = "0px";
+      wrapper.style.width = "1222px";
+      wrapper.style.backgroundColor = "white";
 
-    // Remove explicit bottom border styling on last row and last td elements
-    // const tbody = clonedNode.querySelector("tbody");
-    // if (tbody) {
-    //   const rows = tbody.querySelectorAll("tr");
-    //   if (rows.length > 0) {
-    //     const lastRow = rows[rows.length - 1];
-    //     lastRow.style.borderBottom = "1px solid #ccc";
-    //     const tds = lastRow.querySelectorAll("td");
-    //     tds.forEach((td) => {
-    //       td.style.borderBottom = "1px solid #ccc";
-    //     });
-    //   }
-    // }
+      // Create table
+      const table = document.createElement("table");
+      table.style.borderCollapse = "collapse";
+      table.style.borderSpacing = "0";
+      table.style.width = "100%";
+      table.style.fontSize = "12px";
+      table.style.tableLayout = "fixed";
+      table.style.border = "0.5px solid #999";
+      table.style.color = "black";
+      table.style.margin = "0";
+      table.style.padding = "0";
 
-    // Also apply the same styles to the cloned root element itself
-    clonedNode.style.backgroundColor = "white";
-    clonedNode.style.color = "black";
-    clonedNode.style.border = "1px solid #ccc";
-    clonedNode.style.borderCollapse = "collapse";
-    clonedNode.style.padding = "4px";
-    clonedNode.style.fontSize = "11px";
-    clonedNode.style.boxSizing = "border-box";
-    clonedNode.style.textAlign = "center";
+      // Header row
+      const headerRow = document.createElement("tr");
 
-    // Wrap in offscreen container with fixed width and padding for margin
-    const wrapper = document.createElement("div");
-    wrapper.style.position = "fixed";
-    wrapper.style.top = "-10000px";
-    wrapper.style.left = "0";
-    wrapper.style.width = "1122px"; // A4 landscape width at 96 DPI
-    wrapper.style.height = "854px"; // Increased height by 60px for bottom margin
-    wrapper.style.padding = "20px 20px 40px 20px"; // Add padding bottom for margin
-    wrapper.style.overflow = "hidden";
-    wrapper.appendChild(clonedNode);
-    document.body.appendChild(wrapper);
+      // "Months" header
+      const monthHeader = document.createElement("th");
+      monthHeader.textContent = "Months";
+      monthHeader.style.border = "0.5px solid #999";
+      monthHeader.style.verticalAlign = "middle";
+      monthHeader.style.textAlign = "center";
+      monthHeader.style.width = "80px";
+      monthHeader.style.height = "40px";
+      monthHeader.style.verticalAlign = "middle";
+      monthHeader.style.lineHeight = "40px";
+      monthHeader.style.padding = "0";
+      monthHeader.style.fontSize = "14px";
+      headerRow.appendChild(monthHeader);
 
-    // Adjust clonedNode width to account for padding
-    clonedNode.style.width = "1082px"; // 1122 - 2*20 padding
-    clonedNode.style.maxWidth = "1082px";
+      // "Weeks" header
+      const weekHeader = document.createElement("th");
+      weekHeader.textContent = "Weeks";
+      weekHeader.colSpan = 5;
+      weekHeader.style.border = "0.5px solid #999";
+      weekHeader.style.textAlign = "center";
+      weekHeader.style.backgroundColor = "#ffffff";
+      weekHeader.style.colSpan = 5;
+      weekHeader.style.height = "40px";
+      weekHeader.style.verticalAlign = "middle";
+      weekHeader.style.lineHeight = "40px";
+      weekHeader.style.padding = "0";
+      weekHeader.style.fontSize = "14px";
+      headerRow.appendChild(weekHeader);
 
-    try {
-      const canvas = await html2canvas(clonedNode, {
-        backgroundColor: "#fff",
+      table.appendChild(headerRow);
+
+      // Data Rows (Each Month)
+      chunk.forEach((month) => {
+        const weeks = dynamicWeeksByMonth[month]?.slice(0, 5) || [];
+        const monthKey = month.toLowerCase().slice(0, 3);
+
+        // Week numbers row (directly under the month label)
+        const weekNumberRow = document.createElement("tr");
+
+        const monthCell = document.createElement("td");
+        monthCell.textContent = month;
+        monthCell.rowSpan =
+          weeks.reduce((max, week) => {
+            const len = groupedData[monthKey][week]?.length || 0;
+            return Math.max(max, len);
+          }, 1) + 1;
+
+        monthCell.style.border = "0.5px solid #999";
+        monthCell.style.textAlign = "center";
+        monthCell.style.fontWeight = "bold";
+        monthCell.style.backgroundColor = "#d0f1e8";
+        monthCell.style.verticalAlign = "middle";
+        monthCell.style.width = "80px";
+        monthCell.style.fontSize = "14px";
+        weekNumberRow.appendChild(monthCell);
+
+        weeks.forEach((week) => {
+          const weekCell = document.createElement("td");
+          weekCell.textContent = `Week ${week}`;
+          weekCell.style.border = "0.5px solid #999";
+          weekCell.style.textAlign = "center";
+          weekCell.style.verticalAlign = "middle";
+          weekCell.style.height = "25px";
+          weekCell.style.lineHeight = "40px";
+          weekCell.style.padding = "0";
+          weekCell.style.backgroundColor = "#fde0b8";
+          weekCell.style.fontWeight = "bold";
+          weekCell.style.fontSize = "14px";
+          weekNumberRow.appendChild(weekCell);
+        });
+
+        table.appendChild(weekNumberRow);
+
+        // Collect week-wise items
+        const weekItems = weeks.map((week) => {
+          return groupedData[monthKey]?.[week] || [];
+        });
+
+        const maxRows = Math.max(...weekItems.map((items) => items.length));
+
+        // Add data rows under week numbers
+        for (let rowIndex = 0; rowIndex < maxRows; rowIndex++) {
+          const row = document.createElement("tr");
+
+          weeks.forEach((_, weekIndex) => {
+            const cell = document.createElement("td");
+            cell.style.border = "0.5px solid #999";
+            cell.style.padding = "6px 6px";
+            cell.style.verticalAlign = "top";
+            cell.style.textAlign = "left";
+            cell.style.lineHeight = "1.4";
+            cell.style.height = "100%";
+            cell.style.fontSize = "14px";
+
+            const item = weekItems[weekIndex][rowIndex];
+            if (item) {
+              const div = document.createElement("div");
+              div.style.marginBottom = "6px";
+              div.style.padding = "2px 4px";
+              div.style.borderRadius = "2px";
+              div.style.display = "block";
+              div.style.backgroundColor = "transparent";
+
+              if (item.Is_External) {
+                cell.style.backgroundColor = "#f0dff8";
+                cell.style.color = "black";
+              }
+              if (item.Special_Position) {
+                cell.style.backgroundColor = "#e6f7df";
+                cell.style.color = "black";
+              }
+
+              div.textContent = `• ${item.Program_Name || item}`;
+              cell.appendChild(div);
+            } else {
+              const dash = document.createElement("div");
+              dash.textContent = "-";
+              dash.style.textAlign = "center";
+              dash.style.color = "3px solid black";
+              dash.style.padding = "4px";
+              dash.style.fontStyle = "Times New Roman";
+              cell.appendChild(dash);
+            }
+
+            row.appendChild(cell);
+          });
+
+          table.appendChild(row);
+        }
+      });
+
+      wrapper.appendChild(table);
+      document.body.appendChild(wrapper);
+
+      const canvas = await html2canvas(wrapper, {
+        backgroundColor: "#ffffff",
         scale: 2,
-        useCORS: true,
-        width: 1082,
-        height: 820, // Increased height by 60px for bottom margin
       });
 
       const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("l", "mm", "a4");
 
-      // Add image with margin offset (10mm)
-      pdf.addImage(imgData, "PNG", 10, 10, 277, 210); // Keep height at full 210mm
-      pdf.save("annual_training_calendar.pdf");
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      alert("Failed to generate PDF due to unexpected error.");
-    } finally {
+      if (pageIndex > 0) doc.addPage();
+
+      // Header
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      let title = "";
+
+      if (trainingType === "HSE") {
+        title = `${trainingType} Annual Training Plan - ${year}`;
+      } else {
+        title = `${trainingType} 16949 Annual Training Plan - ${year}`;
+      }
+
+      doc.text(title, 10, 10);
+      const footerText =
+        trainingType === "HSE"
+          ? 'We are following "[S014001] & [S045001] CAPD Method 10.3 Continuous Improvement Spirit to improve our GTI"'
+          : 'We are following "IATF16949 CAPD method 10.3 Continuous Improvement Spirit to improve our GTI"';
+
+      doc.setFontSize(6);
+      doc.setFont("helvetica", "normal");
+      doc.text(footerText, 10, 16);
+
+      // Table Image
+      doc.addImage(imgData, "PNG", 10, 22, 277, 150); // x = 10
+
+      //Add Page Number at Top Right
+      const currentPage = pageIndex / monthsPerPage + 1;
+      const totalPages = Math.ceil(monthsInData.length / monthsPerPage);
+
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        `Page ${currentPage} of ${totalPages}`,
+        doc.internal.pageSize.getWidth() - 10,
+        20,
+        { align: "right" }
+      );
+
+      // Footer box dimensions
+      const boxX = 10;
+      const boxY = 172;
+      const boxWidth = doc.internal.pageSize.getWidth() - 20;
+      const boxHeight = 23;
+      const boxRight = boxX + boxWidth;
+      const boxBottom = boxY + boxHeight;
+
+      // Draw footer rectangle border
+      doc.setDrawColor("#999");
+      doc.setLineWidth(0.3);
+      doc.line(boxX, boxY, boxX, boxBottom); // Left border
+      doc.line(boxRight, boxY, boxRight, boxBottom); // Right border
+      doc.line(boxX, boxBottom, boxRight, boxBottom);
+      doc.rect(boxX, boxY, boxWidth, boxHeight);
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+
+      const signatureY = boxY + 20;
+      doc.text("Prepared By", 30, signatureY);
+      doc.text("Checked By", 130, signatureY);
+      doc.text("Approved By", 230, signatureY);
+
+      const footerInfoY = signatureY + 10;
+      doc.setFontSize(8);
+
+      doc.text("EDI 1.0", boxX + 2, footerInfoY);
+
+      doc.text(
+        "Greentech Industries (India) Pvt. Ltd.",
+        doc.internal.pageSize.getWidth() / 2,
+        footerInfoY,
+        { align: "center" }
+      );
+
+      doc.text("HR-021-1", doc.internal.pageSize.getWidth() - 10, footerInfoY, {
+        align: "right",
+      });
+
       document.body.removeChild(wrapper);
     }
+
+    doc.save(`${trainingType}_Annual_Training_${year}.pdf`);
   };
 
   return (
@@ -371,11 +543,12 @@ const AnnualTraining = () => {
                 </td>
               </tr>
               <tr>
-<th
-  className="border border-gray-300 px-2 py-1 font-semibold w-[60px] special-width bg-blue-200 text-center align-middle"
- style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}>
-  Months
-</th>
+                <th
+                  className="border border-gray-300 px-2 py-1 font-semibold w-[60px] special-width bg-blue-200 text-center align-middle"
+                  style={{ width: "60px", minWidth: "60px", maxWidth: "60px" }}
+                >
+                  Months
+                </th>
                 <td
                   className="border border-gray-300 px-1 py-1 w-24 text-center font-semibold bg-orange-200"
                   colSpan={6}
@@ -390,13 +563,17 @@ const AnnualTraining = () => {
                 return (
                   <React.Fragment key={month}>
                     <tr>
-<td
-  className="border border-gray-300 px-2 py-1 font-semibold w-[60px] bg-blue-100 text-center align-middle whitespace-nowrap"
-  rowSpan={2}
-   style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}
->
-  {month}
-</td>
+                      <td
+                        className="border border-gray-300 px-2 py-1 font-semibold w-[60px] bg-blue-100 text-center align-middle whitespace-nowrap"
+                        rowSpan={2}
+                        style={{
+                          width: "60px",
+                          minWidth: "60px",
+                          maxWidth: "60px",
+                        }}
+                      >
+                        {month}
+                      </td>
                       {weeksToShow.map((week) => (
                         <td
                           key={`${month}-week-header-${week}`}
@@ -414,21 +591,23 @@ const AnnualTraining = () => {
                             key={`${month}-week-data-${week}`}
                             className={`border border-gray-300 px-4 py-3 w-12 break-words whitespace-normal max-w-12 ${bgColor}`}
                           >
-{groupedData[monthKey] &&
-                            groupedData[monthKey][week]
-                              ? (
-                                <ul className="list-disc list-inside m-0 p-0">
-                                  {groupedData[monthKey][week].map((program, idx) => (
+                            {groupedData[monthKey] &&
+                            groupedData[monthKey][week] ? (
+                              <ul className="list-disc list-inside m-0 p-0">
+                                {groupedData[monthKey][week].map(
+                                  (item, idx) => (
                                     <li
                                       key={idx}
                                       className="mb-1 break-words whitespace-normal max-w-full"
                                     >
-                                      {program}
+                                      {item.Program_Name}
                                     </li>
-                                  ))}
-                                </ul>
-                              )
-                              : "-"}
+                                  )
+                                )}
+                              </ul>
+                            ) : (
+                              "-"
+                            )}
                           </td>
                         );
                       })}
@@ -436,7 +615,6 @@ const AnnualTraining = () => {
                   </React.Fragment>
                 );
               })}
-   
             </tbody>
           </table>
         </>

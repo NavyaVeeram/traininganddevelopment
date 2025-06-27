@@ -3,7 +3,7 @@ const prisma = new PrismaClient();
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
-    const { year, training_name } = req.query;
+    const { year, training_name,EmployeeId } = req.query;
 
     if (!year) {
       return res.status(400).json({ message: "Year is required" });
@@ -11,7 +11,7 @@ export default async function handler(req, res) {
 
     try {
       const employeeDetails = await prisma.$queryRaw`
-        EXEC [dbo].[Get_TET_Form_Data] @Year_No=${parseInt(year)}, @Training_name=${training_name || ''}
+        EXEC [dbo].[Get_TET_Form_Data] @Year_No=${parseInt(year)}, @Training_name=${training_name || ''}, @EmployeeId=${EmployeeId || ''}
       `;
 
       if (!employeeDetails || employeeDetails.length === 0) {

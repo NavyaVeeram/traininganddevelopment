@@ -43,6 +43,14 @@ const formatDateDDMMMYYYY = (dateString) => {
 };
 
   const fetchData = async (date, trainingName) => {
+    const storedEmployeeId = localStorage.getItem("employeeId");
+
+    if (storedEmployeeId) {
+      setEmployeeId(storedEmployeeId);
+    } else {
+      window.location.href = "/";
+      return;
+    }
     if (!date) return;
 
     setLoading(true);
@@ -51,7 +59,7 @@ const formatDateDDMMMYYYY = (dateString) => {
 
     try {
       const response = await fetch(
-        `/api/get_tet_form_data?year=${date}&training_name=${encodeURIComponent(trainingName)}`
+        `/api/get_tet_form_data?year=${date}&training_name=${encodeURIComponent(trainingName)}&EmployeeId=${storedEmployeeId}`
       );
 
       if (!response.ok) {

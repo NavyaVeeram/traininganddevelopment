@@ -653,27 +653,29 @@ const font = await mergedPdf.embedFont(fontBytes);
   };
 
   // Fetch employee data options for the dropdown
-  useEffect(() => {
-    const fetchDropdownData = async () => {
-      try {
-        const res = await fetch(`/api/get_tet_form_user_dropdown?programId=${programId}`);
-        const data = await res.json();
+ useEffect(() => {
+  const fetchDropdownData = async () => {
+    try {
+      const storedEmployeeId = localStorage.getItem('employeeId');
+      if (!storedEmployeeId) return;
 
-        // Format the data for React Select
-      // Adjust dropdown options to show EmployeeId as value and include EmployeeId in label with Username + Department
+      const res = await fetch(`/api/get_tet_form_user_dropdown?programId=${programId}&EmployeeId=${storedEmployeeId}`);
+      const data = await res.json();
+
       const formattedOptions = data.map((item) => ({
         value: item.Value,
-        label: `${item.Text}`, // Show EmployeeId along with Username + Department
+        label: `${item.Text}`,
       }));
 
       setOptions(formattedOptions);
-      } catch (error) {
-        console.error("Error fetching dropdown data:", error);
-      }
-    };
+    } catch (error) {
+      console.error("Error fetching dropdown data:", error);
+    }
+  };
 
-    fetchDropdownData();
-  }, [programId]);
+  fetchDropdownData();
+}, [programId]); // 👈 Triggered when programId changes
+
 
   // Fetch employee details based on selected EmployeeId
   useEffect(() => {

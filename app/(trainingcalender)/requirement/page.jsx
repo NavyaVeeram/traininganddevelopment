@@ -104,6 +104,30 @@ export default function Requirement() {
       // If no data found, redirect to login page
       window.location.href = '/';
     }
+
+    const fetchAccessRole = async () => {
+      try {
+        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+        const data = await res.json();
+
+        if (res.ok && data.Access_Role) {
+          if ( data.Access_Role === "HR_Hod" ) {
+            setIsAuthorized(false);
+            return;
+          }
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+        }
+      } catch (error) {
+        console.error('Error fetching access role:', error);
+        setIsAuthorized(false);
+      }
+    };
+
+    fetchAccessRole();
+
     const fetchData = async () => {
       try {
         const response = await fetch(`/api/view_training_data_by_employee?employeeId=${storedEmployeeId}&department=${storedDepartment}`);
@@ -275,40 +299,6 @@ export default function Requirement() {
     });
   };
   
-  useEffect(() => {
-    const storedEmployeeId = localStorage.getItem("employeeId");
-    if (storedEmployeeId) {
-      setEmployeeId(storedEmployeeId);
-    }
-
-    const fetchAccessRole = async () => {
-      try {
-        const res = await fetch(
-          "/api/get_access_role?employeeId=" + storedEmployeeId
-        );
-        const data = await res.json();
-
-        if (res.ok && data.Access_Role) {
-          if (
-            data.Access_Role === "HR_Hod"
-          ) {
-            setIsAuthorized(false);
-            return;
-          }
-          setAccessRole(data.Access_Role);
-          setIsAuthorized(true);
-        } else {
-          setIsAuthorized(false);
-        }
-      } catch (error) {
-        console.error("Error fetching access role:", error);
-        setIsAuthorized(false);
-      }
-    };
-
-    fetchAccessRole();
-  }, []);
-
   useEffect(() => {
     // Update No. of Times based on selected months
     setNoOfTimes(selectedOptions.length);

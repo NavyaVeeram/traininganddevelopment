@@ -69,31 +69,21 @@ export default function UploadCertificates() {
     setUploadSuccess(null);
     setOptions([]);
   };
-  const mappedTrainerOptions = trainerOptions.map((trainer) => ({
-    value: trainer.Value,
-    label: trainer.Text,
-  }));
+const mappedTrainerOptions = trainerOptions.map((trainer) => ({
+  value: trainer.value,
+  label: trainer.label,
+}));
+
+// Removed fetching trainers from qualified_trainer_dropdown
+// Trainer options will be set from get_training_att_entry API response
 
 useEffect(() => {
-    const fetchTrainers = async () => {
-      try {
-        const res = await fetch("/api/qualified_trainer_dropdown");
-        const data = await res.json();
-        setTrainerOptions(data);
-      } catch (err) {
-        console.error("Failed to fetch trainers:", err);
-      }
-    };
-
-    fetchTrainers();
-  }, []);
-  useEffect(() => {
   const storedEmployeeId = localStorage.getItem('employeeId');
 
   if (storedEmployeeId) {
     setEmployeeId(storedEmployeeId);
   }
- 
+
   const fetchAccessRole = async () => {
     try {
       const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
@@ -121,47 +111,54 @@ useEffect(() => {
   fetchAccessRole();
 }, []);
 
-  useEffect(() => {
-    if (formData.Program_Id) {
-      fetchTrainingData(formData.Program_Id);
-    }
-  }, [formData.Program_Id]);
+useEffect(() => {
+  if (formData.Program_Id) {
+    fetchTrainingData(formData.Program_Id);
+  }
+}, [formData.Program_Id]);
 
-  const fetchTrainingData = async (programId) => {
-    try {
-      const res = await fetch(
-        `/api/get_training_att_entry?program_id=${programId}`
-      );
-      const data = await res.json();
+const fetchTrainingData = async (programId) => {
+  try {
+    const res = await fetch(
+      `/api/get_training_att_entry?program_id=${programId}`
+    );
+    const data = await res.json();
 
-      if (!res.ok)
-        throw new Error(data.error || "Error fetching training details");
+    if (!res.ok)
+      throw new Error(data.error || "Error fetching training details");
 
-      const trainingData = data[0] || {};
+    const trainingData = data[0] || {};
 
-      setFormData((prev) => ({
-        ...prev,
-        Training_Name: trainingData.Training_Name || "",
-        Train_Mode: trainingData.Train_Mode || "",
-        Req_Months: trainingData.Req_Months || "",
-        Start_Month: trainingData.Start_Month || "",
-        No_Hrs: trainingData.No_Hrs || "",
-        Persons: trainingData.Persons || "",
-        Training_Date: trainingData.Training_Date || "",
-        selectedMonth: trainingData.Training_Status || "",
-        Forward: trainingData.Forward || "",
-        Schedule_Type: trainingData.Schedule_Type || "",
-        Trainer: trainingData.Trainer || "",
-        Venue: trainingData.Venue || "",
-        Training_Budget: trainingData.Training_Budget || "",
-        EmployeeIds: trainingData.EmployeeId
-          ? trainingData.EmployeeId.split(",").map((id) => id.trim())
-          : [],
-      }));
-    } catch (err) {
-      setError(err.message);
-    }
-  };
+    // Set trainerOptions from the single trainer in trainingData.Trainer
+    const trainerOption = trainingData.Trainer
+      ? [{ value: trainingData.Trainer, label: trainingData.Trainer }]
+      : [];
+
+    setTrainerOptions(trainerOption);
+
+    setFormData((prev) => ({
+      ...prev,
+      Training_Name: trainingData.Training_Name || "",
+      Train_Mode: trainingData.Train_Mode || "",
+      Req_Months: trainingData.Req_Months || "",
+      Start_Month: trainingData.Start_Month || "",
+      No_Hrs: trainingData.No_Hrs || "",
+      Persons: trainingData.Persons || "",
+      Training_Date: trainingData.Training_Date || "",
+      selectedMonth: trainingData.Training_Status || "",
+      Forward: trainingData.Forward || "",
+      Schedule_Type: trainingData.Schedule_Type || "",
+      Trainer: trainingData.Trainer || "",
+      Venue: trainingData.Venue || "",
+      Training_Budget: trainingData.Training_Budget || "",
+      EmployeeIds: trainingData.EmployeeId
+        ? trainingData.EmployeeId.split(",").map((id) => id.trim())
+        : [],
+    }));
+  } catch (err) {
+    setError(err.message);
+  }
+};
 
   const handleMonthYearChange = async (date) => {
     if (!date) return;
@@ -176,7 +173,7 @@ useEffect(() => {
 
     try {
       const res = await fetch(
-        `/api/get_training_attendance_dropdown?month=${selectedMonth}&year=${selectedYear}`
+        `/api/upload_certificates_dropdown?month=${selectedMonth}&year=${selectedYear}`
       );
       const data = await res.json();
       if (res.ok) {

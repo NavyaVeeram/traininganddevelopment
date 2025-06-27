@@ -1,7 +1,9 @@
-"use client";
+ "use client";
 import { FaSearch } from "react-icons/fa";
 import { useMemo, useState, useEffect, useRef } from "react";
 import Select from "react-select";
+import React from "react";
+
 
 const EmployeeHistoryList = () => {
   const [EmployeeId, setEmployeeId] = useState(null);
@@ -23,6 +25,11 @@ const EmployeeHistoryList = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [tableSearchTerm, setTableSearchTerm] = useState("");
+  const [uploadedData, setUploadedData] = useState([]);
+  const [filteredDataState, setFilteredData] = useState([]);
+  const [fileList, setFileList] = useState([]);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [certificates, setCertificates] = useState([]);
   const dropdownRef = useRef(null);
 const [selectedEmployee, setSelectedEmployee] = useState(null);
     const [accessRole, setAccessRole] = useState(null);
@@ -115,10 +122,47 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
   useEffect(() => {
     if (EmployeeId) {
       fetchQualifiedTrainers(EmployeeId);
+      fetchCertificates(EmployeeId);
       setRowsPerPage(10);
       setCurrentPage(1);
     }
   }, [EmployeeId]);
+
+  // Use certificates data directly for "View" column by mapping certificates by Program_Id and Employee_Id
+  const certificateMap = new Map();
+  certificates.forEach((cert) => {
+    const key = `${cert.Program_Id}_${cert.Employee_Id}`;
+    certificateMap.set(key, cert);
+  });
+
+  const qualifiedTrainersWithFiles = qualifiedTrainers.map((trainer) => {
+    const key = `${trainer.Program_Id}_${trainer.EmployeeId}`;
+    const cert = certificateMap.get(key);
+    return {
+      ...trainer,
+      fileUrl: cert ? cert.fileUrl : null,
+      IsUpload: cert ? cert.IsUpload : 0,
+    };
+  });
+
+  // Override the "View" column rendering to use IsUpload from view_upload_emp_certificates API
+  const renderViewColumn = (item) => {
+    const key = `${item.Program_Id}_${item.EmployeeId}`;
+    const cert = certificateMap.get(key);
+    if (cert && cert.IsUpload === 1 && cert.fileUrl) {
+      return (
+        <a
+          href={cert.fileUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 underline"
+        >
+          View
+        </a>
+      );
+    }
+    return <span className="text-gray-500">No file</span>;
+  };
 
   const filteredData = sortedData.filter(
     (trainer) =>
@@ -171,51 +215,151 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
   };
 
   const fetchQualifiedTrainers = async (empId) => {
-    if (!empId) return;
-    setLoading(true);
-    setError(null);
+  if (!empId) return;
+  setLoading(true);
+  setError(null);
 
-    try {
-      const url = `/api/get_employee_history_table?EmployeeId=${empId}`;
-      const res = await fetch(url);
-      const data = await res.json();
+  try {
+    const url = `/api/get_employee_history_table?EmployeeId=${empId}`;
+    const res = await fetch(url);
+    const data = await res.json();
 
-      if (res.status === 200) {
-        if (Array.isArray(data)) {
-          const formatDateYYYYMMDD = (date) => {
-            const d = new Date(date);
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, "0");
-            const day = String(d.getDate()).padStart(2, "0");
-            return `${year}-${month}-${day}`;
-          };
-          const formattedData = data.map(item => ({
-            ...item,
-            Training_DateFormatted: item.Training_Date ? formatDateYYYYMMDD(item.Training_Date) : "",
-          }));
-          setQualifiedTrainers(formattedData);
-          if (data.length === 0) {
-            setError("No data found for the selected employee.");
-          }
-        } else if (Object.keys(data).length === 0) {
-          setQualifiedTrainers([]);
+    if (res.status === 200) {
+      if (Array.isArray(data)) {
+        const formattedData = data.map(item => ({
+          ...item,
+          Training_DateFormatted: item.Training_Date || "", // Use the formatted string directly
+        }));
+
+        setQualifiedTrainers(formattedData);
+
+        if (data.length === 0) {
           setError("No data found for the selected employee.");
-        } else {
-          console.error("Unexpected response:", data);
-          setQualifiedTrainers([]);
-          setError(data.message || "Error fetching qualified trainers data");
         }
-      } else if (res.status === 404) {
+      } else if (Object.keys(data).length === 0) {
         setQualifiedTrainers([]);
-        setError(null);
+        setError("No data found for the selected employee.");
       } else {
         console.error("Unexpected response:", data);
         setQualifiedTrainers([]);
         setError(data.message || "Error fetching qualified trainers data");
       }
+    } else if (res.status === 404) {
+      setQualifiedTrainers([]);
+      setError(null);
+    } else {
+      console.error("Unexpected response:", data);
+      setQualifiedTrainers([]);
+      setError(data.message || "Error fetching qualified trainers data");
+    }
+  } catch (err) {
+    console.error("Fetch error:", err);
+    setError("Failed to fetch qualified trainers data");
+  } finally {
+    setLoading(false);
+  }
+};
+
+  const fetchCertificates = async (empId, programId) => {
+    if (!empId || !programId) return;
+    try {
+      // Pass both Employee_Id and ProgramId as query parameters to avoid 400 error
+      const res = await fetch(`/api/view_upload_emp_certificates?Employee_Id=${empId}&ProgramId=${programId}`);
+      const data = await res.json();
+      if (res.ok) {
+        setCertificates(data);
+      } else {
+        setCertificates([]);
+      }
+    } catch (error) {
+      console.error("Error fetching certificates:", error);
+      setCertificates([]);
+    }
+  };
+
+  const handleUpload = async (e, empId) => {
+    e.preventDefault();
+
+    if (!file || !formData.Training_Date || !formData.Program_Id) {
+      alert("File, Training Date, or Program ID is missing!");
+      return;
+    }
+
+    const uploadData = new FormData();
+    uploadData.append("file", file);
+    uploadData.append("program_id", formData.Program_Id);
+
+    try {
+      console.log("Uploading file...");
+
+      const response = await fetch("/api/upload_emp_certificates", {
+        method: "POST",
+        body: uploadData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.message === "File uploaded successfully") {
+        try {
+          const insertRes = await fetch("/api/insert_upload_emp_certificates_status", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          body: JSON.stringify({
+            Program_Id: formData.Program_Id,
+            IsUpload: 1,
+            CreatedBy: employeeId || "",
+          }),
+          });
+
+          const insertData = await insertRes.json();
+
+          if (insertRes.ok) {
+            alert(insertData.message);
+          } else {
+            console.error("Error saving upload status:", insertData.message);
+          }
+        } catch (err) {
+          console.error("Error inserting upload status:", err.message);
+        }
+
+        setErrorMessage("");
+        setFileList((prev) => [...prev, data.fileUrl]);
+
+        setFile(null);
+        document.getElementById("fileInput").value = "";
+
+        resetForm();
+        fetchUploadedData();
+        fetchCertificates(empId, formData.Program_Id);
+      } else {
+        console.error("Error uploading file:", data);
+        setErrorMessage("Error uploading file");
+      }
     } catch (err) {
-      console.error("Fetch error:", err);
-      setError("Failed to fetch qualified trainers data");
+      console.error("Upload failed:", err);
+      setErrorMessage("Upload failed.");
+    }
+  };
+
+  useEffect(() => {
+    fetchUploadedData();
+  }, []);
+
+  const fetchUploadedData = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/view_upload_emp_certificates");
+      const data = await res.json();
+      //if (!res.ok) throw new Error(data.error || "Error loading data");
+
+      setUploadedData(data);
+      setFilteredData(data);
+      setErrorMessage("");
+    } catch (err) {
+      console.error(err);
+      setErrorMessage(err.message);
     } finally {
       setLoading(false);
     }
@@ -267,7 +411,7 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             const day = String(d.getDate()).padStart(2, "0");
             return `${year}-${month}-${day}`;
           };
-          const formattedDOJ = data.DOJ ? formatDateYYYYMMDD(data.DOJ) : "";
+         ;
           setTrainingDetails({
             Username: data.Username || "",
             Department: data.Department || "",
@@ -277,7 +421,6 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             Emp_Category: data.Emp_Category || "",
             No_Hrs: data.No_Hrs,
             DOJ: data.DOJ || "",
-            DOJFormatted: formattedDOJ,
             IsActive: data.IsActive || "",
           });
           setError(null);
@@ -416,7 +559,7 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             <label className="block text-sm font-medium text-gray-900">Username</label>
             <input
               type="text"
-              value={trainingDetails.Username || ""}
+              value={trainingDetails.Username ?? ""}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
@@ -425,7 +568,7 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             <label className="block text-sm font-medium text-gray-900">Department</label>
             <input
               type="text"
-              value={trainingDetails.Department || ""}
+              value={trainingDetails.Department ?? ""}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
@@ -434,7 +577,7 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             <label className="block text-sm font-medium text-gray-900">Section</label>
             <input
               type="text"
-              value={trainingDetails.Section || ""}
+              value={trainingDetails.Section ?? ""}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
@@ -446,7 +589,7 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             <label className="block text-sm font-medium text-gray-900">Designation</label>
             <input
               type="text"
-              value={trainingDetails.Designation || ""}
+              value={trainingDetails.Designation ?? ""}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
@@ -455,7 +598,7 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             <label className="block text-sm font-medium text-gray-900">Emp Type</label>
             <input
               type="text"
-              value={trainingDetails.Emp_Type || ""}
+              value={trainingDetails.Emp_Type ?? ""}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
@@ -464,7 +607,7 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             <label className="block text-sm font-medium text-gray-900">Emp Category</label>
             <input
               type="text"
-              value={trainingDetails.Emp_Category || ""}
+              value={trainingDetails.Emp_Category ?? ""}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
@@ -473,7 +616,7 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             <label className="block text-sm font-medium text-gray-900">Total Hrs</label>
             <input
               type="text"
-              value={trainingDetails.No_Hrs}
+              value={trainingDetails.No_Hrs ?? ""}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
@@ -482,7 +625,7 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             <label className="block text-sm font-medium text-gray-900">DOJ</label>
             <input
               type="text"
-              value={trainingDetails.DOJFormatted || ""}
+              value={trainingDetails.DOJ ?? ""}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
@@ -563,6 +706,8 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
                           { key: "Train_Mode", label: "Training Mode" },
                           { key: "No_Hrs", label: "Hours" },
                           { key: "Training_Date", label: "Training Date" },
+{ key: "", label: "Upload" },
+{ key: "view", label: "View" },
                         ].map(({ key, label }, index) => (
                           <th
                             key={key}
@@ -578,8 +723,8 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
                       </tr>
                     </thead>
                     <tbody>
-                      {paginatedData.length > 0 ? (
-                        paginatedData.map((item, index) => (
+                      {qualifiedTrainersWithFiles.length > 0 ? (
+                        qualifiedTrainersWithFiles.map((item, index) => (
                           <tr key={index} className="hover:bg-muted border">
                             <td className="px-4 py-2 border left-0 bg-white z-10">{item.EmployeeId}</td>
                             <td className="px-4 py-2 border">{item.Training_Name}</td>
@@ -588,12 +733,78 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
                             <td className="px-4 py-2 border">{item.No_Hrs}</td>
                             <td className="px-4 py-2 border">
                               {item.Training_Date ? item.Training_DateFormatted : ""}
+                            </td>           
+                            <td className="px-4 py-2 border">
+                              <input
+                                id={`fileInput_${item.Program_Id}_${item.EmployeeId}`}
+                                type="file"
+                                accept="*"
+                                onChange={(e) => {
+                                  const file = e.target.files[0];
+                                  if (!file) return;
+                                  // Upload file logic
+                                    const uploadFile = async () => {
+                                    const uploadData = new FormData();
+                                    uploadData.append("file", file);
+                                    uploadData.append("program_id", item.Program_Id);
+                                    uploadData.append("employee_id", item.EmployeeId);
+                                    try {
+                                      const response = await fetch("/api/upload_emp_certificates", {
+                                        method: "POST",
+                                        body: uploadData,
+                                      });
+                                      const data = await response.json();
+                                      if (response.ok && data.message === "File uploaded successfully") {
+                                        // Insert upload status
+                                        const insertRes = await fetch("/api/insert_upload_emp_certificate_status", {
+                                          method: "POST",
+                                          headers: {
+                                            "Content-Type": "application/json",
+                                          },
+                                          body: JSON.stringify({
+                                            Program_Id: item.Program_Id,
+                                            Employee_Id: item.EmployeeId,
+                                            IsUpload: 1,
+                                            CreatedBy: "system",
+                                          }),
+                                        });
+                                        const insertData = await insertRes.json();
+                                        if (!insertRes.ok) {
+                                          alert("Error saving upload status: " + insertData.message);
+                                        } else {
+                                          alert(insertData.message);
+                                        }
+                                      } else {
+                                        alert("Error uploading file: " + data.message);
+                                      }
+                                    } catch (err) {
+                                      alert("Upload failed: " + err.message);
+                                    }
+                                  };
+                                  uploadFile();
+                                }}
+                                className="block border rounded-lg p-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+                              />
                             </td>
+                          <td className="px-4 py-2 border">
+                            {item.IsUpload === 1 && item.fileUrl ? (
+                              <a
+                                href={item.fileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 underline"
+                              >
+                                View
+                              </a>
+                            ) : (
+                              <span className="text-gray-500">No file</span>
+                            )}
+                          </td>
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td colSpan="6" className="text-center py-4">
+                          <td colSpan="8" className="text-center py-4">
                             No results found.
                           </td>
                         </tr>

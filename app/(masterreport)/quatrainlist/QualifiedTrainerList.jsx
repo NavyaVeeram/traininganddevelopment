@@ -3,7 +3,7 @@ import { FaEdit, FaSearch, FaSortUp } from "react-icons/fa";
 import { useState, useEffect, useRef, useMemo } from "react";
 import DataTable from "react-data-table-component";
 import Select from "react-select";
-
+import TrainerApprovalForm from "../approvalformfortrainers/page";
 const QualifiedTrainerList = () => {
   const [data, setData] = useState([]);
   const [EmployeeId, setEmployeeId] = useState(null);
@@ -45,6 +45,8 @@ const QualifiedTrainerList = () => {
   const [tableSearchTerm, setTableSearchTerm] = useState("");
   const [trainingName, setTrainingName] = useState("");
   const [certified, setCertified] = useState(false);
+  const [certifiedInput, setCertifiedInput] = useState("");
+  const [showCertifiedInput, setShowCertifiedInput] = useState(false);
   const [exp5Yr, setExp5Yr] = useState(false);
   const [exp3Yr, setExp3Yr] = useState(false);
   const [hodRec, setHodRec] = useState(false);
@@ -220,6 +222,13 @@ const QualifiedTrainerList = () => {
 
       setQualified(isAnyChecked);
 
+      if (checkboxName === "certified") {
+        setShowCertifiedInput(newValue);
+        if (!newValue) {
+          setCertifiedInput("");
+        }
+      }
+
       return newValue;
     });
   };
@@ -240,10 +249,12 @@ const QualifiedTrainerList = () => {
       Training_Name: trainingName,
       EmployeeId: EmployeeId,
       Certified: certified ? 1 : 0,
+      Cert_Des: certifiedInput,
       Exp_5_Yr: exp5Yr ? 1 : 0,
       Exp_3_Yr: exp3Yr ? 1 : 0,
       HOD_Rec: hodRec ? 1 : 0,
       Qualified: qualified ? 1 : 0,
+      IsActive: 1,
       CreatedBy: createdByFromStorage || "", // Use localStorage EmployeeId for CreatedBy
     };
 
@@ -586,8 +597,9 @@ const QualifiedTrainerList = () => {
           </div>
         </div>
         {/* Checkbox Section */}
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mt-4">
-          <div className="flex items-center space-x-2">
+        
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="flex space-x-2">
             <label className="block text-sm font-medium text-gray-900">
               Certified
             </label>
@@ -600,9 +612,21 @@ const QualifiedTrainerList = () => {
               className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
               disabled={isDOJLessThan3Years}
             />
+            {showCertifiedInput && (
+              <input
+                type="text"
+                value={certifiedInput}
+                onChange={(e) => setCertifiedInput(e.target.value)}
+                placeholder="Enter certification description"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none"
+              />
+            )}
           </div>
+       
 
-          <div className="flex items-center space-x-2">
+        
+          <div className="flex  justify-around">
+            <div className="flex space-x-2">
             <label className="block text-sm font-medium text-gray-900">
               Experience (5 Years)
             </label>
@@ -613,9 +637,8 @@ const QualifiedTrainerList = () => {
               className="h-4 w-4 "
               disabled={isDOJLessThan3Years}
             />
-          </div>
-
-          <div className="flex items-center space-x-2">
+            </div>
+               <div className="flex  space-x-2">
             <label className="block text-sm font-medium text-gray-900">
               Experience (3 Years)
             </label>
@@ -627,8 +650,11 @@ const QualifiedTrainerList = () => {
               disabled={isDOJLessThan3Years}
             />
           </div>
+          </div>
 
-          <div className="flex items-center space-x-2">
+       <div className="flex  justify-around">
+
+          <div className="flex space-x-2">
             <label className="block text-sm font-medium text-gray-900">
               HOD Rec
             </label>
@@ -641,7 +667,7 @@ const QualifiedTrainerList = () => {
             />
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex space-x-2">
             <label className="block text-sm font-medium text-gray-900">
               Qualified
             </label>
@@ -653,7 +679,7 @@ const QualifiedTrainerList = () => {
               className="h-4 w-4"
             />
           </div>
-
+</div>
           <div>
             <button
               type="submit"
@@ -666,12 +692,17 @@ const QualifiedTrainerList = () => {
         </div>
       </form>
       <br></br>
-
-      <div className="card-body p-0 overflow-x-auto pb-3">
+<div>
+  <TrainerApprovalForm/>
+</div>
+   
         <div className="card-body p-0 overflow-x-auto pb-3">
+           <p className="font-semibold text-sky-400">Qualified Trainers:</p>
+
           <div className="p-4 bg-card">
+            
             <div className="flex flex-wrap justify-between items-center mb-4 space-y-2">
-              <div className="flex items-center space-x-2 text-sm">
+                              <div className="flex items-center space-x-2 text-sm">
                 <span>Show</span>
                 <select
                   className="border p-1 rounded bg-secondary"
@@ -862,7 +893,7 @@ const QualifiedTrainerList = () => {
             }
           </div>
         </div>
-      </div>
+   
     </div>
   );
 };
