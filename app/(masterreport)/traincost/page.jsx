@@ -2,11 +2,14 @@
 import { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { FaSearch } from "react-icons/fa";
+import { FaSearch, FaPrint } from "react-icons/fa";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import autoTable from "jspdf-autotable";
 
 const TrainingBudget = () => {
   // Tab state
-  const [activeTab, setActiveTab] = useState('actual');
+  const [activeTab, setActiveTab] = useState("actual");
 
   // Common states
   const [selectedDate, setSelectedDate] = useState(null);
@@ -19,30 +22,43 @@ const TrainingBudget = () => {
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
   const [accessRole, setAccessRole] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(null);
-  const [employeeId,setEmployeeId] = useState(null);
+  const [employeeId, setEmployeeId] = useState(null);
 
   // New state for additional training programs text field
-  const [additionalTrainingProgramsText, setAdditionalTrainingProgramsText] = useState("");
-  
+  const [additionalTrainingProgramsText, setAdditionalTrainingProgramsText] =
+    useState("");
+
+  // New state for notes keyed by program_id
+  const [notes, setNotes] = useState({});
+
   // New state for second tab data and search
   const [budgetVsActualData, setBudgetVsActualData] = useState([]);
   const [budgetVsActualSearchTerm, setBudgetVsActualSearchTerm] = useState("");
-  const [budgetVsActualFilteredData, setBudgetVsActualFilteredData] = useState([]);
+  const [budgetVsActualFilteredData, setBudgetVsActualFilteredData] = useState(
+    []
+  );
   const [budgetVsActualLoading, setBudgetVsActualLoading] = useState(false);
   const [budgetVsActualError, setBudgetVsActualError] = useState(null);
-  const [budgetVsActualSelectedDate, setBudgetVsActualSelectedDate] = useState(null);
+  const [budgetVsActualSelectedDate, setBudgetVsActualSelectedDate] =
+    useState(null);
 
   useEffect(() => {
-    const storedEmployeeId = localStorage.getItem('employeeId');
+    const storedEmployeeId = localStorage.getItem("employeeId");
     if (storedEmployeeId) {
       setEmployeeId(storedEmployeeId);
     }
     const fetchAccessRole = async () => {
       try {
-        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+        const res = await fetch(
+          `/api/get_access_role?employeeId=${storedEmployeeId}`
+        );
         const data = await res.json();
         if (res.ok && data.Access_Role) {
-          if (data.Access_Role === "Res_Person" || data.Access_Role === "HOS" || data.Access_Role === "HOD") {
+          if (
+            data.Access_Role === "Res_Person" ||
+            data.Access_Role === "HOS" ||
+            data.Access_Role === "HOD"
+          ) {
             setIsAuthorized(false);
             return;
           }
@@ -52,7 +68,7 @@ const TrainingBudget = () => {
           setIsAuthorized(false);
         }
       } catch (error) {
-        console.error('Error fetching access role:', error);
+        console.error("Error fetching access role:", error);
         setIsAuthorized(false);
       }
     };
@@ -61,28 +77,43 @@ const TrainingBudget = () => {
 
   const fetchData = async (date) => {
     if (!date) {
-      alert('Please select a year.');
+      alert("Please select a year.");
       return;
     }
     setLoading(true);
     setError(null);
     try {
       const year = date.getFullYear();
-      const response = await fetch(`/api/get_training_budget_first?year=${year}`);
+      const response = await fetch(
+        `/api/get_training_budget_first?year=${year}`
+      );
       if (!response.ok) {
-        throw new Error('No data available.');
+        throw new Error("No data available.");
       }
       const data = await response.json();
+      console.log("First data item full object:", data.length > 0 ? data[0] : "No data");
+      console.log("First data item keys:", data.length > 0 ? Object.keys(data[0]) : "No data");
       if (data && data.length === 0) {
         setError("No data available for the selected Year.");
         setFilteredData([]);
       } else {
         setTrainingData(data);
         setFilteredData(data);
-        // Set additionalTrainingProgramsText from "additional" row if exists
-        const additionalRow = data.find(item => item.Program_Name?.toLowerCase().includes("additional"));
+        // Initialize notes state with existing note values if available
+        const initialNotes = {};
+        data.forEach((item) => {
+          if (item.Program_Id && item.Note) {
+            initialNotes[item.Program_Id] = item.Note;
+          }
+        });
+        setNotes(initialNotes);
+        const additionalRow = data.find((item) =>
+          item.Program_Name?.toLowerCase().includes("additional")
+        );
         if (additionalRow) {
-          setAdditionalTrainingProgramsText(additionalRow.Training_Budget != null ? additionalRow.Training_Budget.toString() : "");
+          setAdditionalTrainingProgramsText(
+            additionalRow.Training_Budget?.toString() || ""
+          );
         } else {
           setAdditionalTrainingProgramsText("");
         }
@@ -97,7 +128,7 @@ const TrainingBudget = () => {
 
   const fetchBudgetVsActualData = async (date) => {
     if (!date) {
-      alert('Please select a year.');
+      alert("Please select a year.");
       return;
     }
     setBudgetVsActualLoading(true);
@@ -106,9 +137,10 @@ const TrainingBudget = () => {
       const year = date.getFullYear();
       const response = await fetch(`/api/get_training_budget?year=${year}`);
       if (!response.ok) {
-        throw new Error('No data available.');
+        throw new Error("No data available.");
       }
       const data = await response.json();
+      console.log("BudgetVsActual first data item keys:", data.length > 0 ? Object.keys(data[0]) : "No data");
       if (data && data.length === 0) {
         setBudgetVsActualError("No data available for the selected Year.");
         setBudgetVsActualFilteredData([]);
@@ -117,7 +149,9 @@ const TrainingBudget = () => {
         setBudgetVsActualFilteredData(data);
       }
     } catch (err) {
-      setBudgetVsActualError(err.message || "An error occurred while fetching data.");
+      setBudgetVsActualError(
+        err.message || "An error occurred while fetching data."
+      );
       setBudgetVsActualFilteredData([]);
     } finally {
       setBudgetVsActualLoading(false);
@@ -125,11 +159,12 @@ const TrainingBudget = () => {
   };
 
   useEffect(() => {
-    if (selectedDate && activeTab === 'actual') fetchData(selectedDate);
+    if (selectedDate && activeTab === "actual") fetchData(selectedDate);
   }, [selectedDate, activeTab]);
 
   useEffect(() => {
-    if (budgetVsActualSelectedDate && activeTab === 'budgetVsActual') fetchBudgetVsActualData(budgetVsActualSelectedDate);
+    if (budgetVsActualSelectedDate && activeTab === "budgetVsActual")
+      fetchBudgetVsActualData(budgetVsActualSelectedDate);
   }, [budgetVsActualSelectedDate, activeTab]);
 
   const handleSort = (key) => {
@@ -149,14 +184,16 @@ const TrainingBudget = () => {
     return 0;
   });
 
-  const sortedBudgetVsActualData = [...budgetVsActualFilteredData].sort((a, b) => {
-    if (!sortConfig.key) return 0;
-    const aVal = a[sortConfig.key];
-    const bVal = b[sortConfig.key];
-    if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
-    if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
-    return 0;
-  });
+  const sortedBudgetVsActualData = [...budgetVsActualFilteredData].sort(
+    (a, b) => {
+      if (!sortConfig.key) return 0;
+      const aVal = a[sortConfig.key];
+      const bVal = b[sortConfig.key];
+      if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
+    }
+  );
 
   const paginatedData = sortedData;
   const paginatedBudgetVsActualData = sortedBudgetVsActualData;
@@ -169,9 +206,24 @@ const TrainingBudget = () => {
     } else {
       const lowerSearchQuery = searchQuery.toLowerCase();
       const filtered = trainingData.filter((trainer) => {
-        const isTotalRow = (trainer.Program_Name?.toString().toLowerCase().includes("total") || trainer.Training_Name?.toString().toLowerCase().includes("total"));
-        return !isTotalRow && ["Program_Name", "Req_Months", "Training_Date", "Training_Name", "Train_Mode", "Schedule_Type", "Training_Status", "Training_Budget"]
-          .some((field) => trainer[field]?.toString().toLowerCase().includes(lowerSearchQuery));
+        const isTotalRow =
+          trainer.Program_Name?.toString().toLowerCase().includes("total") ||
+          trainer.Training_Name?.toString().toLowerCase().includes("total");
+        return (
+          !isTotalRow &&
+          [
+            "Program_Name",
+            "Req_Months",
+            "Training_Date",
+            "Training_Name",
+            "Train_Mode",
+            "Schedule_Type",
+            "Training_Status",
+            "Training_Budget",
+          ].some((field) =>
+            trainer[field]?.toString().toLowerCase().includes(lowerSearchQuery)
+          )
+        );
       });
       setFilteredData(filtered);
     }
@@ -185,9 +237,24 @@ const TrainingBudget = () => {
     } else {
       const lowerSearchQuery = searchQuery.toLowerCase();
       const filtered = budgetVsActualData.filter((trainer) => {
-        const isTotalRow = (trainer.Program_Name?.toString().toLowerCase().includes("total") || trainer.Training_Name?.toString().toLowerCase().includes("total"));
-        return !isTotalRow && ["Program_Name", "Req_Months", "Training_Date", "Training_Name", "Train_Mode", "Schedule_Type", "Training_Status", "Training_Budget"]
-          .some((field) => trainer[field]?.toString().toLowerCase().includes(lowerSearchQuery));
+        const isTotalRow =
+          trainer.Program_Name?.toString().toLowerCase().includes("total") ||
+          trainer.Training_Name?.toString().toLowerCase().includes("total");
+        return (
+          !isTotalRow &&
+          [
+            "Program_Name",
+            "Req_Months",
+            "Training_Date",
+            "Training_Name",
+            "Train_Mode",
+            "Schedule_Type",
+            "Training_Status",
+            "Training_Budget",
+          ].some((field) =>
+            trainer[field]?.toString().toLowerCase().includes(lowerSearchQuery)
+          )
+        );
       });
       setBudgetVsActualFilteredData(filtered);
     }
@@ -204,11 +271,79 @@ const TrainingBudget = () => {
   };
 
   // Render table rows with conditional text field for additional training programs in actual tab
-  const renderTableRows = (data, isActualTab = true) => {
+  const renderActualBudgetTableRows = (data, isActualTab = true) => {
     return data.map((item, index) => {
-      const isTotalRow = (item.Program_Name?.toString().toLowerCase().includes("total") || item.Training_Name?.toString().toLowerCase().includes("total"));
+      console.log("Program_Id for row", index, ":", item.Program_Id);
+      const isTotalRow =
+        item.Program_Name?.toString().toLowerCase().includes("total") ||
+        item.Training_Name?.toString().toLowerCase().includes("total");
       return (
-        <tr key={index} className={`border ${isTotalRow ? "bg-gray-200" : "hover:bg-gray-100"}`}>
+        <tr
+          key={index}
+          className={`border ${
+            isTotalRow ? "bg-gray-200" : "hover:bg-gray-100"
+          }`}
+        >
+          <td className="px-4 py-2 border">{item.Program_Name}</td>
+          <td className="px-4 py-2 border">{item.Department}</td>
+          <td className="px-4 py-2 border">{item.Req_Months}</td>
+          {/* <td className="px-4 py-2 border">{item.Training_Date ?? ""}</td> */}
+          <td className="px-4 py-2 border">{item.Training_Name}</td>
+          {/* <td className="px-4 py-2 border">{item.Train_Mode}</td> */}
+          {/* <td className="px-4 py-2 border">{item.Schedule_Type}</td> */}
+          {/* <td className="px-4 py-2 border">{item.Training_Status}</td> */}
+          
+          <td className="px-4 py-2 border text-right">
+            {isActualTab &&
+            item.Program_Name?.toLowerCase().includes("additional") ? (
+              <input
+                type="number"
+                value={additionalTrainingProgramsText}
+                onChange={(e) =>
+                  setAdditionalTrainingProgramsText(e.target.value)
+                }
+                className="w-full p-1 border border-gray-300 rounded"
+                placeholder="Enter Training Budget"
+              />
+            ) : (
+              item.Training_Budget
+            )}
+          </td>
+          <td className="px-4 py-2 border">
+            {item.Program_Id && !item.Program_Name?.toLowerCase().includes("total") ? (
+              <input
+                type="text"
+                value={notes[item.Program_Id] !== undefined ? notes[item.Program_Id] : item.Note || ""}
+                onChange={(e) =>
+                  setNotes((prev) => ({
+                    ...prev,
+                    [item.Program_Id]: e.target.value,
+                  }))
+                }
+                className="w-full p-1 border border-gray-300 rounded"
+                placeholder="Enter note"
+              />
+            ) : (
+              ""
+            )}
+          </td>
+          {/* <td className="px-4 py-2 border text-right">{item.Actual_Budget}</td> */}
+        </tr>
+      );
+    });
+  };
+  const renderActualVSEstimatedTableRows = (data, isActualTab = true) => {
+    return data.map((item, index) => {
+      const isTotalRow =
+        item.Program_Name?.toString().toLowerCase().includes("total") ||
+        item.Training_Name?.toString().toLowerCase().includes("total");
+      return (
+        <tr
+          key={index}
+          className={`border ${
+            isTotalRow ? "bg-gray-200" : "hover:bg-gray-100"
+          }`}
+        >
           <td className="px-4 py-2 border">{item.Program_Name}</td>
           <td className="px-4 py-2 border">{item.Department}</td>
           <td className="px-4 py-2 border">{item.Req_Months}</td>
@@ -218,11 +353,14 @@ const TrainingBudget = () => {
           <td className="px-4 py-2 border">{item.Schedule_Type}</td>
           <td className="px-4 py-2 border">{item.Training_Status}</td>
           <td className="px-4 py-2 border text-right">
-            {isActualTab && item.Program_Name?.toLowerCase().includes("additional") ? (
+            {isActualTab &&
+            item.Program_Name?.toLowerCase().includes("additional") ? (
               <input
                 type="number"
                 value={additionalTrainingProgramsText}
-                onChange={(e) => setAdditionalTrainingProgramsText(e.target.value)}
+                onChange={(e) =>
+                  setAdditionalTrainingProgramsText(e.target.value)
+                }
                 className="w-full p-1 border border-gray-300 rounded"
                 placeholder="Enter Training Budget"
               />
@@ -250,6 +388,166 @@ const TrainingBudget = () => {
       </div>
     );
   }
+  const generateBudgetPDF = (type) => {
+    const isActual = type === "actual";
+    const orientation = isActual ? "portrait" : "landscape";
+    const doc = new jsPDF(orientation, "mm", "a4");
+    const year = isActual
+      ? selectedDate?.getFullYear()
+      : budgetVsActualSelectedDate?.getFullYear();
+    const dateStr = new Date().toLocaleDateString("en-GB");
+
+    const data = isActual ? filteredData : budgetVsActualFilteredData;
+
+    if (!year || !data || data.length === 0) {
+      alert("Please select a valid year and ensure data is available.");
+      return;
+    }
+
+    const title = isActual
+      ? "External Trainings Estimated Budget"
+      : "External Trainings Estimated Budget Vs. Actual Cost";
+
+    // Header
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("TRAINING AND DEVELOPMENT", 15, 15);
+
+    doc.setFontSize(12);
+    doc.text(`${title} - ${year}`, 15, 23);
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text(
+      'We are following "IATF 16949 CAPD Method 10.3 Continuous Improvement Spirit to improve our GTI"',
+      15,
+      28
+    );
+
+    doc.setFontSize(9);
+    doc.text("Approved By", 15, 50);
+    doc.text("Checked By", 80, 50);
+
+    let headers, tableData, columnStyles;
+
+    if (isActual) {
+      headers = [
+        [
+          "S.No",
+          "Training Topic",
+          "Req. Dep.",
+          "Scheduled Month",
+          "Type",
+          "Estimated Cost in Rs./-",
+        ],
+      ];
+
+      tableData = data.map((item, index) => [
+        index + 1,
+        item.Program_Name,
+        item.Department || "",
+        item.Req_Months || "",
+        item.Training_Name || "",
+        item.Training_Budget != null && !isNaN(item.Training_Budget)
+          ? parseFloat(item.Training_Budget).toLocaleString()
+          : " ",
+      ]);
+
+      columnStyles = {
+        0: { halign: "center", cellWidth: 12 }, // S.No
+        5: { halign: "right" }, // Estimated Cost
+      };
+    } else {
+      headers = [
+        [
+          "S.No",
+          "Training Topic",
+          "Req. Dep.",
+          "Scheduled Month",
+          "Conducted Date",
+          "Type",
+          // "Mode",
+          // "Schedule Type",
+          "Est. Cost in Rs./-",
+          "Act. Cost in Rs./-",
+          "Remarks",
+        ],
+      ];
+
+      tableData = data.map((item, index) => [
+        index + 1,
+        item.Program_Name,
+        item.Department || "",
+        item.Req_Months || "",
+        item.Training_Date || "",
+        item.Training_Name || "",
+        // item.Train_Mode || "",
+        // item.Schedule_Type || "",
+        item.Training_Budget != null && !isNaN(item.Training_Budget)
+          ? parseFloat(item.Training_Budget).toLocaleString()
+          : " ",
+        item.Actual_Budget != null && !isNaN(item.Actual_Budget)
+          ? parseFloat(item.Actual_Budget).toLocaleString()
+          : " ",
+        item.Training_Status || "",
+      ]);
+
+      columnStyles = {
+        0: { halign: "center", cellWidth: 12 }, // S.No
+        6: { halign: "right" }, // Estimated
+        7: { halign: "right" }, // Actual
+      };
+    }
+
+    autoTable(doc, {
+      startY: 60,
+      head: headers,
+      body: tableData,
+      theme: "grid",
+      didDrawPage: function (data) {
+        const pageCount = doc.internal.getNumberOfPages();
+        const pageSize = doc.internal.pageSize;
+        const pageHeight = pageSize.height || pageSize.getHeight();
+        const pageWidth = pageSize.width || pageSize.getWidth();
+        const pageCurrent = doc.internal.getCurrentPageInfo().pageNumber;
+
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        doc.text(`Page: ${pageCurrent} of ${pageCount}`, pageWidth - 40, 15);
+        doc.text(`Date: ${dateStr}`, pageWidth - 40, 20);
+
+        const footerText = `Greentech Industries (India) Pvt. Ltd @ HR By Syam Prasad`;
+        const textWidth = doc.getTextWidth(footerText);
+        const centerX = (pageWidth - textWidth) / 2;
+
+        doc.text(footerText, centerX, pageHeight - 10);
+      },
+      styles: {
+        fontSize: 9,
+        halign: "left",
+        valign: "middle",
+        lineWidth: 0.2,
+        lineColor: [150, 150, 150],
+      },
+      headStyles: {
+        fillColor: [230, 230, 250],
+        textColor: [60, 60, 60],
+      },
+      columnStyles: columnStyles,
+    });
+
+    // Add total row if needed (optional)
+    const total = data.reduce(
+      (sum, item) => sum + (parseFloat(item.Training_Budget) || 0),
+      0
+    );
+
+    const fileName = isActual
+      ? `External_Training_Budget_${year}.pdf`
+      : `Training_Budget_vs_Actual_${year}.pdf`;
+
+    doc.save(fileName);
+  };
 
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
@@ -257,23 +555,51 @@ const TrainingBudget = () => {
         <h1 className="font-semibold">Training Cost</h1>
         <button
           className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-            activeTab === 'actual' ? 'bg-white text-sky-600 shadow-sm' : 'text-white hover:bg-sky-300'
+            activeTab === "actual"
+              ? "bg-white text-sky-600 shadow-sm"
+              : "text-white hover:bg-sky-300"
           }`}
-          onClick={() => setActiveTab('actual')}
+          onClick={() => setActiveTab("actual")}
         >
           Actual Training Budget
         </button>
         <button
           className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-            activeTab === 'budgetVsActual' ? 'bg-white text-sky-600 shadow-sm' : 'text-white hover:bg-sky-300'
+            activeTab === "budgetVsActual"
+              ? "bg-white text-sky-600 shadow-sm"
+              : "text-white hover:bg-sky-300"
           }`}
-          onClick={() => setActiveTab('budgetVsActual')}
+          onClick={() => setActiveTab("budgetVsActual")}
         >
           Training Budget vs Actual Budget
         </button>
+        <div className="flex justify-end">
+          {/* <button
+            onClick={(e) => {
+              e.preventDefault();
+              generateBudgetPDF();
+            }}
+            className="ml-2 flex items-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-1 px-3 rounded"
+            aria-label="Export Estimated Budget PDF"
+            title="Export Estimated Budget PDF"
+          >
+            <FaPrint />
+          </button> */}
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              generateBudgetPDF(activeTab); // pass either "actual" or "budgetVsActual"
+            }}
+            className="ml-2 flex items-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-1 px-3 rounded"
+            aria-label="Export PDF"
+            title="Export PDF"
+          >
+            <FaPrint />
+          </button>
+        </div>
       </div>
 
-      {activeTab === 'actual' && (
+      {activeTab === "actual" && (
         <>
           <div className="my-4 relative z-50">
             <div className="flex items-center space-x-2">
@@ -299,12 +625,14 @@ const TrainingBudget = () => {
               />
             </div>
           </div>
+
           {loading && <p>Loading...</p>}
           {error && (
             <div className="flex justify-center items-center h-64 text-center text-red-500 mt-4">
               <p>{error}</p>
             </div>
           )}
+
           {selectedDate && !loading && !error && (
             <div className="card-body p-0 pb-3">
               <div className="p-4 bg-card">
@@ -326,87 +654,130 @@ const TrainingBudget = () => {
                     className="min-w-full border z-0 rounded-lg bg-card text-sm"
                     style={{ tableLayout: "fixed", fontSize: "13px" }}
                   >
-                    <thead className="bg-muted sticky top-0">
-                      <tr>
-                        {[
-                          { key: "Program_Name", label: "Training Name" },
-                          { key: "Department", label: "Department" },
-                          { key: "Req_Months", label: "Scheduled Month" },
-                          { key: "Training_Date", label: "Conducted Date" },
-                          { key: "Training_Name", label: "Type" },
-                          { key: "Train_Mode", label: "Mode" },
-                          { key: "Schedule_Type", label: "Schedule Type" },
-                          { key: "Training_Status", label: "Training Status" },
-                          { key: "Training_Budget", label: "Estimated Budget" },
-                          { key: "Actual_Budget", label: "Actual Budget" },
-                        ].map(({ key, label }, index) => (
-                          <th
-                            key={key}
-                            className={`px-4 py-2 border text-left cursor-pointer ${
-                              index === 0 ? "sticky left-0 bg-muted z-20" : ""
-                            }`}
-                            onClick={() => handleSort(key)}
-                          >
-                            {label}{" "}
-                            {sortConfig.key === key
-                              ? sortConfig.direction === "asc"
-                                ? "▲"
-                                : "▼"
-                              : "↕"}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>{renderTableRows(paginatedData, true)}</tbody>
-                  </table>
+                      <thead className="bg-muted sticky top-0">
+                        <tr>
+                          {[  
+                            { key: "Program_Name", label: "Training Name" },
+                            { key: "Department", label: "Department" },
+                            { key: "Req_Months", label: "Scheduled Month" },
+                            // { key: "Training_Date", label: "Conducted Date" },
+                            { key: "Training_Name", label: "Type" },
+                            // { key: "Train_Mode", label: "Mode" },
+                            // { key: "Schedule_Type", label: "Schedule Type" },
+                            // { key: "Training_Status", label: "Training Status" },
+                            { key: "Training_Budget", label: "Estimated Budget" },
+                            { key: "Note", label: "Note" },
+                            // { key: "Actual_Budget", label: "Actual Budget" },
+                          ].map(({ key, label }, index) => (
+                            <th
+                              key={key}
+                              className={`px-4 py-2 border text-left cursor-pointer ${
+                                index === 0 ? "sticky left-0 bg-muted z-20" : ""
+                              }`}
+                              onClick={() => handleSort(key)}
+                            >
+                              {label}{" "}
+                              {sortConfig.key === key
+                                ? sortConfig.direction === "asc"
+                                  ? "▲"
+                                  : "▼"
+                                : "↕"}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {renderActualBudgetTableRows(paginatedData, true)}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
           <div className="flex justify-end mt-4">
-            <button
+              <button
               className="px-6 mt-2 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
               onClick={async () => {
                 try {
                   if (!selectedDate) {
-                    alert('Please select a year before saving.');
+                    alert("Please select a year before saving.");
                     return;
                   }
-                  const response = await fetch('/api/insert_additional_budget', {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ 
-                      Year_No: selectedDate.getFullYear(),
-                      Add_Budget: Number(additionalTrainingProgramsText) || 0,
-                      createdBy: employeeId || ''
-                    }),
-                  });
+                  // Save additional budget
+                  const response = await fetch(
+                    "/api/insert_additional_budget",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        Year_No: selectedDate.getFullYear(),
+                        Add_Budget: Number(additionalTrainingProgramsText) || 0,
+                        createdBy: employeeId || "",
+                      }),
+                    }
+                  );
                   if (!response.ok) {
-                    throw new Error('Failed to save additional budget');
+                    throw new Error("Failed to save additional budget");
                   }
-                  alert('Additional budget saved successfully');
-                  // Do not clear the text field after successful save as per user request
+                  // Save notes for each program_id
+                  const notePromises = Object.entries(notes)
+                    .filter(([_, noteText]) => noteText && noteText.trim() !== "")
+                    .map(([programId, noteText]) =>
+                      fetch("/api/insert_additional_budget_note", {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                          Year_No: selectedDate.getFullYear(),
+                          Program_Id: programId,
+                          Note_text: noteText,
+                          createdBy: employeeId || "",
+                        }),
+                      })
+                  );
+                  const noteResponses = await Promise.all(notePromises);
+                  const failedNote = noteResponses.find(
+                    (res) => !res.ok
+                  );
+                  if (failedNote) {
+                    throw new Error("Failed to save one or more notes");
+                  }
+                  alert("Additional budget and notes saved successfully");
+                  // Do not clear the text fields after successful save as per user request
                   // Update trainingData and filteredData state directly to avoid full re-render
                   setTrainingData((prevData) => {
-                    return prevData.map(item => {
-                      if (item.Program_Name?.toLowerCase().includes("additional")) {
-                        return { ...item, Training_Budget: Number(additionalTrainingProgramsText) || 0 };
+                    return prevData.map((item) => {
+                      if (
+                        item.Program_Name?.toLowerCase().includes("additional")
+                      ) {
+                        return {
+                          ...item,
+                          Training_Budget:
+                            Number(additionalTrainingProgramsText) || 0,
+                        };
                       }
                       return item;
                     });
                   });
                   setFilteredData((prevData) => {
-                    return prevData.map(item => {
-                      if (item.Program_Name?.toLowerCase().includes("additional")) {
-                        return { ...item, Training_Budget: Number(additionalTrainingProgramsText) || 0 };
+                    return prevData.map((item) => {
+                      if (
+                        item.Program_Name?.toLowerCase().includes("additional")
+                      ) {
+                        return {
+                          ...item,
+                          Training_Budget:
+                            Number(additionalTrainingProgramsText) || 0,
+                        };
                       }
                       return item;
                     });
                   });
                 } catch (error) {
-                  alert('Error saving additional budget: ' + error.message);
+                  alert("Error saving additional budget and notes: " + error.message);
                 }
               }}
             >
@@ -416,7 +787,7 @@ const TrainingBudget = () => {
         </>
       )}
 
-      {activeTab === 'budgetVsActual' && (
+      {activeTab === "budgetVsActual" && (
         <>
           <div className="my-4 relative z-50">
             <div className="flex items-center space-x-2">
@@ -448,64 +819,77 @@ const TrainingBudget = () => {
               <p>{budgetVsActualError}</p>
             </div>
           )}
-          {budgetVsActualSelectedDate && !budgetVsActualLoading && !budgetVsActualError && (
-            <div className="card-body p-0 pb-3">
-              <div className="p-4 bg-card">
-                <div className="flex flex-wrap justify-between items-center mb-4 space-y-2">
-                  <div className="flex items-center space-x-2 text-sm"></div>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={budgetVsActualSearchTerm}
-                      onChange={handleBudgetVsActualSearchChange}
-                      placeholder="Search..."
-                      className="border p-1 pl-8 rounded bg-secondary"
-                    />
-                    <FaSearch className="absolute left-2 top-2 text-gray-400" />
+          {budgetVsActualSelectedDate &&
+            !budgetVsActualLoading &&
+            !budgetVsActualError && (
+              <div className="card-body p-0 pb-3">
+                <div className="p-4 bg-card">
+                  <div className="flex flex-wrap justify-between items-center mb-4 space-y-2">
+                    <div className="flex items-center space-x-2 text-sm"></div>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={budgetVsActualSearchTerm}
+                        onChange={handleBudgetVsActualSearchChange}
+                        placeholder="Search..."
+                        className="border p-1 pl-8 rounded bg-secondary"
+                      />
+                      <FaSearch className="absolute left-2 top-2 text-gray-400" />
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-300px)]">
+                    <table
+                      className="min-w-full border z-0 rounded-lg bg-card text-sm"
+                      style={{ tableLayout: "fixed", fontSize: "13px" }}
+                    >
+                      <thead className="bg-muted sticky top-0">
+                        <tr>
+                          {[
+                            { key: "Program_Name", label: "Training Name" },
+                            { key: "Department", label: "Department" },
+                            { key: "Req_Months", label: "Scheduled Month" },
+                            { key: "Training_Date", label: "Conducted Date" },
+                            { key: "Training_Name", label: "Type" },
+                            { key: "Train_Mode", label: "Mode" },
+                            { key: "Schedule_Type", label: "Schedule Type" },
+                            {
+                              key: "Training_Status",
+                              label: "Training Status",
+                            },
+                            {
+                              key: "Training_Budget",
+                              label: "Estimated Budget",
+                            },
+                            { key: "Actual_Budget", label: "Actual Budget" },
+                          ].map(({ key, label }, index) => (
+                            <th
+                              key={key}
+                              className={`px-4 py-2 border text-left cursor-pointer ${
+                                index === 0 ? "sticky left-0 bg-muted z-20" : ""
+                              }`}
+                              onClick={() => handleSort(key)}
+                            >
+                              {label}{" "}
+                              {sortConfig.key === key
+                                ? sortConfig.direction === "asc"
+                                  ? "▲"
+                                  : "▼"
+                                : "↕"}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {renderActualVSEstimatedTableRows(
+                          paginatedBudgetVsActualData,
+                          false
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
-                <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-300px)]">
-                  <table
-                    className="min-w-full border z-0 rounded-lg bg-card text-sm"
-                    style={{ tableLayout: "fixed", fontSize: "13px" }}
-                  >
-                    <thead className="bg-muted sticky top-0">
-                      <tr>
-                        {[
-                          { key: "Program_Name", label: "Training Name" },
-                          { key: "Department", label: "Department" },
-                          { key: "Req_Months", label: "Scheduled Month" },
-                          { key: "Training_Date", label: "Conducted Date" },
-                          { key: "Training_Name", label: "Type" },
-                          { key: "Train_Mode", label: "Mode" },
-                          { key: "Schedule_Type", label: "Schedule Type" },
-                          { key: "Training_Status", label: "Training Status" },
-                          { key: "Training_Budget", label: "Estimated Budget" },
-                          { key: "Actual_Budget", label: "Actual Budget" },
-                        ].map(({ key, label }, index) => (
-                          <th
-                            key={key}
-                            className={`px-4 py-2 border text-left cursor-pointer ${
-                              index === 0 ? "sticky left-0 bg-muted z-20" : ""
-                            }`}
-                            onClick={() => handleSort(key)}
-                          >
-                            {label}{" "}
-                            {sortConfig.key === key
-                              ? sortConfig.direction === "asc"
-                                ? "▲"
-                                : "▼"
-                              : "↕"}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>{renderTableRows(paginatedBudgetVsActualData, false)}</tbody>
-                  </table>
-                </div>
               </div>
-            </div>
-          )}
+            )}
         </>
       )}
     </div>
