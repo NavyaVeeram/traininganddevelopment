@@ -10,17 +10,7 @@ import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import fontkit from '@pdf-lib/fontkit';
 
 const TetReportsClient = () => {
-  // Helper function to format date as DD-MMM-YYYY (e.g., 01-Jan-2000)
-  const formatDateDDMMMYYYY = (dateString) => {
-    if (!dateString) return "N/A";
-    const d = new Date(dateString);
-    if (isNaN(d)) return "N/A";
-    const day = String(d.getDate()).padStart(2, '0');
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const month = monthNames[d.getMonth()];
-    const year = d.getFullYear();
-    return `${day}-${month}-${year}`;
-  };
+
 
   const parameters = [
     "Benefit to the person/employee",
@@ -871,13 +861,13 @@ const font = await mergedPdf.embedFont(fontBytes);
         <td className="border px-4 py-2 font-semibold">Department</td>
         <td className="border px-4 py-2">{employeeDetails.Department}</td>
         <td className="border px-4 py-2 font-semibold">Date of Training</td>
-<td className="border px-4 py-2">{formatDateDDMMMYYYY(employeeDetails.Training_Date)}</td>
+<td className="border px-4 py-2">{employeeDetails.Training_Date}</td>
       </tr>
       <tr>
         <td className="border px-4 py-2 font-semibold">Place of Training</td>
         <td className="border px-4 py-2">{employeeDetails.Venue}</td>
         <td className="border px-4 py-2 font-semibold">Date of Evaluation</td>
-<td className="border px-4 py-2">{formatDateDDMMMYYYY(employeeDetails.Evaluation_Date)}</td>
+<td className="border px-4 py-2">{employeeDetails.Evaluation_Date}</td>
       </tr>
         </tbody>
             

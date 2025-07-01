@@ -23,6 +23,7 @@ const [trainingName, setTrainingName] = useState("IATF");
   const getMonthNumber = (date) => (date ? date.getMonth() + 1 : null);
 const [EmployeeId,setEmployeeId] = useState(null);
 
+
   const fetchData = async (date, trainingName) => {
     const storedEmployeeId = localStorage.getItem("employeeId");
 
@@ -40,7 +41,7 @@ const [EmployeeId,setEmployeeId] = useState(null);
 
     try {
       const response = await fetch(
-        `/api/get_tet_form_data?year=${date}&training_name=${encodeURIComponent(trainingName)}&EmployeeId=${storedEmployeeId}`
+        `/api/get_tet_form_data_res_person?year=${date}&training_name=${encodeURIComponent(trainingName)}&EmployeeId=${storedEmployeeId}`
       );
 
       if (!response.ok) {
@@ -72,37 +73,34 @@ const [EmployeeId,setEmployeeId] = useState(null);
       return;
     }
     setSubmittedStatusLoading(true);
-    const programIds = [...new Set(trainingData.map(item => item.Program_Id))];
+    const storedUpdatedEmployees = localStorage.getItem('updatedEmployees');
+    let updatedEmployees = [];
+    if (storedUpdatedEmployees) {
+      try {
+        updatedEmployees = JSON.parse(storedUpdatedEmployees);
+      } catch (error) {
+        updatedEmployees = [];
+      }
+    }
     const statusMap = {};
     try {
-      const fetchPromises = programIds.map(async (programId) => {
+      const fetchPromises = trainingData.map(async (item) => {
         try {
-          const res = await fetch(`/api/get_tet_form_emp_details_for_report?programId=${programId}`);
+          const res = await fetch(`/api/get_tet_form_user_dropdown_res_person?programId=${item.Program_Id}`);
           if (!res.ok) {
-            statusMap[programId] = false;
+            statusMap[item.Program_Id] = false;
             return;
           }
           const data = await res.json();
-          // Check if all employees have all Q_1 to Q_10 > 0 (all dropdowns ticked)
-          // Determine number of dropdowns dynamically from keys starting with "Q_"
-          const dropdownKeys = Object.keys(data[0] || {}).filter(key => key.startsWith("Q_"));
-          const allTicked = data.every(emp => {
-            for (let i = 0; i < dropdownKeys.length; i++) {
-              const key = dropdownKeys[i];
-              if (!emp[key] || emp[key] <= 0) {
-                return false;
-              }
-            }
-            return true;
-          });
-          statusMap[programId] = allTicked;
+          const employeeIds = data.map(emp => emp.Value);
+          const allUpdated = employeeIds.every(empId => updatedEmployees.includes(empId));
+          statusMap[item.Program_Id] = allUpdated;
         } catch (error) {
-          statusMap[programId] = false;
+          statusMap[item.Program_Id] = false;
         }
       });
       await Promise.all(fetchPromises);
     } catch (error) {
-      // In case of unexpected error, clear status map
       setSubmittedStatusMap({});
     } finally {
       setSubmittedStatusMap(statusMap);
@@ -340,25 +338,25 @@ const [EmployeeId,setEmployeeId] = useState(null);
                         { key: "Training_Name", label: "Type" },
                         { key: "Training_Date", label: "Training Date" },
                         { key: "Evaluation_Date", label: "Evaluation Date" },
-                        { key: "IsActive", label: "Status" },
+                        // { key: "IsActive", label: "Status" },
                         { key: "actions", label: "Report" },
                       ].map(({ key, label }, index) => (
-                        <th
-                          key={key}
-                          className={`px-4 py-2 border text-left cursor-pointer ${
-                            index === 0 ? "sticky left-0 bg-muted z-20" : ""
-                          }`}
-                          onClick={() => key !== "actions" && handleSort(key)}
-                        >
-                          {label}{" "}
-                          {sortConfig.key === key
-                            ? sortConfig.direction === "asc"
-                              ? "▲"
-                              : "▼"
-                            : key !== "actions"
-                            ? "↕"
-                            : ""}
-                        </th>
+                          <th
+                            key={key}
+                            className={`px-4 py-2 border text-left cursor-pointer ${
+                              index === 0 ? "sticky left-0 bg-muted z-20" : ""
+                            }`}
+                            onClick={() => key !== "actions" && handleSort(key)}
+                          >
+                            {label}{" "}
+                            {sortConfig.key === key
+                              ? sortConfig.direction === "asc"
+                                ? "▲"
+                                : "▼"
+                              : key !== "actions"
+                              ? "↕"
+                              : ""}
+                          </th>
                       ))}
                     </tr>
                   </thead>
@@ -378,20 +376,12 @@ const [EmployeeId,setEmployeeId] = useState(null);
                             {item.Training_Date}
                           </td>
                           <td className="px-4 py-2 border">
-                            {item.Evaluation_Date}
+                            {(item.Evaluation_Date)}
                           </td>
-                          <td className="px-4 py-2 border">
-                            {submittedStatusLoading && submittedStatusMap[item.Program_Id] === undefined ? (
-                              <span>Loading...</span>
-                            ) : (
-                              <span className={submittedStatusMap[item.Program_Id] ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
-                                {submittedStatusMap[item.Program_Id] ? "Completed" : "Pending"}
-                              </span>
-                            )}
-                          </td>
+                        {/* Removed Status column as it depends on unnecessary API */}
                           <td className="px-4 py-2 border text-blue-600 underline">
                             <Link
-                              href={`/tetreports?id=${item.Program_Id}`}
+                              href={`/tetreportsfortl?id=${item.Program_Id}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-600 underline"
