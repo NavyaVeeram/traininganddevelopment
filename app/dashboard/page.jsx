@@ -25,7 +25,7 @@ import {
   Line,
 } from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
-
+import { GiArrowScope } from "react-icons/gi";
 const BLUE_COLORS = ["#1d4ed8", "#3b82f6", "#60a5fa", "#93c5fd", "#bfdbfe"];
 const GREEN_COLORS = ["#4ade80", "#166534", "#15803d", "#16a34a", "#22c55e"];
 
@@ -329,9 +329,9 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {[
             { label: "IATF Total", value: iatfStats.total, icon: <BookOpen className="w-8 h-8 text-white" />, bg: "bg-blue-400" },
-            { label: "IATF Completed", value: iatfStats.completed, icon: <Target className="w-6 h-6 text-white" />, bg: "bg-blue-700" },
+            { label: "IATF Completed", value: iatfStats.completed, icon: <GiArrowScope className="w-6 h-6 text-white" />, bg: "bg-blue-700" },
             { label: "HSE Total", value: hseStats.total, icon: <BookOpen className="w-8 h-8 text-white" />, bg: "bg-green-400" },
-            { label: "HSE Completed", value: hseStats.completed, icon: <Target className="w-6 h-6 text-white" />, bg: "bg-green-700" },
+            { label: "HSE Completed", value: hseStats.completed, icon: <GiArrowScope className="w-6 h-6 text-white" />, bg: "bg-green-700" },
           ].map(({ label, value, icon, bg }) => (
             <div key={label} className={`p-5 rounded-xl shadow-md flex justify-between items-center text-white ${bg}`}>
               <div>

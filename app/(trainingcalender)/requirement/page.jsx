@@ -92,42 +92,18 @@ export default function Requirement() {
     const storedDepartment = localStorage.getItem('department');
     const storedUsername = localStorage.getItem('username');
     const storedEmployeeId = localStorage.getItem('employeeId');
-    const storedSection = localStorage.getItem('section');
+    // const storedSection = localStorage.getItem('section');
 
     // If data is found, update state
-    if (storedDepartment && storedUsername && storedEmployeeId && storedSection) {
+    if (storedDepartment && storedUsername && storedEmployeeId ) {
       setDepartment(storedDepartment);
       setUsername(storedUsername);
       setEmployeeId(storedEmployeeId);
-      setSection(storedSection)
+      // setSection(storedSection)
     } else {
       // If no data found, redirect to login page
       window.location.href = '/';
     }
-
-    const fetchAccessRole = async () => {
-      try {
-        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-        const data = await res.json();
-
-        if (res.ok && data.Access_Role) {
-          if ( data.Access_Role === "HR_Hod" ) {
-            setIsAuthorized(false);
-            return;
-          }
-          setAccessRole(data.Access_Role);
-          setIsAuthorized(true);
-        } else {
-          setIsAuthorized(false);
-        }
-      } catch (error) {
-        console.error('Error fetching access role:', error);
-        setIsAuthorized(false);
-      }
-    };
-
-    fetchAccessRole();
-
     const fetchData = async () => {
       try {
         const response = await fetch(`/api/view_training_data_by_employee?employeeId=${storedEmployeeId}&department=${storedDepartment}`);
@@ -239,6 +215,7 @@ export default function Requirement() {
         const data = await response.json();
 
         if (response.ok) {
+          console.log(data);
           setPrograms(data); // Populate the programs list
         } else {
           console.error('Failed to fetch programs:', data.message);
@@ -299,6 +276,42 @@ export default function Requirement() {
     });
   };
   
+    useEffect(() => {
+    const storedEmployeeId = localStorage.getItem('employeeId');
+  
+    if (storedEmployeeId) {
+      setEmployeeId(storedEmployeeId);
+    }
+   
+    const fetchAccessRole = async () => {
+      try {
+        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+        const data = await res.json();
+  
+        if (res.ok && data.Access_Role) {
+          // Restrict access for HR_HOD 
+           setIsAuthorized(true);
+          if (data.Access_Role === "HR_Hod") {
+            setIsAuthorized(false);
+            // Optionally redirect to unauthorized page
+            // window.location.href = '/unauthorized';
+            return;
+          }
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+        }
+      } catch (error) {
+        console.error('Error fetching access role:', error);
+        setIsAuthorized(false);
+      }
+    };
+  
+    fetchAccessRole();
+  }, []);
+  
+
   useEffect(() => {
     // Update No. of Times based on selected months
     setNoOfTimes(selectedOptions.length);
@@ -337,15 +350,9 @@ const handleDelete = async (programId) => {
     setError(err.message);
   }
 };
-const handleEdit = (data) => {
-  setEditingData(data); // Set the data of the row to be edited
-  setIsModalOpen(true); // Open the modal
-  setEditingData(data); // Set the data of the row to be edited
-  setIsModalOpen(true); // Open the modal
-};
 const programOptions = programs.map(program => ({
-  value: program.Program_Name,
-  label: program.Program_Name,
+  value: program.Value,
+  label: program.Text,
 }));
 
 
@@ -658,11 +665,6 @@ const programOptions = programs.map(program => ({
 
   </div>
 </div>
-
-
-
-
-
       <div>        <fieldset className="space-y-2 ">
   <legend className="text-sm font-semibold text-gray-900">Mode of Training</legend>
   <div className="flex space-x-6">
@@ -764,7 +766,6 @@ const programOptions = programs.map(program => ({
             name="Req_Months"
             closeMenuOnSelect={false}
             components={animatedComponents}
-            
             isMulti
             options={options} 
             value={
@@ -799,7 +800,6 @@ const programOptions = programs.map(program => ({
           />
             </div>
           </div>
-        
        {/* No. of Times */}
        <div className="space-y-0.5">
             <label htmlFor="No_Times" className="block text-sm font-medium text-gray-900">

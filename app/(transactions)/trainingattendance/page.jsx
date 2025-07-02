@@ -607,19 +607,21 @@ const font = await mergedPdf.embedFont(fontBytes);
         const height = page.getSize().height;
 
         if (index === 0) {
-          // page.drawText(emp.Username || "", {
-          //   x: 180,
-          //   y: height - 70,
-          //   size: 11,
-          //   font,
-          //   color: rgb(0, 0, 0),
-          // });
-          //      // Split Program_Name into two lines for drawing
-          const Username = emp.Username || "";
+        const Username = emp.UserName || "";
                                 const words = Username.split(" ").filter(Boolean);
                                 if (words.length > 4) {
-                                  // Draw all words in one line lower
-                                  page.drawText(Username, {
+                                  // Draw first 4 words on one line at top
+                                  const firstLine = words.slice(0, 4).join(" ");
+                                  const secondLine = words.slice(4).join(" ");
+                                  page.drawText(firstLine, {
+                                    x: 140,
+                                    y: height - 70,
+                                    size: 11,
+                                    font,
+                                    color: rgb(0, 0, 0),
+                                  });
+                                  // Draw remaining words on next line lower
+                                  page.drawText(secondLine, {
                                     x: 140,
                                     y: height - 85,
                                     size: 11,
@@ -637,28 +639,28 @@ const font = await mergedPdf.embedFont(fontBytes);
                                   });
                                 }
           // Customize on first page
-          page.drawText(emp.EmployeeId || "", {
+          page.drawText(String(emp.EmployeeId || "") , {
             x: 140,
             y: height - 104,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
-          page.drawText(emp.Designation || "", {
+          page.drawText(String(emp.Designation || "") , {
             x: 140,
             y: height - 138,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
-          page.drawText(emp.Section || "", {
+          page.drawText(String(emp.Section || "") , {
             x: 140,
             y: height - 173,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
-          page.drawText(emp.Department || "", {
+          page.drawText(String(emp.Department || "") , {
             x: 140,
             y: height - 208,
             size: 11,
@@ -666,44 +668,37 @@ const font = await mergedPdf.embedFont(fontBytes);
             color: rgb(0, 0, 0),
           });
           // Split Program_Name into two lines for drawing
-        // Split Program_Name into two lines for drawing
-                            const programName = emp.Program_Name || "";
-                            const wordss = programName.split(" ").filter(Boolean);
-                            if (wordss.length > 4) {
-                              const mid = Math.ceil(wordss.length / 2);
-                              const line1 = wordss.slice(0, mid).join(" ");
-                              const line2 = wordss.slice(mid).join(" ");
-                              page.drawText(line1, {
-                                x: 375,
-                                y: height - 70,
-                                size: 11,
-                                font,
-                                color: rgb(0, 0, 0),
-                              });
-                              page.drawText(line2, {
-                                x: 375,
-                                y: height - 85, // Adjust line height as needed
-                                size: 11,
-                                font,
-                                color: rgb(0, 0, 0),
-                              });
-                            } else {
-                              page.drawText(programName, {
-                                x: 375,
-                                y: height - 70,
-                                size: 11,
-                                font,
-                                color: rgb(0, 0, 0),
-                              });
-                            }
-          page.drawText(emp.Trainer || "", {
+        // Split Program_Name into two lines for drawing  
+        const ProgramName = emp.Program_Name || "";
+                                const wordss = ProgramName.split(" ").filter(Boolean);
+                                if (wordss.length > 5) {
+                                  // Draw first 4 words on one line at top
+                                  const firstLine1 = wordss.slice(0, 5).join(" ");
+                                  const secondLine2 = wordss.slice(5).join(" ");
+                                  page.drawText(firstLine1, {
+                                    x: 375,
+                                    y: height - 70,
+                                    size: 11,
+                                    font,
+                                    color: rgb(0, 0, 0),
+                                  });
+                                  // Draw remaining words on next line lower
+                                  page.drawText(secondLine2, {
+                                    x: 375,
+                                    y: height - 85,
+                                    size: 11,
+                                    font,
+                                    color: rgb(0, 0, 0),
+                                  });
+                                }
+          page.drawText(String(emp.Trainer || "") , {
             x: 375,
             y: height - 104,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
-          page.drawText(emp.Train_Mode || "", {
+          page.drawText(String(emp.Train_Mode || "") , {
             x: 375,
             y: height - 139,
             size: 11,

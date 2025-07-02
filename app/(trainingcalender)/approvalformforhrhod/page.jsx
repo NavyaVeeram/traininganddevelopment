@@ -355,20 +355,20 @@ export default function TrainingDataTable() {
             {paginatedData.length > 0 ? (
                     paginatedData.map((item) => (
                       <tr key={item.Program_Id} className="hover:bg-gray-50">
-                        <td className="border p-2 text-center">{item.Training_Name}</td>
-                        <td className="border p-2 text-center">{item.Year_No}</td>
-                        <td className="border p-2 text-center">{item.Department}</td>
-                        <td className="border p-2 text-center">{item.Section}</td>
-                        <td className="border p-2 text-center">{item.Program_Name}</td>
-                        <td className="border p-2 text-center">{item.Train_Mode}</td>
-                        <td className="border p-2 text-center">{item.Persons}</td>
-                        <td className="border p-2 text-center">{item.No_Hrs}</td>
-                        <td className="border p-2 text-center">{item.No_Times}</td>
-                        <td className="border p-2 text-center">{item.Req_Months}</td>
-                        <td className="border p-2 text-center">{item.Week}</td>
-                        <td className="border p-2 text-center">{item.Training_Budget}</td>
-                        <td className="border p-2 text-center">{item.Evaluation_Period}</td>
-                        <td className="border p-2 text-center">
+                        <td className="border p-2 text-left">{item.Training_Name}</td>
+                        <td className="border p-2 text-left">{item.Year_No}</td>
+                        <td className="border p-2 text-left">{item.Department}</td>
+                        <td className="border p-2 text-left">{item.Section}</td>
+                        <td className="border p-2 text-left">{item.Program_Name}</td>
+                        <td className="border p-2 text-left">{item.Train_Mode}</td>
+                        <td className="border p-2 text-left">{item.Persons}</td>
+                        <td className="border p-2 text-left">{item.No_Hrs}</td>
+                        <td className="border p-2 text-left">{item.No_Times}</td>
+                        <td className="border p-2 text-left">{item.Req_Months}</td>
+                        <td className="border p-2 text-left">{item.Week}</td>
+                        <td className="border p-2 text-left">{item.Training_Budget}</td>
+                        <td className="border p-2 text-left">{item.Evaluation_Period}</td>
+                        <td className="border p-2 text-left">
                           <div className="flex items-center justify-center gap-2">
                             <input
                               type="checkbox"

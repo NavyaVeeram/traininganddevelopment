@@ -11,9 +11,13 @@ export default async function handler(req, res) {
     }
 
     try {
+      console.log("Fetching employee details for ProgramId:", programId);
       const employeeDetails = await prisma.$queryRaw`
         EXEC [dbo].[Get_TET_Form_Emp_Details] @Program_Id = ${programId}
       `;
+
+      console.log("Employee details fetched:", employeeDetails.length);
+      console.log("Employee details data:", employeeDetails);
 
       if (employeeDetails.length === 0) {
         return res.status(404).json({ message: "No employee details found" });

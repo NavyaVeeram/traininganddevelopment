@@ -91,6 +91,10 @@ const masterreport: { title: string; href: string }[] = [
     title: "Add Training Record",
     href: "/trainingrecord",
   },
+     {
+    title: "Update TL",
+    href: "/tetformgeneratefortl",
+  },
 ]
 const trainingcertificates: { title: string; href: string }[] = [
   {
@@ -225,7 +229,7 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
         >
       
 <NavigationMenuItem className="bg-gray-100 position-relative cursor-pointer Z-10">
-  <NavigationMenuTrigger className="hover:text-sky-400">Training Calendar</NavigationMenuTrigger>
+  <NavigationMenuTrigger className="hover:text-sky-400 cursor-pointer">Training Calendar</NavigationMenuTrigger>
   <NavigationMenuContent className="grid gap-2 p-1 md:w-[280px] max-h-[280px] cursor-pointer">
     <ul className="grid gap-2 ">
    {training.map((component) => {
@@ -252,8 +256,8 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
 </NavigationMenuItem>
 
 {accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HOD" && (
-<NavigationMenuItem className="bg-gray-100">
-              <NavigationMenuTrigger className="hover:text-sky-400" >Transaction</NavigationMenuTrigger>
+<NavigationMenuItem className="bg-gray-100 cursor-pointer" >
+              <NavigationMenuTrigger className="hover:text-sky-400 cursor-pointer" >Transaction</NavigationMenuTrigger>
               <NavigationMenuContent className="grid gap-2 p-1 md:w-[250px] px-3 max-h-[300px] ">
                 <ul className="grid gap-2 p-1">
                   {transaction.map((component) => {
@@ -277,8 +281,8 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
             </NavigationMenuItem>
             )}
 {accessRole !== "Res_Person" && (
-<NavigationMenuItem className="bg-gray-100">
-              <NavigationMenuTrigger className="hover:text-sky-400">Training Effectiveness</NavigationMenuTrigger>
+<NavigationMenuItem className="bg-gray-100 cursor-pointer">
+              <NavigationMenuTrigger className="hover:text-sky-400 cursor-pointer">Training Effectiveness</NavigationMenuTrigger>
               <NavigationMenuContent className="grid gap-2 p-1 md:w-[200px] max-h-[300px] ">
                 <ul className="grid gap-2 p-1">
                   {tet.map((component) => {
@@ -306,8 +310,8 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
             </NavigationMenuContent>
           </NavigationMenuItem> */}
           {accessRole !== "Res_Person" && accessRole !== "HOS"  && accessRole !== "HOD" &&(
-          <NavigationMenuItem className="bg-gray-100">
-            <NavigationMenuTrigger className="hover:text-sky-400">Training certificates</NavigationMenuTrigger>
+          <NavigationMenuItem className="bg-gray-100 cursor-pointer">
+            <NavigationMenuTrigger className="hover:text-sky-400 cursor-pointer">Training certificates</NavigationMenuTrigger>
             <NavigationMenuContent
               className="overflow-hidden"
               style={{ "--radix-navigation-menu-viewport-height": "auto" } as React.CSSProperties}
@@ -328,8 +332,8 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
           </NavigationMenuItem>
           )}
           {accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HOD" &&(
-          <NavigationMenuItem className="bg-gray-100 hover:bg-gray-200 hover:text-sky-400 focus:bg-gray-300 transition-all duration-300">
-            <NavigationMenuTrigger className="hover:text-sky-400">Training Materials</NavigationMenuTrigger>
+          <NavigationMenuItem className="bg-gray-100 cursor-pointer hover:bg-gray-200 hover:text-sky-400 focus:bg-gray-300 transition-all duration-300">
+            <NavigationMenuTrigger className="hover:text-sky-400 cursor-pointer">Training Materials</NavigationMenuTrigger>
             <NavigationMenuContent
               className="overflow-hidden"
               style={{ "--radix-navigation-menu-viewport-height": "auto" } as React.CSSProperties}
@@ -348,11 +352,11 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
             </NavigationMenuContent>
           </NavigationMenuItem>
           )}
-            {accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HOD" && (
+            {(accessRole === "Res_Person" || accessRole === "HOS" || accessRole === "HR_Res" || accessRole === "HOD") && (
             <NavigationMenuItem className="bg-gray-100 position-relative z-10">
               <NavigationMenuTrigger className="hover:text-sky-400  cursor-pointer focus:outline-none">T & D Report</NavigationMenuTrigger>
               <NavigationMenuContent className="grid gap-2 p-1 md:w-[200px] max-h-[250px] ">
-                <ul className="grid gap-2 p-1">
+                <ul className="grid gap-2 p-1 cursor-pointer">
                   {masterreport.map((component) => {
                      if (component.title === "Employee History" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
                      return null; // skip if not Employee or HOS
@@ -369,6 +373,9 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
                   if (component.title === "Add Training Record" && accessRole !== "HR_Res" &&  accessRole !== "HR_Hod" ) {
     return null; // skip
   }
+   if (component.title === "Update TL" && accessRole !== "Res_Person" && accessRole !== "HOS") {
+    return null; // skip
+  }
           return(
                     <ListItem key={component.title} title={component.title} href={component.href} />
           );
@@ -378,7 +385,7 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
             </NavigationMenuItem>
             )}
           <NavigationMenuItem className="bg-gray-100 hover:bg-gray-200 hover:text-sky-400 focus:bg-gray-300 transition-all duration-300">
-            <div className="mx-5">  <ProfileDropdown  username={username} /></div>
+            <div className="mx-5 cursor-pointer">  <ProfileDropdown  username={username} /></div>
         
             </NavigationMenuItem>
 
@@ -501,7 +508,7 @@ function ProfileDropdown({ username }: { username: string }) {
         <DropdownMenuGroup>
           <DropdownMenuItem><a href="/dashboard">Dashboard</a></DropdownMenuItem> 
         </DropdownMenuGroup>
-        <DropdownMenuItem><button type="button" className="px-6 mt-2 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2 " onClick={handleLogout}>Logout</button></DropdownMenuItem>
+        <DropdownMenuItem><button type="button" className="px-6 mt-2 py-2 text-sm cursor-pointer font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2 " onClick={handleLogout}>Logout</button></DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

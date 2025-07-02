@@ -423,14 +423,13 @@ const font = await mergedPdf.embedFont(fontBytes);
               font,
               color: rgb(0, 0, 0),
             });
-
-            const formattedTrainingDate = emp.Training_Date
-              ? new Date(emp.Training_Date).toISOString().slice(0, 10)
-              : "";
-
-            const formattedEvaluationDate = emp.Evaluation_Date
-              ? new Date(emp.Evaluation_Date).toISOString().slice(0, 10)
-              : "";
+             page.drawText(String(Evaluation_Date) || "", {
+              x: 385,
+              y: height - 142,
+              size:9,
+              font,
+              color: rgb(0, 0, 0),
+            });   
 
             page.drawText(String(formattedTrainingDate) || "", {
               x: 385,
@@ -988,7 +987,7 @@ const font = await mergedPdf.embedFont(fontBytes);
 <div className="flex justify-end">
 <button
        type="submit"
-       className="px-6 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"          >
+       className="px-6 py-2 text-sm font-semibold cursor-pointer text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"          >
     submit</button>
 </div>
    

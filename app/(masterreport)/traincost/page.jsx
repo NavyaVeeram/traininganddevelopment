@@ -2,105 +2,180 @@
 import { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { FaSearch } from "react-icons/fa";
+import { FaSearch, FaPrint } from "react-icons/fa";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import autoTable from "jspdf-autotable";
 
 const TrainingBudget = () => {
+  // Tab state
+  const [activeTab, setActiveTab] = useState("actual");
+
+  // Common states
   const [selectedDate, setSelectedDate] = useState(null);
   const [trainingData, setTrainingData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [tableSearchTerm, setTableSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  // Removed pagination state as pagination is not needed
-  // const [rowsPerPage, setRowsPerPage] = useState("All");
-  // const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = "All";
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
-    const [accessRole, setAccessRole] = useState(null);
+  const [accessRole, setAccessRole] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(null);
-  const [employeeId,setEmployeeId] = useState(null);
-   useEffect(() => {
-       const storedEmployeeId = localStorage.getItem('employeeId');
-     
-       if (storedEmployeeId) {
-         setEmployeeId(storedEmployeeId);
-       }
-      
-       const fetchAccessRole = async () => {
-         try {
-           const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-           const data = await res.json();
-     
-           if (res.ok && data.Access_Role) {
-             // Restrict access for HR_Res and HR_HOD roles
-             if (data.Access_Role === "Res_Person" || data.Access_Role === "HOS" || data.Access_Role === "HOD") {
-               setIsAuthorized(false);
-               // Optionally redirect to unauthorized page
-               // window.location.href = '/unauthorized';
-               return;
-             }
-             setAccessRole(data.Access_Role);
-             setIsAuthorized(true);
-           } else {
-             setIsAuthorized(false);
-           }
-         } catch (error) {
-           console.error('Error fetching access role:', error);
-           setIsAuthorized(false);
-         }
-       };
-     
-       fetchAccessRole();
-     }, []);
-     
+  const [employeeId, setEmployeeId] = useState(null);
+
+  // New state for additional training programs text field
+  const [additionalTrainingProgramsText, setAdditionalTrainingProgramsText] =
+    useState("");
+
+  // New state for notes keyed by program_id
+  const [notes, setNotes] = useState({});
+
+  // New state for second tab data and search
+  const [budgetVsActualData, setBudgetVsActualData] = useState([]);
+  const [budgetVsActualSearchTerm, setBudgetVsActualSearchTerm] = useState("");
+  const [budgetVsActualFilteredData, setBudgetVsActualFilteredData] = useState(
+    []
+  );
+  const [budgetVsActualLoading, setBudgetVsActualLoading] = useState(false);
+  const [budgetVsActualError, setBudgetVsActualError] = useState(null);
+  const [budgetVsActualSelectedDate, setBudgetVsActualSelectedDate] =
+    useState(null);
+
+  useEffect(() => {
+    const storedEmployeeId = localStorage.getItem("employeeId");
+    if (storedEmployeeId) {
+      setEmployeeId(storedEmployeeId);
+    }
+    const fetchAccessRole = async () => {
+      try {
+        const res = await fetch(
+          `/api/get_access_role?employeeId=${storedEmployeeId}`
+        );
+        const data = await res.json();
+        if (res.ok && data.Access_Role) {
+          if (
+            data.Access_Role === "Res_Person" ||
+            data.Access_Role === "HOS" ||
+            data.Access_Role === "HOD"
+          ) {
+            setIsAuthorized(false);
+            return;
+          }
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+        }
+      } catch (error) {
+        console.error("Error fetching access role:", error);
+        setIsAuthorized(false);
+      }
+    };
+    fetchAccessRole();
+  }, []);
+
   const fetchData = async (date) => {
     if (!date) {
-      alert('Please select a year.');
+      alert("Please select a year.");
       return;
     }
     setLoading(true);
     setError(null);
     try {
       const year = date.getFullYear();
-      const response = await fetch(`/api/get_training_budget?year=${year}`);
+      const response = await fetch(
+        `/api/get_training_budget_first?year=${year}`
+      );
       if (!response.ok) {
-        throw new Error('No data available.');
+        throw new Error("No data available.");
       }
       const data = await response.json();
-
+      console.log(
+        "First data item full object:",
+        data.length > 0 ? data[0] : "No data"
+      );
+      console.log(
+        "First data item keys:",
+        data.length > 0 ? Object.keys(data[0]) : "No data"
+      );
       if (data && data.length === 0) {
         setError("No data available for the selected Year.");
-        setFilteredData([]); 
+        setFilteredData([]);
       } else {
         setTrainingData(data);
         setFilteredData(data);
+        // Initialize notes state with existing note values if available
+        const initialNotes = {};
+        data.forEach((item) => {
+          if (item.Program_Id && item.Note) {
+            initialNotes[item.Program_Id] = item.Note;
+          }
+        });
+        setNotes(initialNotes);
+        const additionalRow = data.find((item) =>
+          item.Program_Name?.toLowerCase().includes("additional")
+        );
+        if (additionalRow) {
+          setAdditionalTrainingProgramsText(
+            additionalRow.Training_Budget?.toString() || ""
+          );
+        } else {
+          setAdditionalTrainingProgramsText("");
+        }
       }
     } catch (err) {
       setError(err.message || "An error occurred while fetching data.");
       setFilteredData([]);
     } finally {
-      setLoading(false); 
+      setLoading(false);
     }
   };
 
-
-  useEffect(() => {
-    if (selectedDate) fetchData(selectedDate);
-  }, [selectedDate]);
-
-  useEffect(() => {
-    if (selectedDate) {
-      fetchData(selectedDate);
-      // setRowsPerPage(10);
-      // setCurrentPage(1);
+  const fetchBudgetVsActualData = async (date) => {
+    if (!date) {
+      alert("Please select a year.");
+      return;
     }
-  }, [selectedDate]);
-  
-  // Removed pagination effect
-  // useEffect(() => {
-  //   setCurrentPage(1);
-  // }, [rowsPerPage, filteredData]);
-  
+    setBudgetVsActualLoading(true);
+    setBudgetVsActualError(null);
+    try {
+      const year = date.getFullYear();
+      const response = await fetch(`/api/get_training_budget?year=${year}`);
+      if (!response.ok) {
+        throw new Error("No data available.");
+      }
+      const data = await response.json();
+      console.log(
+        "BudgetVsActual first data item keys:",
+        data.length > 0 ? Object.keys(data[0]) : "No data"
+      );
+      if (data && data.length === 0) {
+        setBudgetVsActualError("No data available for the selected Year.");
+        setBudgetVsActualFilteredData([]);
+      } else {
+        setBudgetVsActualData(data);
+        setBudgetVsActualFilteredData(data);
+      }
+    } catch (err) {
+      setBudgetVsActualError(
+        err.message || "An error occurred while fetching data."
+      );
+      setBudgetVsActualFilteredData([]);
+    } finally {
+      setBudgetVsActualLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedDate && activeTab === "actual") fetchData(selectedDate);
+  }, [selectedDate, activeTab]);
+
+  useEffect(() => {
+    if (budgetVsActualSelectedDate && activeTab === "budgetVsActual")
+      fetchBudgetVsActualData(budgetVsActualSelectedDate);
+  }, [budgetVsActualSelectedDate, activeTab]);
+
   const handleSort = (key) => {
     let direction = "asc";
     if (sortConfig.key === key && sortConfig.direction === "asc") {
@@ -118,22 +193,79 @@ const TrainingBudget = () => {
     return 0;
   });
 
+  const sortedBudgetVsActualData = [...budgetVsActualFilteredData].sort(
+    (a, b) => {
+      if (!sortConfig.key) return 0;
+      const aVal = a[sortConfig.key];
+      const bVal = b[sortConfig.key];
+      if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
+    }
+  );
+
   const paginatedData = sortedData;
+  const paginatedBudgetVsActualData = sortedBudgetVsActualData;
 
   const handleTableSearchChange = (e) => {
     const searchQuery = e.target.value;
     setTableSearchTerm(searchQuery);
-
     if (!searchQuery) {
       setFilteredData(trainingData);
     } else {
       const lowerSearchQuery = searchQuery.toLowerCase();
       const filtered = trainingData.filter((trainer) => {
-        const isTotalRow = (trainer.Program_Name?.toString().toLowerCase().includes("total") || trainer.Training_Name?.toString().toLowerCase().includes("total"));
-        return !isTotalRow && ["Program_Name", "Req_Months", "Training_Date", "Training_Name", "Train_Mode", "Schedule_Type", "Training_Status", "Training_Budget"]
-          .some((field) => trainer[field]?.toString().toLowerCase().includes(lowerSearchQuery));
+        const isTotalRow =
+          trainer.Program_Name?.toString().toLowerCase().includes("total") ||
+          trainer.Training_Name?.toString().toLowerCase().includes("total");
+        return (
+          !isTotalRow &&
+          [
+            "Program_Name",
+            "Req_Months",
+            "Training_Date",
+            "Training_Name",
+            "Train_Mode",
+            "Schedule_Type",
+            "Training_Status",
+            "Training_Budget",
+          ].some((field) =>
+            trainer[field]?.toString().toLowerCase().includes(lowerSearchQuery)
+          )
+        );
       });
       setFilteredData(filtered);
+    }
+  };
+
+  const handleBudgetVsActualSearchChange = (e) => {
+    const searchQuery = e.target.value;
+    setBudgetVsActualSearchTerm(searchQuery);
+    if (!searchQuery) {
+      setBudgetVsActualFilteredData(budgetVsActualData);
+    } else {
+      const lowerSearchQuery = searchQuery.toLowerCase();
+      const filtered = budgetVsActualData.filter((trainer) => {
+        const isTotalRow =
+          trainer.Program_Name?.toString().toLowerCase().includes("total") ||
+          trainer.Training_Name?.toString().toLowerCase().includes("total");
+        return (
+          !isTotalRow &&
+          [
+            "Program_Name",
+            "Req_Months",
+            "Training_Date",
+            "Training_Name",
+            "Train_Mode",
+            "Schedule_Type",
+            "Training_Status",
+            "Training_Budget",
+          ].some((field) =>
+            trainer[field]?.toString().toLowerCase().includes(lowerSearchQuery)
+          )
+        );
+      });
+      setBudgetVsActualFilteredData(filtered);
     }
   };
 
@@ -142,78 +274,122 @@ const TrainingBudget = () => {
     setFilteredData(trainingData);
   };
 
-  const columns = [
-    {
-      name: 'Training Name',
-      selector: row => row.Program_Name,
-      sortable: true,
-      searchable: true,
-      width: '35%', 
-    },
-    {
-      name: 'Scheduled Month',
-      selector: row => row.Req_Months,
-      sortable: true,
-      searchable: true,
-      width: '10%',
-    },
-    {
-      name: 'Conducted Date',
-      selector: row => row.Training_Date ? new Date(row.Training_Date).toLocaleDateString() : '',
-      sortable: true,
-      searchable: true,
-      width: '10%', 
-    },
-    {
-      name: 'Type',
-      selector: row => row.Training_Name,
-      sortable: true,
-      searchable: true,
-      width: '5%',
-    },
-    {
-      name: 'Mode',
-      selector: row => row.Train_Mode,
-      sortable: true,
-      searchable: true,
-      width: '10%',
-    },
-    {
-      name: 'Schedule Type',
-      selector: row => row.Schedule_Type,
-      sortable: true,
-      searchable: true,
-      width: '10%',
-    },
-    {
-      name: 'Training Status',
-      selector: row => row.Training_Status,
-      sortable: true,
-      searchable: true,
-      width: '10%',
-    },
-    {
-      name: 'Training Budget',
-      selector: row => row.Training_Budget,
-      sortable: true,
-      searchable: true,
-      width: '10%',
-    },
-  ];
-// const isYearEnabled = (date) => {
-//   const year = date.getFullYear();
-//   const currentYear = new Date().getFullYear();
-//   return [currentYear, currentYear + 1].includes(year);
-// };
- if (isAuthorized === null) {
-    return (
-      <div>Loading...</div>
-      // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
-      //   <div className="bg-white p-10 rounded shadow text-center">
-      //     <h2 className="text-2xl font-bold">Loading...</h2>
-      //   </div>
-      // </div>
-    );
+  const handleClearBudgetVsActualSearch = () => {
+    setBudgetVsActualSearchTerm("");
+    setBudgetVsActualFilteredData(budgetVsActualData);
+  };
+
+  // Render table rows with conditional text field for additional training programs in actual tab
+  const renderActualBudgetTableRows = (data, isActualTab = true) => {
+    return data.map((item, index) => {
+      console.log("Program_Id for row", index, ":", item.Program_Id);
+      const isTotalRow =
+        item.Program_Name?.toString().toLowerCase().includes("total") ||
+        item.Training_Name?.toString().toLowerCase().includes("total");
+      return (
+        <tr
+          key={index}
+          className={`border ${
+            isTotalRow ? "bg-gray-200" : "hover:bg-gray-100"
+          }`}
+        >
+          <td className="px-4 py-2 border">{item.Program_Name}</td>
+          <td className="px-4 py-2 border">{item.Department}</td>
+          <td className="px-4 py-2 border">{item.Req_Months}</td>
+          {/* <td className="px-4 py-2 border">{item.Training_Date ?? ""}</td> */}
+          <td className="px-4 py-2 border">{item.Training_Name}</td>
+          {/* <td className="px-4 py-2 border">{item.Train_Mode}</td> */}
+          {/* <td className="px-4 py-2 border">{item.Schedule_Type}</td> */}
+          {/* <td className="px-4 py-2 border">{item.Training_Status}</td> */}
+
+          <td className="px-4 py-2 border text-right">
+            {isActualTab &&
+            item.Program_Name?.toLowerCase().includes("additional") ? (
+              <input
+                type="number"
+                value={additionalTrainingProgramsText}
+                onChange={(e) =>
+                  setAdditionalTrainingProgramsText(e.target.value)
+                }
+                className="w-full p-1 border border-gray-300 rounded"
+                placeholder="Enter Training Budget"
+              />
+            ) : (
+              item.Training_Budget
+            )}
+          </td>
+          <td className="px-4 py-2 border">
+            {item.Program_Id &&
+            !item.Program_Name?.toLowerCase().includes("total") ? (
+              <input
+                type="text"
+                value={
+                  notes[item.Program_Id] !== undefined
+                    ? notes[item.Program_Id]
+                    : item.Note || ""
+                }
+                onChange={(e) =>
+                  setNotes((prev) => ({
+                    ...prev,
+                    [item.Program_Id]: e.target.value,
+                  }))
+                }
+                className="w-full p-1 border border-gray-300 rounded"
+                placeholder="Enter note"
+              />
+            ) : (
+              ""
+            )}
+          </td>
+          {/* <td className="px-4 py-2 border text-right">{item.Actual_Budget}</td> */}
+        </tr>
+      );
+    });
+  };
+  const renderActualVSEstimatedTableRows = (data, isActualTab = true) => {
+    return data.map((item, index) => {
+      const isTotalRow =
+        item.Program_Name?.toString().toLowerCase().includes("total") ||
+        item.Training_Name?.toString().toLowerCase().includes("total");
+      return (
+        <tr
+          key={index}
+          className={`border ${
+            isTotalRow ? "bg-gray-200" : "hover:bg-gray-100"
+          }`}
+        >
+          <td className="px-4 py-2 border">{item.Program_Name}</td>
+          <td className="px-4 py-2 border">{item.Department}</td>
+          <td className="px-4 py-2 border">{item.Req_Months}</td>
+          <td className="px-4 py-2 border">{item.Training_Date ?? ""}</td>
+          <td className="px-4 py-2 border">{item.Training_Name}</td>
+          <td className="px-4 py-2 border">{item.Train_Mode}</td>
+          <td className="px-4 py-2 border">{item.Schedule_Type}</td>
+          <td className="px-4 py-2 border text-right">
+            {isActualTab &&
+            item.Program_Name?.toLowerCase().includes("additional") ? (
+              <input
+                type="number"
+                value={additionalTrainingProgramsText}
+                onChange={(e) =>
+                  setAdditionalTrainingProgramsText(e.target.value)
+                }
+                className="w-full p-1 border border-gray-300 rounded"
+                placeholder="Enter Training Budget"
+              />
+            ) : (
+              item.Training_Budget
+            )}
+          </td>
+          <td className="px-4 py-2 border text-right">{item.Actual_Budget}</td>
+          <td className="px-4 py-2 border">{item.Training_Status}</td>
+        </tr>
+      );
+    });
+  };
+
+  if (isAuthorized === null) {
+    return <div>Loading...</div>;
   }
 
   if (isAuthorized === false) {
@@ -226,135 +402,308 @@ const TrainingBudget = () => {
       </div>
     );
   }
+  const generateBudgetPDF = (type) => {
+    const isActual = type === "actual";
+    const orientation = isActual ? "portrait" : "landscape";
+    const doc = new jsPDF(orientation, "mm", "a4");
+    const year = isActual
+      ? selectedDate?.getFullYear()
+      : budgetVsActualSelectedDate?.getFullYear();
+    const dateStr = new Date().toLocaleDateString("en-GB");
+
+    const data = isActual ? filteredData : budgetVsActualFilteredData;
+
+    if (!year || !data || data.length === 0) {
+      alert("Please select a valid year and ensure data is available.");
+      return;
+    }
+
+    const title = isActual
+      ? "External Trainings Estimated Budget"
+      : "External Trainings Estimated Budget Vs. Actual Cost";
+
+    // Header
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("TRAINING AND DEVELOPMENT", 15, 15);
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${title} - ${year}`, 15, 23);
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text(
+      'We are following "IATF 16949 CAPD Method 10.3 Continuous Improvement Spirit to improve our GTI"',
+      15,
+      28
+    );
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text("Approved By", 15, 50);
+    doc.text("Checked By", 80, 50);
+
+    let headers, tableData, columnStyles;
+
+    if (isActual) {
+      headers = [
+        [
+          "S.No",
+          "Training Topic",
+          "Req. Dep.",
+          "Scheduled Month",
+          "Type",
+          "Estimated Cost in Rs./-",
+        ],
+      ];
+
+      tableData = data.map((item, index) => [
+        index + 1,
+        item.Program_Name,
+        item.Department || "",
+        item.Req_Months || "",
+        item.Training_Name || "",
+        item.Training_Budget != null && !isNaN(item.Training_Budget)
+          ? parseFloat(item.Training_Budget).toLocaleString()
+          : " ",
+      ]);
+
+      columnStyles = {
+        0: { halign: "center", cellWidth: 12 }, // S.No
+        5: { halign: "right" }, // Estimated Cost
+      };
+    } else {
+      headers = [
+        [
+          "S.No",
+          "Training Topic",
+          "Req. Dep.",
+          "Scheduled Month",
+          "Conducted Date",
+          "Type",
+          // "Mode",
+          // "Schedule Type",
+          "Est. Cost in Rs./-",
+          "Act. Cost in Rs./-",
+          "Remarks",
+        ],
+      ];
+
+      tableData = data.map((item, index) => [
+        index + 1,
+        item.Program_Name,
+        item.Department || "",
+        item.Req_Months || "",
+        item.Training_Date || "",
+        item.Training_Name || "",
+        // item.Train_Mode || "",
+        // item.Schedule_Type || "",
+        item.Training_Budget != null && !isNaN(item.Training_Budget)
+          ? parseFloat(item.Training_Budget).toLocaleString()
+          : " ",
+        item.Actual_Budget != null && !isNaN(item.Actual_Budget)
+          ? parseFloat(item.Actual_Budget).toLocaleString()
+          : " ",
+        item.Training_Status || "",
+      ]);
+
+      columnStyles = {
+        0: { halign: "center", cellWidth: 12 }, // S.No
+        6: { halign: "right" }, // Estimated
+        7: { halign: "right" }, // Actual
+      };
+    }
+
+    const table = autoTable(doc, {
+      startY: 60,
+      head: headers,
+      body: tableData,
+      theme: "grid",
+      didDrawPage: function (data) {
+        const pageCount = doc.internal.getNumberOfPages();
+        const pageSize = doc.internal.pageSize;
+        const pageHeight = pageSize.height || pageSize.getHeight();
+        const pageWidth = pageSize.width || pageSize.getWidth();
+        const pageCurrent = doc.internal.getCurrentPageInfo().pageNumber;
+
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(0, 0, 0);
+        doc.text(`Page: ${pageCurrent} of ${pageCount}`, pageWidth - 40, 15);
+        doc.text(`Date: ${dateStr}`, pageWidth - 40, 20);
+
+        const footerText = `Greentech Industries (India) Pvt. Ltd @ HR By Syam Prasad`;
+        const textWidth = doc.getTextWidth(footerText);
+        const centerX = (pageWidth - textWidth) / 2;
+
+        doc.text(footerText, centerX, pageHeight - 10);
+      },
+      styles: {
+        fontSize: 9,
+        halign: "left",
+        valign: "middle",
+        lineWidth: 0.2,
+        lineColor: [150, 150, 150],
+      },
+      headStyles: {
+        fillColor: [230, 230, 250],
+        textColor: [60, 60, 60],
+      },
+      columnStyles: columnStyles,
+    });
+
+    const notes = data
+      .map((item) => item.Note?.trim())
+      .filter((note, index, self) => note && self.indexOf(note) === index);
+
+    if (notes.length > 0) {
+      const finalY = doc.lastAutoTable.finalY + 10;
+
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.text("Note:", 15, finalY);
+
+      doc.setFont("helvetica", "normal");
+
+      notes.forEach((note, idx) => {
+        const bullet = `\u2022 ${note}`;
+        doc.text(bullet, 20, finalY + (idx + 1) * 6);
+      });
+    }
+
+    // Add total row if needed (optional)
+    const total = data.reduce(
+      (sum, item) => sum + (parseFloat(item.Training_Budget) || 0),
+      0
+    );
+
+    const fileName = isActual
+      ? `External_Training_Budget_${year}.pdf`
+      : `Training_Budget_vs_Actual_${year}.pdf`;
+
+    doc.save(fileName);
+  };
+
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
-      <div className="bg-sky-400 text-white p-2 rounded-t-lg">
-        <h1 className="font-semibold">Actual Training Budget</h1>
+      <div className="bg-sky-400 text-white p-2 rounded-t-lg flex items-center justify-between">
+        {/* Left side: Title + Tabs */}
+        <div className="flex items-center space-x-4">
+          <h1 className="font-semibold">Training Cost</h1>
+          <button
+            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+              activeTab === "actual"
+                ? "bg-white text-sky-600 shadow-sm"
+                : "text-white hover:bg-sky-300"
+            }`}
+            onClick={() => setActiveTab("actual")}
+          >
+            Actual Training Budget
+          </button>
+          <button
+            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+              activeTab === "budgetVsActual"
+                ? "bg-white text-sky-600 shadow-sm"
+                : "text-white hover:bg-sky-300"
+            }`}
+            onClick={() => setActiveTab("budgetVsActual")}
+          >
+            Training Budget vs Actual Budget
+          </button>
+        </div>
+
+        {/* Right side: Print Button */}
+        <div>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              generateBudgetPDF(activeTab);
+            }}
+            className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-1 px-3 rounded"
+            aria-label="Export PDF"
+            title="Export PDF"
+          >
+            <FaPrint />
+          </button>
+        </div>
       </div>
 
-        {/* <div className="controls flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <label className="block font-medium text-sm">Year</label>
-            <div className="date-picker">
+      {activeTab === "actual" && (
+        <>
+          <div className="my-4 relative z-50">
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium">Year</label>
               <DatePicker
                 selected={selectedDate}
                 onChange={(date) => setSelectedDate(date)}
                 dateFormat="yyyy"
                 showYearPicker
                 placeholderText="Select Year"
-                className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="p-2 border border-gray-300 rounded-lg"
+                calendarClassName="z-50"
+                popperPlacement="top-start"
+                isClearable
+                isSearchable
+                required
+                popperModifiers={{
+                  preventOverflow: {
+                    enabled: true,
+                    boundariesElement: "viewport",
+                  },
+                }}
               />
             </div>
           </div>
-        </div> */}
-        <div className="my-4 relative z-50">
-          <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium">Year</label>
-            <DatePicker
-              selected={selectedDate}
-              onChange={(date) => setSelectedDate(date)}
-                dateFormat="yyyy"
-                showYearPicker
-                placeholderText="Select Year"
-              className="p-2 border border-gray-300 rounded-lg"
-              calendarClassName="z-50" 
-              popperPlacement="top-start"
-              isClearable
-              isSearchable
-              required
-              popperModifiers={{
-                preventOverflow: {
-                  enabled: true,
-                  boundariesElement: "viewport",
-                },
-              }}
-              // filterDate={isYearEnabled}
-            />
-          </div>
-        </div>
-        {loading && <p>Loading...</p>}
 
-      {error && (
-        <div className="flex justify-center items-center h-64 text-center text-red-500 mt-4">
-          <p>{error}</p>
-        </div>
-      )}
-
-        {/* {selectedDate && !loading && !error && (
-          <div className="flex items-center justify-end mb-4 relative w-auto">
-            <label className="mr-2 text-sm font-medium text-gray-900">Search:</label>
-            <div className="relative w-1/11">
-              <input
-                type="text"
-                value={tableSearchTerm}
-                onChange={handleTableSearchChange}
-                placeholder="Search"
-                className="w-full p-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              {tableSearchTerm && (
-                <button
-                  onClick={handleClearTableSearch}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-black-400 hover:text-black-600"
-                >
-                  X
-                </button>
-              )}
+          {loading && <p>Loading...</p>}
+          {error && (
+            <div className="flex justify-center items-center h-64 text-center text-red-500 mt-4">
+              <p>{error}</p>
             </div>
-          </div>
-        )} */}
-      {selectedDate && !loading && !error && (
-        <div className="card-body p-0 pb-3">
-          <div className="p-4 bg-card">
-            <div className="flex flex-wrap justify-between items-center mb-4 space-y-2">
-              <div className="flex items-center space-x-2 text-sm">
-                {/* <span>Show</span>
-                <select
-                  className="border p-1 rounded bg-secondary"
-                  value={rowsPerPage}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setRowsPerPage(val === "All" ? "All" : parseInt(val));
-                    setCurrentPage(1);
-                  }}
-                >
-                  {[10, 15, 25, 50, 100, "All"].map((num) => (
-                    <option key={num} value={num}>
-                      {num}
-                    </option>
-                  ))}
-                </select>
-                <span>entries</span> */}
-              </div>
+          )}
 
-              <div className="relative">
-                <input
-                  type="text"
-                  value={tableSearchTerm}
-                  onChange={handleTableSearchChange}
-                  placeholder="Search..."
-                  className="border p-1 pl-8 rounded bg-secondary"
-                />
-                <FaSearch className="absolute left-2 top-2 text-gray-400" />
-              </div>
-            </div>
-
-            <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-300px)]">
-              <div>
-                <table className="min-w-full border z-0 rounded-lg bg-card text-sm " style={{ tableLayout: "fixed", fontSize: "13px" }} >
-                  <thead className="bg-muted sticky top-0" >
-                    <tr>
-                      {[{ key: "Program_Name", label: "Training Name" },
-                        { key: "Req_Months", label: "Scheduled Month" },
-                        { key: "Training_Date", label: "Conducted Date" },
-                        { key: "Training_Name", label: "Type" },
-                        { key: "Train_Mode", label: "Mode" },
-                        { key: "Schedule_Type", label: "Schedule Type" },
-                        { key: "Training_Status", label: "Training Status" },
-                        {key: "Training_Budget", label: "Budget"}]
-                        .map(({ key, label }, index) => (
+          {selectedDate && !loading && !error && (
+            <div className="card-body p-0 pb-3">
+              <div className="p-4 bg-card">
+                <div className="flex flex-wrap justify-between items-center mb-4 space-y-2">
+                  <div className="flex items-center space-x-2 text-sm"></div>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={tableSearchTerm}
+                      onChange={handleTableSearchChange}
+                      placeholder="Search..."
+                      className="border p-1 pl-8 rounded bg-secondary"
+                    />
+                    <FaSearch className="absolute left-2 top-2 text-gray-400" />
+                  </div>
+                </div>
+                <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-300px)]">
+                  <table
+                    className="min-w-full border z-0 rounded-lg bg-card text-sm"
+                    style={{ tableLayout: "fixed", fontSize: "13px" }}
+                  >
+                    <thead className="bg-muted sticky top-0">
+                      <tr>
+                        {[
+                          { key: "Program_Name", label: "Training Name" },
+                          { key: "Department", label: "Department" },
+                          { key: "Req_Months", label: "Scheduled Month" },
+                          // { key: "Training_Date", label: "Conducted Date" },
+                          { key: "Training_Name", label: "Type" },
+                          // { key: "Train_Mode", label: "Mode" },
+                          // { key: "Schedule_Type", label: "Schedule Type" },
+                          // { key: "Training_Status", label: "Training Status" },
+                          { key: "Training_Budget", label: "Estimated Budget" },
+                          { key: "Note", label: "Note" },
+                          // { key: "Actual_Budget", label: "Actual Budget" },
+                        ].map(({ key, label }, index) => (
                           <th
                             key={key}
-                            className={`px-4 py-2 border text-left cursor-pointer ${index === 0 ? "sticky left-0 bg-muted z-20" : ""}`}
+                            className={`px-4 py-2 border text-left cursor-pointer ${
+                              index === 0 ? "sticky left-0 bg-muted z-20" : ""
+                            }`}
                             onClick={() => handleSort(key)}
                           >
                             {label}{" "}
@@ -365,95 +714,215 @@ const TrainingBudget = () => {
                               : "↕"}
                           </th>
                         ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredData.length > 0 ? (
-                      paginatedData.map((item, index) => {
-                        const isTotalRow = (item.Program_Name?.toString().toLowerCase().includes("total") || item.Training_Name?.toString().toLowerCase().includes("total"));
-                        return (
-                          <tr key={index} className={`border ${isTotalRow ? "bg-gray-200" : "hover:bg-gray-100"}`}>
-                            <td className="px-4 py-2 border">{item.Program_Name}</td>
-                            <td className="px-4 py-2 border">{item.Req_Months}</td>
-                            <td className="px-4 py-2 border">
-                              {item.Training_Date
-                                ? new Date(item.Training_Date).toLocaleDateString()
-                                : ""}
-                            </td>
-                            <td className="px-4 py-2 border">{item.Training_Name}</td>
-                            <td className="px-4 py-2 border">{item.Train_Mode}</td>
-                            <td className="px-4 py-2 border">{item.Schedule_Type}</td>
-                            <td className="px-4 py-2 border">{item.Training_Status}</td>
-                            <td className="px-4 py-2 border">{item.Training_Budget}</td>
-                          </tr>
-                        );
-                      })
-                    ) : (
-                      <tr>
-                        <td colSpan="7" className="py-4 text-center text-gray-500">
-                          No matching training data available.
-                        </td>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {renderActualBudgetTableRows(paginatedData, true)}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
+          )}
+          <div className="flex justify-end mt-4">
+            <button
+              className="px-6 mt-2 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
+              onClick={async () => {
+                try {
+                  if (!selectedDate) {
+                    alert("Please select a year before saving.");
+                    return;
+                  }
+                  // Save additional budget
+                  const response = await fetch(
+                    "/api/insert_additional_budget",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        Year_No: selectedDate.getFullYear(),
+                        Add_Budget: Number(additionalTrainingProgramsText) || 0,
+                        createdBy: employeeId || "",
+                      }),
+                    }
+                  );
+                  if (!response.ok) {
+                    throw new Error("Failed to save additional budget");
+                  }
+                  // Save notes for each program_id
+                  const notePromises = Object.entries(notes)
+                    .filter(
+                      ([_, noteText]) => noteText && noteText.trim() !== ""
+                    )
+                    .map(([programId, noteText]) =>
+                      fetch("/api/insert_additional_budget_note", {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                          Year_No: selectedDate.getFullYear(),
+                          Program_Id: programId,
+                          Note_text: noteText,
+                          createdBy: employeeId || "",
+                        }),
+                      })
+                    );
+                  const noteResponses = await Promise.all(notePromises);
+                  const failedNote = noteResponses.find((res) => !res.ok);
+                  if (failedNote) {
+                    throw new Error("Failed to save one or more notes");
+                  }
+                  alert("Additional budget and notes saved successfully");
+                  // Do not clear the text fields after successful save as per user request
+                  // Update trainingData and filteredData state directly to avoid full re-render
+                  setTrainingData((prevData) => {
+                    return prevData.map((item) => {
+                      if (
+                        item.Program_Name?.toLowerCase().includes("additional")
+                      ) {
+                        return {
+                          ...item,
+                          Training_Budget:
+                            Number(additionalTrainingProgramsText) || 0,
+                        };
+                      }
+                      return item;
+                    });
+                  });
+                  setFilteredData((prevData) => {
+                    return prevData.map((item) => {
+                      if (
+                        item.Program_Name?.toLowerCase().includes("additional")
+                      ) {
+                        return {
+                          ...item,
+                          Training_Budget:
+                            Number(additionalTrainingProgramsText) || 0,
+                        };
+                      }
+                      return item;
+                    });
+                  });
+                } catch (error) {
+                  alert(
+                    "Error saving additional budget and notes: " + error.message
+                  );
+                }
+              }}
+            >
+              Save
+            </button>
+          </div>
+        </>
+      )}
 
-            { (
-              <div className="flex flex-wrap justify-between items-center mt-4 text-sm">
-                {/* <div>
-                  Showing {filteredData.length > 0
-                    ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
-                        currentPage * rowsPerPage,
-                        filteredData.length
-                      )} of ${filteredData.length} entries`
-                    : "0 entries"}
-                </div> */}
-
-                {/* <div className="flex space-x-1">
-                  <button
-                    className="px-3 py-1 border rounded"
-                    onClick={() => setCurrentPage(1)}
-                    disabled={currentPage === 1}
-                  >
-                    {"<<"}
-                  </button>
-                  <button
-                    className="px-3 py-1 border rounded"
-                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                    disabled={currentPage === 1}
-                  >
-                    {"<"}
-                  </button>
-                  {Array.from({ length: totalPages }, (_, i) => (
-                    <button
-                      key={i}
-                      className={`px-3 py-1 border rounded ${currentPage === i + 1 ? "bg-primary text-white" : ""}`}
-                      onClick={() => setCurrentPage(i + 1)}
+      {activeTab === "budgetVsActual" && (
+        <>
+          <div className="my-4 relative z-50">
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium">Year</label>
+              <DatePicker
+                selected={budgetVsActualSelectedDate}
+                onChange={(date) => setBudgetVsActualSelectedDate(date)}
+                dateFormat="yyyy"
+                showYearPicker
+                placeholderText="Select Year"
+                className="p-2 border border-gray-300 rounded-lg"
+                calendarClassName="z-50"
+                popperPlacement="top-start"
+                isClearable
+                isSearchable
+                required
+                popperModifiers={{
+                  preventOverflow: {
+                    enabled: true,
+                    boundariesElement: "viewport",
+                  },
+                }}
+              />
+            </div>
+          </div>
+          {budgetVsActualLoading && <p>Loading...</p>}
+          {budgetVsActualError && (
+            <div className="flex justify-center items-center h-64 text-center text-red-500 mt-4">
+              <p>{budgetVsActualError}</p>
+            </div>
+          )}
+          {budgetVsActualSelectedDate &&
+            !budgetVsActualLoading &&
+            !budgetVsActualError && (
+              <div className="card-body p-0 pb-3">
+                <div className="p-4 bg-card">
+                  <div className="flex flex-wrap justify-between items-center mb-4 space-y-2">
+                    <div className="flex items-center space-x-2 text-sm"></div>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={budgetVsActualSearchTerm}
+                        onChange={handleBudgetVsActualSearchChange}
+                        placeholder="Search..."
+                        className="border p-1 pl-8 rounded bg-secondary"
+                      />
+                      <FaSearch className="absolute left-2 top-2 text-gray-400" />
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-300px)]">
+                    <table
+                      className="min-w-full border z-0 rounded-lg bg-card text-sm"
+                      style={{ tableLayout: "fixed", fontSize: "13px" }}
                     >
-                      {i + 1}
-                    </button>
-                  ))}
-                  <button
-                    className="px-3 py-1 border rounded"
-                    onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                  >
-                    {">"}
-                  </button>
-                  <button
-                    className="px-3 py-1 border rounded"
-                    onClick={() => setCurrentPage(totalPages)}
-                    disabled={currentPage === totalPages}
-                  >
-                    {">>"}
-                  </button>
-                </div> */}
+                      <thead className="bg-muted sticky top-0">
+                        <tr>
+                          {[
+                            { key: "Program_Name", label: "Training Name" },
+                            { key: "Department", label: "Department" },
+                            { key: "Req_Months", label: "Scheduled Month" },
+                            { key: "Training_Date", label: "Conducted Date" },
+                            { key: "Training_Name", label: "Type" },
+                            { key: "Train_Mode", label: "Mode" },
+                            { key: "Schedule_Type", label: "Schedule Type" },
+                            {
+                              key: "Training_Budget",
+                              label: "Estimated Budget",
+                            },
+                            { key: "Actual_Budget", label: "Actual Budget" },
+                             {
+                              key: "Training_Status",
+                              label: "Remarks",
+                            },
+                          ].map(({ key, label }, index) => (
+                            <th
+                              key={key}
+                              className={`px-4 py-2 border text-left cursor-pointer ${
+                                index === 0 ? "sticky left-0 bg-muted z-20" : ""
+                              }`}
+                              onClick={() => handleSort(key)}
+                            >
+                              {label}{" "}
+                              {sortConfig.key === key
+                                ? sortConfig.direction === "asc"
+                                  ? "▲"
+                                  : "▼"
+                                : "↕"}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {renderActualVSEstimatedTableRows(
+                          paginatedBudgetVsActualData,
+                          false
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             )}
-          </div>
-        </div>
+        </>
       )}
     </div>
   );

@@ -12,7 +12,7 @@ export default async function handler(req, res) {
 
   try {
     const result = await prisma.$queryRawUnsafe(
-      `EXEC Get_Training_Budget @Year_No = ${parseInt(year, 10)}`
+      `EXEC Get_Training_Budget_First_Report @Year_No = ${parseInt(year, 10)}`
     );
 
     res.status(200).json(result);

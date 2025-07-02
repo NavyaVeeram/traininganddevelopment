@@ -152,6 +152,7 @@ export default function TrainerApprovalForm() {
                 <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Section")}>Section</th>
                 <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Qualified")}>Qualified</th>
                 <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Certified")}>Certified</th>
+                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Cert_Des")}>Cer_Des</th>
                 <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Exp_5_Yr")}>5 Yr Exp</th>
                 <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Exp_3_Yr")}>3 Yr Exp</th>
               <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("HOD_Rec")}>HOD Rec</th>
@@ -169,6 +170,7 @@ export default function TrainerApprovalForm() {
                   <td className="border p-2 text-left">{item.Section}</td>
                   <td className="border p-2 text-left">{item.Qualified ? "Yes" : "No"}</td>
                   <td className="border p-2 text-left">{item.Certified ? "Yes" : "No"}</td>
+                  <td className="border p-2 text-left">{item.Cert_Des}</td>
                   <td className="border p-2 text-left">{item.Exp_5_Yr ? "Yes" : "No"}</td>
                   <td className="border p-2 text-left">{item.Exp_3_Yr ? "Yes" : "No"}</td>
                   <td className="border p-2 text-left">{item.HOD_Rec ? "Yes" : "No"}</td>

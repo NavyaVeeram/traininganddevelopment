@@ -759,6 +759,7 @@ const QualifiedTrainerList = () => {
                       { key: "Department", label: "Department" },
                       { key: "Training_Name", label: "Training Name" },
                       { key: "Certified", label: "Certified" },
+                      { key :"Cert_Des",label:"Cert_Des"},
                       { key: "Exp_5_Yr", label: "Exp (5Yr)" },
                       { key: "Exp_3_yr", label: "Exp (3Yr)" },
                       { key: "HOD_Rec", label: "HOD Rec" },
@@ -801,6 +802,9 @@ const QualifiedTrainerList = () => {
                         </td>
                         <td className="px-4 py-2 border">
                           {item.Certified ? "Yes" : "No"}
+                        </td>
+                         <td className="px-4 py-2 border">
+                          {item.Cert_Des}
                         </td>
                         <td className="px-4 py-2 border">
                           {item.Exp_5_Yr ? "Yes" : "No"}
