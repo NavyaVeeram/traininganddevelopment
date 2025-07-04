@@ -621,7 +621,6 @@ const QualifiedTrainerList = () => {
                 checked={exp5Yr}
                 onChange={() => handleCheckboxChange(setExp5Yr, exp5Yr, "exp5Yr")}
                 className="h-4 w-4 "
-                disabled={!EmployeeId || !isExperienceAtLeast3Years}
               />
             </div>
                <div className="flex  space-x-2">
@@ -713,7 +712,7 @@ const QualifiedTrainerList = () => {
                 <div className="relative">
                   <input
                     type="text"
-                    className="border p-1 pl-8 rounded bg-secondary"
+                    className="border p-1 pl-8 rounded "
                     placeholder="Search..."
                     value={tableSearchTerm}
                     onChange={handleTableSearchChange}

@@ -188,12 +188,23 @@ yearOptions.push(y);
 }
 
 // Filter out "programid" from columns to display
-const columnsToDisplay = data.length > 0
-? Object.keys(data[0]).filter((key) => {
-const lowerKey = key.toLowerCase();
-return lowerKey !== "programid" && lowerKey !== "program_id" && lowerKey !== "year_no" && lowerKey !== "train_purpose" && lowerKey !== "no_times" && lowerKey !== "isactive" && lowerKey !== "email_status";
-})
-: [];
+const columnsToDisplay =
+    data.length > 0
+      ? Object.keys(data[0]).filter((key) => {
+          const lowerKey = key.toLowerCase();
+          return (
+            lowerKey !== "programid" &&
+            lowerKey !== "program_id" &&
+            lowerKey !== "year_no" &&
+            lowerKey !== "train_purpose" &&
+            lowerKey !== "no_times" &&
+            lowerKey !== "isactive" &&
+            lowerKey !== "email_status" &&
+            lowerKey !== "training_name" &&
+            lowerKey !== "emp_send"
+          );
+        })
+      : [];
 
 return (
 <div className="max-w-full mx-auto bg-white p-2 w-full">
@@ -347,7 +358,6 @@ return (
 .filter(([key]) => columnsToDisplay.includes(key))
 .map(([key, value], index) => {
 let displayValue = value;
-// Map actual data keys to lowercase for consistent access
 const keyMap = {};
 Object.keys(row).forEach(k => {
 keyMap[k.toLowerCase()] = k;
@@ -517,5 +527,4 @@ className="px-3 py-1 border rounded"
 </div>
 );
 }
-
 

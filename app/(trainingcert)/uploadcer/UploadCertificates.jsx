@@ -149,6 +149,7 @@ const fetchTrainingData = async (programId) => {
       Forward: trainingData.Forward || "",
       Schedule_Type: trainingData.Schedule_Type || "",
       Trainer: trainingData.Trainer || "",
+      Trainer_Name: trainingData.Trainer_Name || "",
       Venue: trainingData.Venue || "",
       Training_Budget: trainingData.Training_Budget || "",
       EmployeeIds: trainingData.EmployeeId
@@ -478,30 +479,14 @@ Loading...
       <label htmlFor="Trainer" className="block font-medium mb-1">
         Trainer
       </label>
-      <Select
-        id="Trainer"
-        name="Trainer"
-        options={mappedTrainerOptions}
-        placeholder=""
+      <input
+        type="text"
         value={
-          mappedTrainerOptions.find(
-            (opt) => opt.value === formData.Trainer
-          ) || null
+          formData.Trainer_Name || ""
         }
-        isDisabled={true}
-        className="w-full"
-        styles={{
-          control: (base, state) => ({
-            ...base,
-            backgroundColor: "#f3f4f6",
-            borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
-            boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
-            padding: "1px",
-            borderRadius: "0.5rem",
-            minHeight: "2rem",
-          }),
-        }}
-      />
+        readOnly
+        className="w-full pl-4 py-2 border border-gray-300 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      /> 
     </div>
 
     {/* Training Date */}
@@ -510,7 +495,7 @@ Loading...
       <input
         type="text"
         value={
-          formData.Training_Date
+          formData.Training_Date || ""
         }
         readOnly
         className="w-full pl-4 py-2 border border-gray-300 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -536,9 +521,9 @@ Loading...
   <button
       type="submit"
       disabled={!formData.Training_Date || !file || !formData.Program_Id}
-      className={`px-6 w-30 mt-2 py-2 text-sm font-semibold  rounded-md shadow-md focus:ring-2  ${
-        formData.Training_Date
-          ? "bg-gray-600 text-white hover:bg-gray-800"
+      className={`px-6 w-30 mt-2 py-2 text-sm font-semibold rounded-md shadow-md focus:ring-2  ${
+        formData.Training_Date && file && formData.Program_Id
+          ? "bg-gray-600 text-white hover:bg-gray-800 cursor-pointer"
           : "bg-gray-300 text-gray-400 cursor-not-allowed"
       }`}
     >
@@ -586,7 +571,7 @@ Loading...
                     type="text"
                     className="border p-1 pl-8 rounded bg-secondary"
                     placeholder="Search..."
-                    value={tableSearchTerm}
+                    value={tableSearchTerm || ""}
                     onChange={handleTableSearchChange}
                   />
                   <FaSearch className="absolute left-2 top-2 text-gray-400" />

@@ -120,6 +120,7 @@ const fetchTrainingData = async (programId) => {
       Forward: trainingData.Forward || "",
       Schedule_Type: trainingData.Schedule_Type || "",
       Trainer: trainingData.Trainer || "",
+      Trainer_Name: trainingData.Trainer_Name || "",
       Venue: trainingData.Venue || "",
       Training_Budget: trainingData.Training_Budget || "",
       EmployeeIds: trainingData.EmployeeId
@@ -287,7 +288,7 @@ const fetchTrainingData = async (programId) => {
           "Program_Name",
           "Year_No",
           "Department",
-          "Trainer",
+          "Trainer_Name",
           "Training_Date",
           "Train_Mode",
         ].some((field) =>
@@ -470,42 +471,25 @@ const programOptions = options.map((option) => ({
 
     {/* Trainer */}
     <div className="flex flex-col mx-2">
-      <label htmlFor="Trainer" className="block font-medium mb-1">
-        Trainer
-      </label>
-      <Select
-        id="Trainer"
-        name="Trainer"
-        options={mappedTrainerOptions}
-        placeholder=""
+        <label className="block font-medium mb-1">Trainer</label>
+      <input
+        type="text"
         value={
-          mappedTrainerOptions.find(
-            (opt) => opt.value === formData.Trainer
-          ) || null
+          formData.Trainer_Name || ""
         }
-        isDisabled={true}
-        className="w-full"
-        styles={{
-          control: (base, state) => ({
-            ...base,
-            backgroundColor: "#f3f4f6",
-            borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
-            boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
-            padding: "1px",
-            borderRadius: "0.5rem",
-            minHeight: "2rem",
-          }),
-        }}
+        readOnly
+        className="w-full pl-4 py-2 border border-gray-300 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
+
     </div>
 
     {/* Training Date */}
     <div className="flex flex-col mx-2">
       <label className="block font-medium mb-1">Training Date</label>
       <input
-        type="date"
+        type="text"
         value={
-          formData.Training_Date ? formData.Training_Date.split("T")[0] : ""
+          formData.Training_Date || ""
         }
         readOnly
         className="w-full pl-4 py-2 border border-gray-300 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -531,9 +515,9 @@ const programOptions = options.map((option) => ({
   <button
       type="submit"
       disabled={!formData.Training_Date || !file || !formData.Program_Id}
-      className={`px-6 w-30 mt-2 py-2 text-sm font-semibold  rounded-md shadow-md focus:ring-2  ${
-        formData.Training_Date
-          ? "bg-gray-600 text-white hover:bg-gray-800"
+      className={`px-6 w-30 mt-2 py-2 text-sm font-semibold rounded-md shadow-md focus:ring-2  ${
+        formData.Training_Date && file && formData.Program_Id
+          ? "bg-gray-600 text-white hover:bg-gray-800 cursor-pointer"
           : "bg-gray-300 text-gray-400 cursor-not-allowed"
       }`}
     >
@@ -581,7 +565,7 @@ const programOptions = options.map((option) => ({
                     type="text"
                     className="border p-1 pl-8 rounded bg-secondary"
                     placeholder="Search..."
-                    value={tableSearchTerm}
+                    value={tableSearchTerm || ""}
                     onChange={handleTableSearchChange}
                   />
                   <FaSearch className="absolute left-2 top-2 text-gray-400" />
@@ -604,7 +588,7 @@ const programOptions = options.map((option) => ({
   { key: "Program_Name", label: "Program Name" },
   { key: "Year_No", label: "Year No" },
   { key: "Department", label: "Department" },
-  { key: "Trainer", label: "Trainer" },
+  { key: "Trainer", label: "Trainer " },
   { key: "Training_Date", label: "Training Date" },
   { key: "", label: "Training Materials" },
 ].map(({ key, label }, index) => (
@@ -637,8 +621,7 @@ const programOptions = options.map((option) => ({
                           </td>
                           <td className="px-4 py-2 border">{item.Program_Name}</td>
                           <td className="px-4 py-2 border">{item.Year_No}</td>
-                          <td className="px-4 py-2 border">{item.Department}
-</td>
+                          <td className="px-4 py-2 border">{item.Department}</td>
                           <td className="px-4 py-2 border">{item.Trainer}</td>
                           <td className="px-4 py-2 border">
                             {item.Training_Date
@@ -701,7 +684,7 @@ const programOptions = options.map((option) => ({
                       <button
                         key={i}
                         className={`px-3 py-1 border rounded ${
-                          currentPage === i + 1 ? "bg- text-white" : ""
+                           currentPage === i + 1 ? "bg-black text-white" : ""
                         }`}
                         onClick={() => setCurrentPage(i + 1)}
                       >

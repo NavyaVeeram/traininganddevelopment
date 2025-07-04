@@ -39,7 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Training and Development</title>
         <link rel="icon" href="/favicon.ico" />
-        <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css" />
+        {/* <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css" /> */}
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {/* Only render the navigation menu if logged in */}

@@ -246,7 +246,7 @@ const TETForms = () => {
             <label htmlFor="training-select" className="mr-2 font-semibold ">
               Select Training:
             </label>
-          <div className="relative z-0" style={{ minWidth: "250px" }}>
+          <div className="relative" style={{ minWidth: "250px" }}>
             <Select
               inputId="Training_Name"
               value={{
@@ -256,7 +256,7 @@ const TETForms = () => {
                     ? "International Automotive Task Force - (IATF)"
                     : "Health, Safety, and Environment - (HSE)",
               }}
-              className="relative z-0"
+              className="relative"
               onChange={(selectedOption) => setTrainingName(selectedOption.value)}
               options={[
                 {

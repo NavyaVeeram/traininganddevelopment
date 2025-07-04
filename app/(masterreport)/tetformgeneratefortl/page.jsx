@@ -202,9 +202,11 @@ const [EmployeeId,setEmployeeId] = useState(null);
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
         <h1 className="font-semibold">TET Forms</h1>
       </div>
-      <div className="mt-3 flex relative z-50">
+      <div className="mt-3 flex relative">
         <div className="flex items-center">
-          <label className="text-sm font-medium">Year</label>
+         <label htmlFor="year-select" className="mr-2 font-semibold">
+              Select Year:
+            </label>
           <DatePicker
             selected={selectedDate}
             onChange={(date) => setSelectedDate(date)}
@@ -223,9 +225,9 @@ const [EmployeeId,setEmployeeId] = useState(null);
           />
         </div>
    <div className="flex mx-2 items-center">
-        <label htmlFor="Training_Name" className="text-sm font-medium">
-    Training Name
-        </label>
+<label htmlFor="Training_Name" className=" mr-2 font-semibold whitespace-nowrap">
+              Select Training:
+            </label>
         <div className="relative w-full">
           <Select
             inputId="Training_Name"

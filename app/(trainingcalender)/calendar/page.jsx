@@ -66,11 +66,11 @@ const FullYearCalendar = () => {
   return (
     <div className="relative z-50">
       <button
-        className="p-2 bg-sky-500 text-white rounded-full hover:bg-sky-600"
+        className="p-2 cursor-pointer bg-sky-500 text-white rounded-full hover:bg-sky-600"
         onClick={() => setShowCalendar((prev) => !prev)}
         aria-label="Toggle calendar"
       >
-        <CalendarDays />
+        <CalendarDays className="pointer-events-none"/>
       </button>
 
       {showCalendar && (

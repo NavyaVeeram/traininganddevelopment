@@ -4,11 +4,21 @@ import { FaSearch, FaEdit } from "react-icons/fa";
 import Select from "react-select";
 import EmailApprovalForTrainers from "../emailfortrainers/EmailApprovalForTrainers"
 import EmailRejectionForTrainers from "../emailfortrainers/EmailRejectionForTrainers"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationEllipsis,
+} from "@/components/ui/pagination"
+
 export default function TrainerApprovalForm() {
   const [trainerData, setTrainerData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const [loading, setLoading] = useState(true);
   const [employeeId, setEmployeeId] = useState('');
@@ -143,7 +153,7 @@ export default function TrainerApprovalForm() {
                 }}
                 className="border rounded p-1"
               >
-                {[10, 20, 30, 40, 100, "All"].map((val) => (
+                {[5, 10, 20, 30, 40, 100, "All"].map((val) => (
                   <option key={val} value={val}>
                     {val}
                   </option>
@@ -324,31 +334,57 @@ Nominated by HOD
 
           {rowsPerPage !== "All" && filteredData.length > 0 && (
             <div className="flex justify-between items-center mt-4 text-sm">
-              <span>
+              <div>
                 Showing{" "}
                 {filteredData.length > 0
                   ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
-                    currentPage * rowsPerPage,
-                    filteredData.length
-                  )} of ${filteredData.length}`
-                  : "0"}{" "}
-                entries
-              </span>
-              <div className="flex gap-1">
-                <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="px-3 py-1 border rounded">{"<<"}</button>
-                <button onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="px-3 py-1 border rounded">{"<"}</button>
-                {[...Array(totalPages)].map((_, i) => (
+                      currentPage * rowsPerPage,
+                      filteredData.length
+                    )} of ${filteredData.length} entries`
+                  : "0 entries"}
+              </div>
+              <div className="flex space-x-1">
+                <button
+                  className="px-3 py-1 border rounded"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                >
+                  {"<<"}
+                </button>
+                <button
+                  className="px-3 py-1 border rounded"
+                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                  disabled={currentPage === 1}
+                >
+                  {"<"}
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => (
                   <button
                     key={i}
-                    className={`px-3 py-1 border rounded ${currentPage === i + 1 ? "bg-black text-primary-foreground" : ""}`}
+                    className={`px-3 py-1 border rounded ${
+                      currentPage === i + 1 ? "bg-black text-white" : ""
+                    }`}
                     onClick={() => setCurrentPage(i + 1)}
-                    type="button"
                   >
                     {i + 1}
                   </button>
                 ))}
-                <button onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="px-3 py-1 border rounded">{">"}</button>
-                <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} className="px-3 py-1 border rounded">{">>"}</button>
+                <button
+                  className="px-3 py-1 border rounded"
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(p + 1, totalPages))
+                  }
+                  disabled={currentPage === totalPages}
+                >
+                  {">"}
+                </button>
+                <button
+                  className="px-3 py-1 border rounded"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                >
+                  {">>"}
+                </button>
               </div>
             </div>
           )}

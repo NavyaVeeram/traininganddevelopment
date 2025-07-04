@@ -266,7 +266,7 @@ const animatedComponents = makeAnimated();
     }
   };
 
-  useEffect(() => {a
+  useEffect(() => {
     const fetchTrainers = async () => {
       try {
         const res = await fetch("/api/qualified_trainer_dropdown");
@@ -661,10 +661,10 @@ const font = await mergedPdf.embedFont(fontBytes);
         if (index === 0) {
         const Username = emp.UserName || "";
                                 const words = Username.split(" ").filter(Boolean);
-                                if (words.length > 4) {
+                                if (words.length > 3) {
                                   // Draw first 4 words on one line at top
-                                  const firstLine = words.slice(0, 4).join(" ");
-                                  const secondLine = words.slice(4).join(" ");
+                                  const firstLine = words.slice(0, 3).join(" ");
+                                  const secondLine = words.slice(3).join(" ");
                                   page.drawText(firstLine, {
                                     x: 140,
                                     y: height - 70,
@@ -721,23 +721,28 @@ const font = await mergedPdf.embedFont(fontBytes);
           });
           // Split Program_Name into two lines for drawing
         // Split Program_Name into two lines for drawing  
-        const ProgramName = emp.Program_Name || "";
-                                const wordss = ProgramName.split(" ").filter(Boolean);
-                                if (wordss.length > 5) {
-                                  // Draw first 4 words on one line at top
-                                  const firstLine1 = wordss.slice(0, 5).join(" ");
-                                  const secondLine2 = wordss.slice(5).join(" ");
-                                  page.drawText(firstLine1, {
+         const ProgramName = emp.Program_Name || "";
+                                if (ProgramName.length > 35) {
+                                  const firstLine = ProgramName.substring(0, 35);
+                                  const secondLine = ProgramName.substring(35);
+                                  page.drawText(firstLine, {
                                     x: 375,
                                     y: height - 70,
                                     size: 11,
                                     font,
                                     color: rgb(0, 0, 0),
                                   });
-                                  // Draw remaining words on next line lower
-                                  page.drawText(secondLine2, {
+                                  page.drawText(secondLine, {
                                     x: 375,
                                     y: height - 85,
+                                    size: 11,
+                                    font,
+                                    color: rgb(0, 0, 0),
+                                  });
+                                } else {
+                                  page.drawText(ProgramName, {
+                                    x: 375,
+                                    y: height - 70,
                                     size: 11,
                                     font,
                                     color: rgb(0, 0, 0),
@@ -976,9 +981,24 @@ const programOptions = options.map((option) => ({
                 value={
                   convertDateToInputValue(formData.Training_Date)
                 }
-                onChange={(e) =>
-                setFormData({ ...formData, Training_Date: convertInputValueToDate(e.target.value) })
-                }
+                onChange={(e) => {
+                  const newDate = convertInputValueToDate(e.target.value);
+                  setFormData((prev) => ({
+                    ...prev,
+                    Training_Date: newDate,
+                    // Reset these fields if Training_Date is cleared
+                    ...(newDate === "" && {
+                      selectedMonth: "",
+                      Schedule_Type: "",
+                      Trainer: "",
+                      Venue: "",
+                      Actual_Budget: "",
+                      EmployeeIds: [],
+                    }),
+                  }));
+                  // Reset Cancel checkbox when Training_Date changes
+                  setIsCancelChecked(false);
+                }}
                 disabled={!!formData.selectedMonth}
                 className={`w-full py-2 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-blue-500 ${
                 formData.selectedMonth ? "bg-gray-100 cursor-not-allowed" : ""
@@ -997,13 +1017,17 @@ const programOptions = options.map((option) => ({
                       (opt) => opt.value === formData.selectedMonth
                     ) || null
                   }
-                  onChange={(selectedOption) => {
+                onChange={(selectedOption) => {
                     const newSelectedMonth = selectedOption ? selectedOption.value : "";
                     const reqMonths = formData.Req_Months;
                     setFormData((prev) => ({
                       ...prev,
                       selectedMonth: newSelectedMonth,
                       EmployeeIds: [],
+                      Schedule_Type: "",
+                      Trainer: "",
+                      Venue: "",
+                      Actual_Budget: "",
                     }));
                     if (newSelectedMonth && reqMonths) {
                       const newMessage = `This program will be rescheduled from ${reqMonths} to ${newSelectedMonth}`;

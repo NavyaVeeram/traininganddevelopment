@@ -234,7 +234,7 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
 <NavigationMenuItem className="bg-gray-100 position-relative cursor-pointer Z-50">
   <NavigationMenuTrigger className="hover:text-sky-400 cursor-pointer">Training Calendar</NavigationMenuTrigger>
   <NavigationMenuContent className="grid gap-2 p-1 md:w-[280px] max-h-[280px] cursor-pointer">
-    <ul className="grid gap-2 ">
+    <ul className="grid gap-2 cursor-pointer">
    {training.map((component) => {
    
     if (component.title ===  "Annual Training Calender - IATF/HSE" && accessRole !== "HR_Res" && accessRole !== "HR_Hod" ) {
@@ -394,8 +394,8 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
               </NavigationMenuContent>
             </NavigationMenuItem>
             )}
-          <NavigationMenuItem className="bg-gray-100 hover:bg-gray-200 hover:text-sky-400 focus:bg-gray-300 transition-all duration-300">
-            <div className="mx-5 cursor-pointer">  <ProfileDropdown  username={username} /></div>
+          <NavigationMenuItem className="bg-gray-100 hover:bg-gray-200 hover:text-sky-400 focus:bg-gray-300 transition-all cursor-pointer duration-300">
+            <div className="mx-5 cursor-pointer">  <ProfileDropdown   username={username} /></div>
         
             </NavigationMenuItem>
 
@@ -508,8 +508,8 @@ function ProfileDropdown({ username }: { username: string }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <User className="h-5 w-5" />
+        <Button variant="ghost" size="icon" className="cursor-pointer">
+          <User className="h-5 w-5 cursor-pointer"  />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56 mr-2">

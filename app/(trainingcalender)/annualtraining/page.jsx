@@ -55,21 +55,23 @@ const AnnualTraining = () => {
           if (
             data.Access_Role === "Res_Person" ||
             data.Access_Role === "HOS" ||
-            data.Access_Role === "HOD"
+            data.Access_Role === "HOD" ||
+            data.Access_Role === "HR_Res" ||
+            data.Access_Role === "HR_HOD"
           ) {
-            setIsAuthorized(false);
+            setIsAuthorized(true);
             // Optionally redirect to unauthorized page
             // window.location.href = '/unauthorized';
             return;
           }
           setAccessRole(data.Access_Role);
-          setIsAuthorized(true);
-        } else {
           setIsAuthorized(false);
+        } else {
+          setIsAuthorized(true);
         }
       } catch (error) {
         console.error("Error fetching access role:", error);
-        setIsAuthorized(false);
+        setIsAuthorized(true);
       }
     };
 
