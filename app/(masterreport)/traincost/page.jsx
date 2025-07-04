@@ -620,7 +620,7 @@ const TrainingBudget = () => {
               e.preventDefault();
               generateBudgetPDF(activeTab);
             }}
-            className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-1 px-3 rounded"
+            className="flex items-center cursor-pointer space-x-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-1 px-3 rounded"
             aria-label="Export PDF"
             title="Export PDF"
           >
@@ -724,98 +724,100 @@ const TrainingBudget = () => {
               </div>
             </div>
           )}
-          <div className="flex justify-end mt-4">
-            <button
-              className="px-6 mt-2 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
-              onClick={async () => {
-                try {
-                  if (!selectedDate) {
-                    alert("Please select a year before saving.");
-                    return;
-                  }
-                  // Save additional budget
-                  const response = await fetch(
-                    "/api/insert_additional_budget",
-                    {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                      },
-                      body: JSON.stringify({
-                        Year_No: selectedDate.getFullYear(),
-                        Add_Budget: Number(additionalTrainingProgramsText) || 0,
-                        createdBy: employeeId || "",
-                      }),
+          {selectedDate && filteredData.length > 0 && !error && (
+            <div className="flex justify-end mt-4">
+              <button
+                className="px-6 mt-2 cursor-pointer py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
+                onClick={async () => {
+                  try {
+                    if (!selectedDate) {
+                      alert("Please select a year before saving.");
+                      return;
                     }
-                  );
-                  if (!response.ok) {
-                    throw new Error("Failed to save additional budget");
-                  }
-                  // Save notes for each program_id
-                  const notePromises = Object.entries(notes)
-                    .filter(
-                      ([_, noteText]) => noteText && noteText.trim() !== ""
-                    )
-                    .map(([programId, noteText]) =>
-                      fetch("/api/insert_additional_budget_note", {
+                    // Save additional budget
+                    const response = await fetch(
+                      "/api/insert_additional_budget",
+                      {
                         method: "POST",
                         headers: {
                           "Content-Type": "application/json",
                         },
                         body: JSON.stringify({
                           Year_No: selectedDate.getFullYear(),
-                          Program_Id: programId,
-                          Note_text: noteText,
+                          Add_Budget: Number(additionalTrainingProgramsText) || 0,
                           createdBy: employeeId || "",
                         }),
-                      })
+                      }
                     );
-                  const noteResponses = await Promise.all(notePromises);
-                  const failedNote = noteResponses.find((res) => !res.ok);
-                  if (failedNote) {
-                    throw new Error("Failed to save one or more notes");
+                    if (!response.ok) {
+                      throw new Error("Failed to save additional budget");
+                    }
+                    // Save notes for each program_id
+                    const notePromises = Object.entries(notes)
+                      .filter(
+                        ([_, noteText]) => noteText && noteText.trim() !== ""
+                      )
+                      .map(([programId, noteText]) =>
+                        fetch("/api/insert_additional_budget_note", {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                          },
+                          body: JSON.stringify({
+                            Year_No: selectedDate.getFullYear(),
+                            Program_Id: programId,
+                            Note_text: noteText,
+                            createdBy: employeeId || "",
+                          }),
+                        })
+                      );
+                    const noteResponses = await Promise.all(notePromises);
+                    const failedNote = noteResponses.find((res) => !res.ok);
+                    if (failedNote) {
+                      throw new Error("Failed to save one or more notes");
+                    }
+                    alert("Additional budget and notes saved successfully");
+                    // Do not clear the text fields after successful save as per user request
+                    // Update trainingData and filteredData state directly to avoid full re-render
+                    setTrainingData((prevData) => {
+                      return prevData.map((item) => {
+                        if (
+                          item.Program_Name?.toLowerCase().includes("additional")
+                        ) {
+                          return {
+                            ...item,
+                            Training_Budget:
+                              Number(additionalTrainingProgramsText) || 0,
+                          };
+                        }
+                        return item;
+                      });
+                    });
+                    setFilteredData((prevData) => {
+                      return prevData.map((item) => {
+                        if (
+                          item.Program_Name?.toLowerCase().includes("additional")
+                        ) {
+                          return {
+                            ...item,
+                            Training_Budget:
+                              Number(additionalTrainingProgramsText) || 0,
+                          };
+                        }
+                        return item;
+                      });
+                    });
+                  } catch (error) {
+                    alert(
+                      "Error saving additional budget and notes: " + error.message
+                    );
                   }
-                  alert("Additional budget and notes saved successfully");
-                  // Do not clear the text fields after successful save as per user request
-                  // Update trainingData and filteredData state directly to avoid full re-render
-                  setTrainingData((prevData) => {
-                    return prevData.map((item) => {
-                      if (
-                        item.Program_Name?.toLowerCase().includes("additional")
-                      ) {
-                        return {
-                          ...item,
-                          Training_Budget:
-                            Number(additionalTrainingProgramsText) || 0,
-                        };
-                      }
-                      return item;
-                    });
-                  });
-                  setFilteredData((prevData) => {
-                    return prevData.map((item) => {
-                      if (
-                        item.Program_Name?.toLowerCase().includes("additional")
-                      ) {
-                        return {
-                          ...item,
-                          Training_Budget:
-                            Number(additionalTrainingProgramsText) || 0,
-                        };
-                      }
-                      return item;
-                    });
-                  });
-                } catch (error) {
-                  alert(
-                    "Error saving additional budget and notes: " + error.message
-                  );
-                }
-              }}
-            >
-              Save
-            </button>
-          </div>
+                }}
+              >
+                Save
+              </button>
+            </div>
+          )}
         </>
       )}
 

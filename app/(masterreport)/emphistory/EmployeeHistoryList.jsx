@@ -30,16 +30,12 @@ const EmployeeHistoryList = () => {
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    const storedEmployeeId = localStorage.getItem("employeeId");
-
-    if (storedEmployeeId) {
-      setEmployeeId(storedEmployeeId);
-    }
+    // Removed setting EmployeeId from localStorage to avoid default display in Select dropdown
 
     const fetchAccessRole = async () => {
       try {
         const res = await fetch(
-          `/api/get_access_role?employeeId=${storedEmployeeId}`
+          `/api/get_access_role?employeeId=${localStorage.getItem("employeeId")}`
         );
         const data = await res.json();
 

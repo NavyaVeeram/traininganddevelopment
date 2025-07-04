@@ -2,12 +2,13 @@
 import { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import Select from "react-select";
 import { FaSearch } from "react-icons/fa";
 import Link from "next/link";
 
 const TETForms = () => {
-const [selectedDate, setSelectedDate] = useState(new Date());
-const [trainingName, setTrainingName] = useState("IATF");
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [trainingName, setTrainingName] = useState("IATF");
   const [trainingData, setTrainingData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [tableSearchTerm, setTableSearchTerm] = useState("");
@@ -16,12 +17,19 @@ const [trainingName, setTrainingName] = useState("IATF");
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
-  const [submittedStatusMap, setSubmittedStatusMap] = useState({});
-  const [submittedStatusLoading, setSubmittedStatusLoading] = useState(false);
+  // Removed submittedStatusMap and submittedStatusLoading states
+  // const [submittedStatusMap, setSubmittedStatusMap] = useState({});
+  // const [submittedStatusLoading, setSubmittedStatusLoading] = useState(false);
   const [accessRole, setAccessRole] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(null);
+  const [employeeId, setEmployeeId] = useState(null);
+
+  // New state variables for user dropdown data
+  const [userDropdownData, setUserDropdownData] = useState([]);
+  const [userDropdownLoading, setUserDropdownLoading] = useState(false);
+  const [userDropdownError, setUserDropdownError] = useState(null);
+
   const getMonthNumber = (date) => (date ? date.getMonth() + 1 : null);
-const [EmployeeId,setEmployeeId] = useState(null);
 
   const fetchData = async (date, trainingName) => {
     const storedEmployeeId = localStorage.getItem("employeeId");
@@ -40,7 +48,9 @@ const [EmployeeId,setEmployeeId] = useState(null);
 
     try {
       const response = await fetch(
-        `/api/get_tet_form_data?year=${date}&training_name=${encodeURIComponent(trainingName)}&EmployeeId=${storedEmployeeId}`
+        `/api/get_tet_form_data?year=${date}&training_name=${encodeURIComponent(
+          trainingName
+        )}&EmployeeId=${storedEmployeeId}`
       );
 
       if (!response.ok) {
@@ -56,7 +66,7 @@ const [EmployeeId,setEmployeeId] = useState(null);
         setTrainingData(data);
         setFilteredData(data);
         // Fetch submitted status map for all Program_Ids
-        fetchSubmittedStatusMap(data);
+   
       }
     } catch (err) {
       setError(err.message || "An error occurred while fetching data.");
@@ -66,53 +76,27 @@ const [EmployeeId,setEmployeeId] = useState(null);
     }
   };
 
-  const fetchSubmittedStatusMap = async (trainingData) => {
-    if (!trainingData || trainingData.length === 0) {
-      setSubmittedStatusMap({});
-      return;
-    }
-    setSubmittedStatusLoading(true);
-    const programIds = [...new Set(trainingData.map(item => item.Program_Id))];
-    const statusMap = {};
+  // New function to fetch user dropdown data from API
+  const fetchUserDropdownData = async (programId, empId) => {
+    if (!programId || !empId) return;
+    setUserDropdownLoading(true);
+    setUserDropdownError(null);
     try {
-      const fetchPromises = programIds.map(async (programId) => {
-        try {
-          const res = await fetch(`/api/get_tet_form_emp_details_for_report?programId=${programId}`);
-          if (!res.ok) {
-            statusMap[programId] = false;
-            return;
-          }
-          const data = await res.json();
-          // Check if all employees have all Q_1 to Q_10 > 0 (all dropdowns ticked)
-          // Determine number of dropdowns dynamically from keys starting with "Q_"
-          const dropdownKeys = Object.keys(data[0] || {}).filter(key => key.startsWith("Q_"));
-          const allTicked = data.every(emp => {
-            for (let i = 0; i < dropdownKeys.length; i++) {
-              const key = dropdownKeys[i];
-              if (!emp[key] || emp[key] <= 0) {
-                return false;
-              }
-            }
-            return true;
-          });
-          statusMap[programId] = allTicked;
-        } catch (error) {
-          statusMap[programId] = false;
-        }
-      });
-      await Promise.all(fetchPromises);
+      const res = await fetch(
+        `/api/get_tet_form_user_dropdown_res_person_update_tl?programId=${programId}&EmployeeId=${empId}`
+      );
+      if (!res.ok) {
+        throw new Error("Failed to fetch user dropdown data");
+      }
+      const data = await res.json();
+      setUserDropdownData(data);
     } catch (error) {
-      // In case of unexpected error, clear status map
-      setSubmittedStatusMap({});
+      setUserDropdownError(error.message || "Error fetching user dropdown data");
+      setUserDropdownData([]);
     } finally {
-      setSubmittedStatusMap(statusMap);
-      setSubmittedStatusLoading(false);
+      setUserDropdownLoading(false);
     }
   };
-
-  // useEffect(() => {
-  //   if (selectedDate) fetchData(selectedDate);
-  // }, [selectedDate]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -126,40 +110,47 @@ const [EmployeeId,setEmployeeId] = useState(null);
       setCurrentPage(1);
     }
   }, [selectedDate, trainingName]);
-   useEffect(() => {
-     const storedEmployeeId = localStorage.getItem('employeeId');
-   
-     if (storedEmployeeId) {
-       setEmployeeId(storedEmployeeId);
-     }
-    
-     const fetchAccessRole = async () => {
-       try {
-         const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-         const data = await res.json();
-   
-         if (res.ok && data.Access_Role) {
-           // Restrict access for HR_Res and HR_HOD roles
-           if (data.Access_Role === "Res_Person") {
-             setIsAuthorized(false);
-             // Optionally redirect to unauthorized page
-             // window.location.href = '/unauthorized';
-             return;
-           }
-           setAccessRole(data.Access_Role);
-           setIsAuthorized(true);
-         } else {
-           setIsAuthorized(false);
-         }
-       } catch (error) {
-         console.error('Error fetching access role:', error);
-         setIsAuthorized(false);
-       }
-     };
-   
-     fetchAccessRole();
-   }, []);
 
+  useEffect(() => {
+    const storedEmployeeId = localStorage.getItem("employeeId");
+
+    if (storedEmployeeId) {
+      setEmployeeId(storedEmployeeId);
+    }
+
+    const fetchAccessRole = async () => {
+      try {
+        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+        const data = await res.json();
+
+        if (res.ok && data.Access_Role) {
+          if (data.Access_Role === "Res_Person") {
+            setIsAuthorized(false);
+            return;
+          }
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+        }
+      } catch (error) {
+        console.error("Error fetching access role:", error);
+        setIsAuthorized(false);
+      }
+    };
+
+    fetchAccessRole();
+  }, []);
+
+  // New useEffect to fetch user dropdown data when trainingData and employeeId change
+  useEffect(() => {
+    if (trainingData.length > 0 && employeeId) {
+      const programId = trainingData[0].Program_Id;
+      fetchUserDropdownData(programId, employeeId);
+    } else {
+      setUserDropdownData([]);
+    }
+  }, [trainingData, employeeId]);
 
   const handleSort = (key) => {
     let direction = "asc";
@@ -181,10 +172,7 @@ const [EmployeeId,setEmployeeId] = useState(null);
   const paginatedData =
     rowsPerPage === "All"
       ? sortedData
-      : sortedData.slice(
-          (currentPage - 1) * rowsPerPage,
-          currentPage * rowsPerPage
-        );
+      : sortedData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
 
@@ -203,26 +191,17 @@ const [EmployeeId,setEmployeeId] = useState(null);
           "Evaluation_Date",
           "Training_Date",
           "Training_Name",
-          "IsActive",
+          "Training_Status"
         ].some((field) =>
-          trainer[field]
-            ?.toString()
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase())
+          trainer[field]?.toString().toLowerCase().includes(searchQuery.toLowerCase())
         )
       );
       setFilteredData(filtered);
     }
   };
-   if (isAuthorized === null) {
-    return (
-      // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
-      //   <div className="bg-white p-10 rounded shadow text-center">
-      //     <h2 className="text-2xl font-bold">Loading...</h2>
-      //   </div>
-      // </div>
-      <div>Loading...</div>
-    );
+
+  if (isAuthorized === null) {
+    return <div>Loading...</div>;
   }
   if (isAuthorized === false) {
     return (
@@ -234,14 +213,18 @@ const [EmployeeId,setEmployeeId] = useState(null);
       </div>
     );
   }
+
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
         <h1 className="font-semibold">TET Forms</h1>
       </div>
-      <div className="my-4 flex relative z-50">
-        <div className="flex items-center space-x-2">
-          <label className="text-sm font-medium">Year</label>
+           <div className="mb-4 mt-2 flex justify-between items-center space-x-4">
+        <div className="flex">
+          <div>
+            <label htmlFor="year-select" className="mr-2 font-semibold">
+              Select Year:
+            </label>
           <DatePicker
             selected={selectedDate}
             onChange={(date) => setSelectedDate(date)}
@@ -259,24 +242,51 @@ const [EmployeeId,setEmployeeId] = useState(null);
             }}
           />
         </div>
-   <div className="flex mx-2 items-center space-x-2">
-        <label htmlFor="Training_Name" className="text-sm font-medium">
-    Training Name
-        </label>
-        <div className="relative">
-          <select
-            id="Training_Name"
-            name="Training_Name"
-            value={trainingName}
-            onChange={(e) => setTrainingName(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
-            required 
-          >
-            <option value="IATF">International Automotive Task Force - (IATF)</option>
-            <option value="HSE">Health, Safety, and Environment - (HSE)</option>
-          </select>
+        <div className="mx-2 flex items-center" style={{ minWidth: "250px" }}>
+            <label htmlFor="training-select" className="mr-2 font-semibold ">
+              Select Training:
+            </label>
+          <div className="relative z-0" style={{ minWidth: "250px" }}>
+            <Select
+              inputId="Training_Name"
+              value={{
+                value: trainingName,
+                label:
+                  trainingName === "IATF"
+                    ? "International Automotive Task Force - (IATF)"
+                    : "Health, Safety, and Environment - (HSE)",
+              }}
+              className="relative z-0"
+              onChange={(selectedOption) => setTrainingName(selectedOption.value)}
+              options={[
+                {
+                  value: "IATF",
+                  label: "International Automotive Task Force - (IATF)",
+                },
+                { value: "HSE", label: "Health, Safety, and Environment - (HSE)" },
+              ]}
+              isSearchable={false}
+              classNamePrefix="react-select"
+              styles={{
+                control: (provided) => ({
+                  ...provided,
+                  padding: "2px",
+                  borderColor: "#D1D5DB", // Tailwind sky-500
+                  borderRadius: "0.5rem", // rounded-lg
+                  cursor: "pointer",
+                  minHeight: "38px",
+                }),
+                option: (provided, state) => ({
+                  ...provided,
+                  cursor: "pointer",
+                  backgroundColor: state.isFocused ? "#E0F2FE" : "white", // Tailwind sky-100
+                  color: "black",
+                }),
+              }}
+            />
+          </div>
+          </div>
         </div>
-      </div>
       </div>
       {loading && <p>Loading...</p>}
 
@@ -309,27 +319,20 @@ const [EmployeeId,setEmployeeId] = useState(null);
                 </select>
                 <span>entries</span>
               </div>
-
-              <div className="relative">
-                <input
-                  type="text"
-                  value={tableSearchTerm}
-                  onChange={handleTableSearchChange}
-                  placeholder="Search..."
-                  className="border p-1 pl-8 rounded bg-secondary"
-                />
-                <FaSearch className="absolute left-2 top-2 text-gray-400" />
-              </div>
             </div>
 
             <div className="overflow-x-auto">
               <div>
                 <table
                   className="min-w-full border bg-card text-sm "
-                  style={{ tableLayout: "fixed", fontSize: "13px", padding: "1px",
-                    whiteSpace: "nowrap", 
-                    overflow: "hidden",   
-                    textOverflow: "ellipsis",  }}
+                  style={{
+                    tableLayout: "fixed",
+                    fontSize: "13px",
+                    padding: "1px",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
                 >
                   <thead className="bg-muted sticky top-0">
                     <tr>
@@ -340,8 +343,8 @@ const [EmployeeId,setEmployeeId] = useState(null);
                         { key: "Training_Name", label: "Type" },
                         { key: "Training_Date", label: "Training Date" },
                         { key: "Evaluation_Date", label: "Evaluation Date" },
-                        { key: "IsActive", label: "Status" },
                         { key: "actions", label: "Report" },
+                        { key: "Training_Status", label: "Status" }
                       ].map(({ key, label }, index) => (
                         <th
                           key={key}
@@ -365,29 +368,21 @@ const [EmployeeId,setEmployeeId] = useState(null);
                   <tbody>
                     {filteredData.length > 0 ? (
                       paginatedData.map((item, index) => (
-                        <tr key={index} className="hover:bg-gray-100 border">
+                        <tr key={`${item.Program_Id}-${index}`} className="hover:bg-gray-100 border">
                           <td className="px-4 py-2 border">{item.Year_No}</td>
                           <td className="px-4 py-2 border">{item.Department}</td>
-                          <td className="px-4 py-2 border">
-                            {item.Program_Name}
-                          </td>
-                          <td className="px-4 py-2 border">
-                            {item.Training_Name}
-                          </td>
-                          <td className="px-4 py-2 border">
-                            {item.Training_Date}
-                          </td>
-                          <td className="px-4 py-2 border">
-                            {item.Evaluation_Date}
-                          </td>
-                          <td className="px-4 py-2 border">
-                            {submittedStatusLoading && submittedStatusMap[item.Program_Id] === undefined ? (
-                              <span>Loading...</span>
-                            ) : (
-                              <span className={submittedStatusMap[item.Program_Id] ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
-                                {submittedStatusMap[item.Program_Id] ? "Completed" : "Pending"}
-                              </span>
-                            )}
+                          <td className="px-4 py-2 border">{item.Program_Name}</td>
+                          <td className="px-4 py-2 border">{item.Training_Name}</td>
+                          <td className="px-4 py-2 border">{item.Training_Date}</td>
+                          <td className="px-4 py-2 border">{item.Evaluation_Date}</td> 
+                          <td className={`px-4 py-2 border font-bold ${
+                            item.Training_Status?.toLowerCase() === "completed"
+                              ? "text-green-600"
+                              : item.Training_Status?.toLowerCase() === "pending"
+                              ? "text-red-600"
+                              : ""
+                          }`}>
+                            {item.Training_Status}
                           </td>
                           <td className="px-4 py-2 border text-blue-600 underline">
                             <Link
@@ -403,76 +398,16 @@ const [EmployeeId,setEmployeeId] = useState(null);
                       ))
                     ) : (
                       <tr>
-                        <td
-                          colSpan="7"
-                          className="py-4 text-center text-gray-500"
-                        >
+                        <td colSpan="8" className="py-4 text-center text-gray-500">
                           No matching training data available.
                         </td>
                       </tr>
                     )}
                   </tbody>
                 </table>
+              
               </div>
             </div>
-
-            { (
-              <div className="flex flex-wrap justify-between items-center mt-4 text-sm">
-                <div>
-                  Showing{" "}
-                  {filteredData.length > 0
-                    ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
-                        currentPage * rowsPerPage,
-                        filteredData.length
-                      )} of ${filteredData.length} entries`
-                    : "0 entries"}
-                </div>
-
-                <div className="flex space-x-1">
-                  <button
-                    className="px-3 py-1 border rounded"
-                    onClick={() => setCurrentPage(1)}
-                    disabled={currentPage === 1}
-                  >
-                    {"<<"}
-                  </button>
-                  <button
-                    className="px-3 py-1 border rounded"
-                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                    disabled={currentPage === 1}
-                  >
-                    {"<"}
-                  </button>
-                  {Array.from({ length: totalPages }, (_, i) => (
-                    <button
-                      key={i}
-                      className={`px-3 py-1 border rounded ${
-                        currentPage === i + 1 ? "bg-black text-white" : ""
-                      }`}
-                      onClick={() => setCurrentPage(i + 1)}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
-                  <button
-                    className="px-3 py-1 border rounded"
-                    onClick={() =>
-                      setCurrentPage((p) => Math.min(p + 1, totalPages))
-                    }
-                    disabled={currentPage === totalPages}
-                  >
-                    {">"}
-                  </button>
-                  <button
-                    className="px-3 py-1 border rounded"
-                    onClick={() => setCurrentPage(totalPages)}
-                    disabled={currentPage === totalPages}
-                  >
-                    {">>"}
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}

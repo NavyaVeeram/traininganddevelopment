@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Select from 'react-select';
 import makeAnimated from 'react-select/animated';
+import { FaCheckCircle } from 'react-icons/fa';
 
 const animatedComponents = makeAnimated();
 
@@ -17,22 +18,25 @@ const TetReportsforTL = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [dropdownValue, setDropdownValue] = useState(null);
   const [tlDropdownOptions, setTlDropdownOptions] = useState([]);
-  const [updatedEmployees, setUpdatedEmployees] = useState(() => {
-    try {
-      const stored = localStorage.getItem('updatedEmployees');
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
+  
+  // Remove updatedEmployees state and localStorage usage as it's no longer needed for tick display
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('updatedEmployees', JSON.stringify(updatedEmployees));
-    } catch (error) {
-      console.error('Error saving updatedEmployees to localStorage:', error);
-    }
-  }, [updatedEmployees]);
+  // const [updatedEmployees, setUpdatedEmployees] = useState(() => {
+  //   try {
+  //     const stored = localStorage.getItem('updatedEmployees');
+  //     return stored ? JSON.parse(stored) : [];
+  //   } catch {
+  //     return [];
+  //   }
+  // });
+
+  // useEffect(() => {
+  //   try {
+  //     localStorage.setItem('updatedEmployees', JSON.stringify(updatedEmployees));
+  //   } catch (error) {
+  //     console.error('Error saving updatedEmployees to localStorage:', error);
+  //   }
+  // }, [updatedEmployees]);
   
   useEffect(() => {
     const fetchDropdownData = async () => {
@@ -40,12 +44,13 @@ const TetReportsforTL = () => {
         const storedEmployeeId = localStorage.getItem('employeeId');
         if (!storedEmployeeId) return;
 
-        const res = await fetch(`/api/get_tet_form_user_dropdown_res_person?programId=${programId}&EmployeeId=${storedEmployeeId}`);
+        const res = await fetch(`/api/get_tet_form_user_dropdown_res_person_update_tl?programId=${programId}&EmployeeId=${storedEmployeeId}`);
         const data = await res.json();
 
         const formattedOptions = data.map((item) => ({
           value: item.Value,
           label: item.Text,
+          flag: item.Flag,  // include flag property
         }));
 
         setOptions(formattedOptions);
@@ -84,7 +89,11 @@ const TetReportsforTL = () => {
   useEffect(() => {
     const fetchTlDropdown = async () => {
       try {
-        const res = await fetch('/api/update_tl_dropdown');
+        const storedEmployeeId = localStorage.getItem('employeeId');
+        if (!storedEmployeeId) {
+          throw new Error('Missing employeeId in localStorage');
+        }
+        const res = await fetch(`/api/update_tl_dropdown?employeeId=${storedEmployeeId}`);
         if (!res.ok) {
           throw new Error('Failed to fetch TL dropdown data');
         }
@@ -118,96 +127,109 @@ const TetReportsforTL = () => {
     label: option.Text || option.label,
   }));
 
+  const [tableMaxHeight, setTableMaxHeight] = useState('400px');
+
+  useEffect(() => {
+    const updateTableMaxHeight = () => {
+      const offset = 250; // Adjust this offset as needed based on layout
+      const maxHeight = window.innerHeight - offset;
+      setTableMaxHeight(maxHeight > 200 ? `${maxHeight}px` : '200px'); // minimum height 200px
+    };
+
+    updateTableMaxHeight();
+    window.addEventListener('resize', updateTableMaxHeight);
+    return () => window.removeEventListener('resize', updateTableMaxHeight);
+  }, []);
+
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
       <div className="bg-sky-400 text-white p-2 rounded-t-lg flex justify-between items-center">
-        <h1 className="font-semibold">
+        <h1 className="font-semibold cursor-pointer">
           Update TL
-{programName && (
-  <>
-  <span className="font-semibold text-[#f8e111]"> {'(' + programName + ')'}</span>
-  </>
-)}
-</h1>
-</div>
-    <div style={{ padding: '1.5rem', maxWidth: '800px', margin: '2rem auto', border: '1px solid #ccc', borderRadius: '8px', position: 'relative' }}>
-      
-      {/* Top header actions */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center' }}>
-        {/* Select All container */}
-        <div>
-          <input
-            type="checkbox"
-            id="select-all"
-            className='cursor-pointer'
-            checked={selectedEmployees.length === options.length && options.length > 0}
-            onChange={() => {
-              if (selectedEmployees.length === options.length) {
-                setSelectedEmployees([]);
-              } else {
-                handleSelectAll();
-              }
-            }}
-          />
-          <label htmlFor="select-all" style={{ cursor: 'pointer', marginLeft: '0.5rem', fontWeight: 'bold' }}>
-            Select All
-          </label>
+          {programName && (
+            <>
+              <span className="font-semibold text-[#f8e111]"> {'(' + programName + ')'}</span>
+            </>
+          )}
+        </h1>
+      </div>
+      <div style={{ padding: '1.5rem', maxWidth: '800px', margin: '2rem auto', border: '1px solid #ccc', borderRadius: '8px', position: 'relative' }}>
+        {/* Top header actions */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center' }}>
+          {/* Select All container */}
+          <div>
+            <input
+              type="checkbox"
+              id="select-all"
+              className='cursor-pointer'
+              checked={selectedEmployees.length === options.length && options.length > 0}
+              onChange={() => {
+                if (selectedEmployees.length === options.length) {
+                  setSelectedEmployees([]);
+                } else {
+                  handleSelectAll();
+                }
+              }}
+            />
+            <label htmlFor="select-all" style={{ cursor: 'pointer', marginLeft: '0.5rem', fontWeight: 'bold' }}>
+              Select All
+            </label>
+          </div>
+
+          {/* Update TL button aligned right */}
+          <button
+            onClick={() => setShowPopup(true)}
+            className="px-6 mt-2 py-2 cursor-pointer text-sm font-semibold text-white bg-sky-400 rounded-md shadow-md hover:bg-sky-600 focus:ring-2 focus:ring-black-600 focus:ring-offset-2">
+            Update TL
+          </button>
         </div>
 
-        {/* Update TL button aligned right */}
-        <button
-          onClick={() => setShowPopup(true)}
-         className="px-6 mt-2 py-2 text-sm font-semibold text-white bg-sky-400 rounded-md shadow-md hover:bg-sky-600 focus:ring-2 focus:ring-black-600 focus:ring-offset-2">
-          Update TL
-        </button>
-      </div>
+        {/* Missing programId error */}
+        {!programId && (
+          <p style={{ color: 'red', marginBottom: '1rem' }}>
+            Error: programId is missing in URL parameters.
+          </p>
+        )}
 
-      {/* Missing programId error */}
-      {!programId && (
-        <p style={{ color: 'red', marginBottom: '1rem' }}>
-          Error: programId is missing in URL parameters.
-        </p>
-      )}
-
-      {/* Table container */}
-      <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr>
-              <th style={{ borderBottom: '1px solid #ccc', padding: '0.5rem', textAlign: 'left' }}>Select</th>
-              <th style={{ borderBottom: '1px solid #ccc', padding: '0.5rem', textAlign: 'left' }}>Employee</th>
-            </tr>
-          </thead>
-          <tbody>
-            {options.length === 0 && (
+        {/* Table container */}
+        <div style={{ maxHeight: tableMaxHeight, overflowY: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
               <tr>
-                <td colSpan="2" style={{ padding: '0.5rem' }}>No employees found.</td>
+                <th style={{ borderBottom: '1px solid #ccc', padding: '0.5rem', textAlign: 'left' }}>Select</th>
+                <th style={{ borderBottom: '1px solid #ccc', padding: '0.5rem', textAlign: 'left' }}>Employee</th>
               </tr>
-            )}
-            {options.map((option) => (
-              <tr key={option.value}>
-                <td style={{ padding: '0.5rem', borderBottom: '1px solid #eee' }}>
-                  <input
-                    type="checkbox"
-                    id={`employee-${option.value}`}
-                    checked={selectedEmployees.includes(option.value)}
-                    onChange={() => handleCheckboxChange(option.value)}
-                    className='cursor-pointer'
-                  />
-                </td>
-                <td style={{ padding: '0.5rem', borderBottom: '1px solid #eee' }}>
-                  <label htmlFor={`employee-${option.value}`} style={{ cursor: 'pointer' }}>
-                    {option.label}
-                    {updatedEmployees.includes(option.value) && (
-                      <span style={{ color: 'green', marginLeft: '0.5rem', fontWeight: 'bold' }}>✓</span>
-                    )}
-                  </label>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {options.length === 0 && (
+                <tr>
+                  <td colSpan="2" style={{ padding: '0.5rem' }}>No employees found.</td>
+                </tr>
+              )}
+                    {options.map((option) => (
+                      <tr key={option.value}>
+                        <td style={{ padding: '0.5rem', borderBottom: '1px solid #eee' }}>
+                          <input
+                            type="checkbox"
+                            id={`employee-${option.value}`}
+                            checked={selectedEmployees.includes(option.value)}
+                            onChange={() => handleCheckboxChange(option.value)}
+                            className='cursor-pointer'
+                          />
+                        </td>
+                        <td style={{ padding: '0.5rem', borderBottom: '1px solid #eee' }}>
+                          <label htmlFor={`employee-${option.value}`} style={{ cursor: 'pointer' }} className='flex items-center'>
+                            {option.label}
+                            {option.flag === 1 && (
+                              <span style={{ color: 'green', marginLeft: '0.5rem', fontWeight: 'bold' }}><FaCheckCircle className="text-green-500"/></span>
+                            )}
+                          </label>
+                        </td>
+                      </tr>
+                    ))}
+            </tbody>
+          </table>
+        </div>
 
       {/* Update TL popup modal */}
       {showPopup && (
@@ -243,6 +265,7 @@ const TetReportsforTL = () => {
                 cursor: 'pointer',
                 fontWeight: 'bold',
               }}
+              className='cursor-pointer'
             >
               Update TL
             </p>
@@ -252,12 +275,17 @@ const TetReportsforTL = () => {
               value={dropdownValue}
               onChange={setDropdownValue}
               placeholder="Select an option"
-              styles={{
+            styles={{
                 control: (base) => ({
                   ...base,
                   padding: '0.25rem',
                   marginBottom: '1rem',
                   minWidth: '400px',
+                  cursor:'pointer'
+                }),
+                option: (base) => ({
+                  ...base,
+                  cursor: 'pointer',
                 }),
               }}
             />
@@ -294,7 +322,7 @@ const TetReportsforTL = () => {
                     alert('Error updating Res_Person: ' + error.message);
                   }
                 }}
-                className="px-6 mt-2 py-2 text-sm font-semibold text-white bg-sky-400 rounded-md shadow-md hover:bg-sky-600 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
+                className="px-6 cursor-pointer mt-2 py-2 text-sm font-semibold text-white bg-sky-400 rounded-md shadow-md hover:bg-sky-600 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
               >
                 Update
               </button>
@@ -303,7 +331,7 @@ const TetReportsforTL = () => {
                   setShowPopup(false);
                   setDropdownValue(null);
                 }}
-              className="px-6 mt-2 py-2 text-sm font-semibold text-white bg-sky-400 rounded-md shadow-md hover:bg-sky-600 focus:ring-2 focus:ring-black-600 focus:ring-offset-2">
+              className="px-6 mt-2 py-2 cursor-pointer text-sm font-semibold text-white bg-sky-400 rounded-md shadow-md hover:bg-sky-600 focus:ring-2 focus:ring-black-600 focus:ring-offset-2">
                 Cancel
               </button>
             </div>

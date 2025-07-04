@@ -1,3 +1,4 @@
+
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { faEdit, faTrash } from "@fortawesome/free-solid-svg-icons";
@@ -15,29 +16,82 @@ import { PDFDocument, rgb } from "pdf-lib";
 import fontkit from '@pdf-lib/fontkit';
 const animatedComponents = makeAnimated();
 
-const TrainingAttendanceForm = () => {
-  const [mounted, setMounted] = useState(false);
-  const [year, setYear] = useState("");
-  const [selectedMonth, setSelectedMonth] = useState(null);
-  const [formData, setFormData] = useState({
-    Program_Id: "",
-    Training_Name: "",
-    Train_Mode: "",
-    Persons: "",
-    Req_Months: "",
-    Start_Month: "",
-    No_Hrs: "",
-    Training_Date: "",
-    Training_Status: "",
-    Schedule_Type: "",
-    Forward: "",
-    Trainer: "",
-    Venue: "",
-    Actual_Budget: "",
-    CreatedBy: "",
-    EmployeeIds: [],
-    selectedMonth: "",
-  });
+  const TrainingAttendanceForm = () => {
+    const [mounted, setMounted] = useState(false);
+    const [year, setYear] = useState("");
+    const [selectedMonth, setSelectedMonth] = useState(null);
+    const [formData, setFormData] = useState({
+      Program_Id: "",
+      Training_Name: "",
+      Train_Mode: "",
+      Persons: "",
+      Req_Months: "",
+      Start_Month: "",
+      No_Hrs: "",
+      Training_Date: "",
+      Training_Status: "",
+      Schedule_Type: "",
+      Forward: "",
+      Trainer: "",
+      Venue: "",
+      Actual_Budget: "",
+      CreatedBy: "",
+      EmployeeIds: [],
+      selectedMonth: "",
+    });
+
+    // Helper function to convert dd-MMM-yyyy to yyyy-mm-dd for date input value
+    const convertDateToInputValue = (dateStr) => {
+      if (!dateStr) return "";
+      const months = {
+        Jan: "01",
+        Feb: "02",
+        Mar: "03",
+        Apr: "04",
+        May: "05",
+        Jun: "06",
+        Jul: "07",
+        Aug: "08",
+        Sep: "09",
+        Oct: "10",
+        Nov: "11",
+        Dec: "12",
+      };
+      const parts = dateStr.split("-");
+      if (parts.length !== 3) return "";
+      const day = parts[0];
+      const month = months[parts[1]];
+      const year = parts[2];
+      if (!month) return "";
+      return `${year}-${month}-${day}`;
+    };
+
+    // Helper function to convert yyyy-mm-dd to dd-MMM-yyyy for storing in formData
+    const convertInputValueToDate = (inputValue) => {
+      if (!inputValue) return "";
+      const months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+      const parts = inputValue.split("-");
+      if (parts.length !== 3) return "";
+      const year = parts[0];
+      const monthIndex = parseInt(parts[1], 10) - 1;
+      const day = parts[2];
+      if (monthIndex < 0 || monthIndex > 11) return "";
+      const month = months[monthIndex];
+      return `${day}-${month}-${year}`;
+    };
   const [selectedDate, setSelectedDate] = useState(null);
   const [options, setOptions] = useState([]);
   const [trainerOptions, setTrainerOptions] = useState([]);
@@ -212,7 +266,7 @@ const TrainingAttendanceForm = () => {
     }
   };
 
-  useEffect(() => {
+  useEffect(() => {a
     const fetchTrainers = async () => {
       try {
         const res = await fetch("/api/qualified_trainer_dropdown");
@@ -433,9 +487,7 @@ const TrainingAttendanceForm = () => {
         Program_Id: formData.Program_Id,
         Persons: formData.Persons,
         No_Hrs: formData.No_Hrs,
-        Training_Date: formData.Training_Date
-          ? new Date(formData.Training_Date).toISOString().split("T")[0]
-          : null,
+        Training_Date: formData.Training_Date,
         Training_Status: formData.selectedMonth || null,
         Schedule_Type: formData.Schedule_Type || null,
         Trainer: formData.Trainer || null,
@@ -714,11 +766,7 @@ const font = await mergedPdf.embedFont(fontBytes);
             color: rgb(0, 0, 0),
           });
 
-          const formattedTrainingDate = emp.Training_Date
-            ? new Date(emp.Training_Date).toISOString().slice(0, 10)
-            : "";
-
-          page.drawText(String(formattedTrainingDate) || "", {
+          page.drawText(String(emp.Training_Date) || "", {
             x: 375,
             y: height - 208,
             size: 11,
@@ -799,7 +847,7 @@ const programOptions = options.map((option) => ({
             <DatePicker
               selected={selectedDate}
               onChange={handleMonthYearChange}
-              dateFormat="MM/yyyy"
+              dateFormat="MMM-yyyy"
               showMonthYearPicker
               placeholderText="Select Month and Year"
               className="w-full pl-4 pr-20 py-2 text-left border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -926,12 +974,10 @@ const programOptions = options.map((option) => ({
                 type="date"
                 name="Training_Date"
                 value={
-                formData.Training_Date
-                  ? formData.Training_Date.split("T")[0]
-                  : ""
+                  convertDateToInputValue(formData.Training_Date)
                 }
                 onChange={(e) =>
-                setFormData({ ...formData, Training_Date: e.target.value })
+                setFormData({ ...formData, Training_Date: convertInputValueToDate(e.target.value) })
                 }
                 disabled={!!formData.selectedMonth}
                 className={`w-full py-2 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-blue-500 ${
@@ -1238,7 +1284,7 @@ const programOptions = options.map((option) => ({
                       type="checkbox"
                       id="Cancel"
                       name="Cancel"
-                      className="w-5 h-4"
+                      className="w-5 h-4 cursor-pointer"
                       checked={isCancelChecked}
                       onChange={() => setIsCancelChecked((prev) => !prev)}
                       disabled={!!formData.Training_Date}
@@ -1249,7 +1295,7 @@ const programOptions = options.map((option) => ({
         <div className="flex justify-end mt-1" style={{ marginRight: "100px" }}>
           <button
             type="submit"
-            className="px-6 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
+            className="px-6 py-2 cursor-pointer text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
           >
             Submit
           </button>
@@ -1295,7 +1341,7 @@ const programOptions = options.map((option) => ({
                       onClick={() =>
                         generatePdfForEmployees(formData.Program_Id)
                       }
-                      className="flex items-center justify-end bg-gray-600 text-white px-4 py-2 mx-2 rounded-sm hover:bg-gray-900 transition"
+                      className="flex items-center cursor-pointer justify-end bg-gray-600 text-white px-4 py-2 mx-2 rounded-sm hover:bg-gray-900 transition"
                     >
                       <FaPrint />
                     </button>
@@ -1368,7 +1414,7 @@ const programOptions = options.map((option) => ({
                               {item.Designation}
                             </td>
                             <td className="px-4 py-2 border">
-                              {item.DOJ ? item.DOJ.split("T")[0] : ""}
+                              {item.DOJ}
                             </td>
                           </tr>
                         ))

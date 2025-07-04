@@ -602,18 +602,55 @@ const programOptions = programs.map(program => ({
     Training Name
         </label>
         <div className="relative">
-          <select
-            id="Training_Name"
+          <Select
+            inputId="Training_Name"
             name="Training_Name"
-            value={formData.Training_Name}
-            onChange={handleTrainingNameChange}
-            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
-            required 
-          >
-            <option value="">Select Training Name</option>
-            <option value="IATF">International Automotive Task Force - (IATF)</option>
-            <option value="HSE">Health, Safety, and Environment - (HSE)</option>
-          </select>
+            value={
+              formData.Training_Name === ""
+                ? { value: "", label: "Select Training Name" }
+                : formData.Training_Name === "IATF"
+                ? { value: "IATF", label: "International Automotive Task Force - (IATF)" }
+                : { value: "HSE", label: "Health, Safety, and Environment - (HSE)" }
+            }
+            
+            onChange={(selectedOption) =>
+              handleTrainingNameChange({
+                target: {
+                  name: "Training_Name",
+                  value: selectedOption ? selectedOption.value : "",
+                },
+              })
+            }
+            options={[
+              { value: "", label: "Select Training Name" },
+              { value: "IATF", label: "International Automotive Task Force - (IATF)" },
+              { value: "HSE", label: "Health, Safety, and Environment - (HSE)" },
+            ]}
+            isSearchable={false}
+            classNamePrefix="react-select"
+            className="mb-1 cursor-pointer "
+            styles={{
+    control: (base, state) => ({
+      ...base,
+      borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
+      boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
+      padding: "1px",
+      borderRadius: "0.5rem",
+      minHeight: "2rem",
+      display: "flex",
+      alignItems: "center",
+    }),
+    menu: (base) => ({
+      ...base,
+      zIndex: 9999,
+    }),
+    menuPortal: (base) => ({
+      ...base,
+      zIndex: 9999,
+    }),
+  }}
+            required
+          />
         </div>
       </div>
 
@@ -676,7 +713,7 @@ const programOptions = programs.map(program => ({
         type="radio"
         value="Internal"  // The value when selected
         onChange={handleFormChange}  // Update the state when a radio button is selected
-        className="h-4 w-4"
+        className="h-4 w-4 cursor-pointer"
         required
       />
       <label htmlFor="Internal" className="text-sm text-gray-900">Internal</label>
@@ -689,7 +726,7 @@ const programOptions = programs.map(program => ({
         type="radio"
         value="External"
         onChange={handleFormChange}
-        className="h-4 w-4"
+        className="h-4 w-4 cursor-pointer"
         required
       />
       <label htmlFor="External" className="text-sm text-gray-900">External</label>
@@ -702,7 +739,7 @@ const programOptions = programs.map(program => ({
         type="radio"
         value="Overseas"
         onChange={handleFormChange}
-        className="h-4 w-4"
+        className="h-4 w-4 cursor-pointer"
         required
       />
       <label htmlFor="Overseas" className="text-sm text-gray-900">Overseas</label>
@@ -844,7 +881,7 @@ const programOptions = programs.map(program => ({
 <label htmlFor="Evaluation_Period" style={{visibility:"hidden"}} className="block text-sm font-medium text-gray-900">
     Evaluation Period
   </label>
-        <button type="submit" disabled={loading} className="px-6 mt-2 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
+        <button type="submit" disabled={loading} className="px-6 cursor-pointer mt-2 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
         >
       {loading ? 'Loading...' : 'Submit'}
     </button>

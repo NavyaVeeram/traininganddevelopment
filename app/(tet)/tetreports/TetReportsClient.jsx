@@ -52,58 +52,7 @@ const TetReportsClient = () => {
 const [accessRole, setAccessRole] = useState(null);
 const [isAuthorized, setIsAuthorized] = useState(null);
 const [employeeId, setEmployeeId] = useState(null);
-const [submittedEmployeeIds, setSubmittedEmployeeIds] = useState([]);
-
-useEffect(() => {
-  const fetchSubmittedEmployees = async () => {
-    if (!programId) return;
-    try {
-      const res = await fetch(`/api/get_tet_form_emp_details_for_report?programId=${programId}`);
-      if (!res.ok) {
-        setSubmittedEmployeeIds([]);
-        return;
-      }
-      const data = await res.json();
-      if (!Array.isArray(data)) {
-        setSubmittedEmployeeIds([]);
-        return;
-      }
-      // Filter employees who have submitted (all Q_1 to Q_10 > 0)
-      const submittedIdsFromApi = data
-        .filter(emp => {
-          for (let i = 1; i <= 10; i++) {
-            const key = `Q_${i}`;
-            if (!emp[key] || emp[key] <= 0) {
-              return false;
-            }
-          }
-          return true;
-        })
-        .map(emp => emp.EmployeeId);
-
-      // Also get submitted IDs from localStorage
-      let storedIds = [];
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem("submittedEmployeeIds");
-        storedIds = stored ? JSON.parse(stored) : [];
-      }
-
-      // Merge and deduplicate
-      const mergedIds = Array.from(new Set([...submittedIdsFromApi, ...storedIds]));
-
-      setSubmittedEmployeeIds(mergedIds);
-
-      // Update localStorage with merged IDs
-      if (typeof window !== "undefined") {
-        localStorage.setItem("submittedEmployeeIds", JSON.stringify(mergedIds));
-      }
-    } catch (error) {
-      setSubmittedEmployeeIds([]);
-    }
-  };
-
-  fetchSubmittedEmployees();
-}, [programId]);
+// Removed submittedEmployeeIds state
   // Set Program_Id dynamically when programId changes
   React.useEffect(() => {
     if (programId) {
@@ -177,15 +126,9 @@ useEffect(() => {
     // After successful submission, re-check if all forms are filled to enable print button dynamically
     if (res.ok) {
       checkAllFormsFilled(programId);
-      setSubmittedEmployeeIds((prev) => {
-        const newIds = prev.includes(selectedEmployee?.value) ? prev : [...prev, selectedEmployee?.value];
-        if (typeof window !== "undefined") {
-          localStorage.setItem("submittedEmployeeIds", JSON.stringify(newIds));
-        }
-        return newIds;
-      });
     }
   };
+
   useEffect(() => {
     const filledRatings = formData.ratings.filter((r) => r > 0);
     const total = filledRatings.reduce((sum, r) => sum + r, 0);
@@ -642,30 +585,29 @@ const font = await mergedPdf.embedFont(fontBytes);
   };
 
   // Fetch employee data options for the dropdown
- useEffect(() => {
-  const fetchDropdownData = async () => {
-    try {
-      const storedEmployeeId = localStorage.getItem('employeeId');
-      if (!storedEmployeeId) return;
+  useEffect(() => {
+    const fetchDropdownData = async () => {
+      try {
+        const storedEmployeeId = localStorage.getItem('employeeId');
+        if (!storedEmployeeId) return;
 
-      const res = await fetch(`/api/get_tet_form_user_dropdown?programId=${programId}&EmployeeId=${storedEmployeeId}`);
-      const data = await res.json();
+        const res = await fetch(`/api/get_tet_form_user_dropdown_by_res_person?programId=${programId}&EmployeeId=${storedEmployeeId}`);
+        const data = await res.json();
 
-      const formattedOptions = data.map((item) => ({
-        value: item.Value,
-        label: `${item.Text}`,
-      }));
+        const formattedOptions = data.map((item) => ({
+          value: item.Value,
+          label: `${item.Text}`,
+          flag: item.Flag, // include flag from API response
+        }));
 
-      setOptions(formattedOptions);
-    } catch (error) {
-      console.error("Error fetching dropdown data:", error);
-    }
-  };
+        setOptions(formattedOptions);
+      } catch (error) {
+        console.error("Error fetching dropdown data:", error);
+      }
+    };
 
-  fetchDropdownData();
-}, [programId]); // 👈 Triggered when programId changes
-
-
+    fetchDropdownData();
+  }, [programId]);
   // Fetch employee details based on selected EmployeeId
   useEffect(() => {
     if (selectedEmployee) {
@@ -770,7 +712,7 @@ const font = await mergedPdf.embedFont(fontBytes);
       </div>
         <div className="my-4 relative z-0">
           <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium">Select EmpId</label>
+            <label className="text-sm  font-medium">Select EmpId</label>
   <Select
   options={options}
   onChange={(selectedOption) => {
@@ -788,6 +730,7 @@ const font = await mergedPdf.embedFont(fontBytes);
       minHeight: "2rem",
       display: "flex",
       alignItems: "center",
+      cursor:"pointer"
     }),
     menu: (base) => ({
       ...base,
@@ -798,14 +741,14 @@ const font = await mergedPdf.embedFont(fontBytes);
       zIndex: 9999,
     }),
   }}
-  className="w-[400px]"
+  className="w-[400px] cursor-pointer"
   components={{
     Option: (props) => {
       const { data, innerRef, innerProps } = props;
       return (
         <div ref={innerRef} {...innerProps} className="flex items-center justify-between px-2 py-1">
           <div>{data.label}</div>
-          {submittedEmployeeIds.includes(data.value) && (
+          {data.flag === 1 && (
             <FaCheckCircle className="text-green-500" />
           )}
         </div>
@@ -910,6 +853,7 @@ const font = await mergedPdf.embedFont(fontBytes);
               <input
                 type="radio"
                 name={`rating-${index}`}
+                className="cursor-pointer"
                 checked={formData.ratings[index] === rating}
                 onChange={() => handleRatingChange(index, rating)}
               />
@@ -985,10 +929,14 @@ const font = await mergedPdf.embedFont(fontBytes);
              </div>
           
 <div className="flex justify-end">
-<button
-       type="submit"
-       className="px-6 py-2 text-sm font-semibold cursor-pointer text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"          >
-    submit</button>
+{selectedEmployee && selectedEmployee.flag !== 1 && (
+  <button
+    type="submit"
+    className="px-6 py-2 text-sm font-semibold cursor-pointer text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
+  >
+    submit
+  </button>
+)}
 </div>
    
     </form>

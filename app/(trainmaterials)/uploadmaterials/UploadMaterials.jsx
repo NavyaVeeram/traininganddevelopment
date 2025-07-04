@@ -642,10 +642,7 @@ const programOptions = options.map((option) => ({
                           <td className="px-4 py-2 border">{item.Trainer}</td>
                           <td className="px-4 py-2 border">
                             {item.Training_Date
-                              ? new Date(
-                                  item.Training_Date
-                                ).toLocaleDateString()
-                              : ""}
+                          }
                           </td>
                           <td className="px-4 py-2 border text-blue-600 underline cursor-pointer">
                             <a

@@ -62,16 +62,37 @@ export default function TrainerApprovalForm() {
     setSortConfig({ key, direction });
 
     const sortedData = [...trainerData].sort((a, b) => {
+      if (!sortConfig.key) return 0;
+
       const aValue = a[key];
       const bValue = b[key];
 
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return direction === 'asc'
+      // Handle date fields (example: if key is a date field, adjust accordingly)
+      // Assuming no explicit date fields here, but can add if needed
+
+      // Handle boolean values
+      if (typeof aValue === "boolean" && typeof bValue === "boolean") {
+        return direction === "asc"
+          ? (aValue === bValue ? 0 : aValue ? -1 : 1)
+          : (aValue === bValue ? 0 : aValue ? 1 : -1);
+      }
+
+      // Handle number values
+      if (typeof aValue === "number" && typeof bValue === "number") {
+        return direction === "asc" ? aValue - bValue : bValue - aValue;
+      }
+
+      // Handle string values
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        return direction === "asc"
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue);
-      } else {
-        return direction === 'asc' ? aValue - bValue : bValue - aValue;
       }
+
+      // Fallback to string comparison
+      return direction === "asc"
+        ? aValue?.toString().localeCompare(bValue?.toString())
+        : bValue?.toString().localeCompare(aValue?.toString());
     });
 
     setTrainerData(sortedData);
@@ -142,21 +163,97 @@ export default function TrainerApprovalForm() {
               <FaSearch className="absolute left-2 top-2 text-gray-400" />
             </div>
           </div>
-
           <table className="w-full border-collapse text-sm">
             <thead className="bg-gray-100">
               <tr>
-                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Training_Name")}>Training Name</th>
-                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Username")}>Username</th>
-                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Department")}>Department</th>
-                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Section")}>Section</th>
-                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Qualified")}>Qualified</th>
-                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Certified")}>Certified</th>
-                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Cert_Des")}>Cer_Des</th>
-                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Exp_5_Yr")}>5 Yr Exp</th>
-                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Exp_3_Yr")}>3 Yr Exp</th>
-              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("HOD_Rec")}>HOD Rec</th>
-              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("IsActive")}>Is Active</th>
+              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Training_Name")}>
+                Training Name
+                {sortConfig.key === "Training_Name" ? (
+                  sortConfig.direction === "asc" ? " ▲" : " ▼"
+                ) : (
+                  " ↕"
+                )}
+              </th>
+              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Username")}>
+                Username
+                {sortConfig.key === "Username" ? (
+                  sortConfig.direction === "asc" ? " ▲" : " ▼"
+                ) : (
+                  " ↕"
+                )}
+              </th>
+              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Department")}>
+                Department
+                {sortConfig.key === "Department" ? (
+                  sortConfig.direction === "asc" ? " ▲" : " ▼"
+                ) : (
+                  " ↕"
+                )}
+              </th>
+              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Section")}>
+                Section
+                {sortConfig.key === "Section" ? (
+                  sortConfig.direction === "asc" ? " ▲" : " ▼"
+                ) : (
+                  " ↕"
+                )}
+              </th>
+              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Qualified")}>
+                Qualified
+                {sortConfig.key === "Qualified" ? (
+                  sortConfig.direction === "asc" ? " ▲" : " ▼"
+                ) : (
+                  " ↕"
+                )}
+              </th>
+              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Certified")}>
+                Certified
+                {sortConfig.key === "Certified" ? (
+                  sortConfig.direction === "asc" ? " ▲" : " ▼"
+                ) : (
+                  " ↕"
+                )}
+              </th>
+              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Cert_Des")}>
+                Cer_Des
+                {sortConfig.key === "Cert_Des" ? (
+                  sortConfig.direction === "asc" ? " ▲" : " ▼"
+                ) : (
+                  " ↕"
+                )}
+              </th>
+              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Exp_5_Yr")}>
+                Full Time Exp
+                {sortConfig.key === "Exp_5_Yr" ? (
+                  sortConfig.direction === "asc" ? " ▲" : " ▼"
+                ) : (
+                  " ↕"
+                )}
+              </th>
+              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Exp_3_Yr")}>          
+Current Exp
+                {sortConfig.key === "Exp_3_Yr" ? (
+                  sortConfig.direction === "asc" ? " ▲" : " ▼"
+                ) : (
+                  " ↕"
+                )}
+              </th>
+              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("HOD_Rec")}>
+Nominated by HOD
+                {sortConfig.key === "HOD_Rec" ? (
+                  sortConfig.direction === "asc" ? " ▲" : " ▼"
+                ) : (
+                  " ↕"
+                )}
+              </th>
+              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("IsActive")}>
+                Is Active
+                {sortConfig.key === "IsActive" ? (
+                  sortConfig.direction === "asc" ? " ▲" : " ▼"
+                ) : (
+                  " ↕"
+                )}
+              </th>
               {/* <th className="border p-2 cursor-pointer text-left">Actions</th> */}
             </tr>
           </thead>

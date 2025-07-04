@@ -510,7 +510,7 @@ export default function TrainingDataTable() {
             <div className="flex space-x-1 bg-sky-500 rounded-lg p-1">
               <button
                 onClick={() => setActiveTab('approval')}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                className={`px-3 py-1 rounded-md cursor-pointer text-xs font-medium transition-colors ${
                   activeTab === 'approval'
                     ? 'bg-white text-sky-600 shadow-sm'
                     : 'text-white hover:bg-sky-300'
@@ -520,7 +520,7 @@ export default function TrainingDataTable() {
               </button>
               <button
                 onClick={() => setActiveTab('other')}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                className={`px-3 py-1 rounded-md cursor-pointer text-xs font-medium transition-colors ${
                   activeTab === 'other'
                     ? 'bg-white text-sky-600 shadow-sm'
                     : 'text-white hover:bg-sky-300'

@@ -1,7 +1,6 @@
 "use client";
 import { FaEdit, FaSearch, FaSortUp } from "react-icons/fa";
 import { useState, useEffect, useRef, useMemo } from "react";
-import DataTable from "react-data-table-component";
 import Select from "react-select";
 import TrainerApprovalForm from "../approvalformfortrainers/page";
 const QualifiedTrainerList = () => {
@@ -10,10 +9,7 @@ const QualifiedTrainerList = () => {
 
   // Add useEffect to set EmployeeId from localStorage on mount
   useEffect(() => {
-    const storedEmployeeId = localStorage.getItem('employeeId');
-    if (storedEmployeeId) {
-      setEmployeeId(storedEmployeeId);
-    }
+    // Removed setting EmployeeId from localStorage to avoid default display in Select dropdown
   }, []);
 
   const [employeeOptions, setEmployeeOptions] = useState([]);
@@ -26,19 +22,14 @@ const QualifiedTrainerList = () => {
     DOJ: "",
   });
 
-  // Computed variable to check if DOJ is less than 3 years ago
-  const isDOJLessThan3Years = useMemo(() => {
-    if (!trainingDetails.DOJ) return false;
-    const dojDate = new Date(trainingDetails.DOJ);
-    if (isNaN(dojDate)) return false;
-    const today = new Date();
-    const threeYearsAgo = new Date(
-      today.getFullYear() - 3,
-      today.getMonth(),
-      today.getDate()
-    );
-    return dojDate > threeYearsAgo;
-  }, [trainingDetails.DOJ]);
+  // Computed variables to check DOJ experience for enabling/disabling checkboxes
+  const dojDate = trainingDetails.DOJ ? new Date(trainingDetails.DOJ) : null;
+  const today = new Date();
+  const threeYearsAgo = new Date(today.getFullYear() - 3, today.getMonth(), today.getDate());
+
+  const isExperienceLessThan3Years = dojDate ? dojDate > threeYearsAgo : false;
+  // Adjust logic: if DOJ is greater than 3 years ago, enable Experience (5 Years)
+  const isExperienceAtLeast3Years = dojDate ? dojDate <= threeYearsAgo : false;
   const [qualifiedTrainers, setQualifiedTrainers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -60,18 +51,18 @@ const QualifiedTrainerList = () => {
     value: option.Value,
     label: option.Text,
   }));
+
+  console.log("DEBUG EmployeeId:", EmployeeId);
+  console.log("DEBUG isExperienceAtLeast3Years:", isExperienceAtLeast3Years);
+
     const [accessRole, setAccessRole] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(null);
    useEffect(() => {
-       const storedEmployeeId = localStorage.getItem('employeeId');
+       // Removed setting EmployeeId from localStorage to avoid default display in Select dropdown
      
-       if (storedEmployeeId) {
-         setEmployeeId(storedEmployeeId);
-       }
-      
        const fetchAccessRole = async () => {
          try {
-           const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+           const res = await fetch(`/api/get_access_role?employeeId=${localStorage.getItem('employeeId')}`);
            const data = await res.json();
      
            if (res.ok && data.Access_Role) {
@@ -185,16 +176,13 @@ const QualifiedTrainerList = () => {
         const data = await res.json();
 
         if (res.status === 200) {
-          const formattedDOJ = data.DOJ
-            ? new Date(data.DOJ).toLocaleDateString()
-            : "";
           setTrainingDetails({
             Username: data.Username || "",
             Department: data.Department || "",
             Section: data.Section || "",
             Designation: data.Designation || "",
             Gender: data.Gender || "",
-            DOJ: formattedDOJ,
+            DOJ: data.DOJ || "",
           });
         } else {
           setError(data.message || "Error fetching user details");
@@ -568,29 +556,27 @@ const QualifiedTrainerList = () => {
             </label>
             <div className="flex space-x-6 mt-2">
               <label className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  name="trainingName"
-                  value="IATF"
-                  checked={trainingName === "IATF"}
-                  onChange={() => setTrainingName("IATF")}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
-                  required
-                  disabled={isDOJLessThan3Years}
-                />
+              <input
+                type="radio"
+                name="trainingName"
+                value="IATF"
+                checked={trainingName === "IATF"}
+                onChange={() => setTrainingName("IATF")}
+                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                required
+              />
                 <span>IATF</span>
               </label>
               <label className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  name="trainingName"
-                  value="HSE"
-                  checked={trainingName === "HSE"}
-                  onChange={() => setTrainingName("HSE")}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
-                  required
-                  disabled={isDOJLessThan3Years}
-                />
+              <input
+                type="radio"
+                name="trainingName"
+                value="HSE"
+                checked={trainingName === "HSE"}
+                onChange={() => setTrainingName("HSE")}
+                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                required
+              />
                 <span>HSE</span>
               </label>
             </div>
@@ -603,14 +589,13 @@ const QualifiedTrainerList = () => {
             <label className="block text-sm font-medium text-gray-900">
               Certified
             </label>
-            <input
+          <input
               type="checkbox"
               checked={certified}
               onChange={() =>
                 handleCheckboxChange(setCertified, certified, "certified")
               }
               className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
-              disabled={isDOJLessThan3Years}
             />
             {showCertifiedInput && (
               <input
@@ -619,6 +604,7 @@ const QualifiedTrainerList = () => {
                 onChange={(e) => setCertifiedInput(e.target.value)}
                 placeholder="Enter certification description"
                 className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none"
+                required
               />
             )}
           </div>
@@ -628,26 +614,26 @@ const QualifiedTrainerList = () => {
           <div className="flex  justify-around">
             <div className="flex space-x-2">
             <label className="block text-sm font-medium text-gray-900">
-              Experience (5 Years)
+              Full Time Exp
             </label>
-            <input
-              type="checkbox"
-              checked={exp5Yr}
-              onChange={() => handleCheckboxChange(setExp5Yr, exp5Yr, "exp5Yr")}
-              className="h-4 w-4 "
-              disabled={isDOJLessThan3Years}
-            />
+              <input
+                type="checkbox"
+                checked={exp5Yr}
+                onChange={() => handleCheckboxChange(setExp5Yr, exp5Yr, "exp5Yr")}
+                className="h-4 w-4 "
+                disabled={!EmployeeId || !isExperienceAtLeast3Years}
+              />
             </div>
                <div className="flex  space-x-2">
             <label className="block text-sm font-medium text-gray-900">
-              Experience (3 Years)
+              Current Exp
             </label>
             <input
               type="checkbox"
               checked={exp3Yr}
               onChange={() => handleCheckboxChange(setExp3Yr, exp3Yr, "exp3Yr")}
               className="h-4 w-4 "
-              disabled={isDOJLessThan3Years}
+              disabled={false}
             />
           </div>
           </div>
@@ -656,14 +642,13 @@ const QualifiedTrainerList = () => {
 
           <div className="flex space-x-2">
             <label className="block text-sm font-medium text-gray-900">
-              HOD Rec
+              Nominated by HOD
             </label>
             <input
               type="checkbox"
               checked={hodRec}
               onChange={() => handleCheckboxChange(setHodRec, hodRec, "hodRec")}
               className="h-4 w-4"
-              disabled={isDOJLessThan3Years}
             />
           </div>
 
@@ -675,16 +660,15 @@ const QualifiedTrainerList = () => {
               type="checkbox"
               checked={qualified}
               required
-              disabled={isDOJLessThan3Years || true}
+              readOnly
               className="h-4 w-4"
             />
           </div>
 </div>
           <div>
-            <button
+          <button
               type="submit"
-              className="px-6 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
-              disabled={isDOJLessThan3Years}
+              className="px-6 py-2 cursor-pointer text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
             >
               Submit
             </button>
@@ -760,9 +744,9 @@ const QualifiedTrainerList = () => {
                       { key: "Training_Name", label: "Training Name" },
                       { key: "Certified", label: "Certified" },
                       { key :"Cert_Des",label:"Cert_Des"},
-                      { key: "Exp_5_Yr", label: "Exp (5Yr)" },
-                      { key: "Exp_3_yr", label: "Exp (3Yr)" },
-                      { key: "HOD_Rec", label: "HOD Rec" },
+                      { key: "Exp_5_Yr", label: "Full Time Exp" },
+                      { key: "Exp_3_yr", label: "Current Exp" },
+                      { key: "HOD_Rec", label: "Nominated by HOD" },
                       { key: "Qualified", label: "Qualified" },
                     ].map(({ key, label }, index) => (
                       <th

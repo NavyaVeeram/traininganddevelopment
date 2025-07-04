@@ -66,7 +66,7 @@ const transaction: { title: string; href: string }[] = [
 
 const tet: { title: string; href: string }[] = [
   {
-    title: " Generate Forms",
+    title: "Generate TEE Forms",
     href: "tetformsgenerate",
   },
 ]
@@ -118,6 +118,8 @@ const [username, setUsername] = useState('');
 const [employeeId, setEmployeeId] = useState('');
 const [accessRole, setAccessRole] = useState(null);
 const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
+
+  console.log("Navbar accessRole:", accessRole);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
@@ -189,10 +191,11 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
   return (
     <div>
       <nav className="flex items-center z-10  bg-gray-100 justify-between p-2" >
-        {/* Brand Name on the Left */}
+        {/* Brand Name on the Left */} 
         <div className="text-black font-semibold text-xl">
         <Link href="/dashboard"> Greentech Industries</Link> 
         </div>
+       
 
         {/* Hamburger Icon for Mobile */}
         {/* Hamburger Icon and Profile Icon aligned to the Right */}
@@ -228,7 +231,7 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
           )}
         >
       
-<NavigationMenuItem className="bg-gray-100 position-relative cursor-pointer Z-10">
+<NavigationMenuItem className="bg-gray-100 position-relative cursor-pointer Z-50">
   <NavigationMenuTrigger className="hover:text-sky-400 cursor-pointer">Training Calendar</NavigationMenuTrigger>
   <NavigationMenuContent className="grid gap-2 p-1 md:w-[280px] max-h-[280px] cursor-pointer">
     <ul className="grid gap-2 ">
@@ -355,30 +358,37 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
             {(accessRole === "Res_Person" || accessRole === "HOS" || accessRole === "HR_Res" || accessRole === "HOD") && (
             <NavigationMenuItem className="bg-gray-100 position-relative z-10">
               <NavigationMenuTrigger className="hover:text-sky-400  cursor-pointer focus:outline-none">T & D Report</NavigationMenuTrigger>
-              <NavigationMenuContent className="grid gap-2 p-1 md:w-[200px] max-h-[250px] ">
+              <NavigationMenuContent className="grid gap-2 p-1 md:w-[200px] max-h-[300px] ">
                 <ul className="grid gap-2 p-1 cursor-pointer">
                   {masterreport.map((component) => {
-                     if (component.title === "Employee History" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
-                     return null; // skip if not Employee or HOS
-                  }
+                    console.log("Rendering masterreport item:", component.title, "accessRole:", accessRole);
+                    if (component.title === "Employee History" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
+                      console.log("Skipping Employee History for accessRole:", accessRole);
+                      return null; // skip if not Employee or HOS
+                    }
                     if (component.title === "Qualified Trainers List" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
-                    return null; 
-                 }
-                  if (component.title === "Training Cost/Budget" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
-                    return null; 
-                 }
-                   if (component.title === "Training Agencies" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
-                    return null; 
-                 }
-                  if (component.title === "Add Training Record" && accessRole !== "HR_Res" &&  accessRole !== "HR_Hod" ) {
-    return null; // skip
-  }
-   if (component.title === "Update TL" && accessRole !== "Res_Person" && accessRole !== "HOS") {
-    return null; // skip
-  }
-          return(
-                    <ListItem key={component.title} title={component.title} href={component.href} />
-          );
+                      console.log("Skipping Qualified Trainers List for accessRole:", accessRole);
+                      return null; 
+                    }
+                    if (component.title === "Training Cost/Budget" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
+                      console.log("Skipping Training Cost/Budget for accessRole:", accessRole);
+                      return null; 
+                    }
+                    if (component.title === "Training Agencies" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
+                      console.log("Skipping Training Agencies for accessRole:", accessRole);
+                      return null; 
+                    }
+                    if (component.title === "Add Training Record" && accessRole !== "HR_Res" &&  accessRole !== "HR_Hod" ) {
+                      console.log("Skipping Add Training Record for accessRole:", accessRole);
+                      return null; // skip
+                    }
+                    if (component.title === "Update TL" && accessRole !== "Res_Person" && accessRole !== "HR_Res" && accessRole !== "HR_Hod" && accessRole !== "HOS" && accessRole !== "HOD") {
+                      console.log("Skipping Update TL for accessRole:", accessRole);
+                      return null; // skip
+                    }
+                    return(
+                      <ListItem key={component.title} title={component.title} href={component.href} />
+                    );
                   })}
                 </ul>
               </NavigationMenuContent>

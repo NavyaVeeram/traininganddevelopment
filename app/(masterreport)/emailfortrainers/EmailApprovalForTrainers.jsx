@@ -55,7 +55,7 @@ export default function EmailApprovalForTrainers() {
     <div>
       <button
         onClick={handleSendToApproval}
-        className="px-6 mt-2 py-2 text-sm font-semibold text-white bg-green-400 rounded-md shadow-md hover:bg-green-800 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
+        className="px-6 mt-2 py-2 text-sm cursor-pointer font-semibold text-white bg-green-400 rounded-md shadow-md hover:bg-green-800 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
         disabled={loading || !employeeId}
       >
         {loading ? "Processing..." : "Send to Approval"}

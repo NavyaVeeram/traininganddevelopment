@@ -407,7 +407,7 @@ const handleSubmit = async (e) => {
           <div className="ml-20 mt-5">
             <Button
               type="submit"
-              className="bg-gray-600 hover:bg-gray-900 text-white w-full sm:w-auto"
+              className="bg-gray-600 cursor-pointer hover:bg-gray-900 text-white w-full sm:w-auto"
             >
               Submit
             </Button>

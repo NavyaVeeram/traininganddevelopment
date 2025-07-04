@@ -508,9 +508,9 @@ Loading...
     <div className="flex flex-col mx-2">
       <label className="block font-medium mb-1">Training Date</label>
       <input
-        type="date"
+        type="text"
         value={
-          formData.Training_Date ? formData.Training_Date.split("T")[0] : ""
+          formData.Training_Date
         }
         readOnly
         className="w-full pl-4 py-2 border border-gray-300 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -650,10 +650,7 @@ Loading...
                           <td className="px-4 py-2 border">{item.Trainer}</td>
                           <td className="px-4 py-2 border">
                             {item.Training_Date
-                              ? new Date(
-                                  item.Training_Date
-                                ).toLocaleDateString()
-                              : ""}
+                              }
                           </td>
                           <td className="px-4 py-2 border text-blue-600 underline cursor-pointer">
                             <a

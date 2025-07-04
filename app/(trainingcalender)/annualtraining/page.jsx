@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import Select from "react-select";
 import { FaPrint } from "react-icons/fa";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -487,21 +488,37 @@ const AnnualTraining = () => {
               }}
             />
           </div>
-          <div className="mx-2">
-            <label htmlFor="training-select" className="mr-2 font-semibold">
+          <div className="mx-2 flex items-center" style={{ minWidth: "250px" }}>
+            <label htmlFor="training-select" className="mr-2 font-semibold ">
               Select Training:
             </label>
-            <select
-              id="training-select"
-              value={trainingName}
-              onChange={(e) => setTrainingName(e.target.value)}
-              className="p-2 border border-gray-300 rounded-lg"
-            >
-              <option value="IATF">
-                IATF (International Automotive Task Force)
-              </option>
-              <option value="HSE">HSE (Health, Safety, and Environment)</option>
-            </select>
+            <Select
+              inputId="training-select"
+              value={{ value: trainingName, label: trainingName === "IATF" ? "IATF (International Automotive Task Force)" : "HSE (Health, Safety, and Environment)" }}
+              onChange={(selectedOption) => setTrainingName(selectedOption.value)}
+              options={[
+                { value: "IATF", label: "IATF (International Automotive Task Force)" },
+                { value: "HSE", label: "HSE (Health, Safety, and Environment)" }
+              ]}
+              isSearchable={false}
+              classNamePrefix="react-select"
+              styles={{
+                control: (provided) => ({
+                  ...provided,
+                  padding: "2px",
+                borderColor: "#D1D5DB", // Tailwind sky-500
+                  borderRadius: "0.5rem", // rounded-lg
+                  cursor: "pointer",
+                  minHeight: "38px",
+                }),
+                option: (provided, state) => ({
+                  ...provided,
+                  cursor: "pointer",
+                  backgroundColor: state.isFocused ? "#E0F2FE" : "white", // Tailwind sky-100
+                  color: "black",
+                }),
+              }}
+            />
           </div>
         </div>
 
@@ -511,7 +528,7 @@ const AnnualTraining = () => {
               e.preventDefault();
               generatePDF();
             }}
-            className="ml-2 flex items-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-1 px-3 rounded"
+            className="ml-2 flex cursor-pointer items-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-1 px-3 rounded"
             aria-label="Download Annual Calendar"
             title="Download Annual Calendar"
           >

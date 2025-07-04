@@ -4,10 +4,15 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { FaSearch } from "react-icons/fa";
 import Link from "next/link";
+import Select from "react-select";
 
 const TETForms = () => {
 const [selectedDate, setSelectedDate] = useState(new Date());
-const [trainingName, setTrainingName] = useState("IATF");
+const trainingOptions = [
+  { value: "IATF", label: "International Automotive Task Force - (IATF)" },
+  { value: "HSE", label: "Health, Safety, and Environment - (HSE)" }
+];
+const [selectedTraining, setSelectedTraining] = useState(trainingOptions[0]);
   const [trainingData, setTrainingData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [tableSearchTerm, setTableSearchTerm] = useState("");
@@ -57,7 +62,7 @@ const [EmployeeId,setEmployeeId] = useState(null);
         setTrainingData(data);
         setFilteredData(data);
         // Fetch submitted status map for all Program_Ids
-        fetchSubmittedStatusMap(data);
+        
       }
     } catch (err) {
       setError(err.message || "An error occurred while fetching data.");
@@ -67,47 +72,7 @@ const [EmployeeId,setEmployeeId] = useState(null);
     }
   };
 
-  const fetchSubmittedStatusMap = async (trainingData) => {
-    if (!trainingData || trainingData.length === 0) {
-      setSubmittedStatusMap({});
-      return;
-    }
-    setSubmittedStatusLoading(true);
-    const storedUpdatedEmployees = localStorage.getItem('updatedEmployees');
-    let updatedEmployees = [];
-    if (storedUpdatedEmployees) {
-      try {
-        updatedEmployees = JSON.parse(storedUpdatedEmployees);
-      } catch (error) {
-        updatedEmployees = [];
-      }
-    }
-    const statusMap = {};
-    try {
-      const fetchPromises = trainingData.map(async (item) => {
-        try {
-          const res = await fetch(`/api/get_tet_form_user_dropdown_res_person?programId=${item.Program_Id}`);
-          if (!res.ok) {
-            statusMap[item.Program_Id] = false;
-            return;
-          }
-          const data = await res.json();
-          const employeeIds = data.map(emp => emp.Value);
-          const allUpdated = employeeIds.every(empId => updatedEmployees.includes(empId));
-          statusMap[item.Program_Id] = allUpdated;
-        } catch (error) {
-          statusMap[item.Program_Id] = false;
-        }
-      });
-      await Promise.all(fetchPromises);
-    } catch (error) {
-      setSubmittedStatusMap({});
-    } finally {
-      setSubmittedStatusMap(statusMap);
-      setSubmittedStatusLoading(false);
-    }
-  };
-
+ 
   // useEffect(() => {
   //   if (selectedDate) fetchData(selectedDate);
   // }, [selectedDate]);
@@ -119,11 +84,11 @@ const [EmployeeId,setEmployeeId] = useState(null);
   useEffect(() => {
     if (selectedDate) {
       const year = selectedDate.getFullYear();
-      fetchData(year, trainingName);
+      fetchData(year, selectedTraining.value);
       setRowsPerPage(10);
       setCurrentPage(1);
     }
-  }, [selectedDate, trainingName]);
+  }, [selectedDate, selectedTraining]);
    useEffect(() => {
      const storedEmployeeId = localStorage.getItem('employeeId');
    
@@ -138,7 +103,7 @@ const [EmployeeId,setEmployeeId] = useState(null);
    
          if (res.ok && data.Access_Role) {
            // Restrict access for HR_Res and HR_HOD roles
-           if (data.Access_Role !== "Res_Person") {
+           if (data.Access_Role !== "Res_Person" && data.Access_Role !== "HOS" && data.Access_Role !== "HOD" && data.Access_Role !== "HR_Hod " && data.Access_Role !== "HR_Res") {
              setIsAuthorized(false);
              // Optionally redirect to unauthorized page
              // window.location.href = '/unauthorized';
@@ -237,8 +202,8 @@ const [EmployeeId,setEmployeeId] = useState(null);
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
         <h1 className="font-semibold">TET Forms</h1>
       </div>
-      <div className="my-4 flex relative z-50">
-        <div className="flex items-center space-x-2">
+      <div className="mt-3 flex relative z-50">
+        <div className="flex items-center">
           <label className="text-sm font-medium">Year</label>
           <DatePicker
             selected={selectedDate}
@@ -257,22 +222,38 @@ const [EmployeeId,setEmployeeId] = useState(null);
             }}
           />
         </div>
-   <div className="flex mx-2 items-center space-x-2">
+   <div className="flex mx-2 items-center">
         <label htmlFor="Training_Name" className="text-sm font-medium">
     Training Name
         </label>
-        <div className="relative">
-          <select
-            id="Training_Name"
+        <div className="relative w-full">
+          <Select
+            inputId="Training_Name"
             name="Training_Name"
-            value={trainingName}
-            onChange={(e) => setTrainingName(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
-            required 
-          >
-            <option value="IATF">International Automotive Task Force - (IATF)</option>
-            <option value="HSE">Health, Safety, and Environment - (HSE)</option>
-          </select>
+            options={trainingOptions}
+            value={selectedTraining}
+            onChange={setSelectedTraining}
+            className="mb-1"
+            classNamePrefix="react-select"
+            isSearchable={false}
+            required
+            styles={{
+              control: (provided) => ({
+                ...provided,
+                padding: "2px",
+                borderColor: "#D1D5DB",
+                borderRadius: "0.5rem",
+                cursor: "pointer",
+                minHeight: "38px",
+              }),
+              option: (provided, state) => ({
+                ...provided,
+                cursor: "pointer",
+                backgroundColor: state.isFocused ? "#E0F2FE" : "white",
+                color: "black",
+              }),
+            }}
+          />
         </div>
       </div>
       </div>

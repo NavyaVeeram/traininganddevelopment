@@ -72,36 +72,21 @@ const Access = () => {
   }, []);
 
   useEffect(() => {
-    const checkAuthorization = async () => {
-      const storedEmployeeId = localStorage.getItem("employeeId");
+    const storedEmployeeId = localStorage.getItem("employeeId");
 
-      if (!storedEmployeeId) {
-        window.location.href = "/";
-        return;
-      }
+    if (!storedEmployeeId) {
+      window.location.href = "/";
+      return;
+    }
 
-      try {
-        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-        const data = await res.json();
+    if (["200209", "240212", "240444", "240316", "250010"].includes(storedEmployeeId)) {
+      setAccessRole(storedEmployeeId);
+      setIsAuthorized(true);
+    } else {
+      setIsAuthorized(false);
+    }
 
-        if (
-          res.ok &&
-          ["Res_Person", "HR_Res", "HR_Hod", "HOD", "HOS", "HR_Hos"].includes(data.Access_Role)
-        ) {
-          setAccessRole(data.Access_Role);
-          setIsAuthorized(true);
-        } else {
-          setIsAuthorized(false);
-        }
-      } catch (error) {
-        console.error("Authorization error:", error);
-        setIsAuthorized(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkAuthorization();
+    setLoading(false);
   }, []);
 
   const handleEmployeeIdChange = (selectedOption) => {
