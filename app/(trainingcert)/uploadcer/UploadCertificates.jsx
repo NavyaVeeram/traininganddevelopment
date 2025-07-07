@@ -436,7 +436,7 @@ Loading...
     {/* Program */}
     <div className="flex flex-col mx-2">
       <label className="block font-medium mb-1">Program</label>
-      <Select
+  <Select
   isRequired // Note: react-select does not natively support 'required'
   isDisabled={!selectedDate || loading}
   onChange={(selectedOption) =>
@@ -454,6 +454,7 @@ Loading...
   styles={{
     control: (base, state) => ({
       ...base,
+      cursor: 'pointer',
       borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
       boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
       padding: "1px",
@@ -461,6 +462,10 @@ Loading...
       minHeight: "2rem",
       display: "flex",
       alignItems: "center",
+    }),
+    option: (base) => ({
+      ...base,
+      cursor: 'pointer',
     }),
     menu: (base) => ({
       ...base,

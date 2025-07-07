@@ -55,38 +55,38 @@ const QualifiedTrainerList = () => {
   console.log("DEBUG EmployeeId:", EmployeeId);
   console.log("DEBUG isExperienceAtLeast3Years:", isExperienceAtLeast3Years);
 
-    const [accessRole, setAccessRole] = useState(null);
+  const [accessRole, setAccessRole] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(null);
-   useEffect(() => {
-       // Removed setting EmployeeId from localStorage to avoid default display in Select dropdown
-     
-       const fetchAccessRole = async () => {
-         try {
-           const res = await fetch(`/api/get_access_role?employeeId=${localStorage.getItem('employeeId')}`);
-           const data = await res.json();
-     
-           if (res.ok && data.Access_Role) {
-             // Restrict access for HR_Res and HR_HOD roles
-             if (data.Access_Role === "Res_Person" || data.Access_Role === "HOS" || data.Access_Role === "HOD") {
-               setIsAuthorized(false);
-               // Optionally redirect to unauthorized page
-               // window.location.href = '/unauthorized';
-               return;
-             }
-             setAccessRole(data.Access_Role);
-             setIsAuthorized(true);
-           } else {
-             setIsAuthorized(false);
-           }
-         } catch (error) {
-           console.error('Error fetching access role:', error);
-           setIsAuthorized(false);
-         }
-       };
-     
-       fetchAccessRole();
-     }, []);
-     
+  useEffect(() => {
+    // Removed setting EmployeeId from localStorage to avoid default display in Select dropdown
+
+    const fetchAccessRole = async () => {
+      try {
+        const res = await fetch(`/api/get_access_role?employeeId=${localStorage.getItem('employeeId')}`);
+        const data = await res.json();
+
+        if (res.ok && data.Access_Role) {
+          // Restrict access for HR_Res and HR_HOD roles
+          if (data.Access_Role === "Res_Person" || data.Access_Role === "HOS" || data.Access_Role === "HOD") {
+            setIsAuthorized(false);
+            // Optionally redirect to unauthorized page
+            // window.location.href = '/unauthorized';
+            return;
+          }
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+        }
+      } catch (error) {
+        console.error('Error fetching access role:', error);
+        setIsAuthorized(false);
+      }
+    };
+
+    fetchAccessRole();
+  }, []);
+
   // Fetch employee options
   useEffect(() => {
     const fetchEmployeeOptions = async () => {
@@ -455,6 +455,7 @@ const QualifiedTrainerList = () => {
               styles={{
                 control: (base, state) => ({
                   ...base,
+                  cursor: "pointer",
                   borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
                   boxShadow: state.isFocused
                     ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
@@ -465,6 +466,10 @@ const QualifiedTrainerList = () => {
                   display: "flex",
                   alignItems: "center",
                 }),
+                option: (base) => ({
+                  ...base,
+                  cursor: "pointer",
+                }),
                 menu: (base) => ({
                   ...base,
                   zIndex: 9999,
@@ -474,7 +479,7 @@ const QualifiedTrainerList = () => {
                   zIndex: 9999,
                 }),
               }}
-              className="w-full"
+              className="w-full cursor-pointer"
               classNamePrefix="react-select"
               required
             />

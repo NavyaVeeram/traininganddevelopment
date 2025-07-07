@@ -464,6 +464,7 @@ const EmployeeHistoryList = () => {
                 styles={{
                   control: (base, state) => ({
                     ...base,
+                    cursor: 'pointer',
                     borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
                     boxShadow: state.isFocused
                       ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
@@ -472,6 +473,10 @@ const EmployeeHistoryList = () => {
                     minHeight: "2rem",
                     display: "flex",
                     alignItems: "center",
+                  }),
+                  option: (base) => ({
+                    ...base,
+                    cursor: 'pointer',
                   }),
                   menu: (base) => ({
                     ...base,

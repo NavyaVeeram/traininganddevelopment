@@ -876,11 +876,12 @@ const programOptions = options.map((option) => ({
     (opt) => opt.value === formData.Program_Id
   ) || null}
                 options={programOptions}
-                className="w-[500px]"
+                className="w-[500px] cursor-pointer"
                 placeholder="Select Program"
                 styles={{
                   control: (base, state) => ({
                     ...base,
+                    cursor: 'pointer',
                     borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
                     boxShadow: state.isFocused
                       ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
@@ -889,6 +890,10 @@ const programOptions = options.map((option) => ({
                     minHeight: "2rem",
                     display: "flex",
                     alignItems: "center",
+                  }),
+                  option: (base) => ({
+                    ...base,
+                    cursor: 'pointer',
                   }),
                   menu: (base) => ({
                     ...base,
@@ -1042,10 +1047,11 @@ const programOptions = options.map((option) => ({
                   isClearable
                   isSearchable
                   isDisabled={!!formData.Training_Date}
-                  className="text-gray-900"
+                  className="text-gray-900 cursor-pointer"
                   styles={{
                     control: (base, state) => ({
                       ...base,
+                      cursor: 'pointer',
                       borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
                       boxShadow: state.isFocused
                         ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
@@ -1115,51 +1121,55 @@ const programOptions = options.map((option) => ({
                     <Select
                       id="Trainer"
                       name="Trainer"
-                      options={mappedTrainerOptions}
-                      value={
-                        mappedTrainerOptions.find(
-                          (opt) => opt.value === formData.Trainer
-                        ) || null
-                      }
-                      onChange={(selectedOption) =>
-                        setFormData({
-                          ...formData,
-                          Trainer: selectedOption?.value || "",
-                        })
-                      }
-                      placeholder="Select Trainer"
-                      isSearchable
-                      required
-                      autoComplete="off"
-                      className="text-gray-900"
-                      isDisabled={!!formData.selectedMonth}
-                      styles={{
-                        control: (base, state) => ({
-                          ...base,
-                          borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
-                          boxShadow: state.isFocused
-                            ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
-                            : "none",
-                          padding: "1px",
-                          borderRadius: "0.5rem",
-                          minHeight: "2rem",
-                          display: "flex",
-                          alignItems: "center",
-                          backgroundColor: !!formData.selectedMonth ? "#f3f4f6" : "#fff",
-                          cursor: !!formData.selectedMonth ? "not-allowed" : "default",
-                        }),
-                        menu: (base) => ({
-                          ...base,
-                          zIndex: 50,
-                          position: "absolute",
-                        }),
-                        menuPortal: (base) => ({
-                          ...base,
-                          zIndex: 9999,
-                        }),
-                      }}
-                      instanceId="trainer-select"
-                    />
+                    options={mappedTrainerOptions}
+                    value={
+                      mappedTrainerOptions.find(
+                        (opt) => opt.value === formData.Trainer
+                      ) || null
+                    }
+                    onChange={(selectedOption) =>
+                      setFormData({
+                        ...formData,
+                        Trainer: selectedOption?.value || "",
+                      })
+                    }
+                    placeholder="Select Trainer"
+                    isSearchable
+                    required
+                    autoComplete="off"
+                    className="text-gray-900 cursor-pointer"
+                    isDisabled={!!formData.selectedMonth}
+                    styles={{
+                      control: (base, state) => ({
+                        ...base,
+                        cursor: !!formData.selectedMonth ? "not-allowed" : "pointer",
+                        borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
+                        boxShadow: state.isFocused
+                          ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
+                          : "none",
+                        padding: "1px",
+                        borderRadius: "0.5rem",
+                        minHeight: "2rem",
+                        display: "flex",
+                        alignItems: "center",
+                        backgroundColor: !!formData.selectedMonth ? "#f3f4f6" : "#fff",
+                      }),
+                      option: (base) => ({
+                        ...base,
+                        cursor: 'pointer',
+                      }),
+                      menu: (base) => ({
+                        ...base,
+                        zIndex: 50,
+                        position: "absolute",
+                      }),
+                      menuPortal: (base) => ({
+                        ...base,
+                        zIndex: 9999,
+                      }),
+                    }}
+                    instanceId="trainer-select"
+                  />
                   </div>
                 </div>
 
@@ -1172,44 +1182,48 @@ const programOptions = options.map((option) => ({
                     <Select
                       id="Venue"
                       name="Venue"
-                      options={venueOptions}
-                      value={
-                        formData.Venue
-                          ? venueOptions.find(
-                              (option) => option.value === formData.Venue
-                            )
-                          : null
-                      }
-                      onChange={(selectedOption) => {
-                        setFormData((prev) => ({
-                          ...prev,
-                          Venue: selectedOption ? selectedOption.value : "",
-                        }));
-                      }}
-                      placeholder="Select Venue"
-                      className="text-gray-900 rounded-md"
-                      isDisabled={!!formData.selectedMonth}
-                      styles={{
-                        control: (base, state) => ({
-                          ...base,
-                          backgroundColor: !!formData.selectedMonth ? "#f3f4f6" : "#fff",
-                          borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
-                          boxShadow: state.isFocused
-                            ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
-                            : "none",
-                          padding: "1px",
-                          borderRadius: "0.5rem",
-                          minHeight: "2rem",
-                          display: "flex",
-                          alignItems: "center",
-                          cursor: !!formData.selectedMonth ? "not-allowed" : "default",
-                        }),
-                        menu: (base) => ({
-                          ...base,
-                          zIndex: 50,
-                        }),
-                      }}
-                    />
+                    options={venueOptions}
+                    value={
+                      formData.Venue
+                        ? venueOptions.find(
+                            (option) => option.value === formData.Venue
+                          )
+                        : null
+                    }
+                    onChange={(selectedOption) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        Venue: selectedOption ? selectedOption.value : "",
+                      }));
+                    }}
+                    placeholder="Select Venue"
+                    className="text-gray-900 rounded-md cursor-pointer"
+                    isDisabled={!!formData.selectedMonth}
+                    styles={{
+                      control: (base, state) => ({
+                        ...base,
+                        cursor: !!formData.selectedMonth ? "not-allowed" : "pointer",
+                        backgroundColor: !!formData.selectedMonth ? "#f3f4f6" : "#fff",
+                        borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
+                        boxShadow: state.isFocused
+                          ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
+                          : "none",
+                        padding: "1px",
+                        borderRadius: "0.5rem",
+                        minHeight: "2rem",
+                        display: "flex",
+                        alignItems: "center",
+                      }),
+                      option: (base) => ({
+                        ...base,
+                        cursor: 'pointer',
+                      }),
+                      menu: (base) => ({
+                        ...base,
+                        zIndex: 50,
+                      }),
+                    }}
+                  />
                   </div>
                 </div>
               <div>
@@ -1260,12 +1274,12 @@ const programOptions = options.map((option) => ({
       }
       required
       autoComplete="off"
-      className=" text-gray-900 bg-white"
+      className=" text-gray-900 bg-white cursor-pointer"
       styles={{
         control: (base, state) => ({
           ...base,
+          cursor: formData.selectedMonth ? "not-allowed" : "pointer",
           backgroundColor: formData.selectedMonth ? "#f3f4f6" : "#fff",
-          cursor: formData.selectedMonth ? "not-allowed" : "default",
           borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
           boxShadow: state.isFocused
             ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
@@ -1275,6 +1289,10 @@ const programOptions = options.map((option) => ({
           minHeight: "2rem",
           display: "flex",
           alignItems: "center",
+        }),
+        option: (base) => ({
+          ...base,
+          cursor: 'pointer',
         }),
         menu: (base) => ({
           ...base,

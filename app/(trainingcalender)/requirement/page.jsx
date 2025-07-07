@@ -632,6 +632,7 @@ const programOptions = programs.map(program => ({
             styles={{
     control: (base, state) => ({
       ...base,
+      cursor: 'pointer',
       borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
       boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
       padding: "1px",
@@ -639,6 +640,10 @@ const programOptions = programs.map(program => ({
       minHeight: "2rem",
       display: "flex",
       alignItems: "center",
+    }),
+    option: (base) => ({
+      ...base,
+      cursor: 'pointer',
     }),
     menu: (base) => ({
       ...base,
@@ -676,6 +681,7 @@ const programOptions = programs.map(program => ({
   styles={{
     control: (base, state) => ({
       ...base,
+      cursor: 'pointer',
       borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
       boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
       padding: "1px",
@@ -683,6 +689,10 @@ const programOptions = programs.map(program => ({
       minHeight: "2rem",
       display: "flex",
       alignItems: "center",
+    }),
+    option: (base) => ({
+      ...base,
+      cursor: 'pointer',
     }),
     menu: (base) => ({
       ...base,
@@ -693,7 +703,7 @@ const programOptions = programs.map(program => ({
       zIndex: 9999,
     }),
   }}
-  className={`mb-1 ${formData.Training_Name === '' ? 'opacity-70 cursor-not-allowed' : ''}`}
+  className={`mb-1 ${formData.Training_Name === '' ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
   placeholder="Select program name"
   required
   autoComplete="off"
@@ -814,9 +824,11 @@ const programOptions = programs.map(program => ({
             required autoComplete="off"
             instanceId="req-months-select"
             classNamePrefix="react-select" 
+            className="cursor-pointer"
             styles={{
               control: (base, state) => ({
                 ...base,
+                cursor: 'pointer',
                 borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
                 boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
                 padding: "1px",
@@ -824,6 +836,10 @@ const programOptions = programs.map(program => ({
                 minHeight: "2rem",
                 display: "flex",
                 alignItems: "center",
+              }),
+              option: (base) => ({
+                ...base,
+                cursor: 'pointer',
               }),
               menu: (base) => ({
                 ...base,

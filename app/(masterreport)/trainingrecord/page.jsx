@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-
+import Select from 'react-select';
 export default function TrainingRecord() {
   const [message, setMessage] = useState('');
   const [department, setDepartment] = useState('');
@@ -142,17 +142,55 @@ export default function TrainingRecord() {
           <label htmlFor="Training_Name" className="block text-sm font-medium text-gray-900">
             Mode of the Program
           </label>
-          <select
-            id="Training_Name"
+          <Select
+            inputId="Training_Name"
             name="Training_Name"
-            value={formData.Training_Name}
-            onChange={handleFormChange}
+            value={
+              [
+                { value: "IATF", label: "International Automotive Task Force - (IATF)" },
+                { value: "HSE", label: "Health, Safety, and Environment - (HSE)" }
+              ].find(option => option.value === formData.Training_Name)
+            }
+            onChange={(selectedOption) => {
+              handleFormChange({
+                target: {
+                  name: "Training_Name",
+                  value: selectedOption ? selectedOption.value : ""
+                }
+              });
+            }}
+            options={[
+              { value: "IATF", label: "International Automotive Task Force - (IATF)" },
+              { value: "HSE", label: "Health, Safety, and Environment - (HSE)" }
+            ]}
+            className="block w-full mt-1 cursor-pointer"
+            classNamePrefix="react-select"
+            styles={{
+              control: (base, state) => ({
+                ...base,
+                cursor: "pointer",
+                backgroundColor: state.isFocused ? "white" : "white",
+                color: "black",
+                borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
+                boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
+              }),
+              singleValue: (base) => ({
+                ...base,
+                color: "black",
+              }),
+              placeholder: (base) => ({
+                ...base,
+                color: "#6b7280", // Tailwind gray-500
+              }),
+              option: (base, state) => ({
+                ...base,
+                cursor: "pointer",
+                backgroundColor: state.isFocused ? "#e0e7ff" : "white", // Tailwind indigo-100
+                color: "black",
+              }),
+            }}
             required
-            className="block w-full mt-1 py-3 pl-4 pr-8 border-2 border-gray-300 rounded-md text-gray-800"
-          >
-            <option value="IATF">International Automotive Task Force - (IATF)</option>
-            <option value="HSE">Health, Safety, and Environment - (HSE)</option>
-          </select>
+          />
         </div>
 
         {/* Program Name */}
