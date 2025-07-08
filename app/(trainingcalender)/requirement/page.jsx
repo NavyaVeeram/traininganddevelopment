@@ -654,6 +654,8 @@ const programOptions = programs.map(program => ({
       zIndex: 9999,
     }),
   }}
+            menuPortalTarget={document.body}
+            menuPosition="fixed"
             required
           />
         </div>
@@ -708,6 +710,8 @@ const programOptions = programs.map(program => ({
   required
   autoComplete="off"
   instanceId="program-name-select"
+  menuPortalTarget={document.body}
+  menuPosition="fixed"
 />
 
   </div>
@@ -1017,7 +1021,7 @@ const programOptions = programs.map(program => ({
         <div className="flex space-x-2" style={{ fontSize: "14px" }}>
           <button
             type="button"
-            className="px-3 py-1 border rounded"
+            className="px-3 py-1 border cursor-pointer rounded"
             onClick={() => setCurrentPage(1)}
             disabled={currentPage === 1}
           >
@@ -1025,7 +1029,7 @@ const programOptions = programs.map(program => ({
           </button>
           <button
             type="button"
-            className="px-3 py-1 border rounded"
+            className="px-3 py-1 border cursor-pointer  rounded"
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
           >
@@ -1035,7 +1039,7 @@ const programOptions = programs.map(program => ({
             <button
               key={i}
               type="button"
-              className={`px-3 py-1 border rounded ${
+              className={`px-3 py-1 border cursor-pointer  rounded ${
                 currentPage === i + 1 ? "bg-black text-primary-foreground" : ""
               }`}
               onClick={() => setCurrentPage(i + 1)}
@@ -1045,7 +1049,7 @@ const programOptions = programs.map(program => ({
           ))}
           <button
             type="button"
-            className="px-3 py-1 border rounded"
+            className="px-3 py-1 border cursor-pointer  rounded"
             onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
           >
@@ -1053,7 +1057,7 @@ const programOptions = programs.map(program => ({
           </button>
           <button
             type="button"
-            className="px-3 py-1 border rounded"
+            className="px-3 py-1 border cursor-pointer  rounded"
             onClick={() => setCurrentPage(totalPages)}
             disabled={currentPage === totalPages}
           >

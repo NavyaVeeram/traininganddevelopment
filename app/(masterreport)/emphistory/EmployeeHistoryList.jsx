@@ -35,7 +35,9 @@ const EmployeeHistoryList = () => {
     const fetchAccessRole = async () => {
       try {
         const res = await fetch(
-          `/api/get_access_role?employeeId=${localStorage.getItem("employeeId")}`
+          `/api/get_access_role?employeeId=${localStorage.getItem(
+            "employeeId"
+          )}`
         );
         const data = await res.json();
 
@@ -373,7 +375,7 @@ const EmployeeHistoryList = () => {
     selectAllRowsItemText: "All",
   };
 
- const handleFileUpload = async (event, item) => {
+  const handleFileUpload = async (event, item) => {
     const file = event.target.files[0];
     if (!file || file.type !== "application/pdf") {
       alert("Please upload a valid PDF file.");
@@ -464,7 +466,7 @@ const EmployeeHistoryList = () => {
                 styles={{
                   control: (base, state) => ({
                     ...base,
-                    cursor: 'pointer',
+                    cursor: "pointer",
                     borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
                     boxShadow: state.isFocused
                       ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
@@ -476,7 +478,7 @@ const EmployeeHistoryList = () => {
                   }),
                   option: (base) => ({
                     ...base,
-                    cursor: 'pointer',
+                    cursor: "pointer",
                   }),
                   menu: (base) => ({
                     ...base,

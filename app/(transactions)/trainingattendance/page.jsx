@@ -1233,10 +1233,10 @@ const programOptions = options.map((option) => ({
               name="Actual_Budget"
               value={formData.Actual_Budget}
               onChange={handleFormDataChange}
-              disabled={formData.Train_Mode === "Internal"}
+              disabled={!!formData.selectedMonth || !(formData.Train_Mode === "Internal" || formData.Train_Mode === "External" || formData.Train_Mode === "Overseas")}
               autoComplete="off"
-              className={`w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-blue-500e ${
-                formData.Train_Mode === "Internal"
+              className={`w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-blue-500 ${
+                !!formData.selectedMonth || !(formData.Train_Mode === "Internal" || formData.Train_Mode === "External" || formData.Train_Mode === "Overseas")
                   ? "bg-gray-100 cursor-not-allowed"
                   : ""
               }`}

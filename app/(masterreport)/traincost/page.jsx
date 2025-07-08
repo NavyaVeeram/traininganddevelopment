@@ -744,7 +744,8 @@ const TrainingBudget = () => {
                         },
                         body: JSON.stringify({
                           Year_No: selectedDate.getFullYear(),
-                          Add_Budget: Number(additionalTrainingProgramsText) || 0,
+                          Add_Budget:
+                            Number(additionalTrainingProgramsText) || 0,
                           createdBy: employeeId || "",
                         }),
                       }
@@ -782,7 +783,9 @@ const TrainingBudget = () => {
                     setTrainingData((prevData) => {
                       return prevData.map((item) => {
                         if (
-                          item.Program_Name?.toLowerCase().includes("additional")
+                          item.Program_Name?.toLowerCase().includes(
+                            "additional"
+                          )
                         ) {
                           return {
                             ...item,
@@ -796,7 +799,9 @@ const TrainingBudget = () => {
                     setFilteredData((prevData) => {
                       return prevData.map((item) => {
                         if (
-                          item.Program_Name?.toLowerCase().includes("additional")
+                          item.Program_Name?.toLowerCase().includes(
+                            "additional"
+                          )
                         ) {
                           return {
                             ...item,
@@ -809,7 +814,8 @@ const TrainingBudget = () => {
                     });
                   } catch (error) {
                     alert(
-                      "Error saving additional budget and notes: " + error.message
+                      "Error saving additional budget and notes: " +
+                        error.message
                     );
                   }
                 }}
@@ -891,7 +897,7 @@ const TrainingBudget = () => {
                               label: "Estimated Budget",
                             },
                             { key: "Actual_Budget", label: "Actual Budget" },
-                             {
+                            {
                               key: "Training_Status",
                               label: "Remarks",
                             },

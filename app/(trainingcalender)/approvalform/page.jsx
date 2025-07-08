@@ -85,26 +85,26 @@ export default function TrainingDataTable() {
       return;
     }
 
-    const fetchAccessRole = async () => {
-      try {
-        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-        const data = await res.json();
+      const fetchAccessRole = async () => {
+        try {
+          const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+          const data = await res.json();
 
-        if (res.ok && data.Access_Role) {
-          if (data.Access_Role === "HR_Res"  && data.Access_Role === "HR_Hod" ) {
+          if (res.ok && data.Access_Role) {
+            if (data.Access_Role === "HR_Res" || data.Access_Role === "HR_Hod") {
+              setIsAuthorized(false);  // Hide page for these roles
+              return;
+            }
+            setAccessRole(data.Access_Role);
+            setIsAuthorized(true);
+          } else {
             setIsAuthorized(false);
-            return;
           }
-          setAccessRole(data.Access_Role);
-          setIsAuthorized(true);
-        } else {
+        } catch (error) {
+          console.error('Error fetching access role:', error);
           setIsAuthorized(false);
         }
-      } catch (error) {
-        console.error('Error fetching access role:', error);
-        setIsAuthorized(false);
-      }
-    };
+      };
 
     fetchAccessRole();
   }, []);
@@ -399,62 +399,70 @@ export default function TrainingDataTable() {
                     ))
                      ) : (
               <tr>
-                <td colSpan={15} className="text-center p-4">
+                <td colSpan={15} className="text-center border p-4">
                   No data found.
                 </td>
               </tr>
             )}
           </tbody>
         </table>
-
-        {/* Pagination */}
-        {rowsPerPage !== "All" && filteredData.length > 0 && (
-          <div className="flex justify-between items-center mt-4 text-sm">
-            <span>
-              Showing{" "}
-              {filteredData.length > 0
-                ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
-                  currentPage * rowsPerPage,
-                  filteredData.length
-                )} of ${filteredData.length}`
-                : "0"}{" "}
-              entries
-            </span>
-            <div className="flex gap-1">
-              <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1}
-                className="px-3 py-1 border rounded">
-                {"<<"}
-              </button>
-              <button onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} disabled={currentPage === 1}
-                className="px-3 py-1 border rounded">
-                {"<"}
-              </button>
-              {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i}
-                  className={`px-3 py-1 border rounded ${currentPage === i + 1 ? "bg-black text-primary-foreground" : ""
-                    }`}
-                  onClick={() => setCurrentPage(i + 1)}
-                  type="button"
-                >
-                  {i + 1}
-                </button>
-              ))}
-              <button
-                className="px-3 py-1 border rounded"
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-              >
-                {">"}
-              </button>
-              <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages}
-                className="px-3 py-1 border rounded">
-                {">>"}
-              </button>
-            </div>
-          </div>
-        )}
-
+     <div className="flex flex-wrap justify-between items-center mt-4 space-y-2">
+        <div style={{ fontSize: "14px" }}>
+          Showing{" "}
+          {paginatedData.length > 0
+            ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
+                currentPage * rowsPerPage,
+                paginatedData.length
+              )} of ${paginatedDataS.length} entries`
+            : "0 entries"}
+        </div>
+        <div className="flex space-x-2" style={{ fontSize: "14px" }}>
+          <button
+            type="button"
+            className="px-3 py-1 border cursor-pointer rounded"
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
+          >
+            {"<<"}
+          </button>
+          <button
+            type="button"
+            className="px-3 py-1 border cursor-pointer  rounded"
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+          >
+            {"<"}
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i}
+              type="button"
+              className={`px-3 py-1 border cursor-pointer  rounded ${
+                currentPage === i + 1 ? "bg-black text-primary-foreground" : ""
+              }`}
+              onClick={() => setCurrentPage(i + 1)}
+            >
+              {i + 1}
+            </button>
+          ))}
+          <button
+            type="button"
+            className="px-3 py-1 border cursor-pointer  rounded"
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+          >
+            {">"}
+          </button>
+          <button
+            type="button"
+            className="px-3 py-1 border cursor-pointer  rounded"
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={currentPage === totalPages}
+          >
+            {">>"}
+          </button>
+        </div>
+      </div>
         {/* Approval Button */}
         {paginatedData.length > 0 && (
           <div className="flex justify-end mt-6 gap-x-2">

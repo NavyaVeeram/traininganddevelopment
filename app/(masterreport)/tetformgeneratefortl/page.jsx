@@ -7,12 +7,12 @@ import Link from "next/link";
 import Select from "react-select";
 
 const TETForms = () => {
-const [selectedDate, setSelectedDate] = useState(new Date());
-const trainingOptions = [
-  { value: "IATF", label: "International Automotive Task Force - (IATF)" },
-  { value: "HSE", label: "Health, Safety, and Environment - (HSE)" }
-];
-const [selectedTraining, setSelectedTraining] = useState(trainingOptions[0]);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const trainingOptions = [
+    { value: "IATF", label: "International Automotive Task Force - (IATF)" },
+    { value: "HSE", label: "Health, Safety, and Environment - (HSE)" },
+  ];
+  const [selectedTraining, setSelectedTraining] = useState(trainingOptions[0]);
   const [trainingData, setTrainingData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [tableSearchTerm, setTableSearchTerm] = useState("");
@@ -26,8 +26,7 @@ const [selectedTraining, setSelectedTraining] = useState(trainingOptions[0]);
   const [accessRole, setAccessRole] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(null);
   const getMonthNumber = (date) => (date ? date.getMonth() + 1 : null);
-const [EmployeeId,setEmployeeId] = useState(null);
-
+  const [EmployeeId, setEmployeeId] = useState(null);
 
   const fetchData = async (date, trainingName) => {
     const storedEmployeeId = localStorage.getItem("employeeId");
@@ -46,7 +45,9 @@ const [EmployeeId,setEmployeeId] = useState(null);
 
     try {
       const response = await fetch(
-        `/api/get_tet_form_data_res_person?year=${date}&training_name=${encodeURIComponent(trainingName)}&EmployeeId=${storedEmployeeId}`
+        `/api/get_tet_form_data_res_person?year=${date}&training_name=${encodeURIComponent(
+          trainingName
+        )}&EmployeeId=${storedEmployeeId}`
       );
 
       if (!response.ok) {
@@ -62,7 +63,6 @@ const [EmployeeId,setEmployeeId] = useState(null);
         setTrainingData(data);
         setFilteredData(data);
         // Fetch submitted status map for all Program_Ids
-        
       }
     } catch (err) {
       setError(err.message || "An error occurred while fetching data.");
@@ -72,7 +72,6 @@ const [EmployeeId,setEmployeeId] = useState(null);
     }
   };
 
- 
   // useEffect(() => {
   //   if (selectedDate) fetchData(selectedDate);
   // }, [selectedDate]);
@@ -89,40 +88,47 @@ const [EmployeeId,setEmployeeId] = useState(null);
       setCurrentPage(1);
     }
   }, [selectedDate, selectedTraining]);
-   useEffect(() => {
-     const storedEmployeeId = localStorage.getItem('employeeId');
-   
-     if (storedEmployeeId) {
-       setEmployeeId(storedEmployeeId);
-     }
-    
-     const fetchAccessRole = async () => {
-       try {
-         const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-         const data = await res.json();
-   
-         if (res.ok && data.Access_Role) {
-           // Restrict access for HR_Res and HR_HOD roles
-           if (data.Access_Role !== "Res_Person" && data.Access_Role !== "HOS" && data.Access_Role !== "HOD" && data.Access_Role !== "HR_Hod " && data.Access_Role !== "HR_Res") {
-             setIsAuthorized(false);
-             // Optionally redirect to unauthorized page
-             // window.location.href = '/unauthorized';
-             return;
-           }
-           setAccessRole(data.Access_Role);
-           setIsAuthorized(true);
-         } else {
-           setIsAuthorized(false);
-         }
-       } catch (error) {
-         console.error('Error fetching access role:', error);
-         setIsAuthorized(false);
-       }
-     };
-   
-     fetchAccessRole();
-   }, []);
+  useEffect(() => {
+    const storedEmployeeId = localStorage.getItem("employeeId");
 
+    if (storedEmployeeId) {
+      setEmployeeId(storedEmployeeId);
+    }
+
+    const fetchAccessRole = async () => {
+      try {
+        const res = await fetch(
+          `/api/get_access_role?employeeId=${storedEmployeeId}`
+        );
+        const data = await res.json();
+
+        if (res.ok && data.Access_Role) {
+          // Restrict access for HR_Res and HR_HOD roles
+          if (
+            data.Access_Role !== "Res_Person" &&
+            data.Access_Role !== "HOS" &&
+            data.Access_Role !== "HOD" &&
+            data.Access_Role !== "HR_Hod " &&
+            data.Access_Role !== "HR_Res"
+          ) {
+            setIsAuthorized(false);
+            // Optionally redirect to unauthorized page
+            // window.location.href = '/unauthorized';
+            return;
+          }
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+        }
+      } catch (error) {
+        console.error("Error fetching access role:", error);
+        setIsAuthorized(false);
+      }
+    };
+
+    fetchAccessRole();
+  }, []);
 
   const handleSort = (key) => {
     let direction = "asc";
@@ -177,7 +183,7 @@ const [EmployeeId,setEmployeeId] = useState(null);
       setFilteredData(filtered);
     }
   };
-   if (isAuthorized === null) {
+  if (isAuthorized === null) {
     return (
       // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
       //   <div className="bg-white p-10 rounded shadow text-center">
@@ -204,9 +210,9 @@ const [EmployeeId,setEmployeeId] = useState(null);
       </div>
       <div className="mt-3 flex relative">
         <div className="flex items-center">
-         <label htmlFor="year-select" className="mr-2 font-semibold">
-              Select Year:
-            </label>
+          <label htmlFor="year-select" className="mr-2 font-semibold">
+            Select Year:
+          </label>
           <DatePicker
             selected={selectedDate}
             onChange={(date) => setSelectedDate(date)}
@@ -224,40 +230,43 @@ const [EmployeeId,setEmployeeId] = useState(null);
             }}
           />
         </div>
-   <div className="flex mx-2 items-center">
-<label htmlFor="Training_Name" className=" mr-2 font-semibold whitespace-nowrap">
-              Select Training:
-            </label>
-        <div className="relative w-full">
-          <Select
-            inputId="Training_Name"
-            name="Training_Name"
-            options={trainingOptions}
-            value={selectedTraining}
-            onChange={setSelectedTraining}
-            className="mb-1"
-            classNamePrefix="react-select"
-            isSearchable={false}
-            required
-            styles={{
-              control: (provided) => ({
-                ...provided,
-                padding: "2px",
-                borderColor: "#D1D5DB",
-                borderRadius: "0.5rem",
-                cursor: "pointer",
-                minHeight: "38px",
-              }),
-              option: (provided, state) => ({
-                ...provided,
-                cursor: "pointer",
-                backgroundColor: state.isFocused ? "#E0F2FE" : "white",
-                color: "black",
-              }),
-            }}
-          />
+        <div className="flex mx-2 items-center">
+          <label
+            htmlFor="Training_Name"
+            className=" mr-2 font-semibold whitespace-nowrap"
+          >
+            Select Training:
+          </label>
+          <div className="relative w-full">
+            <Select
+              inputId="Training_Name"
+              name="Training_Name"
+              options={trainingOptions}
+              value={selectedTraining}
+              onChange={setSelectedTraining}
+              className="mb-1"
+              classNamePrefix="react-select"
+              isSearchable={false}
+              required
+              styles={{
+                control: (provided) => ({
+                  ...provided,
+                  padding: "2px",
+                  borderColor: "#D1D5DB",
+                  borderRadius: "0.5rem",
+                  cursor: "pointer",
+                  minHeight: "38px",
+                }),
+                option: (provided, state) => ({
+                  ...provided,
+                  cursor: "pointer",
+                  backgroundColor: state.isFocused ? "#E0F2FE" : "white",
+                  color: "black",
+                }),
+              }}
+            />
+          </div>
         </div>
-      </div>
       </div>
       {loading && <p>Loading...</p>}
 
@@ -307,10 +316,14 @@ const [EmployeeId,setEmployeeId] = useState(null);
               <div>
                 <table
                   className="min-w-full border bg-card text-sm "
-                  style={{ tableLayout: "fixed", fontSize: "13px", padding: "1px",
-                    whiteSpace: "nowrap", 
-                    overflow: "hidden",   
-                    textOverflow: "ellipsis",  }}
+                  style={{
+                    tableLayout: "fixed",
+                    fontSize: "13px",
+                    padding: "1px",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
                 >
                   <thead className="bg-muted sticky top-0">
                     <tr>
@@ -324,22 +337,22 @@ const [EmployeeId,setEmployeeId] = useState(null);
                         // { key: "IsActive", label: "Status" },
                         { key: "actions", label: "Report" },
                       ].map(({ key, label }, index) => (
-                          <th
-                            key={key}
-                            className={`px-4 py-2 border text-left cursor-pointer ${
-                              index === 0 ? "sticky left-0 bg-muted z-20" : ""
-                            }`}
-                            onClick={() => key !== "actions" && handleSort(key)}
-                          >
-                            {label}{" "}
-                            {sortConfig.key === key
-                              ? sortConfig.direction === "asc"
-                                ? "▲"
-                                : "▼"
-                              : key !== "actions"
-                              ? "↕"
-                              : ""}
-                          </th>
+                        <th
+                          key={key}
+                          className={`px-4 py-2 border text-left cursor-pointer ${
+                            index === 0 ? "sticky left-0 bg-muted z-20" : ""
+                          }`}
+                          onClick={() => key !== "actions" && handleSort(key)}
+                        >
+                          {label}{" "}
+                          {sortConfig.key === key
+                            ? sortConfig.direction === "asc"
+                              ? "▲"
+                              : "▼"
+                            : key !== "actions"
+                            ? "↕"
+                            : ""}
+                        </th>
                       ))}
                     </tr>
                   </thead>
@@ -348,7 +361,9 @@ const [EmployeeId,setEmployeeId] = useState(null);
                       paginatedData.map((item, index) => (
                         <tr key={index} className="hover:bg-gray-100 border">
                           <td className="px-4 py-2 border">{item.Year_No}</td>
-                          <td className="px-4 py-2 border">{item.Department}</td>
+                          <td className="px-4 py-2 border">
+                            {item.Department}
+                          </td>
                           <td className="px-4 py-2 border">
                             {item.Program_Name}
                           </td>
@@ -359,9 +374,9 @@ const [EmployeeId,setEmployeeId] = useState(null);
                             {item.Training_Date}
                           </td>
                           <td className="px-4 py-2 border">
-                            {(item.Evaluation_Date)}
+                            {item.Evaluation_Date}
                           </td>
-                        {/* Removed Status column as it depends on unnecessary API */}
+                          {/* Removed Status column as it depends on unnecessary API */}
                           <td className="px-4 py-2 border text-blue-600 underline">
                             <Link
                               href={`/tetreportsfortl?id=${item.Program_Id}`}
@@ -389,7 +404,7 @@ const [EmployeeId,setEmployeeId] = useState(null);
               </div>
             </div>
 
-            { (
+            {
               <div className="flex flex-wrap justify-between items-center mt-4 text-sm">
                 <div>
                   Showing{" "}
@@ -445,7 +460,7 @@ const [EmployeeId,setEmployeeId] = useState(null);
                   </button>
                 </div>
               </div>
-            )}
+            }
           </div>
         </div>
       )}

@@ -17,9 +17,9 @@ const Upload = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
-  const [department, setDepartment] = useState('');
-  const [username, setUsername] = useState('');
-  const [employeeId, setEmployeeId] = useState('');
+  const [department, setDepartment] = useState("");
+  const [username, setUsername] = useState("");
+  const [employeeId, setEmployeeId] = useState("");
   const [accessRole, setAccessRole] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(null);
   const [formData, setFormData] = useState({
@@ -49,44 +49,50 @@ const Upload = () => {
     }
   };
 
-     useEffect(() => {
-         const storedEmployeeId = localStorage.getItem('employeeId');
-       
-         if (storedEmployeeId) {
-           setEmployeeId(storedEmployeeId);
-         }
-        
-         const fetchAccessRole = async () => {
-           try {
-             const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-             const data = await res.json();
-       
-             if (res.ok && data.Access_Role) {
-               // Restrict access for HR_Res and HR_HOD roles
-               if (data.Access_Role === "Res_Person" || data.Access_Role === "HOS" || data.Access_Role === "HOD") {
-                 setIsAuthorized(false);
-                 // Optionally redirect to unauthorized page
-                 // window.location.href = '/unauthorized';
-                 return;
-               }
-               setAccessRole(data.Access_Role);
-               setIsAuthorized(true);
-             } else {
-               setIsAuthorized(false);
-             }
-           } catch (error) {
-             console.error('Error fetching access role:', error);
-             setIsAuthorized(false);
-           }
-         };
-       
-         fetchAccessRole();
-       }, []);
- useEffect(() => {
+  useEffect(() => {
+    const storedEmployeeId = localStorage.getItem("employeeId");
+
+    if (storedEmployeeId) {
+      setEmployeeId(storedEmployeeId);
+    }
+
+    const fetchAccessRole = async () => {
+      try {
+        const res = await fetch(
+          `/api/get_access_role?employeeId=${storedEmployeeId}`
+        );
+        const data = await res.json();
+
+        if (res.ok && data.Access_Role) {
+          // Restrict access for HR_Res and HR_HOD roles
+          if (
+            data.Access_Role === "Res_Person" ||
+            data.Access_Role === "HOS" ||
+            data.Access_Role === "HOD"
+          ) {
+            setIsAuthorized(false);
+            // Optionally redirect to unauthorized page
+            // window.location.href = '/unauthorized';
+            return;
+          }
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+        }
+      } catch (error) {
+        console.error("Error fetching access role:", error);
+        setIsAuthorized(false);
+      }
+    };
+
+    fetchAccessRole();
+  }, []);
+  useEffect(() => {
     // Retrieve the department, username, and employeeId from localStorage
-    const storedDepartment = localStorage.getItem('department');
-    const storedUsername = localStorage.getItem('username');
-    const storedEmployeeId = localStorage.getItem('employeeId');
+    const storedDepartment = localStorage.getItem("department");
+    const storedUsername = localStorage.getItem("username");
+    const storedEmployeeId = localStorage.getItem("employeeId");
 
     // If data is found, update state
     if (storedDepartment && storedUsername && storedEmployeeId) {
@@ -95,7 +101,7 @@ const Upload = () => {
       setEmployeeId(storedEmployeeId);
     } else {
       // If no data found, redirect to login page
-      window.location.href = '/';
+      window.location.href = "/";
     }
     // Removed fetchData and trainingData usage as trainingData state is unused
   }, [department, username, employeeId]);
@@ -136,78 +142,78 @@ const Upload = () => {
   };
 
   const validatePhoneNumber = (number) => /^\d{10}$/.test(number);
-const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
-  setSuccessMessage("");
-
-  // Validate phone numbers
-  if (
-    !validatePhoneNumber(formData.Contact_1) ||
-    !validatePhoneNumber(formData.Contact_2)
-  ) {
-    setError("Please enter valid 10-digit phone numbers.");
-    setTimeout(() => setError(""), 3000);
-    return;
-  }
-
-  // Trim and validate email
-  let email = formData.Mailid.trim();
-
-  // Check if email contains both "@" and "."
-  if (!email.includes("@") || !email.includes(".")) {
-    alert("Please enter an mail that includes both '@' and '.'");
-    return;
-  }
-
-  // Check against full valid email format
-  if (!validateEmail(email)) {
-    setError("Please enter a valid email address.");
-    setTimeout(() => setError(""), 3000);
-    return;
-  }
-
-  // Save cleaned email back
-  setFormData((prev) => ({ ...prev, Mailid: email }));
-
-  // Add CreatedBy field
-  const submissionData = { ...formData, CreatedBy: employeeId };
-
-  try {
-    const res = await fetch("/api/insert_agencies", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(submissionData),
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-      setFormData({
-        Agency_name: "",
-        Contact_person: "",
-        Location: "",
-        Contact_1: "",
-        Contact_2: "",
-        Mailid: "",
-        Website: "",
-        CreatedBy: "",
-      });
-      fetchAgencies();
-      alert("Data Submitted Successfully");
-    } else {
-      setError(data.error || "Submission failed.");
-    }
-  } catch {
-    setError("An error occurred while submitting.");
-  }
-
-  setTimeout(() => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setError("");
-  }, 3000);
-};
+    setSuccessMessage("");
+
+    // Validate phone numbers
+    if (
+      !validatePhoneNumber(formData.Contact_1) ||
+      !validatePhoneNumber(formData.Contact_2)
+    ) {
+      setError("Please enter valid 10-digit phone numbers.");
+      setTimeout(() => setError(""), 3000);
+      return;
+    }
+
+    // Trim and validate email
+    let email = formData.Mailid.trim();
+
+    // Check if email contains both "@" and "."
+    if (!email.includes("@") || !email.includes(".")) {
+      alert("Please enter an mail that includes both '@' and '.'");
+      return;
+    }
+
+    // Check against full valid email format
+    if (!validateEmail(email)) {
+      setError("Please enter a valid email address.");
+      setTimeout(() => setError(""), 3000);
+      return;
+    }
+
+    // Save cleaned email back
+    setFormData((prev) => ({ ...prev, Mailid: email }));
+
+    // Add CreatedBy field
+    const submissionData = { ...formData, CreatedBy: employeeId };
+
+    try {
+      const res = await fetch("/api/insert_agencies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(submissionData),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setFormData({
+          Agency_name: "",
+          Contact_person: "",
+          Location: "",
+          Contact_1: "",
+          Contact_2: "",
+          Mailid: "",
+          Website: "",
+          CreatedBy: "",
+        });
+        fetchAgencies();
+        alert("Data Submitted Successfully");
+      } else {
+        setError(data.error || "Submission failed.");
+      }
+    } catch {
+      setError("An error occurred while submitting.");
+    }
+
+    setTimeout(() => {
+      setError("");
+    }, 3000);
+  };
 
   const filteredAgencies = agencies.filter((agency) =>
     Object.values(agency).some((val) =>
@@ -382,7 +388,6 @@ const handleSubmit = async (e) => {
                 placeholder="Enter your email"
                 className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
               />
-         
             </div>
           </div>
 
