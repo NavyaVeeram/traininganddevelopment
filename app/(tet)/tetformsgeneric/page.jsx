@@ -2,17 +2,12 @@
 import { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import Select from "react-select";
 import { FaSearch } from "react-icons/fa";
 import Link from "next/link";
-import Select from "react-select";
-
 const TETForms = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const trainingOptions = [
-    { value: "IATF", label: "International Automotive Task Force - (IATF)" },
-    { value: "HSE", label: "Health, Safety, and Environment - (HSE)" },
-  ];
-  const [selectedTraining, setSelectedTraining] = useState(trainingOptions[0]);
+  const [trainingName, setTrainingName] = useState("IATF");
   const [trainingData, setTrainingData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [tableSearchTerm, setTableSearchTerm] = useState("");
@@ -20,16 +15,27 @@ const TETForms = () => {
   const [error, setError] = useState(null);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Normalize rowsPerPage to always be a number for pagination calculations
+  const normalizedRowsPerPage =
+    rowsPerPage === "All" ? filteredData.length || 1 : rowsPerPage;
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
-  const [submittedStatusMap, setSubmittedStatusMap] = useState({});
-  const [submittedStatusLoading, setSubmittedStatusLoading] = useState(false);
+  // Removed submittedStatusMap and submittedStatusLoading states
+  // const [submittedStatusMap, setSubmittedStatusMap] = useState({});
+  // const [submittedStatusLoading, setSubmittedStatusLoading] = useState(false);
   const [accessRole, setAccessRole] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(null);
-  const [department, setDepartment] = useState(null);
+  const [employeeId, setEmployeeId] = useState(null);
+
+  // New state variables for user dropdown data
+  const [userDropdownData, setUserDropdownData] = useState([]);
+  const [userDropdownLoading, setUserDropdownLoading] = useState(false);
+  const [userDropdownError, setUserDropdownError] = useState(null);
+
   const getMonthNumber = (date) => (date ? date.getMonth() + 1 : null);
-  const [EmployeeId, setEmployeeId] = useState(null);
 
   const fetchData = async (date, trainingName) => {
+    // const storedEmployeeId = localStorage.getItem("employeeId");
     const storedEmployeeId = localStorage.getItem("employeeId");
 
     if (storedEmployeeId) {
@@ -46,7 +52,7 @@ const TETForms = () => {
 
     try {
       const response = await fetch(
-        `/api/get_tet_form_data_res_person?year=${date}&training_name=${encodeURIComponent(
+        `/api/get_tet_form_data_generic?year=${date}&training_name=${encodeURIComponent(
           trainingName
         )}&EmployeeId=${storedEmployeeId}`
       );
@@ -73,9 +79,29 @@ const TETForms = () => {
     }
   };
 
-  // useEffect(() => {
-  //   if (selectedDate) fetchData(selectedDate);
-  // }, [selectedDate]);
+  // New function to fetch user dropdown data from API
+  const fetchUserDropdownData = async (programId, empId) => {
+    if (!programId || !empId) return;
+    setUserDropdownLoading(true);
+    setUserDropdownError(null);
+    try {
+      const res = await fetch(
+        `/api/get_tet_form_user_dropdown_by_generic?programId=${programId}&EmployeeId=${empId}`
+      );
+      if (!res.ok) {
+        throw new Error("Failed to fetch user dropdown data");
+      }
+      const data = await res.json();
+      setUserDropdownData(data);
+    } catch (error) {
+      setUserDropdownError(
+        error.message || "Error fetching user dropdown data"
+      );
+      setUserDropdownData([]);
+    } finally {
+      setUserDropdownLoading(false);
+    }
+  };
 
   useEffect(() => {
     setCurrentPage(1);
@@ -84,18 +110,16 @@ const TETForms = () => {
   useEffect(() => {
     if (selectedDate) {
       const year = selectedDate.getFullYear();
-      fetchData(year, selectedTraining.value);
+      fetchData(year, trainingName);
       setRowsPerPage(10);
       setCurrentPage(1);
     }
-  }, [selectedDate, selectedTraining]);
+  }, [selectedDate, trainingName]);
+
   useEffect(() => {
     const storedEmployeeId = localStorage.getItem("employeeId");
-    const storedDepartment = localStorage.getItem("department");
-
-    if (storedEmployeeId && storedDepartment) {
+    if (storedEmployeeId) {
       setEmployeeId(storedEmployeeId);
-      setDepartment(storedDepartment);
     }
 
     const fetchAccessRole = async () => {
@@ -105,19 +129,13 @@ const TETForms = () => {
         );
         const data = await res.json();
 
-        if (
-          res.ok &&
-          data.Access_Role &&
-          storedDepartment &&
-          (data.Access_Role === "Res_Person" ||
-            data.Access_Role === "HOS" ||
-            data.Access_Role === "HOD" ||
-            data.Access_Role === "HR_Hod" ||
-            data.Access_Role === "HR_Res") 
-            // &&  (storedDepartment === "MS" || storedDepartment === "FNTRY")
-        ) {
-          setIsAuthorized(true);
+        if (res.ok && data.Access_Role) {
+          if (data.Access_Role === "Res_Person" && data.Access_Role === 'HOS' && data.Access_Role ==='HOD') {
+            setIsAuthorized(false);
+            return;
+          }
           setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
         } else {
           setIsAuthorized(false);
         }
@@ -129,6 +147,16 @@ const TETForms = () => {
 
     fetchAccessRole();
   }, []);
+
+  // New useEffect to fetch user dropdown data when trainingData and employeeId change
+  useEffect(() => {
+    if (trainingData.length > 0 && employeeId) {
+      const programId = trainingData[0].Program_Id;
+      fetchUserDropdownData(programId, employeeId);
+    } else {
+      setUserDropdownData([]);
+    }
+  }, [trainingData, employeeId]);
 
   const handleSort = (key) => {
     let direction = "asc";
@@ -155,7 +183,7 @@ const TETForms = () => {
           currentPage * rowsPerPage
         );
 
-  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+  const totalPages = Math.ceil(filteredData.length / normalizedRowsPerPage);
 
   const handleTableSearchChange = (e) => {
     const searchQuery = e.target.value;
@@ -172,7 +200,7 @@ const TETForms = () => {
           "Evaluation_Date",
           "Training_Date",
           "Training_Name",
-          "IsActive",
+          "Training_Status",
         ].some((field) =>
           trainer[field]
             ?.toString()
@@ -183,15 +211,9 @@ const TETForms = () => {
       setFilteredData(filtered);
     }
   };
+
   if (isAuthorized === null) {
-    return (
-      // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
-      //   <div className="bg-white p-10 rounded shadow text-center">
-      //     <h2 className="text-2xl font-bold">Loading...</h2>
-      //   </div>
-      // </div>
-      <div>Loading...</div>
-    );
+    return <div>Loading...</div>;
   }
   if (isAuthorized === false) {
     return (
@@ -203,68 +225,83 @@ const TETForms = () => {
       </div>
     );
   }
+
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
         <h1 className="font-semibold">TET Forms</h1>
       </div>
-      <div className="mt-3 flex relative">
-        <div className="flex items-center">
-          <label htmlFor="year-select" className="mr-2 font-semibold">
-            Select Year:
-          </label>
-          <DatePicker
-            selected={selectedDate}
-            onChange={(date) => setSelectedDate(date)}
-            dateFormat="yyyy"
-            showYearPicker
-            placeholderText="Select Year"
-            className="p-2 border border-gray-300 rounded-lg"
-            calendarClassName="z-50"
-            popperPlacement="top-start"
-            popperModifiers={{
-              preventOverflow: {
-                enabled: true,
-                boundariesElement: "viewport",
-              },
-            }}
-          />
-        </div>
-        <div className="flex mx-2 items-center">
-          <label
-            htmlFor="Training_Name"
-            className=" mr-2 font-semibold whitespace-nowrap"
-          >
-            Select Training:
-          </label>
-          <div className="relative w-full">
-            <Select
-              inputId="Training_Name"
-              name="Training_Name"
-              options={trainingOptions}
-              value={selectedTraining}
-              onChange={setSelectedTraining}
-              className="mb-1"
-              classNamePrefix="react-select"
-              isSearchable={false}
-              required
-              styles={{
-                control: (provided) => ({
-                  ...provided,
-                  padding: "2px",
-                  borderColor: "#D1D5DB",
-                  borderRadius: "0.5rem",
-                  cursor: "pointer",
-                  minHeight: "38px",
-                }),
-                option: (provided, state) => ({
-                  ...provided,
-                  cursor: "pointer",
-                  backgroundColor: state.isFocused ? "#E0F2FE" : "white",
-                  color: "black",
-                }),
+      <div className="mb-4 mt-2 flex justify-between items-center space-x-4">
+        <div className="flex">
+          <div>
+            <label htmlFor="year-select" className="mr-2 font-semibold">
+              Select Year:
+            </label>
+            <DatePicker
+              selected={selectedDate}
+              onChange={(date) => setSelectedDate(date)}
+              dateFormat="yyyy"
+              showYearPicker
+              placeholderText="Select Year"
+              className="p-2 border border-gray-300 rounded-lg"
+              calendarClassName="z-50"
+              popperPlacement="top-start"
+              popperModifiers={{
+                preventOverflow: {
+                  enabled: true,
+                  boundariesElement: "viewport",
+                },
               }}
             />
+          </div>
+          <div className="mx-2 flex items-center" style={{ minWidth: "250px" }}>
+            <label htmlFor="training-select" className="mr-2 font-semibold ">
+              Select Training:
+            </label>
+            <div className="relative" style={{ minWidth: "250px" }}>
+              <Select
+                inputId="Training_Name"
+                value={{
+                  value: trainingName,
+                  label:
+                    trainingName === "IATF"
+                      ? "International Automotive Task Force - (IATF)"
+                      : "Health, Safety, and Environment - (HSE)",
+                }}
+                className="relative"
+                onChange={(selectedOption) =>
+                  setTrainingName(selectedOption.value)
+                }
+                options={[
+                  {
+                    value: "IATF",
+                    label: "International Automotive Task Force - (IATF)",
+                  },
+                  {
+                    value: "HSE",
+                    label: "Health, Safety, and Environment - (HSE)",
+                  },
+                ]}
+                isSearchable={false}
+                classNamePrefix="react-select"
+                styles={{
+                  control: (provided) => ({
+                    ...provided,
+                    padding: "2px",
+                    borderColor: "#D1D5DB", // Tailwind sky-500
+                    borderRadius: "0.5rem", // rounded-lg
+                    cursor: "pointer",
+                    minHeight: "38px",
+                  }),
+                  option: (provided, state) => ({
+                    ...provided,
+                    cursor: "pointer",
+                    backgroundColor: state.isFocused ? "#E0F2FE" : "white", // Tailwind sky-100
+                    color: "black",
+                  }),
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -299,20 +336,9 @@ const TETForms = () => {
                 </select>
                 <span>entries</span>
               </div>
-
-              <div className="relative">
-                <input
-                  type="text"
-                  value={tableSearchTerm}
-                  onChange={handleTableSearchChange}
-                  placeholder="Search..."
-                  className="border p-1 pl-8 rounded bg-secondary"
-                />
-                <FaSearch className="absolute left-2 top-2 text-gray-400" />
-              </div>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="overflow-auto">
               <div>
                 <table
                   className="min-w-full border bg-card text-sm "
@@ -334,8 +360,8 @@ const TETForms = () => {
                         { key: "Training_Name", label: "Type" },
                         { key: "Training_Date", label: "Training Date" },
                         { key: "Evaluation_Date", label: "Evaluation Date" },
-                        // { key: "IsActive", label: "Status" },
                         { key: "actions", label: "Report" },
+                        { key: "Training_Status", label: "Status" },
                       ].map(({ key, label }, index) => (
                         <th
                           key={key}
@@ -359,7 +385,10 @@ const TETForms = () => {
                   <tbody>
                     {filteredData.length > 0 ? (
                       paginatedData.map((item, index) => (
-                        <tr key={index} className="hover:bg-gray-100 border">
+                        <tr
+                          key={`${item.Program_Id}-${index}`}
+                          className="hover:bg-gray-100 border"
+                        >
                           <td className="px-4 py-2 border">{item.Year_No}</td>
                           <td className="px-4 py-2 border">
                             {item.Department}
@@ -376,10 +405,22 @@ const TETForms = () => {
                           <td className="px-4 py-2 border">
                             {item.Evaluation_Date}
                           </td>
-                          {/* Removed Status column as it depends on unnecessary API */}
+                          <td
+                            className={`px-4 py-2 border font-bold ${
+                              item.Training_Status?.toLowerCase() ===
+                              "completed"
+                                ? "text-green-600"
+                                : item.Training_Status?.toLowerCase() ===
+                                  "pending"
+                                ? "text-red-600"
+                                : ""
+                            }`}
+                          >
+                            {item.Training_Status}
+                          </td>
                           <td className="px-4 py-2 border text-blue-600 underline">
                             <Link
-                              href={`/tetreportsfortl?id=${item.Program_Id}`}
+                              href={`/tetreports?id=${item.Program_Id}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-600 underline"
@@ -392,7 +433,7 @@ const TETForms = () => {
                     ) : (
                       <tr>
                         <td
-                          colSpan="7"
+                          colSpan="8"
                           className="py-4 text-center text-gray-500"
                         >
                           No matching training data available.
@@ -401,66 +442,71 @@ const TETForms = () => {
                     )}
                   </tbody>
                 </table>
+                <div className="flex flex-wrap justify-between items-center mt-4 space-y-2">
+                  <div style={{ fontSize: "14px" }}>
+                    Showing{" "}
+                    {filteredData.length > 0
+                      ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
+                          currentPage * rowsPerPage,
+                          filteredData.length
+                        )} of ${filteredData.length} entries`
+                      : "0 entries"}
+                  </div>
+                  <div className="flex space-x-2" style={{ fontSize: "14px" }}>
+                    <button
+                      type="button"
+                      className="px-3 py-1 border cursor-pointer rounded"
+                      onClick={() => setCurrentPage(1)}
+                      disabled={currentPage === 1}
+                    >
+                      {"<<"}
+                    </button>
+                    <button
+                      type="button"
+                      className="px-3 py-1 border cursor-pointer  rounded"
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.max(prev - 1, 1))
+                      }
+                      disabled={currentPage === 1}
+                    >
+                      {"<"}
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        className={`px-3 py-1 border cursor-pointer  rounded ${
+                          currentPage === i + 1
+                            ? "bg-black text-primary-foreground"
+                            : ""
+                        }`}
+                        onClick={() => setCurrentPage(i + 1)}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      className="px-3 py-1 border cursor-pointer  rounded"
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                      }
+                      disabled={currentPage === totalPages}
+                    >
+                      {">"}
+                    </button>
+                    <button
+                      type="button"
+                      className="px-3 py-1 border cursor-pointer  rounded"
+                      onClick={() => setCurrentPage(totalPages)}
+                      disabled={currentPage === totalPages}
+                    >
+                      {">>"}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-
-            {
-              <div className="flex flex-wrap justify-between items-center mt-4 text-sm">
-                <div>
-                  Showing{" "}
-                  {filteredData.length > 0
-                    ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
-                        currentPage * rowsPerPage,
-                        filteredData.length
-                      )} of ${filteredData.length} entries`
-                    : "0 entries"}
-                </div>
-
-                <div className="flex space-x-1">
-                  <button
-                    className="px-3 py-1 border rounded"
-                    onClick={() => setCurrentPage(1)}
-                    disabled={currentPage === 1}
-                  >
-                    {"<<"}
-                  </button>
-                  <button
-                    className="px-3 py-1 border rounded"
-                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                    disabled={currentPage === 1}
-                  >
-                    {"<"}
-                  </button>
-                  {Array.from({ length: totalPages }, (_, i) => (
-                    <button
-                      key={i}
-                      className={`px-3 py-1 border rounded ${
-                        currentPage === i + 1 ? "bg-black text-white" : ""
-                      }`}
-                      onClick={() => setCurrentPage(i + 1)}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
-                  <button
-                    className="px-3 py-1 border rounded"
-                    onClick={() =>
-                      setCurrentPage((p) => Math.min(p + 1, totalPages))
-                    }
-                    disabled={currentPage === totalPages}
-                  >
-                    {">"}
-                  </button>
-                  <button
-                    className="px-3 py-1 border rounded"
-                    onClick={() => setCurrentPage(totalPages)}
-                    disabled={currentPage === totalPages}
-                  >
-                    {">>"}
-                  </button>
-                </div>
-              </div>
-            }
           </div>
         </div>
       )}

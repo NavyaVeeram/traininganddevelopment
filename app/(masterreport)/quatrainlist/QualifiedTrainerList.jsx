@@ -435,11 +435,13 @@ const QualifiedTrainerList = () => {
   }
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
+      {accessRole === "HR_Res" && (
+        <div>
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
         <h2 className="text-lg font-semibold">Add Qualified Trainers List</h2>
       </div>
-      <br></br>
-      <form onSubmit={handleSubmit}>
+ 
+      <form onSubmit={handleSubmit} className="mt-3">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* React Select Dropdown */}
           <div>
@@ -679,7 +681,8 @@ const QualifiedTrainerList = () => {
           </div>
         </div>
       </form>
-      <br></br>
+      </div>
+       )}
 <div>
   <TrainerApprovalForm/>
 </div>

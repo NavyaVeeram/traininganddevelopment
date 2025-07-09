@@ -410,7 +410,7 @@ export default function Home() {
             className="relative w-full h-56 sm:h-72 md:h-[90vh] overflow-hidden group"
           >
             {/* Gradient Border Effect with Increased Radius */}
-            <div className="absolute inset-0 bg-gradient-to-r from-sky-500 via-sky-700 to-sky-800 rounded-[2.5rem] p-1 group-hover:p-1 transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-r from-sky-500 via-sky-700 to-sky-800 rounded-[2.5rem] p-0.5 group-hover:p-0.5 transition-all duration-300">
               <div className="w-full h-full rounded-[2.25rem] overflow-hidden relative">
                 <Image
                   src="/assets/loginimage.png"

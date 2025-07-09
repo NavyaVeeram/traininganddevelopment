@@ -69,6 +69,10 @@ const tet: { title: string; href: string }[] = [
     title: "Generate TEE Forms",
     href: "tetformsgenerate",
   },
+    {
+    title: "Generic Forms",
+    href: "tetformsgeneric",
+  },
 ]
 const masterreport: { title: string; href: string }[] = [
   {
@@ -131,9 +135,10 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
  
   useEffect(() => {
   const storedEmployeeId = localStorage.getItem('employeeId');
-
-  if (storedEmployeeId) {
+   const storedDepartment = localStorage.getItem("department");
+  if (storedEmployeeId && storedDepartment) {
     setEmployeeId(storedEmployeeId);
+    setDepartment(storedDepartment);
   } else {
     window.location.href = '/';
     return;
@@ -143,7 +148,7 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
     try {
       const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
       const data = await res.json();
-      if (res.ok && data.Access_Role) {
+      if (res.ok && data.Access_Role ) {
         setAccessRole(data.Access_Role);
         setIsAuthorized(true);
       } else {
@@ -236,10 +241,6 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
   <NavigationMenuContent className="grid gap-2 p-1 md:w-[280px] max-h-[280px] cursor-pointer">
     <ul className="grid gap-2 cursor-pointer">
    {training.map((component) => {
-   
-    if (component.title ===  "Annual Training Calender - IATF/HSE" && accessRole !== "HR_Res" && accessRole !== "HR_Hod" ) {
-    return null; // skip
-  }
   if (component.title === "Requirement - IATF/HSE" && accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HR_Res" ) {
       return null; // skip if not Employee or HOS
   }
@@ -289,10 +290,14 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
               <NavigationMenuContent className="grid gap-2 p-1 md:w-[200px] max-h-[300px] ">
                 <ul className="grid gap-2 p-1">
                   {tet.map((component) => {
-                        if (component.title === "TET forms Generate" && accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HOD" && accessRole !== "HR_Res"  && accessRole !== "HR_Hod") {
+                        if (component.title === "Generate TEE Forms" && accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HOD" && accessRole !== "HR_Res"  && accessRole !== "HR_Hod") {
                     return null; 
+                    
                  }
-                 
+                    if (component.title === "Generic Forms"  && accessRole !== "HR_Res"  && accessRole !== "HR_Hod") {
+                    return null; 
+                    
+                 }
           return(
                     <ListItem key={component.title} title={component.title} href={component.href} />
           );
@@ -355,14 +360,14 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
             </NavigationMenuContent>
           </NavigationMenuItem>
           )}
-            {(accessRole === "Res_Person" || accessRole === "HOS" || accessRole === "HR_Res" || accessRole === "HOD") && (
+{(accessRole === "Res_Person" || accessRole === "HR_Res" || accessRole ==="HR_Hod") && !(accessRole === "Res_Person" && (department !== "MS" && department !== "FNTRY")) && (
             <NavigationMenuItem className="bg-gray-100 position-relative z-10">
               <NavigationMenuTrigger className="hover:text-sky-400  cursor-pointer focus:outline-none">T & D Report</NavigationMenuTrigger>
               <NavigationMenuContent className="grid gap-2 p-1 md:w-[200px] max-h-[300px] ">
                 <ul className="grid gap-2 p-1 cursor-pointer">
                   {masterreport.map((component) => {
                     console.log("Rendering masterreport item:", component.title, "accessRole:", accessRole);
-                    if (component.title === "Employee History" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
+                    if (component.title === "Employee History" && accessRole !== "HR_Res" ) {
                       console.log("Skipping Employee History for accessRole:", accessRole);
                       return null; // skip if not Employee or HOS
                     }
@@ -370,22 +375,22 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
                       console.log("Skipping Qualified Trainers List for accessRole:", accessRole);
                       return null; 
                     }
-                    if (component.title === "Training Cost/Budget" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
+                    if (component.title === "Training Cost/Budget" && accessRole !== "HR_Res" ) {
                       console.log("Skipping Training Cost/Budget for accessRole:", accessRole);
                       return null; 
                     }
-                    if (component.title === "Training Agencies" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
+                    if (component.title === "Training Agencies" && accessRole !== "HR_Res" ) {
                       console.log("Skipping Training Agencies for accessRole:", accessRole);
                       return null; 
                     }
-                    if (component.title === "Add Training Record" && accessRole !== "HR_Res" &&  accessRole !== "HR_Hod" ) {
+                    if (component.title === "Add Training Record" && accessRole !== "HR_Res"  ) {
                       console.log("Skipping Add Training Record for accessRole:", accessRole);
                       return null; // skip
                     }
-                    if (component.title === "Update TL" && accessRole !== "Res_Person" && accessRole !== "HR_Res" && accessRole !== "HR_Hod" && accessRole !== "HOS" && accessRole !== "HOD") {
-                      console.log("Skipping Update TL for accessRole:", accessRole);
-                      return null; // skip
-                    }
+// if (component.title === "Update TL" && (accessRole !== "Res_Person" || (department !== "MS" && department !== "FNTRY"))) {
+//                       console.log("Skipping Update TL for accessRole or department:", accessRole, department);
+//                       return null; // skip
+//                     }
                     return(
                       <ListItem key={component.title} title={component.title} href={component.href} />
                     );

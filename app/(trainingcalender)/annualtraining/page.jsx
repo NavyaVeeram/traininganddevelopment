@@ -57,7 +57,7 @@ const AnnualTraining = () => {
             data.Access_Role === "HOS" ||
             data.Access_Role === "HOD" ||
             data.Access_Role === "HR_Res" ||
-            data.Access_Role === "HR_HOD"
+            data.Access_Role === "HR_Hod"
           ) {
             setIsAuthorized(true);
             // Optionally redirect to unauthorized page

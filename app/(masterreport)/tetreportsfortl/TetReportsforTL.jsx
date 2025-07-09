@@ -38,30 +38,30 @@ const TetReportsforTL = () => {
   //   }
   // }, [updatedEmployees]);
 
+  const fetchDropdownData = async () => {
+    try {
+      const storedEmployeeId = localStorage.getItem("employeeId");
+      if (!storedEmployeeId) return;
+
+      const res = await fetch(
+        `/api/get_tet_form_user_dropdown_res_person_update_tl?programId=${programId}&EmployeeId=${storedEmployeeId}`
+      );
+      const data = await res.json();
+
+      const formattedOptions = data.map((item) => ({
+        value: item.Value,
+        label: item.Text,
+        flag: item.Flag, // include flag property
+      }));
+
+      setOptions(formattedOptions);
+      setEmployeeData(data);
+    } catch (error) {
+      console.error("Error fetching dropdown data:", error);
+    }
+  };
+
   useEffect(() => {
-    const fetchDropdownData = async () => {
-      try {
-        const storedEmployeeId = localStorage.getItem("employeeId");
-        if (!storedEmployeeId) return;
-
-        const res = await fetch(
-          `/api/get_tet_form_user_dropdown_res_person_update_tl?programId=${programId}&EmployeeId=${storedEmployeeId}`
-        );
-        const data = await res.json();
-
-        const formattedOptions = data.map((item) => ({
-          value: item.Value,
-          label: item.Text,
-          flag: item.Flag, // include flag property
-        }));
-
-        setOptions(formattedOptions);
-        setEmployeeData(data);
-      } catch (error) {
-        console.error("Error fetching dropdown data:", error);
-      }
-    };
-
     if (programId) {
       fetchDropdownData();
     }
@@ -90,26 +90,27 @@ const TetReportsforTL = () => {
     }
   }, [programId]);
 
-  useEffect(() => {
-    const fetchTlDropdown = async () => {
-      try {
-        const storedEmployeeId = localStorage.getItem("employeeId");
-        if (!storedEmployeeId) {
-          throw new Error("Missing employeeId in localStorage");
-        }
-        const res = await fetch(
-          `/api/update_tl_dropdown?employeeId=${storedEmployeeId}`
-        );
-        if (!res.ok) {
-          throw new Error("Failed to fetch TL dropdown data");
-        }
-        const data = await res.json();
-        setTlDropdownOptions(data);
-      } catch (error) {
-        console.error("Error fetching TL dropdown:", error);
+  const fetchTlDropdown = async () => {
+    try {
+      const storedEmployeeId = localStorage.getItem("employeeId");
+      if (!storedEmployeeId) {
+        throw new Error("Missing employeeId in localStorage");
       }
-    };
+      const res = await fetch(
+        `/api/update_tl_dropdown?employeeId=${storedEmployeeId}`
+      );
+      if (!res.ok) {
+        throw new Error("Failed to fetch TL dropdown data");
+      }
+      const data = await res.json();
+      setTlDropdownOptions(data);
+      await fetchDropdownData();
+    } catch (error) {
+      console.error("Error fetching TL dropdown:", error);
+    }
+  };
 
+  useEffect(() => {
     if (showPopup) {
       fetchTlDropdown();
     }
@@ -404,9 +405,10 @@ const TetReportsforTL = () => {
                       alert("Res_Person updated successfully.");
                       setShowPopup(false);
                       setDropdownValue(null);
-                      setUpdatedEmployees((prev) => [
-                        ...new Set([...prev, ...selectedEmployees]),
-                      ]);
+                      await fetchTlDropdown();
+                      // setUpdatedEmployees((prev) => [
+                      //   ...new Set([...prev, ...selectedEmployees]),
+                      // ]);
                     } catch (error) {
                       alert("Error updating Res_Person: " + error.message);
                     }
