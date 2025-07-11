@@ -236,7 +236,7 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
           )}
         >
       
-<NavigationMenuItem className="bg-gray-100 position-relative cursor-pointer Z-50">
+<NavigationMenuItem className="bg-gray-100 cursor-pointer">
   <NavigationMenuTrigger className="hover:text-sky-400 cursor-pointer">Training Calendar</NavigationMenuTrigger>
   <NavigationMenuContent className="grid gap-2 p-1 md:w-[280px] max-h-[280px] cursor-pointer">
     <ul className="grid gap-2 cursor-pointer">
@@ -340,7 +340,7 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
           </NavigationMenuItem>
           )}
           {accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HOD" &&(
-          <NavigationMenuItem className="bg-gray-100 cursor-pointer hover:bg-gray-200 hover:text-sky-400 focus:bg-gray-300 transition-all duration-300">
+          <NavigationMenuItem className="bg-gray-100 cursor-pointer">
             <NavigationMenuTrigger className="hover:text-sky-400 cursor-pointer">Training Materials</NavigationMenuTrigger>
             <NavigationMenuContent
               className="overflow-hidden"
@@ -360,8 +360,8 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
             </NavigationMenuContent>
           </NavigationMenuItem>
           )}
-{(accessRole === "Res_Person" || accessRole === "HR_Res" || accessRole ==="HR_Hod") && !(accessRole === "Res_Person" && (department !== "MS" && department !== "FNTRY")) && (
-            <NavigationMenuItem className="bg-gray-100 position-relative z-10">
+{(accessRole === "Res_Person" || accessRole === "HR_Res" || accessRole ==="HR_Hod" || accessRole === "HOS" || accessRole === "HOD") && !(accessRole === "Res_Person" && (department !== "MS" && department !== "FNTRY")) && (
+            <NavigationMenuItem className="bg-gray-100 cursor-pointer">
               <NavigationMenuTrigger className="hover:text-sky-400  cursor-pointer focus:outline-none">T & D Report</NavigationMenuTrigger>
               <NavigationMenuContent className="grid gap-2 p-1 md:w-[200px] max-h-[300px] ">
                 <ul className="grid gap-2 p-1 cursor-pointer">
@@ -371,7 +371,7 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
                       console.log("Skipping Employee History for accessRole:", accessRole);
                       return null; // skip if not Employee or HOS
                     }
-                    if (component.title === "Qualified Trainers List" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
+                    if (component.title === "Qualified Trainers List" && accessRole !== "HR_Res" && accessRole !== "HR_Hod" && accessRole !== "HOS" && accessRole !== "HOD") {
                       console.log("Skipping Qualified Trainers List for accessRole:", accessRole);
                       return null; 
                     }

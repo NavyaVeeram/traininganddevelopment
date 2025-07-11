@@ -1,32 +1,3 @@
-// import { prisma } from '../../lib/prisma';
-
-// export default async function handler(req, res) {
-//   if (req.method !== 'POST') {
-//     return res.status(405).json({ message: 'Method not allowed' });
-//   }
-
-//   const { employeeId } = req.body;
-
-//   if (!employeeId) {
-//     return res.status(400).json({ message: 'EmployeeId is required' });
-//   }
-
-//   try {
-//     // Call the stored procedure using prisma.$queryRaw
-//     const result = await prisma.$queryRaw`
-//       EXEC Generate_Email_Qualified_Trainers @EmployeeId=${employeeId}
-//     `;
-
-//     // result is an array of records, take the first record's Email property if exists
-//     const email = result && result.length > 0 ? result[0].Email : null;
-
-//     return res.status(200).json({ email });
-//   } catch (error) {
-//     console.error('Error executing stored procedure:', error);
-//     return res.status(500).json({ message: 'Internal server error' });
-//   }
-// }
-// pages/api/generate-email.js
 import { prisma } from '../../lib/prisma';
 import nodemailer from 'nodemailer';
 import fs from 'fs';
@@ -39,6 +10,8 @@ export default async function handler(req, res) {
 
   const { employeeId, approve } = req.body;
 
+  console.log('Received request with approve flag:', approve);
+
   if (!process.env.EMAIL || !process.env.APP_PASSWORD) {
     console.error('Missing EMAIL or APP_PASSWORD environment variables');
     return res.status(500).json({ message: 'Server configuration error' });
@@ -49,24 +22,26 @@ export default async function handler(req, res) {
     const result = await prisma.$queryRawUnsafe(`
       EXEC Generate_Email_Qualified_Trainers '${employeeId}'
     `);
-if (!result || result.length === 0) {
-  // Maybe it's the last submission, but no email is needed
-  return res.status(200).json({ message: 'Last submission successful', email: null });
-}
+    if (!result || result.length === 0) {
+      console.log('No result returned from stored procedure, possibly last submission with no email needed.');
+      return res.status(200).json({ message: 'Last submission successful', email: null });
+    }
 
-const { Email, IsLastSubmission } = result[0];
+    const { Email, IsLastSubmission } = result[0];
 
-if (!Email && IsLastSubmission) {
-  return res.status(200).json({ message: 'Last submission successful', email: null });
-}
+    if (!Email && IsLastSubmission) {
+      console.log('Last submission detected with no email to send.');
+      return res.status(200).json({ message: 'Last submission successful', email: null });
+    }
 
-if (!Email) {
-  return res.status(400).json({ message: 'No valid email found in result' });
-}
-
+    if (!Email) {
+      console.log('No valid email found in stored procedure result.');
+      return res.status(400).json({ message: 'No valid email found in result' });
+    }
 
     if (approve) {
       if (IsLastSubmission) {
+        console.log('Approve flag set but last submission, no email sent.');
         // Last submission: do not send email, just return success message
         return res.status(200).json({ message: 'Last submission successful', email: null });
       }
@@ -81,25 +56,40 @@ if (!Email) {
         return res.status(500).json({ message: 'Failed to load email template' });
       }
 
-      // Create transporter
-      const transporter = nodemailer.createTransport({
-        host: '10.40.10.250',
-        port: 25,
-        secure: false,
-        auth: {
-          user: process.env.EMAIL,
-          pass: process.env.APP_PASSWORD,
-        },
-        authMethod: 'LOGIN',
-      });
+      let transporter;
+      try {
+        // Create transporter
+        transporter = nodemailer.createTransport({
+          host: '10.40.10.250',
+          port: 25,
+          secure: false,
+          auth: {
+            user: process.env.EMAIL,
+            pass: process.env.APP_PASSWORD,
+          },
+          authMethod: 'LOGIN',
+        });
+      } catch (transporterError) {
+        console.error('Error creating transporter:', transporterError);
+        return res.status(500).json({ message: 'Failed to create email transporter' });
+      }
 
+      try {
+      console.log(`Sending email to ${Email}...`);
       // Send the email
       await transporter.sendMail({
         from: process.env.EMAIL,
         to: Email,
-        subject: 'Training Approval',
+        subject: 'Trainer Approval',
         html: emailHtmlContent,
       });
+      console.log('Email sent successfully.');
+      } catch (emailError) {
+        console.error('Error sending email:', emailError);
+        return res.status(500).json({ message: 'Failed to send email' });
+      }
+    } else {
+      console.log('Approve flag not set or false, skipping email sending.');
     }
 
     return res.status(200).json({ email: Email });
@@ -109,4 +99,3 @@ if (!Email) {
     return res.status(500).json({ message: 'Error executing procedure' });
   }
 }
-

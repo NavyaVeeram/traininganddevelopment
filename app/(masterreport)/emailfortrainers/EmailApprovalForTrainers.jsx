@@ -25,7 +25,7 @@ export default function EmailApprovalForTrainers() {
       const res = await fetch("/api/generate_email_qualified_trainers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ employeeId }),
+        body: JSON.stringify({ employeeId, approve: true }),
       });
 
       if (res.status === 404) {
@@ -58,7 +58,7 @@ export default function EmailApprovalForTrainers() {
         className="px-6 mt-2 py-2 text-sm cursor-pointer font-semibold text-white bg-green-400 rounded-md shadow-md hover:bg-green-800 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
         disabled={loading || !employeeId}
       >
-        {loading ? "Processing..." : "Send to Approval"}
+        {loading ? "Processing..." : "Approve"}
       </button>
       {/* {email && (
         <div>

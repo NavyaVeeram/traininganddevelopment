@@ -26,7 +26,8 @@ export default function TrainerApprovalForm() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingData, setEditingData] = useState(null);
   const [error, setError] = useState("");
-
+    const [accessRole, setAccessRole] = useState(null);
+  const [isAuthorized, setIsAuthorized] = useState(null);
   useEffect(() => {
     const storedEmployeeId = localStorage.getItem("employeeId");
     const storedUsername = localStorage.getItem("username");
@@ -61,6 +62,33 @@ export default function TrainerApprovalForm() {
     };
 
     fetchData();
+  }, []);
+ useEffect(() => {
+    const storedEmployeeId = localStorage.getItem("employeeId");
+    if (storedEmployeeId) {
+      setEmployeeId(storedEmployeeId);
+    }
+
+    const fetchAccessRole = async () => {
+      try {
+        const res = await fetch(
+          `/api/get_access_role?employeeId=${storedEmployeeId}`
+        );
+        const data = await res.json();
+
+        if (res.ok && data.Access_Role) {
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+        }
+      } catch (error) {
+        console.error("Error fetching access role:", error);
+        setIsAuthorized(false);
+      }
+    };
+
+    fetchAccessRole();
   }, []);
 
   const handleSort = (key) => {
@@ -274,7 +302,7 @@ export default function TrainerApprovalForm() {
                   className="border p-2 cursor-pointer text-left"
                   onClick={() => handleSort("Exp_5_Yr")}
                 >
-                  Full Time Exp
+                  Overall Exp (5 yrs)
                   {sortConfig.key === "Exp_5_Yr"
                     ? sortConfig.direction === "asc"
                       ? " ▲"
@@ -285,7 +313,7 @@ export default function TrainerApprovalForm() {
                   className="border p-2 cursor-pointer text-left"
                   onClick={() => handleSort("Exp_3_Yr")}
                 >
-                  Current Exp
+                 GTI Exp (3 yrs)
                   {sortConfig.key === "Exp_3_Yr"
                     ? sortConfig.direction === "asc"
                       ? " ▲"
@@ -314,7 +342,26 @@ export default function TrainerApprovalForm() {
                       : " ▼"
                     : " ↕"}
                 </th>
-                {/* <th className="border p-2 cursor-pointer text-left">Actions</th> */}
+                {/* <th
+                  className="border p-2 cursor-pointer text-left"
+                  onClick={() => handleSort("Qual_Id")}
+                >
+                  Qual Id
+                  {sortConfig.key === "Qual_Id"
+                    ? sortConfig.direction === "asc"
+                      ? " ▲"
+                      : " ▼"
+                    : " ↕"}
+                </th> */}
+                
+                  {accessRole !== "HR_Hod" && (
+                    <th
+                      className="border p-2 cursor-pointer text-left"
+                      onClick={() => handleSort("Approval_Status")}
+                    >
+                      Approval Status
+                    </th>
+                  )}
               </tr>
             </thead>
             <tbody>
@@ -393,17 +440,19 @@ export default function TrainerApprovalForm() {
                         </span>
                       </label>
                     </td>
-                    {/* <td className="border p-2">
-                    <button onClick={() => handleEdit(item)}>
-                      <FaEdit className="text-blue-500 cursor-pointer" />
-                    </button>
-                  </td> */}
+                    {/* <td className="border p-2 text-left">{item.Qual_Id}</td> */}
+                    
+                    {accessRole !== "HR_Hod" && (
+                      <td className="border p-2 text-left text-red-600 font-bold">
+                        {item.Approval_Status}
+                      </td>
+                    )}             
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={11} className="text-center border p-4">
-                    No data found.
+                  <td colSpan={19} className="text-center border p-4">
+                  No data found
                   </td>
                 </tr>
               )}

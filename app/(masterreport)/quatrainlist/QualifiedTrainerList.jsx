@@ -67,7 +67,7 @@ const QualifiedTrainerList = () => {
 
         if (res.ok && data.Access_Role) {
           // Restrict access for HR_Res and HR_HOD roles
-          if (data.Access_Role === "Res_Person" || data.Access_Role === "HOS" || data.Access_Role === "HOD") {
+          if (data.Access_Role === "Res_Person" ) {
             setIsAuthorized(false);
             // Optionally redirect to unauthorized page
             // window.location.href = '/unauthorized';
@@ -87,28 +87,31 @@ const QualifiedTrainerList = () => {
     fetchAccessRole();
   }, []);
 
-  // Fetch employee options
-  useEffect(() => {
-    const fetchEmployeeOptions = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch("/api/user_qualified_dropdown");
-        const data = await res.json();
-        if (res.status === 200) {
-          setEmployeeOptions(data);
-        } else {
-          setError(data.message || "Error fetching employee data");
-        }
-      } catch (err) {
-        setError("Failed to fetch employee data");
-      } finally {
-        setLoading(false);
-      }
-    };
+    // Fetch employee options
+    useEffect(() => {
+      const fetchEmployeeOptions = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          // Get department code from localStorage or other source
+          const deptCode = localStorage.getItem("department") || "";
 
-    fetchEmployeeOptions();
-  }, []);
+          const res = await fetch(`/api/user_qualified_dropdown_testing?deptCode=${encodeURIComponent(deptCode)}`);
+          const data = await res.json();
+          if (res.status === 200) {
+            setEmployeeOptions(data);
+          } else {
+            setError(data.message || "Error fetching employee data");
+          }
+        } catch (err) {
+          setError("Failed to fetch employee data");
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchEmployeeOptions();
+    }, []);
 
   // Fetch qualified trainers list
   const fetchQualifiedTrainers = async () => {
@@ -435,7 +438,7 @@ const QualifiedTrainerList = () => {
   }
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
-      {accessRole === "HR_Res" && (
+    
         <div>
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
         <h2 className="text-lg font-semibold">Add Qualified Trainers List</h2>
@@ -621,7 +624,7 @@ const QualifiedTrainerList = () => {
           <div className="flex  justify-around">
             <div className="flex space-x-2">
             <label className="block text-sm font-medium text-gray-900">
-              Full Time Exp
+              OverAll Exp (5 years)
             </label>
               <input
                 type="checkbox"
@@ -632,7 +635,7 @@ const QualifiedTrainerList = () => {
             </div>
                <div className="flex  space-x-2">
             <label className="block text-sm font-medium text-gray-900">
-              Current Exp
+              GTI Exp (3 yrs)
             </label>
             <input
               type="checkbox"
@@ -682,7 +685,7 @@ const QualifiedTrainerList = () => {
         </div>
       </form>
       </div>
-       )}
+
 <div>
   <TrainerApprovalForm/>
 </div>
@@ -751,10 +754,21 @@ const QualifiedTrainerList = () => {
                       { key: "Training_Name", label: "Training Name" },
                       { key: "Certified", label: "Certified" },
                       { key :"Cert_Des",label:"Cert_Des"},
-                      { key: "Exp_5_Yr", label: "Full Time Exp" },
-                      { key: "Exp_3_yr", label: "Current Exp" },
+                      { key: "Exp_5_Yr", label: "OverAll Exp (5 yrs)" },
+                      { key: "Exp_3_yr", label: "GTI Exp (3 yrs)" },
                       { key: "HOD_Rec", label: "Nominated by HOD" },
                       { key: "Qualified", label: "Qualified" },
+                         <th
+                  className="border p-2 cursor-pointer text-left"
+                  onClick={() => handleSort("IsActive")}
+                >
+                  Is Active
+                  {sortConfig.key === "IsActive"
+                    ? sortConfig.direction === "asc"
+                      ? " ▲"
+                      : " ▼"
+                    : " ↕"}
+                </th>
                     ].map(({ key, label }, index) => (
                       <th
                         key={key}
@@ -809,6 +823,56 @@ const QualifiedTrainerList = () => {
                         <td className="px-4 py-2 border">
                           {item.Qualified ? "Yes" : "No"}
                         </td>
+                               <td className="border p-2 text-left">
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={item.IsActive}
+                          onChange={async (e) => {
+                            const newStatus = e.target.checked;
+                            try {
+                              const response = await fetch(
+                                "/api/update_active_status_to_remove_trainers",
+                                {
+                                  method: "PATCH",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({
+                                    Qual_Id: item.Qual_Id,
+                                    IsActive: newStatus,
+                                  }),
+                                }
+                              );
+                              if (response.ok) {
+                                // Update local state to reflect change
+                                setTrainerData((prevData) =>
+                                  prevData.map((trainer) =>
+                                    trainer.Qual_Id === item.Qual_Id
+                                      ? { ...trainer, IsActive: newStatus }
+                                      : trainer
+                                  )
+                                );
+                                alert("Status updated successfully");
+                              } else {
+                                alert("Failed to update status");
+                              }
+                            } catch (error) {
+                              alert("Error updating status");
+                            }
+                          }}
+                        />
+                        <span
+                          className={
+                            item.IsActive
+                              ? "text-green-600 font-semibold"
+                              : "text-red-600 font-semibold"
+                          }
+                        >
+                          {item.IsActive ? "Active" : "Inactive"}
+                        </span>
+                      </label>
+                    </td>
                       </tr>
                     ))
                   ) : filteredData.length === 0 ? (
