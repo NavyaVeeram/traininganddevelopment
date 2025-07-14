@@ -420,7 +420,7 @@ const TETForms = () => {
                           </td>
                           <td className="px-4 py-2 border text-blue-600 underline">
                             <Link
-                              href={`/tetreports?id=${item.Program_Id}`}
+                              href={`/terreportsgeneric?id=${item.Program_Id}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-600 underline"

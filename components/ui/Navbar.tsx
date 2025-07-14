@@ -73,6 +73,10 @@ const tet: { title: string; href: string }[] = [
     title: "Generic Forms",
     href: "tetformsgeneric",
   },
+     {
+    title: "Reports",
+    href: "/ratingdistribution",
+  },
 ]
 const masterreport: { title: string; href: string }[] = [
   {
@@ -105,13 +109,17 @@ const trainingcertificates: { title: string; href: string }[] = [
     title: "Upload Certificates",
     href: "/uploadcer",
   },
-]
-const trainingmaterials: { title: string; href: string }[] = [
-  {
+    {
     title: "Upload Materials",
     href: "/uploadmaterials",
   },
 ]
+// const trainingmaterials: { title: string; href: string }[] = [
+//   {
+//     title: "Upload Materials",
+//     href: "/uploadmaterials",
+//   },
+// ]
 
 export default function NavigationMenuDemo() {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
@@ -319,7 +327,7 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
           </NavigationMenuItem> */}
           {accessRole !== "Res_Person" && accessRole !== "HOS"  && accessRole !== "HOD" &&(
           <NavigationMenuItem className="bg-gray-100 cursor-pointer">
-            <NavigationMenuTrigger className="hover:text-sky-400 cursor-pointer">Training certificates</NavigationMenuTrigger>
+            <NavigationMenuTrigger className="hover:text-sky-400 cursor-pointer">Upload </NavigationMenuTrigger>
             <NavigationMenuContent
               className="overflow-hidden"
               style={{ "--radix-navigation-menu-viewport-height": "auto" } as React.CSSProperties}
@@ -328,6 +336,10 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
                 {trainingcertificates.map((component) => {
                      if (component.title === "Upload Certificates" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
                     return null; 
+                    
+                 }  if (component.title === "Upload Materials" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
+                    return null; 
+                    
                  }
                  
           return(
@@ -339,7 +351,7 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
             </NavigationMenuContent>
           </NavigationMenuItem>
           )}
-          {accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HOD" &&(
+          {/* {accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HOD" &&(
           <NavigationMenuItem className="bg-gray-100 cursor-pointer">
             <NavigationMenuTrigger className="hover:text-sky-400 cursor-pointer">Training Materials</NavigationMenuTrigger>
             <NavigationMenuContent
@@ -359,7 +371,7 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
               </ul>
             </NavigationMenuContent>
           </NavigationMenuItem>
-          )}
+          )} */}
 {(accessRole === "Res_Person" || accessRole === "HR_Res" || accessRole ==="HR_Hod" || accessRole === "HOS" || accessRole === "HOD") && !(accessRole === "Res_Person" && (department !== "MS" && department !== "FNTRY")) && (
             <NavigationMenuItem className="bg-gray-100 cursor-pointer">
               <NavigationMenuTrigger className="hover:text-sky-400  cursor-pointer focus:outline-none">T & D Report</NavigationMenuTrigger>
@@ -465,13 +477,13 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
     </MobileNavGroup>
 
     {/* Training Materials Group */}
-    <MobileNavGroup title="Training Materials" isOpen={openGroup === "trainingmaterials"} toggle={() => toggleGroup("trainingmaterials")}>
+    {/* <MobileNavGroup title="Training Materials" isOpen={openGroup === "trainingmaterials"} toggle={() => toggleGroup("trainingmaterials")}>
       {trainingmaterials.map((item) => (
         <MobileNavLink key={item.title} href={item.href}>
           {item.title}
         </MobileNavLink>
       ))}
-    </MobileNavGroup>
+    </MobileNavGroup> */}
   </div>
 )}
 

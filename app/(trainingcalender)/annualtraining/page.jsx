@@ -138,6 +138,8 @@ const AnnualTraining = () => {
       Program_Name: item.Program_Name,
       Is_External: item.Is_External === 1,
       Special_Position: item.Special_Position === 1,
+      Is_Planned: item.Is_Planned === 1,
+      Is_Additional: item.Is_Additional === 1,
     });
   });
 
@@ -199,7 +201,7 @@ const AnnualTraining = () => {
     });
   });
 
-  const generatePDF = async () => {
+const generatePDF = async () => {
     const doc = new jsPDF("landscape", "mm", "a4");
     const year = selectedDate.getFullYear();
     const trainingType = trainingName;
@@ -349,6 +351,9 @@ const AnnualTraining = () => {
               }
 
               div.textContent = `• ${item.Program_Name || item}`;
+              div.innerHTML = `&#8226; ${item.Program_Name || item}`;
+              div.style.paddingLeft = "15px";
+              div.style.textIndent = "-10px";
               cell.appendChild(div);
             } else {
               const dash = document.createElement("div");
@@ -467,6 +472,7 @@ const AnnualTraining = () => {
       <div className="bg-sky-400 text-white p-2 flex justify-between rounded-t-lg">
         <p className="font-semibold">Annual Training Calendar</p>
       </div>
+
       <div className="mb-4 mt-2 flex justify-between items-center space-x-4">
         <div className="flex">
           <div>
@@ -496,11 +502,25 @@ const AnnualTraining = () => {
             </label>
             <Select
               inputId="training-select"
-              value={{ value: trainingName, label: trainingName === "IATF" ? "IATF (International Automotive Task Force)" : "HSE (Health, Safety, and Environment)" }}
-              onChange={(selectedOption) => setTrainingName(selectedOption.value)}
+              value={{
+                value: trainingName,
+                label:
+                  trainingName === "IATF"
+                    ? "IATF (International Automotive Task Force)"
+                    : "HSE (Health, Safety, and Environment)",
+              }}
+              onChange={(selectedOption) =>
+                setTrainingName(selectedOption.value)
+              }
               options={[
-                { value: "IATF", label: "IATF (International Automotive Task Force)" },
-                { value: "HSE", label: "HSE (Health, Safety, and Environment)" }
+                {
+                  value: "IATF",
+                  label: "IATF (International Automotive Task Force)",
+                },
+                {
+                  value: "HSE",
+                  label: "HSE (Health, Safety, and Environment)",
+                },
               ]}
               isSearchable={false}
               classNamePrefix="react-select"
@@ -508,7 +528,7 @@ const AnnualTraining = () => {
                 control: (provided) => ({
                   ...provided,
                   padding: "2px",
-                borderColor: "#D1D5DB", // Tailwind sky-500
+                  borderColor: "#D1D5DB", // Tailwind sky-500
                   borderRadius: "0.5rem", // rounded-lg
                   cursor: "pointer",
                   minHeight: "38px",
@@ -523,6 +543,7 @@ const AnnualTraining = () => {
             />
           </div>
         </div>
+        <div className="hidden">text-green-600 text-blue-600 text-gray-800</div>
 
         <div>
           <button
@@ -558,7 +579,17 @@ const AnnualTraining = () => {
                   className="border border-gray-300 px-2 py-1 font-semibold  bg-blue-100 text-center align-middle whitespace-nowrap"
                   colSpan={6}
                 >
-                  Annual Training Calendar for {trainingName}
+                  <div className="text-center">
+                    Annual Training Calendar for {trainingName}
+                  </div>
+                   <div className="mr-2 absolute right-2 transform -translate-y-5 flex space-x-4 text-sm">
+                    <span className="text-blue-600 font-semibold">
+                      ● Additional
+                    </span>
+                    <span className="text-green-600 font-semibold">
+                      ● External
+                    </span>
+                  </div>
                 </td>
               </tr>
               <tr>
@@ -612,16 +643,27 @@ const AnnualTraining = () => {
                           >
                             {groupedData[monthKey] &&
                             groupedData[monthKey][week] ? (
-                              <ul className="list-disc list-inside m-0 p-0">
+                              <ul className="list-disc list-outside pl-5 m-0 p-0">
                                 {groupedData[monthKey][week].map(
-                                  (item, idx) => (
-                                    <li
-                                      key={idx}
-                                      className="mb-1 break-words whitespace-normal max-w-full"
-                                    >
-                                      {item.Program_Name}
-                                    </li>
-                                  )
+                                  (item, idx) => {
+                                    // Use Tailwind classes conditionally
+                                    let textClass = "";
+
+                                    if (item.Is_Additional) {
+                                      textClass = "text-blue-600 font-semibold";
+                                    } else if (item.Is_External) {
+                                      textClass =
+                                        "text-green-600 font-semibold";
+                                    }
+                                    return (
+                                      <li
+                                        key={idx}
+                                        className={`mb-1 break-words whitespace-normal max-w-full ${textClass}`}
+                                      >
+                                        {item.Program_Name}
+                                      </li>
+                                    );
+                                  }
                                 )}
                               </ul>
                             ) : (

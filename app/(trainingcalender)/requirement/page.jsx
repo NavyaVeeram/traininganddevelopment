@@ -881,20 +881,56 @@ const programOptions = programs.map(program => ({
   <label htmlFor="Evaluation_Period" className="block text-sm font-medium text-gray-900">
     Evaluation Period
   </label>
-  <Input
-    type="text" // Keep as text
+  <Select
     id="Evaluation_Period"
     name="Evaluation_Period"
-    value={formData.Evaluation_Period}
-    onChange={(e) => {
-      const newValue = e.target.value;
-      // Check if the value is a number or an empty string (allowing clearing the field)
-      if (/^\d*$/.test(newValue)) {
-        handleFormChange(e);  // Only update if the value is numeric or empty
-      }
+    options={[
+      { value: "30", label: "1 Month" },
+      { value: "60", label: "2 Months" },
+      { value: "90", label: "3 Months" },
+    ]}
+    value={[
+      { value: "30", label: "1 Month" },
+      { value: "60", label: "2 Months" },
+      { value: "90", label: "3 Months" },
+    ].find(option => option.value === formData.Evaluation_Period) || null}
+    onChange={(selectedOption) => {
+      setFormData((prevData) => ({
+        ...prevData,
+        Evaluation_Period: selectedOption ? selectedOption.value : '',
+      }));
     }}
-    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-64"      
- aria-required  autoComplete="off"/>
+    classNamePrefix="react-select"
+    className="mb-1 cursor-pointer"
+    styles={{
+      control: (base, state) => ({
+        ...base,
+        cursor: 'pointer',
+        borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
+        boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
+        padding: "1px",
+        borderRadius: "0.5rem",
+        minHeight: "2rem",
+        display: "flex",
+        alignItems: "center",
+      }),
+      option: (base) => ({
+        ...base,
+        cursor: 'pointer',
+      }),
+      menu: (base) => ({
+        ...base,
+        zIndex: 9999,
+      }),
+      menuPortal: (base) => ({
+        ...base,
+        zIndex: 9999,
+      }),
+    }}
+    menuPortalTarget={document.body}
+    menuPosition="fixed"
+    required
+  />
 </div>
    {/* Buttons */}
 <div>

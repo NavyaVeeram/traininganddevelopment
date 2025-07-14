@@ -9,7 +9,7 @@ import React from "react";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import fontkit from '@pdf-lib/fontkit';
 
-const TetReportsClient = () => {
+const TetReportsGeneric = () => {
 
 
   const parameters = [
@@ -591,7 +591,7 @@ const font = await mergedPdf.embedFont(fontBytes);
         const storedEmployeeId = localStorage.getItem('employeeId');
         if (!storedEmployeeId) return;
 
-        const res = await fetch(`/api/get_tet_form_user_dropdown_by_res_person?programId=${programId}&EmployeeId=${storedEmployeeId}`);
+        const res = await fetch(`/api/get_tet_form_user_dropdown_by_generic?programId=${programId}&EmployeeId=${storedEmployeeId}`);
         const data = await res.json();
 
         const formattedOptions = data.map((item) => ({
@@ -856,7 +856,7 @@ const font = await mergedPdf.embedFont(fontBytes);
                 className="cursor-pointer"
                 checked={formData.ratings[index] === rating}
                 onChange={() => handleRatingChange(index, rating)}
-                disabled={!selectedEmployee || selectedEmployee.flag === 1}
+                disabled={true}
               />
             </td>
           ))}
@@ -932,16 +932,6 @@ const font = await mergedPdf.embedFont(fontBytes);
                  <div className="text-xs text-gray-600"> HR-040-4</div>
              </div>
           
-<div className="flex justify-end">
-{selectedEmployee && selectedEmployee.flag !== 1 && (
-  <button
-    type="submit"
-    className="px-6 py-2 text-sm font-semibold cursor-pointer text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
-  >
-    submit
-  </button>
-)}
-</div>
    
     </form>
     </div>
@@ -953,4 +943,4 @@ const font = await mergedPdf.embedFont(fontBytes);
   );
 };
 
-export default TetReportsClient; 
+export default TetReportsGeneric; 

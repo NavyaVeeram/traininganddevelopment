@@ -120,10 +120,16 @@ const QualifiedTrainerList = () => {
     try {
       const res = await fetch("/api/view_qualifier_list");
       const data = await res.json();
+      console.log("DEBUG qualifiedTrainers data:", data);
       if (res.status === 200) {
-        setQualifiedTrainers(data);
-        setData(data);
-        setFilteredData(data);
+        // Normalize Status field to boolean with explicit number conversion
+        const normalizedData = data.map(item => ({
+          ...item,
+          Status: Boolean(Number(item.Status))
+        }));
+        setQualifiedTrainers(normalizedData);
+        setData(normalizedData);
+        setFilteredData(normalizedData);
       } else {
         setError(data.message || "Error fetching qualified trainers data");
       }
@@ -230,6 +236,13 @@ const QualifiedTrainerList = () => {
 
     if (!qualified) {
       alert("You must check the Qualified checkbox!");
+      return;
+    }
+
+    // Check if logged-in user's department matches selected employee's department
+    const loggedInDepartment = localStorage.getItem("department") || "";
+    if (loggedInDepartment !== trainingDetails.Department) {
+      alert("You can only submit data for employees in your own department.");
       return;
     }
 
@@ -758,17 +771,7 @@ const QualifiedTrainerList = () => {
                       { key: "Exp_3_yr", label: "GTI Exp (3 yrs)" },
                       { key: "HOD_Rec", label: "Nominated by HOD" },
                       { key: "Qualified", label: "Qualified" },
-                         <th
-                  className="border p-2 cursor-pointer text-left"
-                  onClick={() => handleSort("IsActive")}
-                >
-                  Is Active
-                  {sortConfig.key === "IsActive"
-                    ? sortConfig.direction === "asc"
-                      ? " ▲"
-                      : " ▼"
-                    : " ↕"}
-                </th>
+                       {key:"Status", label :"Status"}
                     ].map(({ key, label }, index) => (
                       <th
                         key={key}
@@ -788,106 +791,108 @@ const QualifiedTrainerList = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedData.length > 0 ? (
-                    paginatedData.map((item, index) => (
-                      <tr key={index} className="border hover:bg-muted">
-                        <td className="px-4 py-2 border">{item.EmployeeId}</td>
-                        <td className="px-4 py-2 border">{item.Username}</td>
-                        <td className="px-4 py-2 border">
-                          {" "}
-                          {new Date(item.DOJ).toLocaleDateString()}
-                        </td>
-                        <td className="px-4 py-2 border">
-                          {item.Designation}{" "}
-                        </td>
-                        <td className="px-4 py-2 border">{item.Section}</td>
-                        <td className="px-4 py-2 border">{item.Department}</td>
-                        <td className="px-4 py-2 border">
-                          {item.Training_Name}
-                        </td>
-                        <td className="px-4 py-2 border">
-                          {item.Certified ? "Yes" : "No"}
-                        </td>
-                         <td className="px-4 py-2 border">
-                          {item.Cert_Des}
-                        </td>
-                        <td className="px-4 py-2 border">
-                          {item.Exp_5_Yr ? "Yes" : "No"}
-                        </td>
-                        <td className="px-4 py-2 border">
-                          {item.Exp_3_yr ? "Yes" : "No"}
-                        </td>
-                        <td className="px-4 py-2 border">
-                          {item.HOD_Rec ? "Yes" : "No"}
-                        </td>
-                        <td className="px-4 py-2 border">
-                          {item.Qualified ? "Yes" : "No"}
-                        </td>
-                               <td className="border p-2 text-left">
-                      <label className="flex items-center gap-2 cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          checked={item.IsActive}
-                          onChange={async (e) => {
-                            const newStatus = e.target.checked;
-                            try {
-                              const response = await fetch(
-                                "/api/update_active_status_to_remove_trainers",
-                                {
-                                  method: "PATCH",
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                  },
-                                  body: JSON.stringify({
-                                    Qual_Id: item.Qual_Id,
-                                    IsActive: newStatus,
-                                  }),
-                                }
-                              );
-                              if (response.ok) {
-                                // Update local state to reflect change
-                                setTrainerData((prevData) =>
-                                  prevData.map((trainer) =>
-                                    trainer.Qual_Id === item.Qual_Id
-                                      ? { ...trainer, IsActive: newStatus }
-                                      : trainer
-                                  )
-                                );
-                                alert("Status updated successfully");
-                              } else {
-                                alert("Failed to update status");
-                              }
-                            } catch (error) {
-                              alert("Error updating status");
-                            }
-                          }}
-                        />
-                        <span
-                          className={
-                            item.IsActive
-                              ? "text-green-600 font-semibold"
-                              : "text-red-600 font-semibold"
-                          }
-                        >
-                          {item.IsActive ? "Active" : "Inactive"}
-                        </span>
-                      </label>
-                    </td>
-                      </tr>
-                    ))
-                  ) : filteredData.length === 0 ? (
-                    <tr>
-                      <td colSpan="15" className="text-center py-4">
-                        No results found.
-                      </td>
-                    </tr>
-                  ) : (
-                    <tr>
-                      <td colSpan="15" className="text-center py-4">
-                        Loading...
-                      </td>
-                    </tr>
-                  )}
+{paginatedData.length > 0 ? (
+  paginatedData.map((item, index) => {
+    console.log('Rendering item:', item);
+    return (
+      <tr key={index} className="border hover:bg-muted">
+        <td className="px-4 py-2 border">{item.EmployeeId}</td>
+        <td className="px-4 py-2 border">{item.Username}</td>
+        <td className="px-4 py-2 border">
+          {" "}
+          {new Date(item.DOJ).toLocaleDateString()}
+        </td>
+        <td className="px-4 py-2 border">
+          {item.Designation}{" "}
+        </td>
+        <td className="px-4 py-2 border">{item.Section}</td>
+        <td className="px-4 py-2 border">{item.Department}</td>
+        <td className="px-4 py-2 border">
+          {item.Training_Name}
+        </td>
+        <td className="px-4 py-2 border">
+          {item.Certified ? "Yes" : "No"}
+        </td>
+         <td className="px-4 py-2 border">
+          {item.Cert_Des}
+        </td>
+        <td className="px-4 py-2 border">
+          {item.Exp_5_Yr ? "Yes" : "No"}
+        </td>
+        <td className="px-4 py-2 border">
+          {item.Exp_3_yr ? "Yes" : "No"}
+        </td>
+        <td className="px-4 py-2 border">
+          {item.HOD_Rec ? "Yes" : "No"}
+        </td>
+        <td className="px-4 py-2 border">
+          {item.Qualified ? "Yes" : "No"}
+        </td>
+         <td className="border p-2 text-left">
+           <label className="flex items-center gap-2 cursor-pointer select-none">
+             <input
+               type="checkbox"
+               checked={Boolean(item.Status)}
+               onChange={async (e) => {
+                 const newStatus = e.target.checked ? 1 : 0;
+                 try {
+                   const response = await fetch('/api/update_active_status_to_remove_trainers', {
+                     method: 'PATCH',
+                     headers: {
+                       'Content-Type': 'application/json',
+                     },
+                     body: JSON.stringify({ Qual_Id: item.Qual_Id, Status: newStatus }),
+                   });
+                   if (response.ok) {
+                     const data = await response.json();
+                     // Update local state to reflect change
+                     setQualifiedTrainers((prev) =>
+                       prev.map((trainer) =>
+                         trainer.Qual_Id === item.Qual_Id ? { ...trainer, Status: newStatus } : trainer
+                       )
+                     );
+                     setData((prev) =>
+                       prev.map((trainer) =>
+                         trainer.Qual_Id === item.Qual_Id ? { ...trainer, Status: newStatus } : trainer
+                       )
+                     );
+                     setFilteredData((prev) =>
+                       prev.map((trainer) =>
+                         trainer.Qual_Id === item.Qual_Id ? { ...trainer, Status: newStatus } : trainer
+                       )
+                     );
+                     alert(data.message);
+                     fetchQualifiedTrainers(); // Refresh the list after status update
+                   } else {
+                     alert('Failed to update status');
+                   }
+                 } catch (error) {
+                   alert('Error updating status');
+                   console.error(error);
+                 }
+               }}
+             />
+             <span className={item.Status ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>
+               {item.Status ? 'Active' : 'Inactive'}
+             </span>
+           </label>
+         </td>
+    </tr>
+  );
+})
+) : filteredData.length === 0 ? (
+  <tr>
+    <td colSpan="15" className="text-center py-4">
+      No results found.
+    </td>
+  </tr>
+) : (
+  <tr>
+    <td colSpan="15" className="text-center py-4">
+      Loading...
+    </td>
+  </tr>
+)}
                 </tbody>
               </table>
             </div>

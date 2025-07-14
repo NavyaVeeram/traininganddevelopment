@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   if (req.method === "GET") {
     try {
       const employeeDetails = await prisma.$queryRaw`
-        EXEC [dbo].[View_Qualifier_List]
+        EXEC [dbo].[View_Qualifier_List_Modified]
       `;
 
       if (employeeDetails.length === 0) {
