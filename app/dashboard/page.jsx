@@ -26,6 +26,8 @@ import {
 } from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
 import { GiArrowScope } from "react-icons/gi";
+import WeeklyTrainingComponent from "./WeeklyTrainingComponent" 
+
 const BLUE_COLORS = ["#1d4ed8", "#3b82f6", "#60a5fa", "#93c5fd", "#bfdbfe"];
 const GREEN_COLORS = ["#4ade80", "#166534", "#15803d", "#16a34a", "#22c55e"];
 
@@ -76,7 +78,6 @@ const Dashboard = () => {
       .catch(() => setMonthWiseBudgetIatfData([]));
   }, [selectedYear]);
 
-
   const computeStats = (data) => {
     if (!data.length) return { total: 0, completed: 0, rate: 0 };
     const total = data.reduce((sum, d) => sum + (d.Total || 0), 0);
@@ -100,7 +101,6 @@ const Dashboard = () => {
 
     return (
       <div className="rounded-xl px-4 py-3 bg-white shadow-md max-h-[400px] overflow-hidden">
-
         <h2 className="font-semibold text-gray-800 mb-4">{title}</h2>
         <ChartContainer
           config={{
@@ -111,7 +111,6 @@ const Dashboard = () => {
         > 
         <div className="w-[1000px] mx-auto ">
           <ResponsiveContainer width="100%" height={300}>
-            
             <LineChart data={chartData} margin={{ left: 12, right: 12, top: 5, bottom: 5 }}>
               <CartesianGrid stroke="#e5e7eb" strokeDasharray="4 4" />
               <XAxis
@@ -129,7 +128,7 @@ const Dashboard = () => {
                 content={({ active, payload, label }) => {
                   if (!active || !payload || !payload.length) return null;
                   return (
-                    <div className="rounded-md border bg-white p-3 text-sm shadow-md">
+                    <div className="rounded-md border bg-white p-3 text-sm  shadow-md">
                       <p className="font-semibold mb-2">{label}</p>
                       {payload.map((entry, index) => (
                         <div key={index} className="flex items-center gap-2">
@@ -181,6 +180,7 @@ const Dashboard = () => {
     }));
 
     return (
+      <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
       <div key={title} className="rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex gap-2 items-center">
@@ -247,6 +247,7 @@ const Dashboard = () => {
             No data available.
           </div>
         )}
+      </div>
       </div>
     );
   };
@@ -326,6 +327,10 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* Weekly Training Component - Added here */}
+        <WeeklyTrainingComponent selectedYear={selectedYear} />
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {[
             { label: "IATF Total", value: iatfStats.total, icon: <BookOpen className="w-8 h-8 text-white" />, bg: "bg-blue-400" },
@@ -342,7 +347,7 @@ const Dashboard = () => {
             </div>
           ))}
         </div>
-
+</div>
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-10 mb-12">
           {renderBarChart(fillMissingMonths(iatfData), "IATF Monthly Training", iatfStats, "#6cb0fc", "#1d4ed8", "text-blue-600")}
           {renderBarChart(fillMissingMonths(hseData), "HSE Monthly Training", hseStats, "#52eb87", "#15803d", "text-green-700")}

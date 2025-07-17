@@ -12,7 +12,11 @@ const TrainingBudget = () => {
   const [activeTab, setActiveTab] = useState("actual");
 
   // Common states
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(() => {
+    // Initialize selectedDate from localStorage if available
+    const storedYear = localStorage.getItem("selectedYear");
+    return storedYear ? new Date(parseInt(storedYear), 0, 1) : null;
+  });
   const [trainingData, setTrainingData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [tableSearchTerm, setTableSearchTerm] = useState("");
@@ -23,6 +27,7 @@ const TrainingBudget = () => {
   const [accessRole, setAccessRole] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(null);
   const [employeeId, setEmployeeId] = useState(null);
+  const [isFinalized, setIsFinalized] = useState(false);
 
   // New state for additional training programs text field
   const [additionalTrainingProgramsText, setAdditionalTrainingProgramsText] =
@@ -39,9 +44,84 @@ const TrainingBudget = () => {
   );
   const [budgetVsActualLoading, setBudgetVsActualLoading] = useState(false);
   const [budgetVsActualError, setBudgetVsActualError] = useState(null);
-  const [budgetVsActualSelectedDate, setBudgetVsActualSelectedDate] =
-    useState(null);
+  const [budgetVsActualSelectedDate, setBudgetVsActualSelectedDate] = useState(null);
 
+
+  // Add this helper function to separate total rows from regular rows
+const separateTotalRows = (data) => {
+  const totalRows = [];
+  const regularRows = [];
+  
+  data.forEach((item) => {
+    const isTotalRow = 
+      item.Program_Name?.toString().toLowerCase().includes("total") ||
+      item.Training_Name?.toString().toLowerCase().includes("total");
+    
+    if (isTotalRow) {
+      totalRows.push(item);
+    } else {
+      regularRows.push(item);
+    }
+  });
+  
+  return { totalRows, regularRows };
+};
+
+// Modified sorting logic to keep total rows at bottom
+const getSortedData = (data, sortConfig) => {
+  const { totalRows, regularRows } = separateTotalRows(data);
+  
+  // Sort only the regular rows
+  const sortedRegularRows = [...regularRows].sort((a, b) => {
+    if (!sortConfig.key) return 0;
+    const aVal = a[sortConfig.key];
+    const bVal = b[sortConfig.key];
+    if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
+    if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
+    return 0;
+  });
+  
+  // Return regular rows first, then total rows
+  return [...sortedRegularRows, ...totalRows];
+};
+
+
+ const checkFinalizationStatus = async (year) => {
+  try {
+    console.log("🔍 Checking finalization status for year:", year);
+    
+    // Reset finalization status first
+    setIsFinalized(false);
+    
+    const response = await fetch(`/api/check_finalisation_status?year=${year}`);
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log("📋 Full API response:", JSON.stringify(data, null, 2));
+
+      // Handle your specific API response format
+      const finalizedStatus = data.isFinalized === true || data.is_finalized === true;
+      console.log(" Extracted finalization status:", finalizedStatus);
+      console.log("Record found:", data.recordFound);
+
+      // Additional debugging
+      if (data.recordFound && !finalizedStatus) {
+        console.log(" Record found but not finalized - this might indicate the finalization didn't save properly");
+      }
+
+      setIsFinalized(finalizedStatus);
+      
+    } else {
+      console.error(" API response not ok:", response.status, response.statusText);
+      const errorData = await response.text();
+      console.error(" Error response:", errorData);
+      setIsFinalized(false);
+    }
+  } catch (error) {
+    console.error(" Error checking finalization:", error);
+    setIsFinalized(false);
+  }
+};
   useEffect(() => {
     const storedEmployeeId = localStorage.getItem("employeeId");
     if (storedEmployeeId) {
@@ -82,30 +162,25 @@ const TrainingBudget = () => {
     }
     setLoading(true);
     setError(null);
+
     try {
       const year = date.getFullYear();
-      const response = await fetch(
-        `/api/get_training_budget_first?year=${year}`
-      );
+      const response = await fetch(`/api/get_training_budget_first?year=${year}`);
+
       if (!response.ok) {
         throw new Error("No data available.");
       }
+
       const data = await response.json();
-      console.log(
-        "First data item full object:",
-        data.length > 0 ? data[0] : "No data"
-      );
-      console.log(
-        "First data item keys:",
-        data.length > 0 ? Object.keys(data[0]) : "No data"
-      );
+
       if (data && data.length === 0) {
         setError("No data available for the selected Year.");
         setFilteredData([]);
       } else {
         setTrainingData(data);
         setFilteredData(data);
-        // Initialize notes state with existing note values if available
+
+        // Initialize notes state
         const initialNotes = {};
         data.forEach((item) => {
           if (item.Program_Id && item.Note) {
@@ -113,6 +188,7 @@ const TrainingBudget = () => {
           }
         });
         setNotes(initialNotes);
+
         const additionalRow = data.find((item) =>
           item.Program_Name?.toLowerCase().includes("additional")
         );
@@ -124,6 +200,10 @@ const TrainingBudget = () => {
           setAdditionalTrainingProgramsText("");
         }
       }
+
+      // IMPORTANT: Check finalization status after data is loaded
+      await checkFinalizationStatus(year);
+
     } catch (err) {
       setError(err.message || "An error occurred while fetching data.");
       setFilteredData([]);
@@ -131,7 +211,6 @@ const TrainingBudget = () => {
       setLoading(false);
     }
   };
-
   const fetchBudgetVsActualData = async (date) => {
     if (!date) {
       alert("Please select a year.");
@@ -167,9 +246,24 @@ const TrainingBudget = () => {
     }
   };
 
+
+
   useEffect(() => {
-    if (selectedDate && activeTab === "actual") fetchData(selectedDate);
+    if (selectedDate && activeTab === "actual") {
+      fetchData(selectedDate);
+      // Removed redundant checkFinalizationStatus call here because fetchData calls it
+    }
   }, [selectedDate, activeTab]);
+
+  // Persist selectedDate year in localStorage when it changes
+  useEffect(() => {
+  if (selectedDate) {
+    localStorage.setItem("selectedYear", selectedDate.getFullYear().toString());
+  } else {
+    localStorage.removeItem("selectedYear");
+    setIsFinalized(false); // Reset finalized state when year is cleared
+  }
+}, [selectedDate]);
 
   useEffect(() => {
     if (budgetVsActualSelectedDate && activeTab === "budgetVsActual")
@@ -184,26 +278,27 @@ const TrainingBudget = () => {
     setSortConfig({ key, direction });
   };
 
-  const sortedData = [...filteredData].sort((a, b) => {
-    if (!sortConfig.key) return 0;
-    const aVal = a[sortConfig.key];
-    const bVal = b[sortConfig.key];
-    if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
-    if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
-    return 0;
-  });
+  // const sortedData = [...filteredData].sort((a, b) => {
+  //   if (!sortConfig.key) return 0;
+  //   const aVal = a[sortConfig.key];
+  //   const bVal = b[sortConfig.key];
+  //   if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
+  //   if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
+  //   return 0;
+  // });
 
-  const sortedBudgetVsActualData = [...budgetVsActualFilteredData].sort(
-    (a, b) => {
-      if (!sortConfig.key) return 0;
-      const aVal = a[sortConfig.key];
-      const bVal = b[sortConfig.key];
-      if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
-      if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
-      return 0;
-    }
-  );
-
+  // const sortedBudgetVsActualData = [...budgetVsActualFilteredData].sort(
+  //   (a, b) => {
+  //     if (!sortConfig.key) return 0;
+  //     const aVal = a[sortConfig.key];
+  //     const bVal = b[sortConfig.key];
+  //     if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
+  //     if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
+  //     return 0;
+  //   }
+  // );
+const sortedData = getSortedData(filteredData, sortConfig);
+const sortedBudgetVsActualData = getSortedData(budgetVsActualFilteredData, sortConfig);
   const paginatedData = sortedData;
   const paginatedBudgetVsActualData = sortedBudgetVsActualData;
 
@@ -223,12 +318,14 @@ const TrainingBudget = () => {
           [
             "Program_Name",
             "Req_Months",
+            "Department",
             "Training_Date",
             "Training_Name",
             "Train_Mode",
             "Schedule_Type",
             "Training_Status",
             "Training_Budget",
+            "Note"
           ].some((field) =>
             trainer[field]?.toString().toLowerCase().includes(lowerSearchQuery)
           )
@@ -253,6 +350,8 @@ const TrainingBudget = () => {
           !isTotalRow &&
           [
             "Program_Name",
+            "Department",
+            "Schedule_Month",
             "Req_Months",
             "Training_Date",
             "Training_Name",
@@ -260,6 +359,8 @@ const TrainingBudget = () => {
             "Schedule_Type",
             "Training_Status",
             "Training_Budget",
+            "Actual_Budget",
+            
           ].some((field) =>
             trainer[field]?.toString().toLowerCase().includes(lowerSearchQuery)
           )
@@ -280,47 +381,41 @@ const TrainingBudget = () => {
   };
 
   // Render table rows with conditional text field for additional training programs in actual tab
-  const renderActualBudgetTableRows = (data, isActualTab = true) => {
+  const renderActualBudgetTableRows = (data, isActualTab = true, isFinalized = false) => {
     return data.map((item, index) => {
-      console.log("Program_Id for row", index, ":", item.Program_Id);
       const isTotalRow =
         item.Program_Name?.toString().toLowerCase().includes("total") ||
         item.Training_Name?.toString().toLowerCase().includes("total");
+
       return (
         <tr
           key={index}
-          className={`border ${
-            isTotalRow ? "bg-gray-200" : "hover:bg-gray-100"
-          }`}
+          className={`border ${isTotalRow ? "bg-gray-200" : "hover:bg-gray-100"}`}
         >
           <td className="px-4 py-2 border">{item.Program_Name}</td>
           <td className="px-4 py-2 border">{item.Department}</td>
           <td className="px-4 py-2 border">{item.Req_Months}</td>
-          {/* <td className="px-4 py-2 border">{item.Training_Date ?? ""}</td> */}
           <td className="px-4 py-2 border">{item.Training_Name}</td>
-          {/* <td className="px-4 py-2 border">{item.Train_Mode}</td> */}
-          {/* <td className="px-4 py-2 border">{item.Schedule_Type}</td> */}
-          {/* <td className="px-4 py-2 border">{item.Training_Status}</td> */}
 
           <td className="px-4 py-2 border text-right">
-            {isActualTab &&
-            item.Program_Name?.toLowerCase().includes("additional") ? (
+            {isActualTab && item.Program_Name?.toLowerCase().includes("additional") ? (
               <input
                 type="number"
                 value={additionalTrainingProgramsText}
-                onChange={(e) =>
-                  setAdditionalTrainingProgramsText(e.target.value)
-                }
-                className="w-full p-1 border border-gray-300 rounded"
+                onChange={(e) => setAdditionalTrainingProgramsText(e.target.value)}
+                className={`w-full p-1 border border-gray-300 rounded ${isFinalized ? "bg-gray-100 cursor-not-allowed" : ""
+                  }`}
                 placeholder="Enter Training Budget"
+                disabled={isFinalized}
+                readOnly={isFinalized}
               />
             ) : (
               item.Training_Budget
             )}
           </td>
+
           <td className="px-4 py-2 border">
-            {item.Program_Id &&
-            !item.Program_Name?.toLowerCase().includes("total") ? (
+            {item.Program_Id && !item.Program_Name?.toLowerCase().includes("total") ? (
               <input
                 type="text"
                 value={
@@ -334,18 +429,22 @@ const TrainingBudget = () => {
                     [item.Program_Id]: e.target.value,
                   }))
                 }
-                className="w-full p-1 border border-gray-300 rounded"
+                className={`w-full p-1 border border-gray-300 rounded ${isFinalized ? "bg-gray-100 cursor-not-allowed" : ""
+                  }`}
                 placeholder="Enter note"
+                disabled={isFinalized}
+                readOnly={isFinalized}
               />
             ) : (
               ""
             )}
           </td>
-          {/* <td className="px-4 py-2 border text-right">{item.Actual_Budget}</td> */}
         </tr>
       );
     });
   };
+
+
   const renderActualVSEstimatedTableRows = (data, isActualTab = true) => {
     return data.map((item, index) => {
       const isTotalRow =
@@ -354,9 +453,8 @@ const TrainingBudget = () => {
       return (
         <tr
           key={index}
-          className={`border ${
-            isTotalRow ? "bg-gray-200" : "hover:bg-gray-100"
-          }`}
+          className={`border ${isTotalRow ? "bg-gray-200" : "hover:bg-gray-100"
+            }`}
         >
           <td className="px-4 py-2 border">{item.Program_Name}</td>
           <td className="px-4 py-2 border">{item.Department}</td>
@@ -367,7 +465,7 @@ const TrainingBudget = () => {
           <td className="px-4 py-2 border">{item.Schedule_Type}</td>
           <td className="px-4 py-2 border text-right">
             {isActualTab &&
-            item.Program_Name?.toLowerCase().includes("additional") ? (
+              item.Program_Name?.toLowerCase().includes("additional") ? (
               <input
                 type="number"
                 value={additionalTrainingProgramsText}
@@ -592,21 +690,19 @@ const TrainingBudget = () => {
         <div className="flex items-center space-x-4">
           <h1 className="font-semibold">Training Cost</h1>
           <button
-            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-              activeTab === "actual"
-                ? "bg-white text-sky-600 shadow-sm"
-                : "text-white hover:bg-sky-300"
-            }`}
+            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${activeTab === "actual"
+              ? "bg-white text-sky-600 shadow-sm"
+              : "text-white hover:bg-sky-300"
+              }`}
             onClick={() => setActiveTab("actual")}
           >
             Actual Training Budget
           </button>
           <button
-            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-              activeTab === "budgetVsActual"
-                ? "bg-white text-sky-600 shadow-sm"
-                : "text-white hover:bg-sky-300"
-            }`}
+            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${activeTab === "budgetVsActual"
+              ? "bg-white text-sky-600 shadow-sm"
+              : "text-white hover:bg-sky-300"
+              }`}
             onClick={() => setActiveTab("budgetVsActual")}
           >
             Training Budget vs Actual Budget
@@ -631,6 +727,8 @@ const TrainingBudget = () => {
 
       {activeTab === "actual" && (
         <>
+
+
           <div className="my-4 relative z-50">
             <div className="flex items-center space-x-2">
               <label className="text-sm font-medium">Year</label>
@@ -646,6 +744,7 @@ const TrainingBudget = () => {
                 isClearable
                 isSearchable
                 required
+                
                 popperModifiers={{
                   preventOverflow: {
                     enabled: true,
@@ -672,9 +771,12 @@ const TrainingBudget = () => {
                     <input
                       type="text"
                       value={tableSearchTerm}
-                      onChange={handleTableSearchChange}
+                      onChange={handleTableSearchChange} // Remove the conditional check here
                       placeholder="Search..."
-                      className="border p-1 pl-8 rounded bg-secondary"
+                      className={`border p-1 pl-8 rounded bg-secondary 
+                        }`}
+                      // disabled={isFinalized}
+                      // readOnly={isFinalized}
                     />
                     <FaSearch className="absolute left-2 top-2 text-gray-400" />
                   </div>
@@ -690,20 +792,14 @@ const TrainingBudget = () => {
                           { key: "Program_Name", label: "Training Name" },
                           { key: "Department", label: "Department" },
                           { key: "Req_Months", label: "Scheduled Month" },
-                          // { key: "Training_Date", label: "Conducted Date" },
                           { key: "Training_Name", label: "Type" },
-                          // { key: "Train_Mode", label: "Mode" },
-                          // { key: "Schedule_Type", label: "Schedule Type" },
-                          // { key: "Training_Status", label: "Training Status" },
                           { key: "Training_Budget", label: "Estimated Budget" },
                           { key: "Note", label: "Note" },
-                          // { key: "Actual_Budget", label: "Actual Budget" },
                         ].map(({ key, label }, index) => (
                           <th
                             key={key}
-                            className={`px-4 py-2 border text-left cursor-pointer ${
-                              index === 0 ? "sticky left-0 bg-muted z-20" : ""
-                            }`}
+                            className={`px-4 py-2 border text-left cursor-pointer ${index === 0 ? "sticky left-0 bg-muted z-20" : ""
+                              }`}
                             onClick={() => handleSort(key)}
                           >
                             {label}{" "}
@@ -717,15 +813,25 @@ const TrainingBudget = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {renderActualBudgetTableRows(paginatedData, true)}
+                      {renderActualBudgetTableRows(paginatedData, true, isFinalized)}
                     </tbody>
                   </table>
                 </div>
               </div>
             </div>
           )}
-          {selectedDate && filteredData.length > 0 && !error && (
-            <div className="flex justify-end mt-4">
+
+          {/* Show buttons ONLY when not finalized */}
+          {console.log("Button visibility check:", {
+            selectedDate: !!selectedDate,
+            hasData: filteredData.length > 0,
+            noError: !error,
+            isFinalized: isFinalized,
+            shouldShowButtons: selectedDate && filteredData.length > 0 && !error && !isFinalized
+          })}
+
+          {selectedDate && filteredData.length > 0 && !error && !isFinalized && (
+            <div className="flex justify-end mt-4 space-x-3">
               <button
                 className="px-6 mt-2 cursor-pointer py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
                 onClick={async () => {
@@ -734,97 +840,106 @@ const TrainingBudget = () => {
                       alert("Please select a year before saving.");
                       return;
                     }
+
+                    const year = selectedDate.getFullYear();
+
                     // Save additional budget
-                    const response = await fetch(
-                      "/api/insert_additional_budget",
-                      {
-                        method: "POST",
-                        headers: {
-                          "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                          Year_No: selectedDate.getFullYear(),
-                          Add_Budget:
-                            Number(additionalTrainingProgramsText) || 0,
-                          createdBy: employeeId || "",
-                        }),
-                      }
-                    );
-                    if (!response.ok) {
+                    const additionalResponse = await fetch("/api/insert_additional_budget", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        Year_No: year,
+                        Add_Budget: Number(additionalTrainingProgramsText) || 0,
+                        createdBy: employeeId || "",
+                      }),
+                    });
+
+                    if (!additionalResponse.ok) {
                       throw new Error("Failed to save additional budget");
                     }
-                    // Save notes for each program_id
-                    const notePromises = Object.entries(notes)
-                      .filter(
-                        ([_, noteText]) => noteText && noteText.trim() !== ""
-                      )
-                      .map(([programId, noteText]) =>
-                        fetch("/api/insert_additional_budget_note", {
+
+                    // Save notes
+                    const notesPromises = Object.entries(notes).map(([programId, note]) => {
+                      if (note && note.trim()) {
+                        return fetch("/api/save_training_note", {
                           method: "POST",
                           headers: {
                             "Content-Type": "application/json",
                           },
                           body: JSON.stringify({
-                            Year_No: selectedDate.getFullYear(),
                             Program_Id: programId,
-                            Note_text: noteText,
-                            createdBy: employeeId || "",
+                            Note: note.trim(),
+                            Year_No: year,
+                            updatedBy: employeeId || "",
                           }),
-                        })
-                      );
-                    const noteResponses = await Promise.all(notePromises);
-                    const failedNote = noteResponses.find((res) => !res.ok);
-                    if (failedNote) {
-                      throw new Error("Failed to save one or more notes");
-                    }
+                        });
+                      }
+                      return Promise.resolve();
+                    });
+
+                    await Promise.all(notesPromises);
+
                     alert("Additional budget and notes saved successfully");
-                    // Do not clear the text fields after successful save as per user request
-                    // Update trainingData and filteredData state directly to avoid full re-render
-                    setTrainingData((prevData) => {
-                      return prevData.map((item) => {
-                        if (
-                          item.Program_Name?.toLowerCase().includes(
-                            "additional"
-                          )
-                        ) {
-                          return {
-                            ...item,
-                            Training_Budget:
-                              Number(additionalTrainingProgramsText) || 0,
-                          };
-                        }
-                        return item;
-                      });
-                    });
-                    setFilteredData((prevData) => {
-                      return prevData.map((item) => {
-                        if (
-                          item.Program_Name?.toLowerCase().includes(
-                            "additional"
-                          )
-                        ) {
-                          return {
-                            ...item,
-                            Training_Budget:
-                              Number(additionalTrainingProgramsText) || 0,
-                          };
-                        }
-                        return item;
-                      });
-                    });
                   } catch (error) {
-                    alert(
-                      "Error saving additional budget and notes: " +
-                        error.message
-                    );
+                    console.error("Save error:", error);
+                    alert("Error saving additional budget and notes: " + error.message);
                   }
                 }}
               >
                 Save
               </button>
+
+              <button
+                className="px-6 mt-2 cursor-pointer py-2 text-sm font-semibold text-white bg-blue-600 rounded-md shadow-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                onClick={async () => {
+                  if (window.confirm("Are you sure you want to finalize? This action cannot be undone.")) {
+                    try {
+                      const year = selectedDate.getFullYear();
+
+                      const response = await fetch("/api/finalise_additional_budget", {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                          Year_No: year,
+                          UpdatedBy: employeeId || "",
+                        }),
+                      });
+
+                      if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || "Failed to finalize additional budget");
+                      }
+
+                      setIsFinalized(true);
+                      alert("Form has been finalized successfully!");
+
+                    } catch (error) {
+                      console.error("Finalization error:", error);
+                      alert("Error finalizing additional budget: " + error.message);
+                    }
+                  }
+                }}
+              >
+                Finalize
+              </button>
             </div>
           )}
+
+          {/* Show finalized status when form is finalized */}
+          {isFinalized && selectedDate && (
+            <div className="flex justify-center mt-4">
+              <div className="px-6 py-2 bg-green-100 text-green-800 rounded-md border border-green-300">
+                <span className="font-semibold">✅ Form has been finalized </span>
+              </div>
+            </div>
+          )}
+
         </>
+
       )}
 
       {activeTab === "budgetVsActual" && (
@@ -904,9 +1019,8 @@ const TrainingBudget = () => {
                           ].map(({ key, label }, index) => (
                             <th
                               key={key}
-                              className={`px-4 py-2 border text-left cursor-pointer ${
-                                index === 0 ? "sticky left-0 bg-muted z-20" : ""
-                              }`}
+                              className={`px-4 py-2 border text-left cursor-pointer ${index === 0 ? "sticky left-0 bg-muted z-20" : ""
+                                }`}
                               onClick={() => handleSort(key)}
                             >
                               {label}{" "}

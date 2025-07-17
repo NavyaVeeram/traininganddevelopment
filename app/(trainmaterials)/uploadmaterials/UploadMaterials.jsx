@@ -75,7 +75,7 @@ const mappedTrainerOptions = trainerOptions.map((trainer) => ({
   label: trainer.label,
 }));
 
-// Removed fetching trainers from qualified_trainer_dropdown
+
 // Trainer options will be set from get_training_att_entry API response
 
 useEffect(() => {

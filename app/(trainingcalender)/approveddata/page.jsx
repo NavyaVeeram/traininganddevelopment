@@ -18,6 +18,13 @@ const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
 const [searchQuery, setSearchQuery] = useState("");
 const [yearNo, setYearNo] = useState(new Date().getFullYear());
 
+// Sync yearNo with selectedDate
+useEffect(() => {
+  if (selectedDate) {
+    setYearNo(selectedDate.getFullYear());
+  }
+}, [selectedDate]);
+
 // Mapping of raw column names to user-friendly display names
 const columnNameMap = {
 "programid": "Program ID",
@@ -76,39 +83,37 @@ setLoading(false);
 });
 }, [yearNo, trainingName]);
 
-// New effect to fetch record counts for each programId
 useEffect(() => {
-if (!data || data.length === 0) {
-setRecordCounts({});
-return;
-}
+  if (!data || data.length === 0) {
+    setRecordCounts({});
+    return;
+  }
 
-const uniqueProgramIds = Array.from(
-new Set(data.map((item) => item.programid || item.Program_Id))
-);
+  const uniqueProgramIds = Array.from(
+    new Set(data.map((item) => item.programid || item.Program_Id))
+  );
 
-const fetchCounts = async () => {
-const counts = {};
-await Promise.all(
-uniqueProgramIds.map(async (programId) => {
-try {
-const res = await fetch(`/api/approval_form_data_view?programId=${programId}`);
-if (res.ok) {
-const result = await res.json();
-counts[programId] = Array.isArray(result) ? result.length : 0;
-} else {
-counts[programId] = 0;
-}
-} catch (error) {
-console.error(`Error fetching count for programId ${programId}:`, error);
-counts[programId] = 0;
-}
-})
-);
-setRecordCounts(counts);
-};
+  const fetchCountsBatch = async () => {
+    try {
+      const res = await fetch('/api/approval_form_data_view_batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ programIds: uniqueProgramIds }),
+      });
 
-fetchCounts();
+      if (res.ok) {
+        const counts = await res.json();
+        setRecordCounts(counts);
+      } else {
+        setRecordCounts({});
+      }
+    } catch (error) {
+      console.error('Error fetching batch counts:', error);
+      setRecordCounts({});
+    }
+  };
+
+  fetchCountsBatch();
 }, [data]);
 
 // Sorting handler
@@ -233,6 +238,8 @@ enabled: true,
 boundariesElement: "viewport",
 },
 }}
+minDate={new Date(new Date().getFullYear() - 1, 0, 1)}
+maxDate={new Date(new Date().getFullYear() + 1, 11, 31)}
 />
 </div>
 
@@ -495,18 +502,61 @@ className="px-3 py-1 border rounded"
 >
 {"<"}
 </button>
-{[...Array(totalPages)].map((_, i) => (
-<button
-key={i}
-className={`px-3 py-1 border rounded ${
-currentPage === i + 1 ? "bg-black text-primary-foreground" : ""
-}`}
-onClick={() => setCurrentPage(i + 1)}
-type="button"
->
-{i + 1}
-</button>
-))}
+{(() => {
+  // Helper function to generate pagination buttons with ellipsis
+  // Shows up to 5 page buttons, then ellipsis, then last page
+  const getPaginationButtons = () => {
+    const buttons = [];
+    if (totalPages <= 7) {
+      // Show all pages if total pages less or equal to 7
+      for (let i = 1; i <= totalPages; i++) {
+        buttons.push(i);
+      }
+    } else {
+      if (currentPage <= 4) {
+        // Show first 5 pages, ellipsis, last page
+        buttons.push(1, 2, 3, 4, 5, 'ellipsis', totalPages);
+      } else if (currentPage > totalPages - 4) {
+        // Show first page, ellipsis, last 5 pages
+        buttons.push(1, 'ellipsis');
+        for (let i = totalPages - 4; i <= totalPages; i++) {
+          buttons.push(i);
+        }
+      } else {
+        // Show first page, ellipsis, currentPage-1, currentPage, currentPage+1, ellipsis, last page
+        buttons.push(1, 'ellipsis', currentPage - 1, currentPage, currentPage + 1, 'ellipsis', totalPages);
+      }
+    }
+    return buttons;
+  };
+
+  return getPaginationButtons().map((page, index) => {
+    if (page === 'ellipsis') {
+      return (
+        <button
+          key={`ellipsis-${index}`}
+          disabled
+          className="px-3 py-1 border rounded cursor-default"
+        >
+          ...
+        </button>
+      );
+    } else {
+      return (
+        <button
+          key={page}
+          className={`px-3 py-1 border rounded ${
+            currentPage === page ? "bg-black text-primary-foreground" : ""
+          }`}
+          onClick={() => setCurrentPage(page)}
+          type="button"
+        >
+          {page}
+        </button>
+      );
+    }
+  });
+})()}
 <button
 className="px-3 py-1 border rounded"
 onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}

@@ -9,6 +9,19 @@ export default function MonthCount() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [collapsedTypes, setCollapsedTypes] = useState(new Set(["HSE", "IATF"]));
+
+  const toggleType = (type) => {
+    setCollapsedTypes((prev) => {
+      const updated = new Set(prev);
+      if (updated.has(type)) {
+        updated.delete(type);
+      } else {
+        updated.add(type);
+      }
+      return updated;
+    });
+  };
 
   const fetchMonthCount = async (year) => {
     setLoading(true);
@@ -23,35 +36,38 @@ export default function MonthCount() {
       }
 
       const data = await res.json();
-      console.log("Raw API data:", data);
 
-      // Merge HSE + IATF counts per month
-      const dataMap = new Map();
-      data.forEach((item) => {
-        const existing = dataMap.get(item.Month) || {
-          Month: item.Month,
-          HSE_Count: 0,
-          IATF_Count: 0,
-        };
-        existing.HSE_Count += item.HSE_Count;
-        existing.IATF_Count += item.IATF_Count;
-        dataMap.set(item.Month, existing);
+      const grouped = {};
+      data.forEach(({ Month, Training_name, Train_Mode, HSE_Count, IATF_Count }) => {
+        if (!grouped[Month]) {
+          grouped[Month] = {
+            Month,
+            HSE: { Internal: 0, External: 0, Overseas: 0 },
+            IATF: { Internal: 0, External: 0, Overseas: 0 },
+          };
+        }
+
+        if (Training_name?.includes("HSE")) {
+          grouped[Month].HSE[Train_Mode] += HSE_Count;
+        } else if (Training_name?.includes("IATF")) {
+          grouped[Month].IATF[Train_Mode] += IATF_Count;
+        }
       });
 
       const allMonths = [
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
       ];
 
-      const mergedData = allMonths.map((month) =>
-        dataMap.get(month) || {
+      const finalData = allMonths.map((month) =>
+        grouped[month] || {
           Month: month,
-          HSE_Count: 0,
-          IATF_Count: 0,
+          HSE: { Internal: 0, External: 0, Overseas: 0 },
+          IATF: { Internal: 0, External: 0, Overseas: 0 },
         }
       );
 
-      setMonthCountData(mergedData);
+      setMonthCountData(finalData);
     } catch (err) {
       console.error("Error fetching month count:", err);
       setError("Error fetching data");
@@ -62,7 +78,6 @@ export default function MonthCount() {
   };
 
   useEffect(() => {
-    if (!selectedDate) return;
     const year = selectedDate.getFullYear();
     fetchMonthCount(year);
 
@@ -72,6 +87,9 @@ export default function MonthCount() {
 
     return () => clearInterval(intervalId);
   }, [selectedDate]);
+
+  const getTotalCountByTypeAndMonth = (month, type) =>
+    Object.values(month[type]).reduce((a, b) => a + b, 0);
 
   if (loading) {
     return (
@@ -115,76 +133,122 @@ export default function MonthCount() {
         />
       </div>
 
-      <div className="bg-white rounded-lg shadow-lg">
-        <div className="p-6 overflow-x-auto">
-          <table className="border-collapse table-fixed text-center" style={{ width: "auto" }}>
-            <thead>
-              <tr className="bg-gray-50">
-                <th className="border border-gray-200 font-semibold text-left text-base" style={{ width: "100px", padding: "12px 8px" }}>
-                  Months
+      <div className="bg-white dark:bg-neutral-900 rounded-lg shadow-lg overflow-x-auto">
+        <table className="border-collapse table-fixed text-center min-w-full">
+          <thead>
+            <tr className="bg-gray-100 dark:bg-neutral-800">
+              <th className="border border-gray-200 dark:border-neutral-700 font-semibold text-left text-base p-2">
+                Months
+              </th>
+              {displayData.map((item, index) => (
+                <th
+                  key={index}
+                  className="border border-gray-200 dark:border-neutral-700 font-semibold text-base p-2"
+                >
+                  {item.Month}
                 </th>
-                {displayData.map((item, index) => (
-                  <th key={index} className="border border-gray-200 font-semibold text-gray-700 text-base" style={{ width: "80px", padding: "12px 6px" }}>
-                    {item.Month}
-                  </th>
-                ))}
-                <th className="border border-gray-200 font-semibold text-base" style={{ width: "90px", padding: "12px 8px" }}>
-                  Total/Yr.
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* HSE */}
-              <tr>
-                <td className="border border-gray-200 font-semibold text-left text-base" style={{ padding: "12px 8px" }}>
-                  HSE
-                </td>
-                {displayData.map((item, index) => (
-                  <td key={"hse-" + index} className="border border-gray-200" style={{ padding: "12px 6px" }}>
-                    <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-base font-medium ${item.HSE_Count > 0 ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}`}>
-                      {item.HSE_Count}
-                    </span>
-                  </td>
-                ))}
-                <td className="border border-gray-200 font-semibold text-base" style={{ padding: "12px 8px" }}>
-                  {displayData.reduce((sum, item) => sum + item.HSE_Count, 0)}
-                </td>
-              </tr>
+              ))}
+              <th className="border border-gray-200 dark:border-neutral-700 font-semibold text-base p-2">
+                Total/Yr.
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {["HSE", "IATF"].map((type) => {
+              const totalYearly = displayData.reduce(
+                (sum, month) => sum + getTotalCountByTypeAndMonth(month, type),
+                0
+              );
 
-              {/* IATF */}
-              <tr>
-                <td className="border border-gray-200 font-semibold text-left text-base" style={{ padding: "12px 8px" }}>
-                  IATF
-                </td>
-                {displayData.map((item, index) => (
-                  <td key={"iatf-" + index} className="border border-gray-200" style={{ padding: "12px 6px" }}>
-                    <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-base font-medium ${item.IATF_Count > 0 ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-600"}`}>
-                      {item.IATF_Count}
-                    </span>
-                  </td>
-                ))}
-                <td className="border border-gray-200 font-semibold text-base" style={{ padding: "12px 8px" }}>
-                  {displayData.reduce((sum, item) => sum + item.IATF_Count, 0)}
-                </td>
-              </tr>
+              return (
+                <React.Fragment key={type}>
+                  <tr className="bg-gray-100 dark:bg-neutral-800">
+                    <td
+                      className="border border-gray-200 dark:border-neutral-700 font-bold text-left text-base p-2 cursor-pointer select-none"
+                      onClick={() => toggleType(type)}
+                    >
+                      <span className="mr-2 text-xl">
+                        {collapsedTypes.has(type) ? "+" : "−"}
+                      </span>
+                      {type}
+                    </td>
+                    {displayData.map((month, index) => (
+                      <td
+                        key={`${type}-summary-${index}`}
+                        className="border border-gray-200 dark:border-neutral-700 text-base p-2"
+                      >
+                        <span className="inline-block px-2 py-1 rounded-full bg-blue-200 text-blue-900 font-semibold">
+                          {getTotalCountByTypeAndMonth(month, type)}
+                        </span>
+                      </td>
+                    ))}
+                    <td className="border border-gray-200 dark:border-neutral-700 font-semibold text-base p-2">
+                      <span className="inline-block px-2 py-1 rounded-full bg-blue-200 text-blue-900 font-semibold">
+                        {totalYearly}
+                      </span>
+                    </td>
+                  </tr>
 
-              {/* Total/Month */}
-              <tr>
-                <td className="border border-gray-200 font-semibold text-left text-base" style={{ padding: "12px 8px" }}>
-                  Total/Mon
-                </td>
-                {displayData.map((item, index) => (
-                  <td key={"total-month-" + index} className="border border-gray-200 font-semibold text-base" style={{ padding: "12px 6px" }}>
-                    {item.HSE_Count + item.IATF_Count}
+                  {!collapsedTypes.has(type) &&
+                    ["Internal", "External", "Overseas"].map((mode) => (
+                      <tr key={`${type}-${mode}`}>
+                        <td className="border border-gray-200 dark:border-neutral-700 font-medium text-left text-sm p-2">
+                           {mode}
+                        </td>
+                        {displayData.map((month, index) => (
+                          <td
+                            key={`${type}-${mode}-${index}`}
+                            className="border border-gray-200 dark:border-neutral-700 text-sm p-2"
+                          >
+                            <span
+                              className={`inline-block px-2 py-1 rounded-full ${
+                                month[type][mode] > 0
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-orange-100 text-orange-600"
+                              }`}
+                            >
+                              {month[type][mode]}
+                            </span>
+                          </td>
+                        ))}
+                        <td className="border border-gray-200 dark:border-neutral-700 font-semibold text-sm p-2">
+                          {displayData.reduce((sum, m) => sum + m[type][mode], 0)}
+                        </td>
+                      </tr>
+                    ))}
+                </React.Fragment>
+              );
+            })}
+
+            <tr className="bg-gray-100 dark:bg-neutral-800">
+              <td className="border border-gray-200 dark:border-neutral-700 font-semibold text-left text-base p-2">
+                Total / Mon
+              </td>
+              {displayData.map((month, index) => {
+                const total =
+                  getTotalCountByTypeAndMonth(month, "HSE") +
+                  getTotalCountByTypeAndMonth(month, "IATF");
+                return (
+                  <td
+                    key={`total-${index}`}
+                    className="border border-gray-200 dark:border-neutral-700 font-semibold text-base p-2"
+                  >
+                    {total}
                   </td>
-                ))}
-                <td className="border border-gray-200 font-semibold text-base" style={{ padding: "12px 8px" }}>
-                  {displayData.reduce((sum, item) => sum + item.HSE_Count + item.IATF_Count, 0)}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                );
+              })}
+              <td className="border border-gray-200 dark:border-neutral-700 font-semibold text-base p-2">
+                {displayData.reduce(
+                  (sum, month) =>
+                    sum +
+                    getTotalCountByTypeAndMonth(month, "HSE") +
+                    getTotalCountByTypeAndMonth(month, "IATF"),
+                  0
+                )}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   );

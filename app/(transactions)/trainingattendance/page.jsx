@@ -860,7 +860,7 @@ const programOptions = options.map((option) => ({
           </div>
 
           {/* Program Selection */}
-          <div className="md:col-span-3">
+          <div className="md:col-span-4">
             <label className="block font-medium">Select Program:</label>
             <div className="relative">
               <Select
@@ -876,7 +876,7 @@ const programOptions = options.map((option) => ({
     (opt) => opt.value === formData.Program_Id
   ) || null}
                 options={programOptions}
-                className="w-[500px] cursor-pointer"
+      className="w-[500px] cursor-pointer"
                 placeholder="Select Program"
                 styles={{
                   control: (base, state) => ({
@@ -911,7 +911,24 @@ const programOptions = options.map((option) => ({
                 // isClearable
                 />
               </div>
+              
               </div>
+  <div className="flex items-center justify-start">
+              <div className="flex items-center  gap-2 mt-6">
+          <label htmlFor="Cancel" className="font-medium">
+            Cancel
+          </label>
+          <input
+                      type="checkbox"
+                      id="Cancel"
+                      name="Cancel"
+                      className="w-5 h-4 cursor-pointer"
+                      checked={isCancelChecked}
+                      onChange={() => setIsCancelChecked((prev) => !prev)}
+                      disabled={!!formData.Training_Date}
+                    />
+        </div>
+        </div>
             </div>
             {/* Align these fields in a single row */}
             <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mt-2 w-full">
@@ -1233,10 +1250,10 @@ const programOptions = options.map((option) => ({
               name="Actual_Budget"
               value={formData.Actual_Budget}
               onChange={handleFormDataChange}
-              disabled={!!formData.selectedMonth || !(formData.Train_Mode === "Internal" || formData.Train_Mode === "External" || formData.Train_Mode === "Overseas")}
+              disabled={formData.Train_Mode === "Internal"}
               autoComplete="off"
               className={`w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-blue-500 ${
-                !!formData.selectedMonth || !(formData.Train_Mode === "Internal" || formData.Train_Mode === "External" || formData.Train_Mode === "Overseas")
+                formData.Train_Mode === "Internal"
                   ? "bg-gray-100 cursor-not-allowed"
                   : ""
               }`}
@@ -1274,7 +1291,7 @@ const programOptions = options.map((option) => ({
       }
       required
       autoComplete="off"
-      className=" text-gray-900 bg-white cursor-pointer"
+      className="w-[620px] text-gray-900 bg-white cursor-pointer"
       styles={{
         control: (base, state) => ({
           ...base,
@@ -1289,6 +1306,9 @@ const programOptions = options.map((option) => ({
           minHeight: "2rem",
           display: "flex",
           alignItems: "center",
+          overflowX: "auto",
+          whiteSpace: "nowrap",
+          maxWidth: "100%",
         }),
         option: (base) => ({
           ...base,
@@ -1301,10 +1321,14 @@ const programOptions = options.map((option) => ({
         multiValue: (base) => ({
           ...base,
           backgroundColor: "#f3f4f6",
+          whiteSpace: "nowrap",
+          display: "inline-flex",
+          maxWidth: "none",
         }),
         multiValueLabel: (base) => ({
           ...base,
           color: "#111827",
+          whiteSpace: "nowrap",
         }),
         multiValueRemove: (base) => ({
           ...base,
@@ -1314,24 +1338,18 @@ const programOptions = options.map((option) => ({
             color: "#111827",
           },
         }),
+        valueContainer: (base) => ({
+          ...base,
+          display: "flex",
+          flexWrap: "nowrap",
+          overflowX: "auto",
+          whiteSpace: "nowrap",
+        }),
       }}
     />
   </div>
 </div>
-<div className="flex items-center gap-2 mt-6">
-          <label htmlFor="Cancel" className="font-medium">
-            Cancel
-          </label>
-          <input
-                      type="checkbox"
-                      id="Cancel"
-                      name="Cancel"
-                      className="w-5 h-4 cursor-pointer"
-                      checked={isCancelChecked}
-                      onChange={() => setIsCancelChecked((prev) => !prev)}
-                      disabled={!!formData.Training_Date}
-                    />
-        </div>
+
 </div>{" "}
         <br></br>
         <div className="flex justify-end mt-1" style={{ marginRight: "100px" }}>

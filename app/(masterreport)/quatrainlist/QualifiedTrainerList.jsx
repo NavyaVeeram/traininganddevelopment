@@ -9,7 +9,10 @@ const QualifiedTrainerList = () => {
 
   // Add useEffect to set EmployeeId from localStorage on mount
   useEffect(() => {
-    // Removed setting EmployeeId from localStorage to avoid default display in Select dropdown
+    const storedEmployeeId = localStorage.getItem("employeeId");
+    if (storedEmployeeId) {
+      setEmployeeId(storedEmployeeId);
+    }
   }, []);
 
   const [employeeOptions, setEmployeeOptions] = useState([]);
@@ -31,6 +34,7 @@ const QualifiedTrainerList = () => {
   // Adjust logic: if DOJ is greater than 3 years ago, enable Experience (5 Years)
   const isExperienceAtLeast3Years = dojDate ? dojDate <= threeYearsAgo : false;
   const [qualifiedTrainers, setQualifiedTrainers] = useState([]);
+    const [trainerData, setTrainerData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [tableSearchTerm, setTableSearchTerm] = useState("");
@@ -118,23 +122,25 @@ const QualifiedTrainerList = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/view_qualifier_list");
+      const storedEmployeeId = localStorage.getItem("employeeId");
+      const url = storedEmployeeId
+        ? `/api/view_qualifier_list?employeeId=${encodeURIComponent(storedEmployeeId)}`
+        : "/api/view_qualifier_list";
+      const res = await fetch(url);
       const data = await res.json();
       console.log("DEBUG qualifiedTrainers data:", data);
       if (res.status === 200) {
-        // Normalize Status field to boolean with explicit number conversion
-        const normalizedData = data.map(item => ({
-          ...item,
-          Status: Boolean(Number(item.Status))
-        }));
-        setQualifiedTrainers(normalizedData);
-        setData(normalizedData);
-        setFilteredData(normalizedData);
+        setQualifiedTrainers(data);
+        setData(data);
+        setFilteredData(data);
+        setTrainerData(data);
       } else {
         setError(data.message || "Error fetching qualified trainers data");
+        setTrainerData([]);
       }
     } catch (err) {
       setError("Failed to fetch qualified trainers data");
+      setTrainerData([]);
     } finally {
       setLoading(false);
     }
@@ -771,7 +777,7 @@ const QualifiedTrainerList = () => {
                       { key: "Exp_3_yr", label: "GTI Exp (3 yrs)" },
                       { key: "HOD_Rec", label: "Nominated by HOD" },
                       { key: "Qualified", label: "Qualified" },
-                       {key:"Status", label :"Status"}
+                      { key: "Status", label: "Status" },
                     ].map(({ key, label }, index) => (
                       <th
                         key={key}
@@ -828,55 +834,45 @@ const QualifiedTrainerList = () => {
         <td className="px-4 py-2 border">
           {item.Qualified ? "Yes" : "No"}
         </td>
-         <td className="border p-2 text-left">
-           <label className="flex items-center gap-2 cursor-pointer select-none">
-             <input
-               type="checkbox"
-               checked={Boolean(item.Status)}
-               onChange={async (e) => {
-                 const newStatus = e.target.checked ? 1 : 0;
-                 try {
-                   const response = await fetch('/api/update_active_status_to_remove_trainers', {
-                     method: 'PATCH',
-                     headers: {
-                       'Content-Type': 'application/json',
-                     },
-                     body: JSON.stringify({ Qual_Id: item.Qual_Id, Status: newStatus }),
-                   });
-                   if (response.ok) {
-                     const data = await response.json();
-                     // Update local state to reflect change
-                     setQualifiedTrainers((prev) =>
-                       prev.map((trainer) =>
-                         trainer.Qual_Id === item.Qual_Id ? { ...trainer, Status: newStatus } : trainer
-                       )
-                     );
-                     setData((prev) =>
-                       prev.map((trainer) =>
-                         trainer.Qual_Id === item.Qual_Id ? { ...trainer, Status: newStatus } : trainer
-                       )
-                     );
-                     setFilteredData((prev) =>
-                       prev.map((trainer) =>
-                         trainer.Qual_Id === item.Qual_Id ? { ...trainer, Status: newStatus } : trainer
-                       )
-                     );
-                     alert(data.message);
-                     fetchQualifiedTrainers(); // Refresh the list after status update
-                   } else {
-                     alert('Failed to update status');
-                   }
-                 } catch (error) {
-                   alert('Error updating status');
-                   console.error(error);
-                 }
-               }}
-             />
-             <span className={item.Status ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>
-               {item.Status ? 'Active' : 'Inactive'}
-             </span>
-           </label>
-         </td>
+      <td className="px-4 py-2 border flex items-center space-x-2">
+      <input
+        type="checkbox"
+        checked={item.Status}
+        onChange={async (e) => {
+          const newStatus = e.target.checked;
+          try {
+            const response = await fetch('/api/update_active_status_to_remove_trainers', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ Qual_Id: item.Qual_Id, Status: newStatus }),
+            });
+            if (!response.ok) {
+              throw new Error('Failed to update status');
+            }
+            const responseData = await response.json();
+            alert(responseData.message || 'Status updated successfully');
+            // Update local state to reflect the change
+            const updatedData = [...data];
+            const index = updatedData.findIndex((d) => d.Qual_Id === item.Qual_Id);
+            if (index !== -1) {
+              updatedData[index].Status = newStatus;
+              setData(updatedData);
+              setFilteredData(updatedData);
+              setQualifiedTrainers(updatedData);
+              setTrainerData(updatedData);
+            }
+          } catch (error) {
+            alert('Error updating status: ' + error.message);
+          }
+        }}
+        className="cursor-pointer"
+      />
+      <span className={item.Status ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
+        {item.Status ? "Active" : "Inactive"}
+      </span>
+    </td>
     </tr>
   );
 })

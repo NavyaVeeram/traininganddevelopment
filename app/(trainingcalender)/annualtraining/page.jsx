@@ -55,13 +55,19 @@ const AnnualTraining = () => {
           if (
             data.Access_Role === "Res_Person" ||
             data.Access_Role === "HOS" ||
-            data.Access_Role === "HOD" ||
-            data.Access_Role === "HR_Res" ||
-            data.Access_Role === "HR_Hod"
+            data.Access_Role === "HOD"
           ) {
             setIsAuthorized(true);
             // Optionally redirect to unauthorized page
             // window.location.href = '/unauthorized';
+            return;
+          }
+          if (
+            data.Access_Role === "HR_Res" ||
+            data.Access_Role === "HR_Hod"
+          ) {
+            setAccessRole(data.Access_Role);
+            setIsAuthorized(true);
             return;
           }
           setAccessRole(data.Access_Role);
@@ -545,19 +551,22 @@ const generatePDF = async () => {
         </div>
         <div className="hidden">text-green-600 text-blue-600 text-gray-800</div>
 
-        <div>
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              generatePDF();
-            }}
-            className="ml-2 flex cursor-pointer items-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-1 px-3 rounded"
-            aria-label="Download Annual Calendar"
-            title="Download Annual Calendar"
-          >
-            <FaPrint />
-          </button>
-        </div>
+        {(accessRole === "HR_Res" || accessRole === "HR_Hod") && (
+          <div>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                generatePDF();
+              }}
+              className="ml-2 flex cursor-pointer items-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-1 px-3 rounded"
+              aria-label="Download Annual Calendar"
+              title="Download Annual Calendar"
+            >
+              <FaPrint />
+            </button>
+          </div>
+        )}
+      
       </div>
       {loading && <p>Loading training calendar...</p>}
       {error && <p className="text-red-600">Error: {error}</p>}

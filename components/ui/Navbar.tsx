@@ -103,6 +103,14 @@ const masterreport: { title: string; href: string }[] = [
     title: "Update TL",
     href: "/tetformgeneratefortl",
   },
+      {
+    title: "Total Head Count",
+    href: "/headcount",
+  },
+      {
+    title: "Training Hours",
+    href: "/totrainhrs",
+  },
 ]
 const trainingcertificates: { title: string; href: string }[] = [
   {
@@ -374,8 +382,8 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
           )} */}
 {(accessRole === "Res_Person" || accessRole === "HR_Res" || accessRole ==="HR_Hod" || accessRole === "HOS" || accessRole === "HOD") && !(accessRole === "Res_Person" && (department !== "MS" && department !== "FNTRY")) && (
             <NavigationMenuItem className="bg-gray-100 cursor-pointer">
-              <NavigationMenuTrigger className="hover:text-sky-400  cursor-pointer focus:outline-none">T & D Report</NavigationMenuTrigger>
-              <NavigationMenuContent className="grid gap-2 p-1 md:w-[200px] max-h-[300px] ">
+              <NavigationMenuTrigger className="hover:text-sky-400 cursor-pointer">T & D Report</NavigationMenuTrigger>
+              <NavigationMenuContent className="grid gap-2 p-1 md:w-[200px] max-h-[400px] ">
                 <ul className="grid gap-2 p-1 cursor-pointer">
                   {masterreport.map((component) => {
                     console.log("Rendering masterreport item:", component.title, "accessRole:", accessRole);
