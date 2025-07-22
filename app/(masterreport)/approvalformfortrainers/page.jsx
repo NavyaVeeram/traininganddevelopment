@@ -354,7 +354,7 @@ export default function TrainerApprovalForm() {
                     : " ↕"}
                 </th> */}
                 
-                  {accessRole !== "HR_Hod" && (
+                  {accessRole !== "HOS"  &&(
                     <th
                       className="border p-2 cursor-pointer text-left"
                       onClick={() => handleSort("Approval_Status")}
@@ -390,6 +390,7 @@ export default function TrainerApprovalForm() {
                     <td className="border p-2 text-left">
                       {item.HOD_Rec ? "Yes" : "No"}
                     </td>
+                    
                     <td className="border p-2 text-left">
                       <label className="flex items-center gap-2 cursor-pointer select-none">
                         <input
@@ -442,11 +443,22 @@ export default function TrainerApprovalForm() {
                     </td>
                     {/* <td className="border p-2 text-left">{item.Qual_Id}</td> */}
                     
-                    {accessRole !== "HR_Hod" && (
-                      <td className="border p-2 text-left text-red-600 font-bold">
-                        {item.Approval_Status}
-                      </td>
-                    )}             
+{accessRole !== "HOS" &&(
+  <td className="border p-2 text-left font-bold">
+{(() => {
+  const status = item.Approval_Status?.trim().toLowerCase();
+  const pendingStatuses = ["Pending with HOD", "Pending with HR_Res", "pending with hr_hod"];
+  const isPending = pendingStatuses.includes(status);
+  const isApproved = status === "approved";
+  const colorClass = isPending ? "text-red-600" : isApproved ? "text-green-600" : "";
+  return (
+    <span className={colorClass}>
+      {item.Approval_Status}
+    </span>
+  );
+})()}
+  </td>
+)}             
                   </tr>
                 ))
               ) : (
@@ -518,7 +530,9 @@ export default function TrainerApprovalForm() {
           {trainerData.length > 0 && (
             <div className="flex justify-end mt-6 gap-x-2">
               <EmailApprovalForTrainers />
+               {accessRole !== "HOS" &&(
               <EmailRejectionForTrainers />
+               )}
             </div>
           )}
         </div>

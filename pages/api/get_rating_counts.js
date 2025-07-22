@@ -2,10 +2,25 @@ import { prisma } from '@/lib/prisma';
 
 export default async function handler(req, res) {
   try {
-    // Execute stored procedure dbo.Get_Rating_Counts
-    const result = await prisma.$queryRaw`EXEC dbo.Get_Rating_Counts`;
+    const { Year_No, Training_Name, Program_Id } = req.query;
 
-    // Result is expected to be an array of objects with Rating and RatingCount properties
+    // Validate and parse parameters
+    const yearNo = Year_No ? parseInt(Year_No, 10) : null;
+    const trainingName = Training_Name || null;
+    const programId = Program_Id ? parseInt(Program_Id, 10) : null;
+    if (!yearNo || !trainingName || !programId) {
+      return res.status(400).json({ error: 'Missing required query parameters' });
+    }
+
+    // Execute stored procedure dbo.Get_Rating_Counts with parameters
+    const result = await prisma.$queryRaw`
+      EXEC dbo.Get_Rating_Counts 
+        @Year_No = ${yearNo}, 
+        @Training_Name = ${trainingName}, 
+        @Program_Id = ${programId}
+    `;
+
+    // Result is expected to be an array of objects with Rating, RatingCount, and Program_Name properties
     res.status(200).json(result);
   } catch (error) {
     console.error('Error fetching rating counts:', error);

@@ -3,7 +3,7 @@ const prisma = new PrismaClient();
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
-    const { Training_Name, EmployeeId, Certified, Cert_Des = "", Exp_5_Yr, Exp_3_Yr, HOD_Rec, Qualified, IsActive = 1, CreatedBy } = req.body;
+const { Training_Name, EmployeeId, Certified, Cert_Des = "", Exp_5_Yr, Exp_3_Yr, HOD_Rec, Qualified, IsActive = 1, Status = 1, CreatedBy } = req.body;
 
     try {
          console.log('Calling stored procedure with parameters:', {
@@ -16,6 +16,7 @@ export default async function handler(req, res) {
       HOD_Rec,
       Qualified,
       IsActive,
+      Status,
       CreatedBy
       })
         const result = await prisma.$queryRaw`
@@ -29,6 +30,7 @@ export default async function handler(req, res) {
           @HOD_Rec = ${HOD_Rec},        
           @Qualified = ${Qualified},
           @IsActive = ${IsActive},
+          @Status = ${Status},
           @CreatedBy = ${CreatedBy}
         `;
         console.log(result);

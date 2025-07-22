@@ -763,37 +763,50 @@ const QualifiedTrainerList = () => {
               >
                 <thead className="bg-muted sticky top-0 z-10">
                   <tr>
-                    {[
-                      { key: "EmployeeId", label: "Employee ID" },
-                      { key: "Username", label: "Username" },
-                      { key: "DOJ", label: "DOJ" },
-                      { key: "Designation", label: "Designation" },
-                      { key: "Section", label: "Section" },
-                      { key: "Department", label: "Department" },
-                      { key: "Training_Name", label: "Training Name" },
-                      { key: "Certified", label: "Certified" },
-                      { key :"Cert_Des",label:"Cert_Des"},
-                      { key: "Exp_5_Yr", label: "OverAll Exp (5 yrs)" },
-                      { key: "Exp_3_yr", label: "GTI Exp (3 yrs)" },
-                      { key: "HOD_Rec", label: "Nominated by HOD" },
-                      { key: "Qualified", label: "Qualified" },
-                      { key: "Status", label: "Status" },
-                    ].map(({ key, label }, index) => (
-                      <th
-                        key={key}
-                        className={`px-4 py-2 border text-left cursor-pointer ${
-                          index === 0 ? "sticky left-0 bg-muted z-20" : ""
-                        }`}
-                        onClick={() => handleSort(key)}
-                      >
-                        {label}{" "}
-                        {sortConfig.key === key
-                          ? sortConfig.direction === "asc"
-                            ? "▲"
-                            : "▼"
-                          : "↕"}
-                      </th>
-                    ))}
+{[
+  { key: "EmployeeId", label: "Employee ID" },
+  { key: "Username", label: "Username" },
+  { key: "DOJ", label: "DOJ" },
+  { key: "Designation", label: "Designation" },
+  { key: "Section", label: "Section" },
+  { key: "Department", label: "Department" },
+  { key: "Training_Name", label: "Training Name" },
+  { key: "Certified", label: "Certified" },
+  { key :"Cert_Des",label:"Cert_Des"},
+  { key: "Exp_5_Yr", label: "OverAll Exp (5 yrs)" },
+  { key: "Exp_3_yr", label: "GTI Exp (3 yrs)" },
+  { key: "HOD_Rec", label: "Nominated by HOD" },
+  { key: "Qualified", label: "Qualified" },
+].map(({ key, label }, index) => (
+  <th
+    key={key}
+    className={`px-4 py-2 border text-left cursor-pointer ${
+      index === 0 ? "sticky left-0 bg-muted z-20" : ""
+    }`}
+    onClick={() => handleSort(key)}
+  >
+    {label}{" "}
+    {sortConfig.key === key
+      ? sortConfig.direction === "asc"
+        ? "▲"
+        : "▼"
+      : "↕"}
+  </th>
+))}
+{(accessRole !== "HOS" && accessRole !== "HOD") && (
+  <th
+    key="Status"
+    className="px-4 py-2 border text-left cursor-pointer"
+    onClick={() => handleSort("Status")}
+  >
+    Status{" "}
+    {sortConfig.key === "Status"
+      ? sortConfig.direction === "asc"
+        ? "▲"
+        : "▼"
+      : "↕"}
+  </th>
+)}
                   </tr>
                 </thead>
                 <tbody>
@@ -834,6 +847,7 @@ const QualifiedTrainerList = () => {
         <td className="px-4 py-2 border">
           {item.Qualified ? "Yes" : "No"}
         </td>
+          {accessRole !== "HOS" &&  accessRole !== "HOD" &&(
       <td className="px-4 py-2 border flex items-center space-x-2">
       <input
         type="checkbox"
@@ -873,6 +887,7 @@ const QualifiedTrainerList = () => {
         {item.Status ? "Active" : "Inactive"}
       </span>
     </td>
+          )}
     </tr>
   );
 })

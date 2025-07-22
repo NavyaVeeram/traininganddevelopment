@@ -136,10 +136,10 @@ export default function NavigationMenuDemo() {
 const [department, setDepartment] = useState('');
 const [username, setUsername] = useState('');
 const [employeeId, setEmployeeId] = useState('');
-const [accessRole, setAccessRole] = useState(null);
+const [accessRole, setAccessRole] = useState<string | null>(null);
 const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
 
-  console.log("Navbar accessRole:", accessRole);
+console.log("Navbar accessRole (raw): '" + accessRole + "'");
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
@@ -403,7 +403,17 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
                       console.log("Skipping Training Agencies for accessRole:", accessRole);
                       return null; 
                     }
-                    if (component.title === "Add Training Record" && accessRole !== "HR_Res"  ) {
+                    const normalizedAccessRole = accessRole ? accessRole.trim().toUpperCase() : "";
+
+                    if (component.title === "Add Training Record" && normalizedAccessRole !== "HR_RES"  ) {
+                      console.log("Skipping Add Training Record for accessRole:", accessRole);
+                      return null; // skip
+                    }
+                          if (component.title === "Total Head Count" && normalizedAccessRole !== "HR_RES" && normalizedAccessRole !== "HR_HOD"  ) {
+                      console.log("Skipping Add Training Record for accessRole:", accessRole);
+                      return null; // skip
+                    }
+                          if (component.title === "Training Hours" && normalizedAccessRole !== "HR_RES" && normalizedAccessRole !== "HR_HOD" ) {
                       console.log("Skipping Add Training Record for accessRole:", accessRole);
                       return null; // skip
                     }

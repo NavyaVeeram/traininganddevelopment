@@ -594,11 +594,12 @@ const font = await mergedPdf.embedFont(fontBytes);
         const res = await fetch(`/api/get_tet_form_user_dropdown_by_res_person?programId=${programId}&EmployeeId=${storedEmployeeId}`);
         const data = await res.json();
 
-        const formattedOptions = data.map((item) => ({
-          value: item.Value,
-          label: `${item.Text}`,
-          flag: item.Flag, // include flag from API response
-        }));
+const formattedOptions = data.map((item) => ({
+  value: item.Value,
+  label: `${item.Text}`,
+  flag: item.Flag, // include flag from API response
+  activeStatus: item.Active_Status, // keep Active_Status for display below dropdown
+}));
 
         setOptions(formattedOptions);
       } catch (error) {
@@ -711,53 +712,74 @@ const font = await mergedPdf.embedFont(fontBytes);
         </div> */}
       </div>
         <div className="my-4 relative z-0">
-          <div className="flex items-center space-x-2">
-            <label className="text-sm  font-medium">Select EmpId</label>
-  <Select
-  options={options}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium">Select EmpId</label>
+              <Select
+                options={options}
   onChange={(selectedOption) => {
     setSelectedEmployee(selectedOption);
-    console.log(selectedOption); // Log the selected employee
+    console.log("Selected option object:", selectedOption); // Log the selected employee object to check properties
   }}
-  placeholder="Select an Employee Id"
-  styles={{
-    control: (base, state) => ({
-      ...base,
-      borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
-      boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
-      padding: "1px",
-      borderRadius: "0.5rem",
-      minHeight: "2rem",
-      display: "flex",
-      alignItems: "center",
-      cursor:"pointer"
-    }),
-    menu: (base) => ({
-      ...base,
-      zIndex: 9999,
-    }),
-    menuPortal: (base) => ({
-      ...base,
-      zIndex: 9999,
-    }),
-  }}
-  className="w-[400px] cursor-pointer"
-  components={{
-    Option: (props) => {
-      const { data, innerRef, innerProps } = props;
-      return (
-        <div ref={innerRef} {...innerProps} className="flex items-center justify-between px-2 py-1">
-          <div>{data.label}</div>
-          {data.flag === 1 && (
-            <FaCheckCircle className="text-green-500" />
-          )}
-        </div>
-      );
-    },
-  }}
-/>
-
-</div>
+                placeholder="Select an Employee Id"
+                styles={{
+                  control: (base, state) => ({
+                    ...base,
+                    borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
+                    boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
+                    padding: "1px",
+                    borderRadius: "0.5rem",
+                    minHeight: "2rem",
+                    display: "flex",
+                    alignItems: "center",
+                    cursor: "pointer",
+                  }),
+                  menu: (base) => ({
+                    ...base,
+                    zIndex: 9999,
+                  }),
+                  menuPortal: (base) => ({
+                    ...base,
+                    zIndex: 9999,
+                  }),
+                }}
+                className="w-[400px] cursor-pointer"
+                components={{
+                  Option: (props) => {
+                    const { data, innerRef, innerProps } = props;
+                    return (
+                      <div ref={innerRef} {...innerProps} className="flex items-center justify-between px-2 py-1">
+                        <div>{data.label}</div>
+                        {data.flag === 1 && <FaCheckCircle className="text-green-500" />}
+                      </div>
+                    );
+                  },
+                }}
+              />
+            </div>
+            {selectedEmployee && (
+              <p
+                className={`mt-2 border p-1 rounded text-sm font-bold ${
+                  selectedEmployee.activeStatus === "Y" ||
+                  (selectedEmployee.data && selectedEmployee.data.activeStatus === "Y")
+                    ? "text-green-600 border-green-600"
+                    : selectedEmployee.activeStatus === "N" ||
+                      (selectedEmployee.data && selectedEmployee.data.activeStatus === "N")
+                    ? "text-red-600 border-red-600"
+                    : "text-gray-600"
+                }`}
+              >
+                The Employee was{" "}
+                {selectedEmployee.activeStatus === "Y" ||
+                (selectedEmployee.data && selectedEmployee.data.activeStatus === "Y")
+                  ? "Active"
+                  : selectedEmployee.activeStatus === "N" ||
+                    (selectedEmployee.data && selectedEmployee.data.activeStatus === "N")
+                  ? "Left"
+                  : "Unknown"}
+              </p>
+            )}
+          </div>
 </div>
 {/* 
       </div> */}

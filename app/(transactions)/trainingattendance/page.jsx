@@ -16,7 +16,7 @@ import { PDFDocument, rgb } from "pdf-lib";
 import fontkit from '@pdf-lib/fontkit';
 const animatedComponents = makeAnimated();
 
-  const TrainingAttendanceForm = () => {
+const TrainingAttendanceForm = () => {
     const [mounted, setMounted] = useState(false);
     const [year, setYear] = useState("");
     const [selectedMonth, setSelectedMonth] = useState(null);
@@ -35,10 +35,16 @@ const animatedComponents = makeAnimated();
       Trainer: "",
       Venue: "",
       Actual_Budget: "",
-      CreatedBy: "",
+      CreatedBy: typeof window !== "undefined" ? localStorage.getItem("employeeId") || "" : "",
       EmployeeIds: [],
       selectedMonth: "",
     });
+
+    // New state for confirmation popup visibility
+    const [showConfirmPopup, setShowConfirmPopup] = useState(false);
+
+    // Ref to store the submit event for later use
+    const submitEventRef = useRef(null);
 
     // Helper function to convert dd-MMM-yyyy to yyyy-mm-dd for date input value
     const convertDateToInputValue = (dateStr) => {
@@ -112,7 +118,8 @@ const animatedComponents = makeAnimated();
   const [username, setUsername] = useState('');
   const [accessRole, setAccessRole] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(null);
-  const [employeeId, setEmployeeId] = useState(null);
+  const storedEmployeeId = typeof window !== "undefined" ? localStorage.getItem("employeeId") : null;
+  const [employeeId, setEmployeeId] = useState(storedEmployeeId);
   const [isCancelChecked, setIsCancelChecked] = useState(false);
 
   useEffect(() => {
@@ -484,7 +491,7 @@ const animatedComponents = makeAnimated();
         }
       }
       const formDataToSend = {
-        Program_Id: formData.Program_Id,
+        Program_Id: Number(formData.Program_Id),
         Persons: formData.Persons,
         No_Hrs: formData.No_Hrs,
         Training_Date: formData.Training_Date,
@@ -494,7 +501,7 @@ const animatedComponents = makeAnimated();
         Venue: formData.Venue || null,
         Actual_Budget: formData.Actual_Budget || null,
         EmployeeIds: formData.EmployeeIds || null,
-        CreatedBy: formData.CreatedBy,
+        CreatedBy: (formData.CreatedBy || localStorage.getItem("employeeId") || "").trim(),
         Cancel: document.getElementById("Cancel")?.checked ? 1 : 0, // Pass as bit value
       };
       setLoading(true);
@@ -520,11 +527,14 @@ const animatedComponents = makeAnimated();
               headers: {
                 "Content-Type": "application/json",
               },
-              body: JSON.stringify({
-                Program_Id: formData.Program_Id,
-                EmployeeIds: formData.EmployeeIds,
-                CreatedBy: formData.CreatedBy,
-              }),
+             body: JSON.stringify({
+  Program_Id: Number(formData.Program_Id),
+  EmployeeIds: Array.isArray(formData.EmployeeIds)
+    ? formData.EmployeeIds
+    : formData.EmployeeIds.split(','),
+  CreatedBy: (formData.CreatedBy || localStorage.getItem("employeeId") || "").trim(),
+}),
+
             }
           );
 
@@ -551,6 +561,39 @@ const animatedComponents = makeAnimated();
     } finally {
       setLoading(false);
     }
+  };
+
+  // New function to handle form submit with confirmation popup
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+
+    // Check if this is a last submission (late submission) condition
+    // For demonstration, let's assume if Training_Date is set, it's a late submission
+    if (formData.Training_Date) {
+      // Show confirmation popup
+      setShowConfirmPopup(true);
+      // Store the event for later use
+      submitEventRef.current = e;
+    } else {
+      // Directly call the original handleSubmit
+      handleSubmit(e);
+    }
+  };
+
+  // Function to handle confirmation OK click
+  const handleConfirmOk = () => {
+    setShowConfirmPopup(false);
+    // Call the original handleSubmit with stored event
+    if (submitEventRef.current) {
+      handleSubmit(submitEventRef.current);
+      submitEventRef.current = null;
+    }
+  };
+
+  // Function to handle confirmation Cancel click or outside click
+  const handleConfirmCancel = () => {
+    setShowConfirmPopup(false);
+    submitEventRef.current = null;
   };
 
   useEffect(() => {
@@ -844,9 +887,41 @@ const programOptions = options.map((option) => ({
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
         <h2 className="font-semibold">Training Attendance Entry</h2>
       </div>
-      <form onSubmit={handleSubmit}>
+
+      {/* Confirmation Popup Modal */}
+      {showConfirmPopup && (
+        <div
+          className="fixed inset-0 flex items-center justify-center z-50"
+          onClick={handleConfirmCancel}
+        >
+          <div
+            className="bg-white rounded-lg p-6 max-w-sm w-full shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="mb-4 text-center font-semibold">
+              Please verify before submitting. Once submitted, it cannot be updated.
+            </p>
+            <div className="flex justify-center gap-4">
+              <button
+                className="px-4 py-2 bg-green-400 text-white rounded hover:bg-green-700"
+                onClick={handleConfirmOk}
+              >
+                OK
+              </button>
+              <button
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-700"
+                onClick={handleConfirmCancel}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={handleFormSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mt-3 w-full">
-          {/* Year Selection */}
+          {/* Year Selection */} 
           <div className="md:col-span-1">
             <label className="block font-medium w-full">Select Year:</label>
             <DatePicker
@@ -1240,7 +1315,7 @@ const programOptions = options.map((option) => ({
                         zIndex: 50,
                       }),
                     }}
-                  />
+                  required/>
                   </div>
                 </div>
               <div>
@@ -1259,107 +1334,117 @@ const programOptions = options.map((option) => ({
               }`}
             />
           </div>
-       <div>
-  <label htmlFor="EmployeeIds" className="block font-medium mb-1">
-    Employee IDs:
-  </label>
-  <div className="relative">
-    <Select
-      id="EmployeeIds"
-      name="EmployeeIds"
-      closeMenuOnSelect={false}
-      components={animatedComponents}
-      isMulti
-      options={employeeOptions}
-      value={employeeOptions.filter((opt) =>
-        (formData.EmployeeIds || []).includes(opt.value)
-      )}
-      onChange={(selectedOptions) => {
-        const selectedValues = selectedOptions.map((opt) => opt.value);
-
-        // Auto-update Persons count based on selected EmployeeIds
-        setFormData((prev) => ({
-          ...prev,
-          EmployeeIds: selectedValues,
-          Persons: selectedValues.length.toString(), // auto-updating
-        }));
-      }}
-      isDisabled={!!formData.selectedMonth}
-      getOptionLabel={(e) => e.label}
-      formatOptionLabel={(data, { context }) =>
-        context === "menu" ? data.label : data.value
-      }
-      required
-      autoComplete="off"
-      className="w-[620px] text-gray-900 bg-white cursor-pointer"
-      styles={{
-        control: (base, state) => ({
-          ...base,
-          cursor: formData.selectedMonth ? "not-allowed" : "pointer",
-          backgroundColor: formData.selectedMonth ? "#f3f4f6" : "#fff",
-          borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
-          boxShadow: state.isFocused
-            ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
-            : "none",
-          padding: "1px",
-          borderRadius: "0.5rem",
-          minHeight: "2rem",
-          display: "flex",
-          alignItems: "center",
-          overflowX: "auto",
-          whiteSpace: "nowrap",
-          maxWidth: "100%",
-        }),
-        option: (base) => ({
-          ...base,
-          cursor: 'pointer',
-        }),
-        menu: (base) => ({
-          ...base,
-          zIndex: 50,
-        }),
-        multiValue: (base) => ({
-          ...base,
-          backgroundColor: "#f3f4f6",
-          whiteSpace: "nowrap",
-          display: "inline-flex",
-          maxWidth: "none",
-        }),
-        multiValueLabel: (base) => ({
-          ...base,
-          color: "#111827",
-          whiteSpace: "nowrap",
-        }),
-        multiValueRemove: (base) => ({
-          ...base,
-          color: "#6b7280",
-          ":hover": {
-            backgroundColor: "#e5e7eb",
-            color: "#111827",
-          },
-        }),
-        valueContainer: (base) => ({
-          ...base,
-          display: "flex",
-          flexWrap: "nowrap",
-          overflowX: "auto",
-          whiteSpace: "nowrap",
-        }),
-      }}
-    />
-  </div>
-</div>
+      
 
 </div>{" "}
-        <br></br>
-        <div className="flex justify-end mt-1" style={{ marginRight: "100px" }}>
-          <button
-            type="submit"
-            className="px-6 py-2 cursor-pointer text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
-          >
-            Submit
-          </button>
-        </div>
+<div className="flex items-end justify-between w-full p-4 gap-4">
+  {/* Employee ID Input Section */}
+  <div className="flex-1">
+    <label htmlFor="EmployeeIds" className="block font-medium mb-1">
+      Employee IDs:
+    </label>
+    <div className="relative">
+      <Select
+        id="EmployeeIds"
+        name="EmployeeIds"
+        closeMenuOnSelect={false}
+        components={animatedComponents}
+        isMulti
+        options={employeeOptions}
+        value={employeeOptions.filter((opt) =>
+          (formData.EmployeeIds || []).includes(opt.value)
+        )}
+        onChange={(selectedOptions) => {
+          const selectedValues = selectedOptions.map((opt) => opt.value);
+          setFormData((prev) => ({
+            ...prev,
+            EmployeeIds: selectedValues,
+            Persons: selectedValues.length.toString(),
+          }));
+        }}
+        isDisabled={!!formData.selectedMonth}
+        getOptionLabel={(e) => e.label}
+        formatOptionLabel={(data, { context }) =>
+          context === "menu" ? data.label : data.value
+        }
+        required
+        autoComplete="off"
+        className="w-full text-gray-900 bg-white cursor-pointer"
+        styles={{
+          control: (base, state) => ({
+            ...base,
+            cursor: formData.selectedMonth ? "not-allowed" : "pointer",
+            backgroundColor: formData.selectedMonth ? "#f3f4f6" : "#fff",
+            borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
+            boxShadow: state.isFocused
+              ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
+              : "none",
+            padding: "1px",
+            borderRadius: "0.5rem",
+            minHeight: "2rem",
+            display: "flex",
+            alignItems: "center",
+            overflowX: "auto",
+            whiteSpace: "nowrap",
+            maxWidth: "100%",
+          }),
+          option: (base) => ({ ...base, cursor: 'pointer' }),
+          menu: (base) => ({ ...base, zIndex: 50 }),
+          multiValue: (base) => ({
+            ...base,
+            backgroundColor: "#f3f4f6",
+            whiteSpace: "nowrap",
+            display: "inline-flex",
+            maxWidth: "none",
+          }),
+          multiValueLabel: (base) => ({
+            ...base,
+            color: "#111827",
+            whiteSpace: "nowrap",
+          }),
+          multiValueRemove: (base) => ({
+            ...base,
+            color: "#6b7280",
+            ":hover": {
+              backgroundColor: "#e5e7eb",
+              color: "#111827",
+            },
+          }),
+          valueContainer: (base) => ({
+            ...base,
+            display: "flex",
+            flexWrap: "wrap",
+            overflowY: "auto",
+            whiteSpace: "nowrap",
+          }),
+        }}
+      />
+    </div>
+  </div>
+
+  {/* Submit Button Section */}
+  <div>
+    <button
+      type="submit"
+      disabled={formData.selectedMonth === "Completed"}
+      className={`px-6 py-2 text-sm font-semibold text-white rounded-md shadow-md focus:ring-2 focus:ring-black-600 focus:ring-offset-2 ${
+        formData.selectedMonth === "Completed"
+          ? "bg-gray-400 cursor-not-allowed"
+          : "bg-gray-600 hover:bg-gray-900 cursor-pointer"
+      }`}
+    >
+      Submit
+      {formData.selectedMonth === "Completed" && (
+        <FontAwesomeIcon
+          icon={faTimes}
+          className="ml-2 text-red-500"
+          title="Disabled because training is completed"
+        />
+      )}
+    </button>
+  </div>
+</div>
+    
         {loading ? (
           <div className="text-center py-4">Loading data...</div>
         ) : error ? (
