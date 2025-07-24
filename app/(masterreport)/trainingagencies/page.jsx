@@ -17,9 +17,11 @@ const Upload = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
-  const [department, setDepartment] = useState('');
-  const [username, setUsername] = useState('');
-  const [employeeId, setEmployeeId] = useState('');
+  const [department, setDepartment] = useState("");
+  const [username, setUsername] = useState("");
+  const [employeeId, setEmployeeId] = useState("");
+  const [accessRole, setAccessRole] = useState(null);
+  const [isAuthorized, setIsAuthorized] = useState(null);
   const [formData, setFormData] = useState({
     Agency_name: "",
     Contact_person: "",
@@ -46,11 +48,51 @@ const Upload = () => {
       setLoading(false);
     }
   };
- useEffect(() => {
+
+  useEffect(() => {
+    const storedEmployeeId = localStorage.getItem("employeeId");
+
+    if (storedEmployeeId) {
+      setEmployeeId(storedEmployeeId);
+    }
+
+    const fetchAccessRole = async () => {
+      try {
+        const res = await fetch(
+          `/api/get_access_role?employeeId=${storedEmployeeId}`
+        );
+        const data = await res.json();
+
+        if (res.ok && data.Access_Role) {
+          // Restrict access for HR_Res and HR_HOD roles
+          if (
+            data.Access_Role === "Res_Person" ||
+            data.Access_Role === "HOS" ||
+            data.Access_Role === "HOD"
+          ) {
+            setIsAuthorized(false);
+            // Optionally redirect to unauthorized page
+            // window.location.href = '/unauthorized';
+            return;
+          }
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+        }
+      } catch (error) {
+        console.error("Error fetching access role:", error);
+        setIsAuthorized(false);
+      }
+    };
+
+    fetchAccessRole();
+  }, []);
+  useEffect(() => {
     // Retrieve the department, username, and employeeId from localStorage
-    const storedDepartment = localStorage.getItem('department');
-    const storedUsername = localStorage.getItem('username');
-    const storedEmployeeId = localStorage.getItem('employeeId');
+    const storedDepartment = localStorage.getItem("department");
+    const storedUsername = localStorage.getItem("username");
+    const storedEmployeeId = localStorage.getItem("employeeId");
 
     // If data is found, update state
     if (storedDepartment && storedUsername && storedEmployeeId) {
@@ -59,7 +101,7 @@ const Upload = () => {
       setEmployeeId(storedEmployeeId);
     } else {
       // If no data found, redirect to login page
-      window.location.href = '/';
+      window.location.href = "/";
     }
     // Removed fetchData and trainingData usage as trainingData state is unused
   }, [department, username, employeeId]);
@@ -117,21 +159,26 @@ const Upload = () => {
       return;
     }
 
-    // Ensure email ends with @gmail.com
+    // Trim and validate email
     let email = formData.Mailid.trim();
-    if (!email.includes("@")) {
-      email = `${email}@gmail.com`; // Only append if there's no @ at all
+
+    // Check if email contains both "@" and "."
+    if (!email.includes("@") || !email.includes(".")) {
+      alert("Please enter an mail that includes both '@' and '.'");
+      return;
     }
 
+    // Check against full valid email format
     if (!validateEmail(email)) {
       setError("Please enter a valid email address.");
       setTimeout(() => setError(""), 3000);
       return;
     }
 
+    // Save cleaned email back
     setFormData((prev) => ({ ...prev, Mailid: email }));
 
-    // Update CreatedBy with current employeeId before submission
+    // Add CreatedBy field
     const submissionData = { ...formData, CreatedBy: employeeId };
 
     try {
@@ -189,7 +236,27 @@ const Upload = () => {
   const handlePaginationChange = (event, value) => {
     setCurrentPage(value);
   };
+  if (isAuthorized === null) {
+    return (
+      <div>Loading..</div>
+      // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+      //   <div className="bg-white p-10 rounded shadow text-center">
+      //     <h2 className="text-2xl font-bold">Loading...</h2>
+      //   </div>
+      // </div>
+    );
+  }
 
+  if (isAuthorized === false) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+        <div className="bg-white p-10 rounded shadow text-center">
+          <h2 className="text-2xl font-bold">Unauthorized</h2>
+          <p className="mt-2">You do not have access to view this page.</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="max-w-full mx-auto bg-white p-2 w-full">
       <div className="bg-sky-400 text-white p-2  flex justify-between rounded-t-lg">
@@ -321,12 +388,6 @@ const Upload = () => {
                 placeholder="Enter your email"
                 className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
               />
-              {/* Show @gmail.com if not in email */}
-              {!formData.Mailid.includes("@") && (
-                <span className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-500">
-                  @gmail.com
-                </span>
-              )}
             </div>
           </div>
 
@@ -351,7 +412,7 @@ const Upload = () => {
           <div className="ml-20 mt-5">
             <Button
               type="submit"
-              className="bg-gray-600 hover:bg-gray-900 text-white w-full sm:w-auto"
+              className="bg-gray-600 cursor-pointer hover:bg-gray-900 text-white w-full sm:w-auto"
             >
               Submit
             </Button>
@@ -575,7 +636,7 @@ const Upload = () => {
                       <button
                         key={i}
                         className={`px-3 py-1 border rounded ${
-                          currentPage === i + 1 ? "bg-primary text-white" : ""
+                          currentPage === i + 1 ? "bg-black text-white" : ""
                         }`}
                         onClick={() => setCurrentPage(i + 1)}
                       >

@@ -35,11 +35,6 @@ const training: { title: string; href: string }[] = [
     title: "Requirement - IATF/HSE",
     href: "requirement",
   },
-  // {
-  //   title: "view / edit / upload",
-  //   href: "/vieweditupload",
-  // },
-
    {
     title: "Approval Form",
     href: "/approvalform",
@@ -63,21 +58,21 @@ const transaction: { title: string; href: string }[] = [
     title: "Monthly Training Particulars",
     href: "/montrainparticulars",
   },
-  {
-    title: "Temporary to regular",
-    href: "/temptoreg",
-  },
+  // {
+  //   title: "Temporary to regular",
+  //   href: "/temptoreg",
+  // },
 ]
 
 const tet: { title: string; href: string }[] = [
   {
-    title: " Generate Forms",
+    title: "Generate TEE Forms",
     href: "tetformsgenerate",
   },
-  // {
-  //   title: "TET Reports",
-  //   href: "tetreports",
-  // },
+    {
+    title: "Generic Forms",
+    href: "tetformsgeneric",
+  },
 ]
 const masterreport: { title: string; href: string }[] = [
   {
@@ -100,36 +95,22 @@ const masterreport: { title: string; href: string }[] = [
     title: "Add Training Record",
     href: "/trainingrecord",
   },
+     {
+    title: "Update TL",
+    href: "/tetformgeneratefortl",
+  },
 ]
-// const trainingagencies: { title: string; href: string }[] = [
-//   {
-//     title: "Upload External Training Agency details",
-//     href: "/uploadexternal",
-//   },
-//   // {
-//   //   title:"List of External Training Agencies",
-//   //   href: "/listofexternal",
-//   // },
-// ]
 const trainingcertificates: { title: string; href: string }[] = [
   {
     title: "Upload Certificates",
     href: "/uploadcer",
   },
-  // {
-  //   title: "View Certificates",
-  //   href: "/viewcer",
-  // },
 ]
 const trainingmaterials: { title: string; href: string }[] = [
   {
     title: "Upload Materials",
     href: "/uploadmaterials",
   },
-  // {
-  //   title: "View Materials",
-  //   href: "/viewmaterials",
-  // },
 ]
 
 export default function NavigationMenuDemo() {
@@ -142,9 +123,8 @@ const [employeeId, setEmployeeId] = useState('');
 const [accessRole, setAccessRole] = useState(null);
 const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
 
-// Removed unused trainingData state
-// const [trainingData,setTrainingData] = useState([]);
-  
+  console.log("Navbar accessRole:", accessRole);
+
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
   }
@@ -155,9 +135,10 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
  
   useEffect(() => {
   const storedEmployeeId = localStorage.getItem('employeeId');
-
-  if (storedEmployeeId) {
+   const storedDepartment = localStorage.getItem("department");
+  if (storedEmployeeId && storedDepartment) {
     setEmployeeId(storedEmployeeId);
+    setDepartment(storedDepartment);
   } else {
     window.location.href = '/';
     return;
@@ -167,8 +148,7 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
     try {
       const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
       const data = await res.json();
-
-      if (res.ok && data.Access_Role) {
+      if (res.ok && data.Access_Role ) {
         setAccessRole(data.Access_Role);
         setIsAuthorized(true);
       } else {
@@ -216,10 +196,11 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
   return (
     <div>
       <nav className="flex items-center z-10  bg-gray-100 justify-between p-2" >
-        {/* Brand Name on the Left */}
+        {/* Brand Name on the Left */} 
         <div className="text-black font-semibold text-xl">
         <Link href="/dashboard"> Greentech Industries</Link> 
         </div>
+       
 
         {/* Hamburger Icon for Mobile */}
         {/* Hamburger Icon and Profile Icon aligned to the Right */}
@@ -255,15 +236,11 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
           )}
         >
       
-<NavigationMenuItem className="bg-gray-100 position-relative Z-10">
-  <NavigationMenuTrigger className="hover:text-sky-400">Training Calendar</NavigationMenuTrigger>
-  <NavigationMenuContent className="grid gap-2 p-1 md:w-[280px] max-h-[280px]">
-    <ul className="grid gap-2 ">
+<NavigationMenuItem className="bg-gray-100 cursor-pointer">
+  <NavigationMenuTrigger className="hover:text-sky-400 cursor-pointer">Training Calendar</NavigationMenuTrigger>
+  <NavigationMenuContent className="grid gap-2 p-1 md:w-[280px] max-h-[280px] cursor-pointer">
+    <ul className="grid gap-2 cursor-pointer">
    {training.map((component) => {
-   
-    if (component.title ===  "Annual Training Calender - IATF/HSE" && accessRole !== "HR_Res" && accessRole !== "HR_Hod" ) {
-    return null; // skip
-  }
   if (component.title === "Requirement - IATF/HSE" && accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HR_Res" ) {
       return null; // skip if not Employee or HOS
   }
@@ -283,8 +260,8 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
 </NavigationMenuItem>
 
 {accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HOD" && (
-<NavigationMenuItem className="bg-gray-100">
-              <NavigationMenuTrigger className="hover:text-sky-400" >Transaction</NavigationMenuTrigger>
+<NavigationMenuItem className="bg-gray-100 cursor-pointer" >
+              <NavigationMenuTrigger className="hover:text-sky-400 cursor-pointer" >Transaction</NavigationMenuTrigger>
               <NavigationMenuContent className="grid gap-2 p-1 md:w-[250px] px-3 max-h-[300px] ">
                 <ul className="grid gap-2 p-1">
                   {transaction.map((component) => {
@@ -308,15 +285,19 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
             </NavigationMenuItem>
             )}
 {accessRole !== "Res_Person" && (
-<NavigationMenuItem className="bg-gray-100">
-              <NavigationMenuTrigger className="hover:text-sky-400">Training Effectiveness</NavigationMenuTrigger>
+<NavigationMenuItem className="bg-gray-100 cursor-pointer">
+              <NavigationMenuTrigger className="hover:text-sky-400 cursor-pointer">Training Effectiveness</NavigationMenuTrigger>
               <NavigationMenuContent className="grid gap-2 p-1 md:w-[200px] max-h-[300px] ">
                 <ul className="grid gap-2 p-1">
                   {tet.map((component) => {
-                        if (component.title === "TET forms Generate" && accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HOD" && accessRole !== "HR_Res"  && accessRole !== "HR_Hod") {
+                        if (component.title === "Generate TEE Forms" && accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HOD" && accessRole !== "HR_Res"  && accessRole !== "HR_Hod") {
                     return null; 
+                    
                  }
-                 
+                    if (component.title === "Generic Forms"  && accessRole !== "HR_Res"  && accessRole !== "HR_Hod") {
+                    return null; 
+                    
+                 }
           return(
                     <ListItem key={component.title} title={component.title} href={component.href} />
           );
@@ -337,8 +318,8 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
             </NavigationMenuContent>
           </NavigationMenuItem> */}
           {accessRole !== "Res_Person" && accessRole !== "HOS"  && accessRole !== "HOD" &&(
-          <NavigationMenuItem className="bg-gray-100">
-            <NavigationMenuTrigger className="hover:text-sky-400">Training certificates</NavigationMenuTrigger>
+          <NavigationMenuItem className="bg-gray-100 cursor-pointer">
+            <NavigationMenuTrigger className="hover:text-sky-400 cursor-pointer">Training certificates</NavigationMenuTrigger>
             <NavigationMenuContent
               className="overflow-hidden"
               style={{ "--radix-navigation-menu-viewport-height": "auto" } as React.CSSProperties}
@@ -359,8 +340,8 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
           </NavigationMenuItem>
           )}
           {accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HOD" &&(
-          <NavigationMenuItem className="bg-gray-100 hover:bg-gray-200 hover:text-sky-400 focus:bg-gray-300 transition-all duration-300">
-            <NavigationMenuTrigger className="hover:text-sky-400">Training Materials</NavigationMenuTrigger>
+          <NavigationMenuItem className="bg-gray-100 cursor-pointer">
+            <NavigationMenuTrigger className="hover:text-sky-400 cursor-pointer">Training Materials</NavigationMenuTrigger>
             <NavigationMenuContent
               className="overflow-hidden"
               style={{ "--radix-navigation-menu-viewport-height": "auto" } as React.CSSProperties}
@@ -379,37 +360,47 @@ const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
             </NavigationMenuContent>
           </NavigationMenuItem>
           )}
-            {accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HOD" && (
-            <NavigationMenuItem className="bg-gray-100 position-relative z-10">
-              <NavigationMenuTrigger className="hover:text-sky-400">T & D Report</NavigationMenuTrigger>
-              <NavigationMenuContent className="grid gap-2 p-1 md:w-[200px] max-h-[250px] ">
-                <ul className="grid gap-2 p-1">
+{(accessRole === "Res_Person" || accessRole === "HR_Res" || accessRole ==="HR_Hod" || accessRole === "HOS" || accessRole === "HOD") && !(accessRole === "Res_Person" && (department !== "MS" && department !== "FNTRY")) && (
+            <NavigationMenuItem className="bg-gray-100 cursor-pointer">
+              <NavigationMenuTrigger className="hover:text-sky-400  cursor-pointer focus:outline-none">T & D Report</NavigationMenuTrigger>
+              <NavigationMenuContent className="grid gap-2 p-1 md:w-[200px] max-h-[300px] ">
+                <ul className="grid gap-2 p-1 cursor-pointer">
                   {masterreport.map((component) => {
-                     if (component.title === "Employee History" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
-                     return null; // skip if not Employee or HOS
-                  }
-                    if (component.title === "Qualified Trainers List" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
-                    return null; 
-                 }
-                  if (component.title === "Training Cost/Budget" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
-                    return null; 
-                 }
-                   if (component.title === "Training Agencies" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
-                    return null; 
-                 }
-                  if (component.title === "Add Training Record" && accessRole !== "HR_Res" &&  accessRole !== "HR_Hod" ) {
-    return null; // skip
-  }
-          return(
-                    <ListItem key={component.title} title={component.title} href={component.href} />
-          );
+                    console.log("Rendering masterreport item:", component.title, "accessRole:", accessRole);
+                    if (component.title === "Employee History" && accessRole !== "HR_Res" ) {
+                      console.log("Skipping Employee History for accessRole:", accessRole);
+                      return null; // skip if not Employee or HOS
+                    }
+                    if (component.title === "Qualified Trainers List" && accessRole !== "HR_Res" && accessRole !== "HR_Hod" && accessRole !== "HOS" && accessRole !== "HOD") {
+                      console.log("Skipping Qualified Trainers List for accessRole:", accessRole);
+                      return null; 
+                    }
+                    if (component.title === "Training Cost/Budget" && accessRole !== "HR_Res" ) {
+                      console.log("Skipping Training Cost/Budget for accessRole:", accessRole);
+                      return null; 
+                    }
+                    if (component.title === "Training Agencies" && accessRole !== "HR_Res" ) {
+                      console.log("Skipping Training Agencies for accessRole:", accessRole);
+                      return null; 
+                    }
+                    if (component.title === "Add Training Record" && accessRole !== "HR_Res"  ) {
+                      console.log("Skipping Add Training Record for accessRole:", accessRole);
+                      return null; // skip
+                    }
+// if (component.title === "Update TL" && (accessRole !== "Res_Person" || (department !== "MS" && department !== "FNTRY"))) {
+//                       console.log("Skipping Update TL for accessRole or department:", accessRole, department);
+//                       return null; // skip
+//                     }
+                    return(
+                      <ListItem key={component.title} title={component.title} href={component.href} />
+                    );
                   })}
                 </ul>
               </NavigationMenuContent>
             </NavigationMenuItem>
             )}
-          <NavigationMenuItem className="bg-gray-100 hover:bg-gray-200 hover:text-sky-400 focus:bg-gray-300 transition-all duration-300">
-            <div className="mx-5">  <ProfileDropdown  username={username} /></div>
+          <NavigationMenuItem className="bg-gray-100 hover:bg-gray-200 hover:text-sky-400 focus:bg-gray-300 transition-all cursor-pointer duration-300">
+            <div className="mx-5 cursor-pointer">  <ProfileDropdown   username={username} /></div>
         
             </NavigationMenuItem>
 
@@ -522,8 +513,8 @@ function ProfileDropdown({ username }: { username: string }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <User className="h-5 w-5" />
+        <Button variant="ghost" size="icon" className="cursor-pointer">
+          <User className="h-5 w-5 cursor-pointer"  />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56 mr-2">
@@ -532,7 +523,7 @@ function ProfileDropdown({ username }: { username: string }) {
         <DropdownMenuGroup>
           <DropdownMenuItem><a href="/dashboard">Dashboard</a></DropdownMenuItem> 
         </DropdownMenuGroup>
-        <DropdownMenuItem><button type="button" className="px-6 mt-2 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2 " onClick={handleLogout}>Logout</button></DropdownMenuItem>
+        <DropdownMenuItem><button type="button" className="px-6 mt-2 py-2 text-sm cursor-pointer font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2 " onClick={handleLogout}>Logout</button></DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

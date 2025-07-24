@@ -92,14 +92,14 @@ export default function Requirement() {
     const storedDepartment = localStorage.getItem('department');
     const storedUsername = localStorage.getItem('username');
     const storedEmployeeId = localStorage.getItem('employeeId');
-    const storedSection = localStorage.getItem('section');
+    // const storedSection = localStorage.getItem('section');
 
     // If data is found, update state
-    if (storedDepartment && storedUsername && storedEmployeeId && storedSection) {
+    if (storedDepartment && storedUsername && storedEmployeeId ) {
       setDepartment(storedDepartment);
       setUsername(storedUsername);
       setEmployeeId(storedEmployeeId);
-      setSection(storedSection)
+      // setSection(storedSection)
     } else {
       // If no data found, redirect to login page
       window.location.href = '/';
@@ -215,6 +215,7 @@ export default function Requirement() {
         const data = await response.json();
 
         if (response.ok) {
+          console.log(data);
           setPrograms(data); // Populate the programs list
         } else {
           console.error('Failed to fetch programs:', data.message);
@@ -275,24 +276,25 @@ export default function Requirement() {
     });
   };
   
-  useEffect(() => {
-    const storedEmployeeId = localStorage.getItem("employeeId");
+    useEffect(() => {
+    const storedEmployeeId = localStorage.getItem('employeeId');
+  
     if (storedEmployeeId) {
       setEmployeeId(storedEmployeeId);
     }
-
+   
     const fetchAccessRole = async () => {
       try {
-        const res = await fetch(
-          "/api/get_access_role?employeeId=" + storedEmployeeId
-        );
+        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
         const data = await res.json();
-
+  
         if (res.ok && data.Access_Role) {
-          if (
-            data.Access_Role === "HR_Hod"
-          ) {
+          // Restrict access for HR_HOD 
+           setIsAuthorized(true);
+          if (data.Access_Role === "HR_Hod") {
             setIsAuthorized(false);
+            // Optionally redirect to unauthorized page
+            // window.location.href = '/unauthorized';
             return;
           }
           setAccessRole(data.Access_Role);
@@ -301,13 +303,14 @@ export default function Requirement() {
           setIsAuthorized(false);
         }
       } catch (error) {
-        console.error("Error fetching access role:", error);
+        console.error('Error fetching access role:', error);
         setIsAuthorized(false);
       }
     };
-
+  
     fetchAccessRole();
   }, []);
+  
 
   useEffect(() => {
     // Update No. of Times based on selected months
@@ -347,15 +350,9 @@ const handleDelete = async (programId) => {
     setError(err.message);
   }
 };
-const handleEdit = (data) => {
-  setEditingData(data); // Set the data of the row to be edited
-  setIsModalOpen(true); // Open the modal
-  setEditingData(data); // Set the data of the row to be edited
-  setIsModalOpen(true); // Open the modal
-};
 const programOptions = programs.map(program => ({
-  value: program.value,
-  label: program.text,
+  value: program.Value,
+  label: program.Text,
 }));
 
 
@@ -605,18 +602,62 @@ const programOptions = programs.map(program => ({
     Training Name
         </label>
         <div className="relative">
-          <select
-            id="Training_Name"
+          <Select
+            inputId="Training_Name"
             name="Training_Name"
-            value={formData.Training_Name}
-            onChange={handleTrainingNameChange}
-            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
-            required 
-          >
-            <option value="">Select Training Name</option>
-            <option value="IATF">International Automotive Task Force - (IATF)</option>
-            <option value="HSE">Health, Safety, and Environment - (HSE)</option>
-          </select>
+            value={
+              formData.Training_Name === ""
+                ? { value: "", label: "Select Training Name" }
+                : formData.Training_Name === "IATF"
+                ? { value: "IATF", label: "International Automotive Task Force - (IATF)" }
+                : { value: "HSE", label: "Health, Safety, and Environment - (HSE)" }
+            }
+            
+            onChange={(selectedOption) =>
+              handleTrainingNameChange({
+                target: {
+                  name: "Training_Name",
+                  value: selectedOption ? selectedOption.value : "",
+                },
+              })
+            }
+            options={[
+              { value: "", label: "Select Training Name" },
+              { value: "IATF", label: "International Automotive Task Force - (IATF)" },
+              { value: "HSE", label: "Health, Safety, and Environment - (HSE)" },
+            ]}
+            isSearchable={false}
+            classNamePrefix="react-select"
+            className="mb-1 cursor-pointer "
+            styles={{
+    control: (base, state) => ({
+      ...base,
+      cursor: 'pointer',
+      borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
+      boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
+      padding: "1px",
+      borderRadius: "0.5rem",
+      minHeight: "2rem",
+      display: "flex",
+      alignItems: "center",
+    }),
+    option: (base) => ({
+      ...base,
+      cursor: 'pointer',
+    }),
+    menu: (base) => ({
+      ...base,
+      zIndex: 9999,
+    }),
+    menuPortal: (base) => ({
+      ...base,
+      zIndex: 9999,
+    }),
+  }}
+            menuPortalTarget={document.body}
+            menuPosition="fixed"
+            required
+          />
         </div>
       </div>
 
@@ -642,6 +683,7 @@ const programOptions = programs.map(program => ({
   styles={{
     control: (base, state) => ({
       ...base,
+      cursor: 'pointer',
       borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
       boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
       padding: "1px",
@@ -649,6 +691,10 @@ const programOptions = programs.map(program => ({
       minHeight: "2rem",
       display: "flex",
       alignItems: "center",
+    }),
+    option: (base) => ({
+      ...base,
+      cursor: 'pointer',
     }),
     menu: (base) => ({
       ...base,
@@ -659,20 +705,17 @@ const programOptions = programs.map(program => ({
       zIndex: 9999,
     }),
   }}
-  className={`mb-1 ${formData.Training_Name === '' ? 'opacity-70 cursor-not-allowed' : ''}`}
+  className={`mb-1 ${formData.Training_Name === '' ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
   placeholder="Select program name"
   required
   autoComplete="off"
   instanceId="program-name-select"
+  menuPortalTarget={document.body}
+  menuPosition="fixed"
 />
 
   </div>
 </div>
-
-
-
-
-
       <div>        <fieldset className="space-y-2 ">
   <legend className="text-sm font-semibold text-gray-900">Mode of Training</legend>
   <div className="flex space-x-6">
@@ -684,7 +727,7 @@ const programOptions = programs.map(program => ({
         type="radio"
         value="Internal"  // The value when selected
         onChange={handleFormChange}  // Update the state when a radio button is selected
-        className="h-4 w-4"
+        className="h-4 w-4 cursor-pointer"
         required
       />
       <label htmlFor="Internal" className="text-sm text-gray-900">Internal</label>
@@ -697,7 +740,7 @@ const programOptions = programs.map(program => ({
         type="radio"
         value="External"
         onChange={handleFormChange}
-        className="h-4 w-4"
+        className="h-4 w-4 cursor-pointer"
         required
       />
       <label htmlFor="External" className="text-sm text-gray-900">External</label>
@@ -710,7 +753,7 @@ const programOptions = programs.map(program => ({
         type="radio"
         value="Overseas"
         onChange={handleFormChange}
-        className="h-4 w-4"
+        className="h-4 w-4 cursor-pointer"
         required
       />
       <label htmlFor="Overseas" className="text-sm text-gray-900">Overseas</label>
@@ -774,7 +817,6 @@ const programOptions = programs.map(program => ({
             name="Req_Months"
             closeMenuOnSelect={false}
             components={animatedComponents}
-            
             isMulti
             options={options} 
             value={
@@ -786,9 +828,11 @@ const programOptions = programs.map(program => ({
             required autoComplete="off"
             instanceId="req-months-select"
             classNamePrefix="react-select" 
+            className="cursor-pointer"
             styles={{
               control: (base, state) => ({
                 ...base,
+                cursor: 'pointer',
                 borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
                 boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
                 padding: "1px",
@@ -796,6 +840,10 @@ const programOptions = programs.map(program => ({
                 minHeight: "2rem",
                 display: "flex",
                 alignItems: "center",
+              }),
+              option: (base) => ({
+                ...base,
+                cursor: 'pointer',
               }),
               menu: (base) => ({
                 ...base,
@@ -809,7 +857,6 @@ const programOptions = programs.map(program => ({
           />
             </div>
           </div>
-        
        {/* No. of Times */}
        <div className="space-y-0.5">
             <label htmlFor="No_Times" className="block text-sm font-medium text-gray-900">
@@ -854,7 +901,7 @@ const programOptions = programs.map(program => ({
 <label htmlFor="Evaluation_Period" style={{visibility:"hidden"}} className="block text-sm font-medium text-gray-900">
     Evaluation Period
   </label>
-        <button type="submit" disabled={loading} className="px-6 mt-2 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
+        <button type="submit" disabled={loading} className="px-6 cursor-pointer mt-2 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
         >
       {loading ? 'Loading...' : 'Submit'}
     </button>
@@ -935,9 +982,7 @@ const programOptions = programs.map(program => ({
                 <td className="px-4 py-2 border">{training.Year_No}</td>
                 <td className="px-4 py-2 border">{training.Department}</td>
                 <td className="px-4 py-2 border">{training.Section}</td>
-                <td className="px-4 py-2 border">
-                  {programs.find(program => program.value === training.Program_Name)?.text || training.Program_Name}
-                </td>
+                <td className="px-4 py-2 border">{training.Program_Name}</td>
                 <td className="px-4 py-2 border">{training.Train_Mode}</td>
                 <td className="px-4 py-2 border">{training.Train_Purpose}</td>
                 <td className="px-4 py-2 border">{training.Persons}</td>
@@ -976,7 +1021,7 @@ const programOptions = programs.map(program => ({
         <div className="flex space-x-2" style={{ fontSize: "14px" }}>
           <button
             type="button"
-            className="px-3 py-1 border rounded"
+            className="px-3 py-1 border cursor-pointer rounded"
             onClick={() => setCurrentPage(1)}
             disabled={currentPage === 1}
           >
@@ -984,7 +1029,7 @@ const programOptions = programs.map(program => ({
           </button>
           <button
             type="button"
-            className="px-3 py-1 border rounded"
+            className="px-3 py-1 border cursor-pointer  rounded"
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
           >
@@ -994,7 +1039,7 @@ const programOptions = programs.map(program => ({
             <button
               key={i}
               type="button"
-              className={`px-3 py-1 border rounded ${
+              className={`px-3 py-1 border cursor-pointer  rounded ${
                 currentPage === i + 1 ? "bg-black text-primary-foreground" : ""
               }`}
               onClick={() => setCurrentPage(i + 1)}
@@ -1004,7 +1049,7 @@ const programOptions = programs.map(program => ({
           ))}
           <button
             type="button"
-            className="px-3 py-1 border rounded"
+            className="px-3 py-1 border cursor-pointer  rounded"
             onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
           >
@@ -1012,7 +1057,7 @@ const programOptions = programs.map(program => ({
           </button>
           <button
             type="button"
-            className="px-3 py-1 border rounded"
+            className="px-3 py-1 border cursor-pointer  rounded"
             onClick={() => setCurrentPage(totalPages)}
             disabled={currentPage === totalPages}
           >

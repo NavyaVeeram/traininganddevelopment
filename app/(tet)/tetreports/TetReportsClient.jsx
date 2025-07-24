@@ -2,6 +2,7 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FaPrint, FaSearch } from "react-icons/fa";
+import { FaCheckCircle } from "react-icons/fa";  // Import green tick icon
 import Select from "react-select";
 import makeAnimated from "react-select/animated";
 import React from "react";
@@ -9,6 +10,8 @@ import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import fontkit from '@pdf-lib/fontkit';
 
 const TetReportsClient = () => {
+
+
   const parameters = [
     "Benefit to the person/employee",
     "Benefit to the team",
@@ -49,6 +52,7 @@ const TetReportsClient = () => {
 const [accessRole, setAccessRole] = useState(null);
 const [isAuthorized, setIsAuthorized] = useState(null);
 const [employeeId, setEmployeeId] = useState(null);
+// Removed submittedEmployeeIds state
   // Set Program_Id dynamically when programId changes
   React.useEffect(() => {
     if (programId) {
@@ -124,6 +128,7 @@ const [employeeId, setEmployeeId] = useState(null);
       checkAllFormsFilled(programId);
     }
   };
+
   useEffect(() => {
     const filledRatings = formData.ratings.filter((r) => r > 0);
     const total = filledRatings.reduce((sum, r) => sum + r, 0);
@@ -231,56 +236,101 @@ const font = await mergedPdf.embedFont(fontBytes);
         
           if (index === 0) {
             // Customize on the first page
-            page.drawText(emp.Username || "", {
-              x: 170,
-              y: height - 55,
-              size: 9,
-              font,
-              color: rgb(0, 0, 0),
-            });
+            // page.drawText(emp.Username || "", {
+            //   x: 170,
+            //   y: height - 55,
+            //   size: 9,
+            //   font,
+            //   color: rgb(0, 0, 0),
+            // });
+             // Split  into two lines for drawing
+                              const Username = emp.Username || "";
+                              const words = Username.split(" ").filter(Boolean);
+                              if (words.length > 4) {
+                                // Draw all words in one line lower
+                                page.drawText(Username, {
+                                  x: 165,
+                                  y: height - 55,
+                                  size: 9,
+                                  font,
+                                  color: rgb(0, 0, 0),
+                                });
+                              } else {
+                                // Draw all words in one line at top
+                                page.drawText(Username, {
+                                  x: 165,
+                                  y: height - 55,
+                                  size: 9,
+                                  font,
+                                  color: rgb(0, 0, 0),
+                                });
+                              }
             page.drawText(emp.EmployeeId || "", {
-              x: 170,
-              y: height - 75,
+              x: 165,
+              y: height - 77,
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
   
             page.drawText(emp.Designation || "", {
-              x: 170,
-              y: height - 98,
+              x: 165,
+              y: height - 100,
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(emp.Section || "", {
-              x: 170,
-              y: height - 118,
+              x: 165,
+              y: height - 120,
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(emp.Department || "", {
-              x: 170,
-              y: height - 140,
+              x: 165,
+              y: height - 142,
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(emp.Venue || "", {
-              x: 170,
-              y: height - 160,
+              x: 165,
+              y: height - 165,
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
-            page.drawText(emp.Program_Name || "", {
-              x: 385,
-              y: height - 55,
-              size: 9,
-              font,
-              color: rgb(0, 0, 0),
-            });
+               // Split Program_Name into two lines for drawing
+                    const programName = emp.Program_Name || "";
+                    const wordss = programName.split(" ").filter(Boolean);
+                    if (wordss.length > 4) {
+                      const mid = Math.ceil(wordss.length / 2);
+                      const line1 = wordss.slice(0, mid).join(" ");
+                      const line2 = wordss.slice(mid).join(" ");
+                      page.drawText(line1, {
+                        x: 385,
+                        y: height - 46,
+                        size: 9,
+                        font,
+                        color: rgb(0, 0, 0),
+                      });
+                      page.drawText(line2, {
+                        x: 385,
+                        y: height - 55, // Adjust line height as needed
+                        size: 9,
+                        font,
+                        color: rgb(0, 0, 0),
+                      });
+                    } else {
+                      page.drawText(programName, {
+                        x: 385,
+                        y: height - 55,
+                        size: 9,
+                        font,
+                        color: rgb(0, 0, 0),
+                      });
+                    }
             page.drawText(emp.Trainer || "", {
               x: 385,
               y: height - 75,
@@ -316,135 +366,134 @@ const font = await mergedPdf.embedFont(fontBytes);
               font,
               color: rgb(0, 0, 0),
             });
-
-            const formattedTrainingDate = emp.Training_Date
-              ? new Date(emp.Training_Date).toISOString().slice(0, 10)
-              : "";
-
-            const formattedEvaluationDate = emp.Evaluation_Date
-              ? new Date(emp.Evaluation_Date).toISOString().slice(0, 10)
-              : "";
+             page.drawText(String(Evaluation_Date) || "", {
+              x: 385,
+              y: height - 142,
+              size:9,
+              font,
+              color: rgb(0, 0, 0),
+            });   
 
             page.drawText(String(formattedTrainingDate) || "", {
               x: 385,
-              y: height - 140,
+              y: height - 142,
               size:9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(formattedEvaluationDate) || "", {
               x: 385,
-              y: height - 160,
+              y: height - 164,
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_1) || "", {
-              x: 530,
-              y: height -225, 
+              x: 538,
+              y: height -230, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_2) || "", {
-              x: 530,
-              y: height -252, 
+              x: 538,
+              y: height -255, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_3) || "", {
-              x: 530,
-              y: height -275, 
+              x: 538,
+              y: height -278, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_4) || "", {
-              x: 530,
-              y: height -300, 
+              x: 538,
+              y: height -303, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_5) || "", {
-              x: 530,
-              y: height -324, 
+              x: 538,
+              y: height -327, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_6) || "", {
-              x: 530,
-              y: height -347, 
+              x: 538,
+              y: height -350, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_7) || "", {
-              x: 530,
-              y: height -373, 
+              x: 538,
+              y: height -376, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_8) || "", {
-              x: 530,
-              y: height -397, 
+              x: 538,
+              y: height -400, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_9) || "", {
-              x: 530,
-              y: height -420, 
+              x: 538,
+              y: height -423, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Q_10) || "", {
-              x: 530,
-              y: height -445, 
+              x: 538,
+              y: height -448, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Overall) || "", {
-              x: 530,
-              y: height - 468, 
+              x: 538,
+              y: height - 474, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(String(emp.Percentage) || "", {
-              x: 530,
-              y: height - 485, 
+              x: 538,
+              y: height - 491, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
             page.drawText(emp.Remarks || "", {
-              x: 100,
-              y: height - 580, 
+              x: 105,
+              y: height - 585, 
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
-            let ratingYPositions = [226, 253, 276, 300.5, 324.5, 347.5, 373, 397, 420.5, 444];
+            let ratingYPositions = [229, 256, 281, 305.5, 329.5, 353.5, 378, 403, 427, 452];
                       for (let idx = 0; idx < 10; idx++) {
         const rating = emp[`Q_${idx + 1}`];
         let rowY = height - ratingYPositions[idx];
-        let xOffset = 388 + (rating - 1) * 10;
+        let xOffset = 385 + (rating - 1) * 10;
         if (rating === 1) {
-          xOffset = 389;
+          xOffset = 390;
         } else if (rating === 2) {
-          xOffset = 421;
+          xOffset = 424;
         } else if (rating === 3) {
-          xOffset = 447;
+          xOffset = 453;
         } else if (rating === 4) {
-          xOffset = 475;
+          xOffset = 480;
         } else if (rating === 5) {
-          xOffset = 503;
+          xOffset = 509;
         }
         if (rating > 0) {
           page.drawImage(tickImage, { x: xOffset, y: rowY, width: tickImageDims.width, height: tickImageDims.height });
@@ -539,17 +588,19 @@ const font = await mergedPdf.embedFont(fontBytes);
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
-        const res = await fetch(`/api/get_tet_form_user_dropdown?programId=${programId}`);
+        const storedEmployeeId = localStorage.getItem('employeeId');
+        if (!storedEmployeeId) return;
+
+        const res = await fetch(`/api/get_tet_form_user_dropdown_by_res_person?programId=${programId}&EmployeeId=${storedEmployeeId}`);
         const data = await res.json();
 
-        // Format the data for React Select
-      // Adjust dropdown options to show EmployeeId as value and include EmployeeId in label with Username + Department
-      const formattedOptions = data.map((item) => ({
-        value: item.Value,
-        label: `${item.Value} | ${item.Text}`, // Show EmployeeId along with Username + Department
-      }));
+        const formattedOptions = data.map((item) => ({
+          value: item.Value,
+          label: `${item.Text}`,
+          flag: item.Flag, // include flag from API response
+        }));
 
-      setOptions(formattedOptions);
+        setOptions(formattedOptions);
       } catch (error) {
         console.error("Error fetching dropdown data:", error);
       }
@@ -557,7 +608,6 @@ const font = await mergedPdf.embedFont(fontBytes);
 
     fetchDropdownData();
   }, [programId]);
-
   // Fetch employee details based on selected EmployeeId
   useEffect(() => {
     if (selectedEmployee) {
@@ -635,8 +685,8 @@ const font = await mergedPdf.embedFont(fontBytes);
   </>
 )}
         </h1>
-         
-        <div className="flex mt-2 lg:mt-0 w-full lg:w-auto justify-start">
+        {/* important code dont delete it  */}
+        {/* <div className="flex mt-2 lg:mt-0 w-full lg:w-auto justify-start">
 {accessRole === "HR_Res" && (
   <button
     type="button"
@@ -658,12 +708,12 @@ const font = await mergedPdf.embedFont(fontBytes);
     <FaPrint />
   </button>
 )}
-        </div>
+        </div> */}
       </div>
         <div className="my-4 relative z-0">
           <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium">Select EmpId</label>
-      <Select
+            <label className="text-sm  font-medium">Select EmpId</label>
+  <Select
   options={options}
   onChange={(selectedOption) => {
     setSelectedEmployee(selectedOption);
@@ -680,6 +730,7 @@ const font = await mergedPdf.embedFont(fontBytes);
       minHeight: "2rem",
       display: "flex",
       alignItems: "center",
+      cursor:"pointer"
     }),
     menu: (base) => ({
       ...base,
@@ -690,7 +741,20 @@ const font = await mergedPdf.embedFont(fontBytes);
       zIndex: 9999,
     }),
   }}
-  className="w-[400px]"
+  className="w-[400px] cursor-pointer"
+  components={{
+    Option: (props) => {
+      const { data, innerRef, innerProps } = props;
+      return (
+        <div ref={innerRef} {...innerProps} className="flex items-center justify-between px-2 py-1">
+          <div>{data.label}</div>
+          {data.flag === 1 && (
+            <FaCheckCircle className="text-green-500" />
+          )}
+        </div>
+      );
+    },
+  }}
 />
 
 </div>
@@ -705,11 +769,11 @@ const font = await mergedPdf.embedFont(fontBytes);
       {employeeDetails && (
         <div className="max-w-5xl mx-auto p-6">
         <div className="bg-sky-400 text-white p-2 rounded-t-lg">
-          <h1 className="text-center font-bold text-xl">Training Effectiveness Tracing Form</h1>
+          <h1 className="text-center font-bold text-xl">Training Effectiveness Evaluation</h1>
     </div>
     <form onSubmit={handleSubmit}>
             <div className="overflow-x-auto mb-6">
-         <table className="table-auto w-full border text-sm">
+         <table className="table-fixed w-full border text-sm">
             <tbody>
           <tr>
           <td className="border px-4 py-2 font-semibold">Employee Name</td>
@@ -739,19 +803,13 @@ const font = await mergedPdf.embedFont(fontBytes);
         <td className="border px-4 py-2 font-semibold">Department</td>
         <td className="border px-4 py-2">{employeeDetails.Department}</td>
         <td className="border px-4 py-2 font-semibold">Date of Training</td>
-        <td className="border px-4 py-2">{employeeDetails.Training_Date
-    ? new Date(employeeDetails.Training_Date).toISOString().slice(0, 10)
-    : "N/A"}
-</td>
+<td className="border px-4 py-2">{employeeDetails.Training_Date}</td>
       </tr>
       <tr>
         <td className="border px-4 py-2 font-semibold">Place of Training</td>
         <td className="border px-4 py-2">{employeeDetails.Venue}</td>
         <td className="border px-4 py-2 font-semibold">Date of Evaluation</td>
-        <td className="border px-4 py-2"> {employeeDetails.Evaluation_Date
-    ? new Date(employeeDetails.Evaluation_Date).toISOString().slice(0, 10)
-    : "N/A"}
-</td>
+<td className="border px-4 py-2">{employeeDetails.Evaluation_Date}</td>
       </tr>
         </tbody>
             
@@ -771,11 +829,11 @@ const font = await mergedPdf.embedFont(fontBytes);
   </div>
 </div>
 
-  <table className="w-full table-auto text-sm">
+  <table className="w-full table-fixed text-sm">
     <thead>
       <tr className="bg-gray-100">
         <th className="border p-2" rowSpan="2">S.No</th>
-        <th className="border p-2" rowSpan="2">Parameters</th>
+        <th className="border p-2 w-64" rowSpan="2">Parameters</th>
         <th className="border p-2" colSpan="5">Rating</th>
         <th className="border p-2" rowSpan="2">Selected</th>
       </tr>
@@ -795,6 +853,7 @@ const font = await mergedPdf.embedFont(fontBytes);
               <input
                 type="radio"
                 name={`rating-${index}`}
+                className="cursor-pointer"
                 checked={formData.ratings[index] === rating}
                 onChange={() => handleRatingChange(index, rating)}
               />
@@ -820,7 +879,7 @@ const font = await mergedPdf.embedFont(fontBytes);
 
         {/* Score Range */}
         <div className="border mt-4 p-4">
-          <table className="w-full table-auto border-collapse text-sm">
+          <table className="w-full border-collapse text-sm">
             <thead>
               <tr>
                 <th className="border p-2">&lt;35</th>
@@ -870,10 +929,14 @@ const font = await mergedPdf.embedFont(fontBytes);
              </div>
           
 <div className="flex justify-end">
-<button
-       type="submit"
-       className="px-6 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"          >
-    submit</button>
+{selectedEmployee && selectedEmployee.flag !== 1 && (
+  <button
+    type="submit"
+    className="px-6 py-2 text-sm font-semibold cursor-pointer text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
+  >
+    submit
+  </button>
+)}
 </div>
    
     </form>

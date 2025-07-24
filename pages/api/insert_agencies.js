@@ -5,17 +5,14 @@ const prisma = new PrismaClient()
 export default async function handler(req, res) {
   if (req.method === 'POST') {
     console.log('Request body:', req.body)
-    const { Agency_name, Contact_person, Location, Contact_1, Contact_2, Mailid, Website, CreatedBy } = req.body
+    let { Agency_name, Contact_person, Location, Contact_1, Contact_2, Mailid, Website, CreatedBy } = req.body
+
+    // Ensure Mailid always has @gmail.com
+    if (Mailid && !Mailid.includes('@')) {
+      Mailid = `${Mailid}@gmail.com`;
+    }
+
     try {
-      // console.log('Calling stored procedure with parameters:', {
-      //   Agency_name,
-      //   Contact_person,
-      //   Location,
-      //   Contact_1,
-      //   Contact_2,
-      //   Mailid,
-      //   CreatedBy,
-      // })
       const result = await prisma.$queryRaw`
         EXEC [dbo].[External_Training_Agencies_Upload] 
           @Agency_name = ${Agency_name},

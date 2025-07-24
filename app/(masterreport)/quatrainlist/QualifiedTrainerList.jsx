@@ -1,19 +1,15 @@
 "use client";
 import { FaEdit, FaSearch, FaSortUp } from "react-icons/fa";
 import { useState, useEffect, useRef, useMemo } from "react";
-import DataTable from "react-data-table-component";
 import Select from "react-select";
-
+import TrainerApprovalForm from "../approvalformfortrainers/page";
 const QualifiedTrainerList = () => {
   const [data, setData] = useState([]);
   const [EmployeeId, setEmployeeId] = useState(null);
 
   // Add useEffect to set EmployeeId from localStorage on mount
   useEffect(() => {
-    const storedEmployeeId = localStorage.getItem('employeeId');
-    if (storedEmployeeId) {
-      setEmployeeId(storedEmployeeId);
-    }
+    // Removed setting EmployeeId from localStorage to avoid default display in Select dropdown
   }, []);
 
   const [employeeOptions, setEmployeeOptions] = useState([]);
@@ -25,12 +21,23 @@ const QualifiedTrainerList = () => {
     Gender: "",
     DOJ: "",
   });
+
+  // Computed variables to check DOJ experience for enabling/disabling checkboxes
+  const dojDate = trainingDetails.DOJ ? new Date(trainingDetails.DOJ) : null;
+  const today = new Date();
+  const threeYearsAgo = new Date(today.getFullYear() - 3, today.getMonth(), today.getDate());
+
+  const isExperienceLessThan3Years = dojDate ? dojDate > threeYearsAgo : false;
+  // Adjust logic: if DOJ is greater than 3 years ago, enable Experience (5 Years)
+  const isExperienceAtLeast3Years = dojDate ? dojDate <= threeYearsAgo : false;
   const [qualifiedTrainers, setQualifiedTrainers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [tableSearchTerm, setTableSearchTerm] = useState("");
   const [trainingName, setTrainingName] = useState("");
   const [certified, setCertified] = useState(false);
+  const [certifiedInput, setCertifiedInput] = useState("");
+  const [showCertifiedInput, setShowCertifiedInput] = useState(false);
   const [exp5Yr, setExp5Yr] = useState(false);
   const [exp3Yr, setExp3Yr] = useState(false);
   const [hodRec, setHodRec] = useState(false);
@@ -45,28 +52,66 @@ const QualifiedTrainerList = () => {
     label: option.Text,
   }));
 
-  // Fetch employee options
+  console.log("DEBUG EmployeeId:", EmployeeId);
+  console.log("DEBUG isExperienceAtLeast3Years:", isExperienceAtLeast3Years);
+
+  const [accessRole, setAccessRole] = useState(null);
+  const [isAuthorized, setIsAuthorized] = useState(null);
   useEffect(() => {
-    const fetchEmployeeOptions = async () => {
-      setLoading(true);
-      setError(null);
+    // Removed setting EmployeeId from localStorage to avoid default display in Select dropdown
+
+    const fetchAccessRole = async () => {
       try {
-        const res = await fetch("/api/user_qualified_dropdown");
+        const res = await fetch(`/api/get_access_role?employeeId=${localStorage.getItem('employeeId')}`);
         const data = await res.json();
-        if (res.status === 200) {
-          setEmployeeOptions(data);
+
+        if (res.ok && data.Access_Role) {
+          // Restrict access for HR_Res and HR_HOD roles
+          if (data.Access_Role === "Res_Person" ) {
+            setIsAuthorized(false);
+            // Optionally redirect to unauthorized page
+            // window.location.href = '/unauthorized';
+            return;
+          }
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
         } else {
-          setError(data.message || "Error fetching employee data");
+          setIsAuthorized(false);
         }
-      } catch (err) {
-        setError("Failed to fetch employee data");
-      } finally {
-        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching access role:', error);
+        setIsAuthorized(false);
       }
     };
 
-    fetchEmployeeOptions();
+    fetchAccessRole();
   }, []);
+
+    // Fetch employee options
+    useEffect(() => {
+      const fetchEmployeeOptions = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          // Get department code from localStorage or other source
+          const deptCode = localStorage.getItem("department") || "";
+
+          const res = await fetch(`/api/user_qualified_dropdown_testing?deptCode=${encodeURIComponent(deptCode)}`);
+          const data = await res.json();
+          if (res.status === 200) {
+            setEmployeeOptions(data);
+          } else {
+            setError(data.message || "Error fetching employee data");
+          }
+        } catch (err) {
+          setError("Failed to fetch employee data");
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchEmployeeOptions();
+    }, []);
 
   // Fetch qualified trainers list
   const fetchQualifiedTrainers = async () => {
@@ -75,6 +120,7 @@ const QualifiedTrainerList = () => {
     try {
       const res = await fetch("/api/view_qualifier_list");
       const data = await res.json();
+      console.log("DEBUG qualifiedTrainers data:", data);
       if (res.status === 200) {
         setQualifiedTrainers(data);
         setData(data);
@@ -134,16 +180,13 @@ const QualifiedTrainerList = () => {
         const data = await res.json();
 
         if (res.status === 200) {
-          const formattedDOJ = data.DOJ
-            ? new Date(data.DOJ).toLocaleDateString()
-            : "";
           setTrainingDetails({
             Username: data.Username || "",
             Department: data.Department || "",
             Section: data.Section || "",
             Designation: data.Designation || "",
             Gender: data.Gender || "",
-            DOJ: formattedDOJ,
+            DOJ: data.DOJ || "",
           });
         } else {
           setError(data.message || "Error fetching user details");
@@ -171,6 +214,13 @@ const QualifiedTrainerList = () => {
 
       setQualified(isAnyChecked);
 
+      if (checkboxName === "certified") {
+        setShowCertifiedInput(newValue);
+        if (!newValue) {
+          setCertifiedInput("");
+        }
+      }
+
       return newValue;
     });
   };
@@ -191,10 +241,12 @@ const QualifiedTrainerList = () => {
       Training_Name: trainingName,
       EmployeeId: EmployeeId,
       Certified: certified ? 1 : 0,
+      Cert_Des: certifiedInput,
       Exp_5_Yr: exp5Yr ? 1 : 0,
       Exp_3_Yr: exp3Yr ? 1 : 0,
       HOD_Rec: hodRec ? 1 : 0,
       Qualified: qualified ? 1 : 0,
+      IsActive: 1,
       CreatedBy: createdByFromStorage || "", // Use localStorage EmployeeId for CreatedBy
     };
 
@@ -364,14 +416,36 @@ const QualifiedTrainerList = () => {
 
     setFilteredData(filtered);
   };
+ if (isAuthorized === null) {
+    return (
+      <div>Loading...</div>
+      // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+      //   <div className="bg-white p-10 rounded shadow text-center">
+      //     <h2 className="text-2xl font-bold">Loading...</h2>
+      //   </div>
+      // </div>
+    );
+  }
 
+  if (isAuthorized === false) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+        <div className="bg-white p-10 rounded shadow text-center">
+          <h2 className="text-2xl font-bold">Unauthorized</h2>
+          <p className="mt-2">You do not have access to view this page.</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
+    
+        <div>
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
         <h2 className="text-lg font-semibold">Add Qualified Trainers List</h2>
       </div>
-      <br></br>
-      <form onSubmit={handleSubmit}>
+ 
+      <form onSubmit={handleSubmit} className="mt-3">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* React Select Dropdown */}
           <div>
@@ -387,6 +461,7 @@ const QualifiedTrainerList = () => {
               styles={{
                 control: (base, state) => ({
                   ...base,
+                  cursor: "pointer",
                   borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
                   boxShadow: state.isFocused
                     ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
@@ -397,6 +472,10 @@ const QualifiedTrainerList = () => {
                   display: "flex",
                   alignItems: "center",
                 }),
+                option: (base) => ({
+                  ...base,
+                  cursor: "pointer",
+                }),
                 menu: (base) => ({
                   ...base,
                   zIndex: 9999,
@@ -406,7 +485,7 @@ const QualifiedTrainerList = () => {
                   zIndex: 9999,
                 }),
               }}
-              className="w-full"
+              className="w-full cursor-pointer"
               classNamePrefix="react-select"
               required
             />
@@ -488,39 +567,40 @@ const QualifiedTrainerList = () => {
             </label>
             <div className="flex space-x-6 mt-2">
               <label className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  name="trainingName"
-                  value="IATF"
-                  checked={trainingName === "IATF"}
-                  onChange={() => setTrainingName("IATF")}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
-                  required
-                />
+              <input
+                type="radio"
+                name="trainingName"
+                value="IATF"
+                checked={trainingName === "IATF"}
+                onChange={() => setTrainingName("IATF")}
+                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                required
+              />
                 <span>IATF</span>
               </label>
               <label className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  name="trainingName"
-                  value="HSE"
-                  checked={trainingName === "HSE"}
-                  onChange={() => setTrainingName("HSE")}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
-                  required
-                />
+              <input
+                type="radio"
+                name="trainingName"
+                value="HSE"
+                checked={trainingName === "HSE"}
+                onChange={() => setTrainingName("HSE")}
+                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                required
+              />
                 <span>HSE</span>
               </label>
             </div>
           </div>
         </div>
         {/* Checkbox Section */}
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mt-4">
-          <div className="flex items-center space-x-2">
+        
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="flex space-x-2">
             <label className="block text-sm font-medium text-gray-900">
               Certified
             </label>
-            <input
+          <input
               type="checkbox"
               checked={certified}
               onChange={() =>
@@ -528,35 +608,51 @@ const QualifiedTrainerList = () => {
               }
               className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
             />
+            {showCertifiedInput && (
+              <input
+                type="text"
+                value={certifiedInput}
+                onChange={(e) => setCertifiedInput(e.target.value)}
+                placeholder="Enter certification description"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none"
+                required
+              />
+            )}
           </div>
+       
 
-          <div className="flex items-center space-x-2">
+        
+          <div className="flex  justify-around">
+            <div className="flex space-x-2">
             <label className="block text-sm font-medium text-gray-900">
-              Experience (5 Years)
+              OverAll Exp (5 years)
             </label>
-            <input
-              type="checkbox"
-              checked={exp5Yr}
-              onChange={() => handleCheckboxChange(setExp5Yr, exp5Yr, "exp5Yr")}
-              className="h-4 w-4 "
-            />
-          </div>
-
-          <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={exp5Yr}
+                onChange={() => handleCheckboxChange(setExp5Yr, exp5Yr, "exp5Yr")}
+                className="h-4 w-4 "
+              />
+            </div>
+               <div className="flex  space-x-2">
             <label className="block text-sm font-medium text-gray-900">
-              Experience (3 Years)
+              GTI Exp (3 yrs)
             </label>
             <input
               type="checkbox"
               checked={exp3Yr}
               onChange={() => handleCheckboxChange(setExp3Yr, exp3Yr, "exp3Yr")}
               className="h-4 w-4 "
+              disabled={false}
             />
           </div>
+          </div>
 
-          <div className="flex items-center space-x-2">
+       <div className="flex  justify-around">
+
+          <div className="flex space-x-2">
             <label className="block text-sm font-medium text-gray-900">
-              HOD Rec
+              Nominated by HOD
             </label>
             <input
               type="checkbox"
@@ -566,7 +662,7 @@ const QualifiedTrainerList = () => {
             />
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex space-x-2">
             <label className="block text-sm font-medium text-gray-900">
               Qualified
             </label>
@@ -574,28 +670,34 @@ const QualifiedTrainerList = () => {
               type="checkbox"
               checked={qualified}
               required
-              disabled
+              readOnly
               className="h-4 w-4"
             />
           </div>
-
+</div>
           <div>
-            <button
+          <button
               type="submit"
-              className="px-6 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
+              className="px-6 py-2 cursor-pointer text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
             >
               Submit
             </button>
           </div>
         </div>
       </form>
-      <br></br>
+      </div>
 
-      <div className="card-body p-0 overflow-x-auto pb-3">
+<div>
+  <TrainerApprovalForm/>
+</div>
+   
         <div className="card-body p-0 overflow-x-auto pb-3">
+           <p className="font-semibold text-sky-400">Qualified Trainers:</p>
+
           <div className="p-4 bg-card">
+            
             <div className="flex flex-wrap justify-between items-center mb-4 space-y-2">
-              <div className="flex items-center space-x-2 text-sm">
+                              <div className="flex items-center space-x-2 text-sm">
                 <span>Show</span>
                 <select
                   className="border p-1 rounded bg-secondary"
@@ -622,7 +724,7 @@ const QualifiedTrainerList = () => {
                 <div className="relative">
                   <input
                     type="text"
-                    className="border p-1 pl-8 rounded bg-secondary"
+                    className="border p-1 pl-8 rounded "
                     placeholder="Search..."
                     value={tableSearchTerm}
                     onChange={handleTableSearchChange}
@@ -652,10 +754,12 @@ const QualifiedTrainerList = () => {
                       { key: "Department", label: "Department" },
                       { key: "Training_Name", label: "Training Name" },
                       { key: "Certified", label: "Certified" },
-                      { key: "Exp_5_Yr", label: "Exp (5Yr)" },
-                      { key: "Exp_3_yr", label: "Exp (3Yr)" },
-                      { key: "HOD_Rec", label: "HOD Rec" },
+                      { key :"Cert_Des",label:"Cert_Des"},
+                      { key: "Exp_5_Yr", label: "OverAll Exp (5 yrs)" },
+                      { key: "Exp_3_yr", label: "GTI Exp (3 yrs)" },
+                      { key: "HOD_Rec", label: "Nominated by HOD" },
                       { key: "Qualified", label: "Qualified" },
+                       {key:"Status", label :"Status"}
                     ].map(({ key, label }, index) => (
                       <th
                         key={key}
@@ -695,6 +799,9 @@ const QualifiedTrainerList = () => {
                         <td className="px-4 py-2 border">
                           {item.Certified ? "Yes" : "No"}
                         </td>
+                         <td className="px-4 py-2 border">
+                          {item.Cert_Des}
+                        </td>
                         <td className="px-4 py-2 border">
                           {item.Exp_5_Yr ? "Yes" : "No"}
                         </td>
@@ -707,6 +814,56 @@ const QualifiedTrainerList = () => {
                         <td className="px-4 py-2 border">
                           {item.Qualified ? "Yes" : "No"}
                         </td>
+                               <td className="border p-2 text-left">
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+  <input
+    type="checkbox"
+    checked={item.Status}
+onChange={async (e) => {
+      const newStatus = e.target.checked ? 1 : 0;
+      try {
+        const response = await fetch(
+          "/api/update_active_status_to_remove_trainers",
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              Qual_Id: item.Qual_Id,
+              Status: newStatus,
+            }),
+          }
+        );
+        if (response.ok) {
+          // Update local state to reflect change
+          setQualifiedTrainers((prevData) =>
+            prevData.map((trainer) =>
+              trainer.Qual_Id === item.Qual_Id
+                ? { ...trainer, Status: newStatus }
+                : trainer
+            )
+          );
+          alert("Status updated successfully");
+        } else {
+          alert("Failed to update status");
+        }
+      } catch (error) {
+        alert("Error updating status");
+      }
+    }}
+  />
+  <span
+    className={
+      item.Status
+        ? "text-green-600 font-semibold"
+        : "text-red-600 font-semibold"
+    }
+  >
+    {item.Status ? "Active" : "Inactive"}
+  </span>
+                      </label>
+                    </td>
                       </tr>
                     ))
                   ) : filteredData.length === 0 ? (
@@ -758,7 +915,7 @@ const QualifiedTrainerList = () => {
                     <button
                       key={i}
                       className={`px-3 py-1 border rounded ${
-                        currentPage === i + 1 ? "bg-primary text-white" : ""
+                        currentPage === i + 1 ? "bg-black text-white" : ""
                       }`}
                       onClick={() => setCurrentPage(i + 1)}
                     >
@@ -786,7 +943,7 @@ const QualifiedTrainerList = () => {
             }
           </div>
         </div>
-      </div>
+   
     </div>
   );
 };

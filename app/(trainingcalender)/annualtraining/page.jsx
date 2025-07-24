@@ -1,7 +1,8 @@
-"use client"
+"use client";
 import React, { useState, useEffect, useRef } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import Select from "react-select";
 import { FaPrint } from "react-icons/fa";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -34,35 +35,43 @@ const AnnualTraining = () => {
 
   useEffect(() => {
     const storedEmployeeId = localStorage.getItem("employeeId");
+
     if (storedEmployeeId) {
       setEmployeeId(storedEmployeeId);
+    } else {
+      window.location.href = "/";
+      return;
     }
 
     const fetchAccessRole = async () => {
       try {
         const res = await fetch(
-          "/api/get_access_role?employeeId=" + storedEmployeeId
+          `/api/get_access_role?employeeId=${storedEmployeeId}`
         );
         const data = await res.json();
 
         if (res.ok && data.Access_Role) {
+          // Restrict access for HR_Res and HR_HOD roles
           if (
             data.Access_Role === "Res_Person" ||
             data.Access_Role === "HOS" ||
             data.Access_Role === "HOD" ||
+            data.Access_Role === "HR_Res" ||
             data.Access_Role === "HR_Hod"
           ) {
-            setIsAuthorized(false);
+            setIsAuthorized(true);
+            // Optionally redirect to unauthorized page
+            // window.location.href = '/unauthorized';
             return;
           }
           setAccessRole(data.Access_Role);
-          setIsAuthorized(true);
-        } else {
           setIsAuthorized(false);
+        } else {
+          setIsAuthorized(true);
         }
       } catch (error) {
         console.error("Error fetching access role:", error);
-        setIsAuthorized(false);
+        setIsAuthorized(true);
       }
     };
 
@@ -93,11 +102,12 @@ const AnnualTraining = () => {
 
   if (isAuthorized === null) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
-        <div className="bg-white p-10 rounded shadow text-center">
-          <h2 className="text-2xl font-bold">Loading...</h2>
-        </div>
-      </div>
+      <div>Loading...</div>
+      // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+      //   <div className="bg-white p-10 rounded shadow text-center">
+      //     <h2 className="text-2xl font-bold">Loading...</h2>
+      //   </div>
+      // </div>
     );
   }
 
@@ -124,7 +134,11 @@ const AnnualTraining = () => {
     if (!groupedData[month][week]) {
       groupedData[month][week] = [];
     }
-    groupedData[month][week].push(program);
+    groupedData[month][week].push({
+      Program_Name: item.Program_Name,
+      Is_External: item.Is_External === 1,
+      Special_Position: item.Special_Position === 1,
+    });
   });
 
   const monthsInData = monthsOrder;
@@ -186,171 +200,266 @@ const AnnualTraining = () => {
   });
 
   const generatePDF = async () => {
-    const input = tableRef.current;
+    const doc = new jsPDF("landscape", "mm", "a4");
+    const year = selectedDate.getFullYear();
+    const trainingType = trainingName;
+    const monthsPerPage = trainingType === "HSE" ? 6 : 3;
 
-    try {
-      // Create a completely new table structure with inline styles only
-      const newTable = document.createElement("table");
-      newTable.style.cssText = `
-        border-collapse: collapse;
-        width: 100%;
-        font-family: Arial, sans-serif;
-        font-size: 11px;
-        color: black;
-        background-color: white;
-        border: 1px solid black;
-      `;
+    for (
+      let pageIndex = 0;
+      pageIndex < monthsInData.length;
+      pageIndex += monthsPerPage
+    ) {
+      const chunk = monthsInData.slice(pageIndex, pageIndex + monthsPerPage);
 
-      // Get the original table data
-      const originalRows = input.querySelectorAll("tr");
-      
-      originalRows.forEach((originalRow, rowIndex) => {
-        const newRow = document.createElement("tr");
-        const originalCells = originalRow.querySelectorAll("td, th");
-        
-        originalCells.forEach((originalCell, cellIndex) => {
-          const newCell = document.createElement("td");
-          
-          // Copy attributes
-          if (originalCell.hasAttribute("colspan")) {
-            newCell.setAttribute("colspan", originalCell.getAttribute("colspan"));
-          }
-          if (originalCell.hasAttribute("rowspan")) {
-            newCell.setAttribute("rowspan", originalCell.getAttribute("rowspan"));
-          }
-
-          // Set safe inline styles based on content and position
-          let cellStyles = `
-            border: 1px solid black;
-            padding: 4px;
-            text-align: center;
-            vertical-align: middle;
-            font-family: Arial, sans-serif;
-            font-size: 11px;
-            color: black;
-            background-color: white;
-          `;
-
-          const textContent = originalCell.textContent || "";
-          
-          // Apply background colors based on content
-          if (textContent.includes("Annual Training Calendar")) {
-            cellStyles += "background-color: #cce7ff; font-weight: bold;";
-          } else if (textContent === "Months") {
-            cellStyles += "background-color: #b3d9ff; font-weight: bold;";
-          } else if (textContent === "Weeks") {
-            cellStyles += "background-color: #ffe0b3; font-weight: bold;";
-          } else if (textContent.includes("Week ")) {
-            cellStyles += "background-color: #fff0d9; font-weight: bold;";
-          } else if (originalCell.hasAttribute("rowspan") && originalCell.getAttribute("rowspan") === "2") {
-            cellStyles += "background-color: #f0f0f0; font-weight: bold;";
-          }
-
-          newCell.style.cssText = cellStyles;
-
-          // Copy content, handling lists specially
-          const ulElements = originalCell.querySelectorAll("ul");
-          if (ulElements.length > 0) {
-            ulElements.forEach(ul => {
-              const newUl = document.createElement("ul");
-              newUl.style.cssText = `
-                margin: 0;
-                padding-left: 16px;
-                list-style-type: disc;
-                text-align: left;
-              `;
-              
-              const liElements = ul.querySelectorAll("li");
-              liElements.forEach(li => {
-                const newLi = document.createElement("li");
-                newLi.style.cssText = `
-                  margin-bottom: 2px;
-                  color: black;
-                  font-family: Arial, sans-serif;
-                  font-size: 11px;
-                `;
-                newLi.textContent = li.textContent;
-                newUl.appendChild(newLi);
-              });
-              
-              newCell.appendChild(newUl);
-            });
-          } else {
-            newCell.textContent = textContent;
-          }
-
-          newRow.appendChild(newCell);
-        });
-        
-        newTable.appendChild(newRow);
-      });
-
-      // Create wrapper with explicit dimensions and no external CSS
+      // Create hidden wrapper
       const wrapper = document.createElement("div");
-      wrapper.style.cssText = `
-        position: fixed;
-        top: -10000px;
-        left: 0;
-        width: 1200px;
-        height: 900px;
-        padding: 20px;
-        background-color: white;
-        font-family: Arial, sans-serif;
-        overflow: hidden;
-      `;
-      
-      wrapper.appendChild(newTable);
-      document.body.appendChild(wrapper);
+      wrapper.style.position = "fixed";
+      wrapper.style.top = "-10000px";
+      wrapper.style.left = "0";
+      wrapper.style.padding = "0px";
+      wrapper.style.width = "1222px";
+      wrapper.style.backgroundColor = "white";
 
-      // Generate canvas with restrictive options
-      const canvas = await html2canvas(newTable, {
-        backgroundColor: "white",
-        scale: 1.5,
-        useCORS: false,
-        allowTaint: false,
-        width: 1160,
-        height: 860,
-        logging: false,
-        removeContainer: false,
-        foreignObjectRendering: false,
-        imageTimeout: 0,
-        onclone: (clonedDoc) => {
-          // Remove all stylesheets from cloned document to prevent CSS interference
-          const stylesheets = clonedDoc.querySelectorAll('link[rel="stylesheet"], style');
-          stylesheets.forEach(sheet => sheet.remove());
-        },
-        ignoreElements: (element) => {
-          return element.tagName === "SCRIPT" || 
-                 element.tagName === "STYLE" || 
-                 element.tagName === "LINK";
+      // Create table
+      const table = document.createElement("table");
+      table.style.borderCollapse = "collapse";
+      table.style.borderSpacing = "0";
+      table.style.width = "100%";
+      table.style.fontSize = "12px";
+      table.style.tableLayout = "fixed";
+      table.style.border = "0.5px solid #999";
+      table.style.color = "black";
+      table.style.margin = "0";
+      table.style.padding = "0";
+
+      // Header row
+      const headerRow = document.createElement("tr");
+
+      // "Months" header
+      const monthHeader = document.createElement("th");
+      monthHeader.textContent = "Months";
+      monthHeader.style.border = "0.5px solid #999";
+      monthHeader.style.verticalAlign = "middle";
+      monthHeader.style.textAlign = "center";
+      monthHeader.style.width = "80px";
+      monthHeader.style.height = "40px";
+      monthHeader.style.verticalAlign = "middle";
+      monthHeader.style.lineHeight = "40px";
+      monthHeader.style.padding = "0";
+      monthHeader.style.fontSize = "14px";
+      headerRow.appendChild(monthHeader);
+
+      // "Weeks" header
+      const weekHeader = document.createElement("th");
+      weekHeader.textContent = "Weeks";
+      weekHeader.colSpan = 5;
+      weekHeader.style.border = "0.5px solid #999";
+      weekHeader.style.textAlign = "center";
+      weekHeader.style.backgroundColor = "#ffffff";
+      weekHeader.style.colSpan = 5;
+      weekHeader.style.height = "40px";
+      weekHeader.style.verticalAlign = "middle";
+      weekHeader.style.lineHeight = "40px";
+      weekHeader.style.padding = "0";
+      weekHeader.style.fontSize = "14px";
+      headerRow.appendChild(weekHeader);
+
+      table.appendChild(headerRow);
+
+      // Data Rows (Each Month)
+      chunk.forEach((month) => {
+        const weeks = dynamicWeeksByMonth[month]?.slice(0, 5) || [];
+        const monthKey = month.toLowerCase().slice(0, 3);
+
+        // Week numbers row (directly under the month label)
+        const weekNumberRow = document.createElement("tr");
+
+        const monthCell = document.createElement("td");
+        monthCell.textContent = month;
+        monthCell.rowSpan =
+          weeks.reduce((max, week) => {
+            const len = groupedData[monthKey][week]?.length || 0;
+            return Math.max(max, len);
+          }, 1) + 1;
+
+        monthCell.style.border = "0.5px solid #999";
+        monthCell.style.textAlign = "center";
+        monthCell.style.fontWeight = "bold";
+        monthCell.style.backgroundColor = "#d0f1e8";
+        monthCell.style.verticalAlign = "middle";
+        monthCell.style.width = "80px";
+        monthCell.style.fontSize = "14px";
+        weekNumberRow.appendChild(monthCell);
+
+        weeks.forEach((week) => {
+          const weekCell = document.createElement("td");
+          weekCell.textContent = `Week ${week}`;
+          weekCell.style.border = "0.5px solid #999";
+          weekCell.style.textAlign = "center";
+          weekCell.style.verticalAlign = "middle";
+          weekCell.style.height = "25px";
+          weekCell.style.lineHeight = "40px";
+          weekCell.style.padding = "0";
+          weekCell.style.backgroundColor = "#fde0b8";
+          weekCell.style.fontWeight = "bold";
+          weekCell.style.fontSize = "14px";
+          weekNumberRow.appendChild(weekCell);
+        });
+
+        table.appendChild(weekNumberRow);
+
+        // Collect week-wise items
+        const weekItems = weeks.map((week) => {
+          return groupedData[monthKey]?.[week] || [];
+        });
+
+        const maxRows = Math.max(...weekItems.map((items) => items.length));
+
+        // Add data rows under week numbers
+        for (let rowIndex = 0; rowIndex < maxRows; rowIndex++) {
+          const row = document.createElement("tr");
+
+          weeks.forEach((_, weekIndex) => {
+            const cell = document.createElement("td");
+            cell.style.border = "0.5px solid #999";
+            cell.style.padding = "6px 6px";
+            cell.style.verticalAlign = "top";
+            cell.style.textAlign = "left";
+            cell.style.lineHeight = "1.4";
+            cell.style.height = "100%";
+            cell.style.fontSize = "14px";
+
+            const item = weekItems[weekIndex][rowIndex];
+            if (item) {
+              const div = document.createElement("div");
+              div.style.marginBottom = "6px";
+              div.style.padding = "2px 4px";
+              div.style.borderRadius = "2px";
+              div.style.display = "block";
+              div.style.backgroundColor = "transparent";
+
+              if (item.Is_External) {
+                cell.style.backgroundColor = "#f0dff8";
+                cell.style.color = "black";
+              }
+              if (item.Special_Position) {
+                cell.style.backgroundColor = "#e6f7df";
+                cell.style.color = "black";
+              }
+
+              div.textContent = `• ${item.Program_Name || item}`;
+              cell.appendChild(div);
+            } else {
+              const dash = document.createElement("div");
+              dash.textContent = "-";
+              dash.style.textAlign = "center";
+              dash.style.color = "3px solid black";
+              dash.style.padding = "4px";
+              dash.style.fontStyle = "Times New Roman";
+              cell.appendChild(dash);
+            }
+
+            row.appendChild(cell);
+          });
+
+          table.appendChild(row);
         }
       });
 
-      const imgData = canvas.toDataURL("image/png", 1.0);
-      const pdf = new jsPDF("l", "mm", "a4");
+      wrapper.appendChild(table);
+      document.body.appendChild(wrapper);
 
-      // Calculate dimensions to fit A4 landscape with margins
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const margin = 10;
-      const availableWidth = pdfWidth - (2 * margin);
-      const availableHeight = pdfHeight - (2 * margin);
+      const canvas = await html2canvas(wrapper, {
+        backgroundColor: "#ffffff",
+        scale: 2,
+      });
 
-      // Add image to PDF
-      pdf.addImage(imgData, "PNG", margin, margin, availableWidth, availableHeight);
-      pdf.save(`annual_training_calendar_${trainingName}_${selectedDate.getFullYear()}.pdf`);
-      
-      console.log("PDF generated successfully");
-      
-      // Clean up
-      if (document.body.contains(wrapper)) {
-        document.body.removeChild(wrapper);
+      const imgData = canvas.toDataURL("image/png");
+
+      if (pageIndex > 0) doc.addPage();
+
+      // Header
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      let title = "";
+
+      if (trainingType === "HSE") {
+        title = `${trainingType} Annual Training Plan - ${year}`;
+      } else {
+        title = `${trainingType} 16949 Annual Training Plan - ${year}`;
       }
-      
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      alert("Failed to generate PDF. Error: " + error.message);
+
+      doc.text(title, 10, 10);
+      const footerText =
+        trainingType === "HSE"
+          ? 'We are following "[S014001] & [S045001] CAPD Method 10.3 Continuous Improvement Spirit to improve our GTI"'
+          : 'We are following "IATF16949 CAPD method 10.3 Continuous Improvement Spirit to improve our GTI"';
+
+      doc.setFontSize(6);
+      doc.setFont("helvetica", "normal");
+      doc.text(footerText, 10, 16);
+
+      // Table Image
+      doc.addImage(imgData, "PNG", 10, 22, 277, 150); // x = 10
+
+      //Add Page Number at Top Right
+      const currentPage = pageIndex / monthsPerPage + 1;
+      const totalPages = Math.ceil(monthsInData.length / monthsPerPage);
+
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        `Page ${currentPage} of ${totalPages}`,
+        doc.internal.pageSize.getWidth() - 10,
+        20,
+        { align: "right" }
+      );
+
+      // Footer box dimensions
+      const boxX = 10;
+      const boxY = 172;
+      const boxWidth = doc.internal.pageSize.getWidth() - 20;
+      const boxHeight = 23;
+      const boxRight = boxX + boxWidth;
+      const boxBottom = boxY + boxHeight;
+
+      // Draw footer rectangle border
+      doc.setDrawColor("#999");
+      doc.setLineWidth(0.3);
+      doc.line(boxX, boxY, boxX, boxBottom); // Left border
+      doc.line(boxRight, boxY, boxRight, boxBottom); // Right border
+      doc.line(boxX, boxBottom, boxRight, boxBottom);
+      doc.rect(boxX, boxY, boxWidth, boxHeight);
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+
+      const signatureY = boxY + 20;
+      doc.text("Prepared By", 30, signatureY);
+      doc.text("Checked By", 130, signatureY);
+      doc.text("Approved By", 230, signatureY);
+
+      const footerInfoY = signatureY + 10;
+      doc.setFontSize(8);
+
+      doc.text("EDI 1.0", boxX + 2, footerInfoY);
+
+      doc.text(
+        "Greentech Industries (India) Pvt. Ltd.",
+        doc.internal.pageSize.getWidth() / 2,
+        footerInfoY,
+        { align: "center" }
+      );
+
+      doc.text("HR-021-1", doc.internal.pageSize.getWidth() - 10, footerInfoY, {
+        align: "right",
+      });
+
+      document.body.removeChild(wrapper);
     }
+
+    doc.save(`${trainingType}_Annual_Training_${year}.pdf`);
   };
 
   return (
@@ -381,21 +490,37 @@ const AnnualTraining = () => {
               }}
             />
           </div>
-          <div className="mx-2">
-            <label htmlFor="training-select" className="mr-2 font-semibold">
+          <div className="mx-2 flex items-center" style={{ minWidth: "250px" }}>
+            <label htmlFor="training-select" className="mr-2 font-semibold ">
               Select Training:
             </label>
-            <select
-              id="training-select"
-              value={trainingName}
-              onChange={(e) => setTrainingName(e.target.value)}
-              className="p-2 border border-gray-300 rounded-lg"
-            >
-              <option value="IATF">
-                IATF (International Automotive Task Force)
-              </option>
-              <option value="HSE">HSE (Health, Safety, and Environment)</option>
-            </select>
+            <Select
+              inputId="training-select"
+              value={{ value: trainingName, label: trainingName === "IATF" ? "IATF (International Automotive Task Force)" : "HSE (Health, Safety, and Environment)" }}
+              onChange={(selectedOption) => setTrainingName(selectedOption.value)}
+              options={[
+                { value: "IATF", label: "IATF (International Automotive Task Force)" },
+                { value: "HSE", label: "HSE (Health, Safety, and Environment)" }
+              ]}
+              isSearchable={false}
+              classNamePrefix="react-select"
+              styles={{
+                control: (provided) => ({
+                  ...provided,
+                  padding: "2px",
+                borderColor: "#D1D5DB", // Tailwind sky-500
+                  borderRadius: "0.5rem", // rounded-lg
+                  cursor: "pointer",
+                  minHeight: "38px",
+                }),
+                option: (provided, state) => ({
+                  ...provided,
+                  cursor: "pointer",
+                  backgroundColor: state.isFocused ? "#E0F2FE" : "white", // Tailwind sky-100
+                  color: "black",
+                }),
+              }}
+            />
           </div>
         </div>
 
@@ -405,7 +530,7 @@ const AnnualTraining = () => {
               e.preventDefault();
               generatePDF();
             }}
-            className="ml-2 flex items-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-1 px-3 rounded"
+            className="ml-2 flex cursor-pointer items-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-1 px-3 rounded"
             aria-label="Download Annual Calendar"
             title="Download Annual Calendar"
           >
@@ -430,26 +555,27 @@ const AnnualTraining = () => {
             <tbody>
               <tr>
                 <td
-                  className="border border-gray-300 px-2 py-1 font-semibold w-12  bg-blue-100 text-center align-middle whitespace-nowrap"
+                  className="border border-gray-300 px-2 py-1 font-semibold  bg-blue-100 text-center align-middle whitespace-nowrap"
                   colSpan={6}
                 >
                   Annual Training Calendar for {trainingName}
                 </td>
               </tr>
               <tr>
-                <td
-                  className="border border-gray-300 px-2 py-1 font-semibold w-12  bg-blue-200 text-center align-middle whitespace-nowrap"
+                <th
+                  className="border border-gray-300 px-2 py-1 font-semibold w-[60px] special-width bg-blue-200 text-center align-middle"
+                  style={{ width: "60px", minWidth: "60px", maxWidth: "60px" }}
                 >
                   Months
-                </td>
+                </th>
                 <td
                   className="border border-gray-300 px-1 py-1 w-24 text-center font-semibold bg-orange-200"
-                  colSpan={5}
+                  colSpan={6}
                 >
                   Weeks
                 </td>
               </tr>
-              {monthsInData.map((month) => {
+              {monthsInData.map((month, index) => {
                 const monthKey = monthAbbrMap[month].toLowerCase();
                 const weeks = dynamicWeeksByMonth[month] || [];
                 const weeksToShow = weeks.slice(0, 5);
@@ -457,8 +583,13 @@ const AnnualTraining = () => {
                   <React.Fragment key={month}>
                     <tr>
                       <td
-                        className="border border-gray-300 px-2 py-1 font-semibold w-16 max-w-[60px] bg-blue-100 text-center align-middle break-words"
+                        className="border border-gray-300 px-2 py-1 font-semibold w-[60px] bg-blue-100 text-center align-middle whitespace-nowrap"
                         rowSpan={2}
+                        style={{
+                          width: "60px",
+                          minWidth: "60px",
+                          maxWidth: "60px",
+                        }}
                       >
                         {month}
                       </td>
@@ -477,20 +608,25 @@ const AnnualTraining = () => {
                         return (
                           <td
                             key={`${month}-week-data-${week}`}
-                            className={`border border-gray-300 px-4 py-3 w-24 break-words whitespace-normal max-w-24 ${bgColor}`}
+                            className={`border border-gray-300 px-4 py-3 w-12 break-words whitespace-normal max-w-12 ${bgColor}`}
                           >
-                            {groupedData[monthKey] && groupedData[monthKey][week] ? (
-                              <ul className="list-disc pl-4 space-y-1">
-                                {groupedData[monthKey][week].map((program, idx) => (
-                                  <li key={idx} className="break-words whitespace-normal">
-                                    {program}
-                                  </li>
-                                ))}
+                            {groupedData[monthKey] &&
+                            groupedData[monthKey][week] ? (
+                              <ul className="list-disc list-inside m-0 p-0">
+                                {groupedData[monthKey][week].map(
+                                  (item, idx) => (
+                                    <li
+                                      key={idx}
+                                      className="mb-1 break-words whitespace-normal max-w-full"
+                                    >
+                                      {item.Program_Name}
+                                    </li>
+                                  )
+                                )}
                               </ul>
                             ) : (
                               "-"
                             )}
-
                           </td>
                         );
                       })}

@@ -1,3 +1,4 @@
+
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { faEdit, faTrash } from "@fortawesome/free-solid-svg-icons";
@@ -11,33 +12,86 @@ import Select from "react-select";
 import makeAnimated from "react-select/animated";
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { PDFDocument, rgb } from "pdf-lib";
 import fontkit from '@pdf-lib/fontkit';
 const animatedComponents = makeAnimated();
 
-const TrainingAttendanceForm = () => {
-  const [mounted, setMounted] = useState(false);
-  const [year, setYear] = useState("");
-  const [selectedMonth, setSelectedMonth] = useState(null);
+  const TrainingAttendanceForm = () => {
+    const [mounted, setMounted] = useState(false);
+    const [year, setYear] = useState("");
+    const [selectedMonth, setSelectedMonth] = useState(null);
     const [formData, setFormData] = useState({
-    Program_Id: "",
-    Training_Name: "",
-    Train_Mode: "",
-    Persons: "",
-    Req_Months: "",
-    Start_Month: "",
-    No_Hrs: "",
-    Training_Date: "",
-    Training_Status: "",
-    Schedule_Type: "",
-    Forward: "",
-    Trainer: "",
-    Venue: "",
-    Training_Budget: "",
-    CreatedBy: "",
-    EmployeeIds: [],
-    selectedMonth: "",
-  });
+      Program_Id: "",
+      Training_Name: "",
+      Train_Mode: "",
+      Persons: "",
+      Req_Months: "",
+      Start_Month: "",
+      No_Hrs: "",
+      Training_Date: "",
+      Training_Status: "",
+      Schedule_Type: "",
+      Forward: "",
+      Trainer: "",
+      Venue: "",
+      Actual_Budget: "",
+      CreatedBy: "",
+      EmployeeIds: [],
+      selectedMonth: "",
+    });
+
+    // Helper function to convert dd-MMM-yyyy to yyyy-mm-dd for date input value
+    const convertDateToInputValue = (dateStr) => {
+      if (!dateStr) return "";
+      const months = {
+        Jan: "01",
+        Feb: "02",
+        Mar: "03",
+        Apr: "04",
+        May: "05",
+        Jun: "06",
+        Jul: "07",
+        Aug: "08",
+        Sep: "09",
+        Oct: "10",
+        Nov: "11",
+        Dec: "12",
+      };
+      const parts = dateStr.split("-");
+      if (parts.length !== 3) return "";
+      const day = parts[0];
+      const month = months[parts[1]];
+      const year = parts[2];
+      if (!month) return "";
+      return `${year}-${month}-${day}`;
+    };
+
+    // Helper function to convert yyyy-mm-dd to dd-MMM-yyyy for storing in formData
+    const convertInputValueToDate = (inputValue) => {
+      if (!inputValue) return "";
+      const months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+      const parts = inputValue.split("-");
+      if (parts.length !== 3) return "";
+      const year = parts[0];
+      const monthIndex = parseInt(parts[1], 10) - 1;
+      const day = parts[2];
+      if (monthIndex < 0 || monthIndex > 11) return "";
+      const month = months[monthIndex];
+      return `${day}-${month}-${year}`;
+    };
   const [selectedDate, setSelectedDate] = useState(null);
   const [options, setOptions] = useState([]);
   const [trainerOptions, setTrainerOptions] = useState([]);
@@ -54,13 +108,13 @@ const TrainingAttendanceForm = () => {
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogMessage, setDialogMessage] = useState("");
   const [message, setMessage] = useState("");
-   const [department, setDepartment] = useState('');
-    const [username, setUsername] = useState('');
-    const [accessRole, setAccessRole] = useState(null);
-    const [isAuthorized, setIsAuthorized] = useState(null);
-    const [employeeId, setEmployeeId] = useState(null);
-  // const [employeeId, setEmployeeId] = useState('');
-  
+  const [department, setDepartment] = useState('');
+  const [username, setUsername] = useState('');
+  const [accessRole, setAccessRole] = useState(null);
+  const [isAuthorized, setIsAuthorized] = useState(null);
+  const [employeeId, setEmployeeId] = useState(null);
+  const [isCancelChecked, setIsCancelChecked] = useState(false);
+
   useEffect(() => {
     setFormData((prev) => ({
       ...prev,
@@ -77,7 +131,7 @@ const TrainingAttendanceForm = () => {
     Schedule_Type: "",
     Trainer: "",
     Venue: "",
-    Training_Budget: "",
+    Actual_Budget: "",
   });
   const monthOptions = [
     { value: "Jan", label: "Jan" },
@@ -115,6 +169,7 @@ const TrainingAttendanceForm = () => {
     { value: "Venue11", label: "Venue11" },
     { value: "Venue12", label: "Venue12" },
   ];
+  // RESET FORM including Cancel checkbox
   const resetForm = () => {
     setFormData({
       Persons: "",
@@ -126,10 +181,14 @@ const TrainingAttendanceForm = () => {
       Schedule_Type: "",
       Trainer: "",
       Venue: "",
-      Training_Budget: "",
+      Actual_Budget: "",
       CreatedBy: "",
       selectedMonth: "",
-      EmployeeIds: "",
+      EmployeeIds: [],
+      Program_Id: "",
+      Req_Months: "",
+      Start_Month: "",
+      Forward: "",
     });
     setTrainingDetails({
       Training_Name: "",
@@ -138,12 +197,13 @@ const TrainingAttendanceForm = () => {
       Persons: "",
       Schedule_Type: "",
     });
-
     setYear("");
     setSelectedMonth(null);
     setSelectedDate(null);
     setOptions([]);
+    setIsCancelChecked(false); // <-- Reset Cancel checkbox
   };
+
   const handleTrainModeChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -175,7 +235,7 @@ const TrainingAttendanceForm = () => {
       [name]: value,
     });
   };
- useEffect(() => {
+  useEffect(() => {
     // Retrieve the department, username, and employeeId from localStorage
     const storedDepartment = localStorage.getItem('department');
     const storedUsername = localStorage.getItem('username');
@@ -270,7 +330,7 @@ const TrainingAttendanceForm = () => {
         Schedule_Type: trainingData.Schedule_Type || "",
         Trainer: trainingData.Trainer || "",
         Venue: trainingData.Venue || "",
-        Training_Budget: trainingData.Training_Budget || "",
+        Actual_Budget: trainingData.Actual_Budget || "",
         EmployeeIds: trainingData.EmployeeId
           ? trainingData.EmployeeId.split(",").map((id) => id.trim())
           : [],
@@ -305,7 +365,7 @@ const TrainingAttendanceForm = () => {
     }
   };
 
-const handleMonthYearChange = async (date) => {
+  const handleMonthYearChange = async (date) => {
     if (!date) return;
     setSelectedDate(date);
 
@@ -334,23 +394,23 @@ const handleMonthYearChange = async (date) => {
       setError(err.message);
     }
   };
-   useEffect(() => {
-   const storedEmployeeId = localStorage.getItem('employeeId');
- 
-   if (storedEmployeeId) {
-     setEmployeeId(storedEmployeeId);
-   }
-  
-   const fetchAccessRole = async () => {
-     try {
-       const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-       const data = await res.json();
- 
-       if (res.ok && data.Access_Role) {
-         // Restrict access for HR_Res and HR_HOD roles
-         if (data.Access_Role === "HOS" || data.Access_Role === "HOD" || data.Access_Role === "Res_Person") {
-           setIsAuthorized(false);
-           // Optionally redirect to unauthorized page
+  useEffect(() => {
+    const storedEmployeeId = localStorage.getItem('employeeId');
+
+    if (storedEmployeeId) {
+      setEmployeeId(storedEmployeeId);
+    }
+
+    const fetchAccessRole = async () => {
+      try {
+        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+        const data = await res.json();
+
+        if (res.ok && data.Access_Role) {
+          // Restrict access for HR_Res and HR_HOD roles
+          if (data.Access_Role === "HOS" || data.Access_Role === "HOD" || data.Access_Role === "Res_Person") {
+            setIsAuthorized(false);
+            //
            // window.location.href = '/unauthorized';
            return;
          }
@@ -427,16 +487,15 @@ const handleMonthYearChange = async (date) => {
         Program_Id: formData.Program_Id,
         Persons: formData.Persons,
         No_Hrs: formData.No_Hrs,
-        Training_Date: formData.Training_Date
-          ? new Date(formData.Training_Date).toISOString().split("T")[0]
-          : null,
+        Training_Date: formData.Training_Date,
         Training_Status: formData.selectedMonth || null,
-        Schedule_Type: formData.Schedule_Type,
-        Trainer: formData.Trainer,
-        Venue: formData.Venue,
-        Training_Budget: formData.Training_Budget || null,
+        Schedule_Type: formData.Schedule_Type || null,
+        Trainer: formData.Trainer || null,
+        Venue: formData.Venue || null,
+        Actual_Budget: formData.Actual_Budget || null,
         EmployeeIds: formData.EmployeeIds || null,
         CreatedBy: formData.CreatedBy,
+        Cancel: document.getElementById("Cancel")?.checked ? 1 : 0, // Pass as bit value
       };
       setLoading(true);
       const res = await fetch("/api/update_trainingdata_att_entry_submit", {
@@ -600,19 +659,21 @@ const font = await mergedPdf.embedFont(fontBytes);
         const height = page.getSize().height;
 
         if (index === 0) {
-          // page.drawText(emp.Username || "", {
-          //   x: 180,
-          //   y: height - 70,
-          //   size: 11,
-          //   font,
-          //   color: rgb(0, 0, 0),
-          // });
-          //      // Split Program_Name into two lines for drawing
-          const Username = emp.Username || "";
+        const Username = emp.UserName || "";
                                 const words = Username.split(" ").filter(Boolean);
-                                if (words.length > 4) {
-                                  // Draw all words in one line lower
-                                  page.drawText(Username, {
+                                if (words.length > 3) {
+                                  // Draw first 4 words on one line at top
+                                  const firstLine = words.slice(0, 3).join(" ");
+                                  const secondLine = words.slice(3).join(" ");
+                                  page.drawText(firstLine, {
+                                    x: 140,
+                                    y: height - 70,
+                                    size: 11,
+                                    font,
+                                    color: rgb(0, 0, 0),
+                                  });
+                                  // Draw remaining words on next line lower
+                                  page.drawText(secondLine, {
                                     x: 140,
                                     y: height - 85,
                                     size: 11,
@@ -630,28 +691,28 @@ const font = await mergedPdf.embedFont(fontBytes);
                                   });
                                 }
           // Customize on first page
-          page.drawText(emp.EmployeeId || "", {
+          page.drawText(String(emp.EmployeeId || "") , {
             x: 140,
             y: height - 104,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
-          page.drawText(emp.Designation || "", {
+          page.drawText(String(emp.Designation || "") , {
             x: 140,
             y: height - 138,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
-          page.drawText(emp.Section || "", {
+          page.drawText(String(emp.Section || "") , {
             x: 140,
             y: height - 173,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
-          page.drawText(emp.Department || "", {
+          page.drawText(String(emp.Department || "") , {
             x: 140,
             y: height - 208,
             size: 11,
@@ -659,44 +720,42 @@ const font = await mergedPdf.embedFont(fontBytes);
             color: rgb(0, 0, 0),
           });
           // Split Program_Name into two lines for drawing
-        // Split Program_Name into two lines for drawing
-                            const programName = emp.Program_Name || "";
-                            const wordss = programName.split(" ").filter(Boolean);
-                            if (wordss.length > 4) {
-                              const mid = Math.ceil(wordss.length / 2);
-                              const line1 = wordss.slice(0, mid).join(" ");
-                              const line2 = wordss.slice(mid).join(" ");
-                              page.drawText(line1, {
-                                x: 375,
-                                y: height - 70,
-                                size: 11,
-                                font,
-                                color: rgb(0, 0, 0),
-                              });
-                              page.drawText(line2, {
-                                x: 375,
-                                y: height - 85, // Adjust line height as needed
-                                size: 11,
-                                font,
-                                color: rgb(0, 0, 0),
-                              });
-                            } else {
-                              page.drawText(programName, {
-                                x: 375,
-                                y: height - 70,
-                                size: 11,
-                                font,
-                                color: rgb(0, 0, 0),
-                              });
-                            }
-          page.drawText(emp.Trainer || "", {
+        // Split Program_Name into two lines for drawing  
+         const ProgramName = emp.Program_Name || "";
+                                if (ProgramName.length > 35) {
+                                  const firstLine = ProgramName.substring(0, 35);
+                                  const secondLine = ProgramName.substring(35);
+                                  page.drawText(firstLine, {
+                                    x: 375,
+                                    y: height - 70,
+                                    size: 11,
+                                    font,
+                                    color: rgb(0, 0, 0),
+                                  });
+                                  page.drawText(secondLine, {
+                                    x: 375,
+                                    y: height - 85,
+                                    size: 11,
+                                    font,
+                                    color: rgb(0, 0, 0),
+                                  });
+                                } else {
+                                  page.drawText(ProgramName, {
+                                    x: 375,
+                                    y: height - 70,
+                                    size: 11,
+                                    font,
+                                    color: rgb(0, 0, 0),
+                                  });
+                                }
+          page.drawText(String(emp.Trainer || "") , {
             x: 375,
             y: height - 104,
             size: 11,
             font,
             color: rgb(0, 0, 0),
           });
-          page.drawText(emp.Train_Mode || "", {
+          page.drawText(String(emp.Train_Mode || "") , {
             x: 375,
             y: height - 139,
             size: 11,
@@ -712,11 +771,7 @@ const font = await mergedPdf.embedFont(fontBytes);
             color: rgb(0, 0, 0),
           });
 
-          const formattedTrainingDate = emp.Training_Date
-            ? new Date(emp.Training_Date).toISOString().slice(0, 10)
-            : "";
-
-          page.drawText(String(formattedTrainingDate) || "", {
+          page.drawText(String(emp.Training_Date) || "", {
             x: 375,
             y: height - 208,
             size: 11,
@@ -786,7 +841,7 @@ const programOptions = options.map((option) => ({
   }
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
-      <div className="bg-sky-400 text-white p-2  rounded-t-lg">
+      <div className="bg-sky-400 text-white p-2 rounded-t-lg">
         <h2 className="font-semibold">Training Attendance Entry</h2>
       </div>
       <form onSubmit={handleSubmit}>
@@ -797,7 +852,7 @@ const programOptions = options.map((option) => ({
             <DatePicker
               selected={selectedDate}
               onChange={handleMonthYearChange}
-              dateFormat="MM/yyyy"
+              dateFormat="MMM-yyyy"
               showMonthYearPicker
               placeholderText="Select Month and Year"
               className="w-full pl-4 pr-20 py-2 text-left border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -821,11 +876,12 @@ const programOptions = options.map((option) => ({
     (opt) => opt.value === formData.Program_Id
   ) || null}
                 options={programOptions}
-                className="w-[500px]"
+                className="w-[500px] cursor-pointer"
                 placeholder="Select Program"
                 styles={{
                   control: (base, state) => ({
                     ...base,
+                    cursor: 'pointer',
                     borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
                     boxShadow: state.isFocused
                       ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
@@ -834,6 +890,10 @@ const programOptions = options.map((option) => ({
                     minHeight: "2rem",
                     display: "flex",
                     alignItems: "center",
+                  }),
+                  option: (base) => ({
+                    ...base,
+                    cursor: 'pointer',
                   }),
                   menu: (base) => ({
                     ...base,
@@ -849,14 +909,14 @@ const programOptions = options.map((option) => ({
                 }
                 instanceId="program-select"
                 // isClearable
-              />
+                />
+              </div>
+              </div>
             </div>
-          </div>
-        </div>
-        <div>
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mt-2">
-            {/* Training Name */}
-            <div>
+            {/* Align these fields in a single row */}
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mt-2 w-full">
+              {/* Training Name */}
+              <div>
               <label className="block font-medium">Training Name:</label>
               <input
                 type="text"
@@ -864,31 +924,29 @@ const programOptions = options.map((option) => ({
                 readOnly
                 className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
               />
-            </div>
-            {/* Training Mode */}
-            <div>
-              <label className="block font-medium">Training Mode:</label>
-              <select
-                value={formData.Train_Mode}
-                onChange={handleTrainModeChange}
-                style={{
-                  pointerEvents: "none",
-                  appearance: "none",
-                  WebkitAppearance: "none",
-                  MozAppearance: "none",
-                  backgroundColor: "oklch(96.7% .003 264.542)",
-                }}
-                className="w-full p-2 border !border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                readOnly
-              >
-                <option value="" className="text-gray-100"></option>
-                <option value="Internal">Internal</option>
-                <option value="External">External</option>
-                <option value="Overseas">Overseas</option>
-              </select>
-            </div>
-
-            <div>
+              </div>
+              {/* Training Mode */}
+              <div>
+              <label className="block font-medium mb-1">Training Mode:</label>
+              <div className="flex gap-2 mt-2">
+                {["Internal", "External", "Overseas"].map((mode) => (
+                <label key={mode} className="inline-flex items-center  w-full ">
+                  <input
+                  type="radio"
+                  name="Train_Mode"
+                  value={mode}
+                  checked={formData.Train_Mode === mode}
+                  onChange={handleTrainModeChange}
+                  className="form-radio"
+                  required
+                  />
+                  <span className="ml-1">{mode}</span>
+                </label>
+                ))}
+              </div>
+              </div>
+              {/* Number of Hours */}
+              <div>
               <label className="block font-medium">Number of Hours:</label>
               <input
                 type="number"
@@ -897,343 +955,389 @@ const programOptions = options.map((option) => ({
                 onChange={handleFormDataChange}
                 className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none"
                 required
+                min="1"
               />
-            </div>
-
-            {/* Number of Persons */}
-            <div>
-              <label className="block font-medium">Number of Persons:</label>
+              </div>
+              {/* Number of Persons */}
+              <div>
+              <label htmlFor="Persons" className="block font-medium">
+                Number of Persons:
+              </label>
               <input
-                type="text"
+                type="number"
+                id="Persons"
                 name="Persons"
                 inputMode="numeric"
                 pattern="[0-9]*"
                 value={formData.Persons}
                 onChange={handleFormDataChange}
-                autoComplete="off"
                 step="1"
                 min="1"
-                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
                 required
               />
-            </div>
-
-            {/* Select Date Field */}
-            <div>
+              </div>
+              {/* Training Date */}
+              <div>
               <label className="block font-medium">Training Date:</label>
               <input
                 type="date"
                 name="Training_Date"
                 value={
-                  formData.Training_Date
-                    ? formData.Training_Date.split("T")[0]
-                    : ""
+                  convertDateToInputValue(formData.Training_Date)
                 }
-                onChange={(e) =>
-                  setFormData({ ...formData, Training_Date: e.target.value })
-                }
+                onChange={(e) => {
+                  const newDate = convertInputValueToDate(e.target.value);
+                  setFormData((prev) => ({
+                    ...prev,
+                    Training_Date: newDate,
+                    // Reset these fields if Training_Date is cleared
+                    ...(newDate === "" && {
+                      selectedMonth: "",
+                      Schedule_Type: "",
+                      Trainer: "",
+                      Venue: "",
+                      Actual_Budget: "",
+                      EmployeeIds: [],
+                    }),
+                  }));
+                  // Reset Cancel checkbox when Training_Date changes
+                  setIsCancelChecked(false);
+                }}
                 disabled={!!formData.selectedMonth}
                 className={`w-full py-2 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-blue-500 ${
-                  formData.selectedMonth ? "bg-gray-100 cursor-not-allowed" : ""
+                formData.selectedMonth ? "bg-gray-100 cursor-not-allowed" : ""
                 }`}
               />
-            </div>
-
-            <div>
-              <label className="block font-medium">Rescheduled Month:</label>
-              <Select
-                id="Training_Status"
-                name="Training_Status"
-                options={monthOptions}
-                value={
-                  monthOptions.find(
-                    (opt) => opt.value === formData.selectedMonth
-                  ) || null
-                }
-                onChange={(selectedOption) => {
-                  const newSelectedMonth = selectedOption ? selectedOption.value : "";
-                
-                  const reqMonths = formData.Req_Months;
-                  const forward = formData.Forward;
-                  setFormData((prev) => ({
-                    ...prev,
-                    selectedMonth: newSelectedMonth,
-                    EmployeeIds: [],
-                  }));
-                  if (newSelectedMonth && reqMonths) {
-                    const newMessage = `This program will be rescheduled from ${reqMonths} to ${newSelectedMonth}`;
-                    setMessage(newMessage);
-                    setIsMessageVisible(true);
-                  } else {
-                    setIsMessageVisible(false);
-                    setMessage("");
+              </div>
+          
+              <div>
+                <label className="block font-medium">Rescheduled Month:</label>
+                <Select
+                  id="Training_Status"
+                  name="Training_Status"
+                  options={monthOptions}
+                  value={
+                    monthOptions.find(
+                      (opt) => opt.value === formData.selectedMonth
+                    ) || null
                   }
-                }}
-                placeholder="Select Month"
-                isClearable
-                isSearchable
-                isDisabled={!!formData.Training_Date}
-                className="text-gray-900"
-                styles={{
-                  control: (base, state) => ({
-                    ...base,
-                    borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
-                    boxShadow: state.isFocused
-                      ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
-                      : "none",
-                    padding: "1px",
-                    borderRadius: "0.5rem",
-                    minHeight: "2rem",
-                    display: "flex",
-                    alignItems: "center",
-                  }),
-                  menu: (base) => ({
-                    ...base,
-                    zIndex: 50,
-                  }),
-                  menuPortal: (base) => ({
-                    ...base,
-                    zIndex: 9999,
-                  }),
-                }}
-                menuPortalTarget={
-                  typeof document !== "undefined" ? document.body : null
-                }
-                instanceId="month-select"
-              />
-            </div>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mt-2">
-          {/* Schedule Type */}
-
-          <div>
-            <label className="block font-medium">Schedule Type:</label>
-            <div className="mt-2">
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  name="Schedule_Type"
-                  value="Planned"
-                  checked={formData.Schedule_Type === "Planned"}
-                  onChange={handleScheduleTypeChange}
-                  required
-                  className="form-radio"
-                />
-
-                <span className="mx-3">Planned</span>
-              </label>
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  name="Schedule_Type"
-                  value="Additional"
-                  checked={formData.Schedule_Type === "Additional"}
-                  onChange={handleScheduleTypeChange}
-                  required
-                  className="form-radio"
-                />
-
-                <span className="mx-2">Additional</span>
-              </label>
-            </div>
-          </div>
-
-          {/* Trainer */}
-
-          <div>
-            <label htmlFor="Trainer" className="block font-medium">
-              Trainer
-            </label>
-            <div className="relative">
-              <Select
-                id="Trainer"
-                name="Trainer"
-                options={mappedTrainerOptions}
-                value={
-                  mappedTrainerOptions.find(
-                    (opt) => opt.value === formData.Trainer
-                  ) || null
-                }
-                onChange={(selectedOption) =>
-                  setFormData({
-                    ...formData,
-                    Trainer: selectedOption?.value || "",
-                  })
-                }
-                placeholder="Select Trainer"
-                isSearchable
-                required
-                autoComplete="off"
-                className="text-gray-900"
-                styles={{
-                  control: (base, state) => ({
-                    ...base,
-                    borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
-                    boxShadow: state.isFocused
-                      ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
-                      : "none",
-                    padding: "1px",
-                    borderRadius: "0.5rem",
-                    minHeight: "2rem",
-                    display: "flex",
-                    alignItems: "center",
-                  }),
-                  menu: (base) => ({
-                    ...base,
-                    zIndex: 50,
-                    position: "absolute",
-                  }),
-                  menuPortal: (base) => ({
-                    ...base,
-                    zIndex: 9999,
-                  }),
-                }}
-                instanceId="trainer-select"
-              />
-            </div>
-          </div>
-
-          {/* Venue */}
-          <div>
-            <label htmlFor="Venue" className="block font-medium">
-              Venue:
-            </label>
-            <div className="relative">
-              <Select
-                id="Venue"
-                name="Venue"
-                options={venueOptions}
-                value={
-                  formData.Venue
-                    ? venueOptions.find(
-                        (option) => option.value === formData.Venue
-                      )
-                    : null
-                }
                 onChange={(selectedOption) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    Venue: selectedOption ? selectedOption.value : "",
-                  }));
-                }}
-                placeholder="Select Venue"
-                className="text-gray-900 rounded-md"
-                styles={{
-                  control: (base, state) => ({
-                    ...base,
-                    backgroundColor: "#fff",
-                    borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
-                    boxShadow: state.isFocused
-                      ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
-                      : "none",
-                    padding: "1px",
-                    borderRadius: "0.5rem",
-                    minHeight: "2rem",
-                    display: "flex",
-                    alignItems: "center",
-                  }),
-                  menu: (base) => ({
-                    ...base,
-                    zIndex: 50,
-                  }),
-                }}
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block font-medium">Budget:</label>
+                    const newSelectedMonth = selectedOption ? selectedOption.value : "";
+                    const reqMonths = formData.Req_Months;
+                    setFormData((prev) => ({
+                      ...prev,
+                      selectedMonth: newSelectedMonth,
+                      EmployeeIds: [],
+                      Schedule_Type: "",
+                      Trainer: "",
+                      Venue: "",
+                      Actual_Budget: "",
+                    }));
+                    if (newSelectedMonth && reqMonths) {
+                      const newMessage = `This program will be rescheduled from ${reqMonths} to ${newSelectedMonth}`;
+                      setMessage(newMessage);
+                      setIsMessageVisible(true);
+                    } else {
+                      setIsMessageVisible(false);
+                      setMessage("");
+                    }
+                  }}
+                  placeholder="Select Month"
+                  isClearable
+                  isSearchable
+                  isDisabled={!!formData.Training_Date}
+                  className="text-gray-900 cursor-pointer"
+                  styles={{
+                    control: (base, state) => ({
+                      ...base,
+                      cursor: 'pointer',
+                      borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
+                      boxShadow: state.isFocused
+                        ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
+                        : "none",
+                      padding: "1px",
+                      borderRadius: "0.5rem",
+                      minHeight: "2rem",
+                      display: "flex",
+                      alignItems: "center",
+                    }),
+                    menu: (base) => ({
+                      ...base,
+                      zIndex: 50,
+                    }),
+                    menuPortal: (base) => ({
+                      ...base,
+                      zIndex: 9999,
+                    }),
+                  }}
+                  menuPortalTarget={
+                    typeof document !== "undefined" ? document.body : null
+                  }
+                  instanceId="month-select"
+                />
+              </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mt-2">
+                {/* Schedule Type */}
+                <div>
+                  <label className="block font-medium">Schedule Type:</label>
+                  <div className="mt-2">
+                    <label className="inline-flex items-center">
+                      <input
+                        type="radio"
+                        name="Schedule_Type"
+                        value="Planned"
+                        checked={formData.Schedule_Type === "Planned"}
+                        onChange={handleScheduleTypeChange}
+                        required
+                        className="form-radio"
+                        disabled={!!formData.selectedMonth}
+                      />
+                      <span className="mx-3">Planned</span>
+                    </label>
+                    <label className="inline-flex items-center">
+                      <input
+                        type="radio"
+                        name="Schedule_Type"
+                        value="Additional"
+                        checked={formData.Schedule_Type === "Additional"}
+                        onChange={handleScheduleTypeChange}
+                        required
+                        className="form-radio"
+                        disabled={!!formData.selectedMonth}
+                      />
+                      <span className="mx-2">Additional</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Trainer */}
+                <div>
+                  <label htmlFor="Trainer" className="block font-medium">
+                    Trainer
+                  </label>
+                  <div className="relative">
+                    <Select
+                      id="Trainer"
+                      name="Trainer"
+                    options={mappedTrainerOptions}
+                    value={
+                      mappedTrainerOptions.find(
+                        (opt) => opt.value === formData.Trainer
+                      ) || null
+                    }
+                    onChange={(selectedOption) =>
+                      setFormData({
+                        ...formData,
+                        Trainer: selectedOption?.value || "",
+                      })
+                    }
+                    placeholder="Select Trainer"
+                    isSearchable
+                    required
+                    autoComplete="off"
+                    className="text-gray-900 cursor-pointer"
+                    isDisabled={!!formData.selectedMonth}
+                    styles={{
+                      control: (base, state) => ({
+                        ...base,
+                        cursor: !!formData.selectedMonth ? "not-allowed" : "pointer",
+                        borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
+                        boxShadow: state.isFocused
+                          ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
+                          : "none",
+                        padding: "1px",
+                        borderRadius: "0.5rem",
+                        minHeight: "2rem",
+                        display: "flex",
+                        alignItems: "center",
+                        backgroundColor: !!formData.selectedMonth ? "#f3f4f6" : "#fff",
+                      }),
+                      option: (base) => ({
+                        ...base,
+                        cursor: 'pointer',
+                      }),
+                      menu: (base) => ({
+                        ...base,
+                        zIndex: 50,
+                        position: "absolute",
+                      }),
+                      menuPortal: (base) => ({
+                        ...base,
+                        zIndex: 9999,
+                      }),
+                    }}
+                    instanceId="trainer-select"
+                  />
+                  </div>
+                </div>
+
+                {/* Venue */}
+                <div>
+                  <label htmlFor="Venue" className="block font-medium">
+                    Venue:
+                  </label>
+                  <div className="relative">
+                    <Select
+                      id="Venue"
+                      name="Venue"
+                    options={venueOptions}
+                    value={
+                      formData.Venue
+                        ? venueOptions.find(
+                            (option) => option.value === formData.Venue
+                          )
+                        : null
+                    }
+                    onChange={(selectedOption) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        Venue: selectedOption ? selectedOption.value : "",
+                      }));
+                    }}
+                    placeholder="Select Venue"
+                    className="text-gray-900 rounded-md cursor-pointer"
+                    isDisabled={!!formData.selectedMonth}
+                    styles={{
+                      control: (base, state) => ({
+                        ...base,
+                        cursor: !!formData.selectedMonth ? "not-allowed" : "pointer",
+                        backgroundColor: !!formData.selectedMonth ? "#f3f4f6" : "#fff",
+                        borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
+                        boxShadow: state.isFocused
+                          ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
+                          : "none",
+                        padding: "1px",
+                        borderRadius: "0.5rem",
+                        minHeight: "2rem",
+                        display: "flex",
+                        alignItems: "center",
+                      }),
+                      option: (base) => ({
+                        ...base,
+                        cursor: 'pointer',
+                      }),
+                      menu: (base) => ({
+                        ...base,
+                        zIndex: 50,
+                      }),
+                    }}
+                  />
+                  </div>
+                </div>
+              <div>
+            <label className="block font-medium">Actual Budget:</label>
             <input
               type="number"
-              name="Training_Budget"
-              value={formData.Training_Budget}
+              name="Actual_Budget"
+              value={formData.Actual_Budget}
               onChange={handleFormDataChange}
-              disabled={formData.Train_Mode === "Internal"}
+              disabled={!!formData.selectedMonth || !(formData.Train_Mode === "Internal" || formData.Train_Mode === "External" || formData.Train_Mode === "Overseas")}
               autoComplete="off"
-              className={`w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-blue-500e ${
-                formData.Train_Mode === "Internal"
+              className={`w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-blue-500 ${
+                !!formData.selectedMonth || !(formData.Train_Mode === "Internal" || formData.Train_Mode === "External" || formData.Train_Mode === "Overseas")
                   ? "bg-gray-100 cursor-not-allowed"
                   : ""
               }`}
             />
           </div>
-          <div>
-            <label htmlFor="EmployeeIds" className="block font-medium">
-              Employee IDs:
-            </label>
-            <div className="relative">
-              <Select
-                id="EmployeeIds"
-                name="EmployeeIds"
-                closeMenuOnSelect={false}
-                components={animatedComponents}
-                isMulti
-                options={employeeOptions}
-                value={employeeOptions.filter((opt) =>
-                  (formData.EmployeeIds || []).includes(opt.value)
-                )}
-                onChange={(selectedOptions) => {
-                  const selectedValues = selectedOptions.map(
-                    (opt) => opt.value
-                  );
-                  setFormData((prev) => ({
-                    ...prev,
-                    EmployeeIds: selectedValues,
-                  }));
-                }}
-                isDisabled={!!formData.selectedMonth}
-                getOptionLabel={(e) => e.label}
-                formatOptionLabel={(data, { context }) =>
-                  context === "menu" ? data.label : data.value
-                }
-                required
-                autoComplete="off"
-                className={`w-[400px] text-gray-900 bg-white`}
-                styles={{
-                  control: (base, state) => ({
-                    ...base,
-                    backgroundColor: formData.selectedMonth ? "#f3f4f6" : "#fff",
-                    cursor: formData.selectedMonth ? "not-allowed" : "default",
-                    borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
-                    boxShadow: state.isFocused
-                      ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
-                      : "none",
-                    padding: "1px",
-                    borderRadius: "0.5rem",
-                    minHeight: "2rem",
-                    display: "flex",
-                    alignItems: "center",
-                  }),
-                  menu: (base) => ({
-                    ...base,
-                    zIndex: 50,
-                  }),
-                  multiValue: (base) => ({
-                    ...base,
-                    backgroundColor: "#f3f4f6",
-                  }),
-                  multiValueLabel: (base) => ({
-                    ...base,
-                    color: "#111827",
-                  }),
-                  multiValueRemove: (base) => ({
-                    ...base,
-                    color: "#6b7280",
-                    ":hover": {
-                      backgroundColor: "#e5e7eb",
-                      color: "#111827",
-                    },
-                  }),
-                }}
-              />
-            </div>
-          </div>
-        </div>{" "}
+       <div>
+  <label htmlFor="EmployeeIds" className="block font-medium mb-1">
+    Employee IDs:
+  </label>
+  <div className="relative">
+    <Select
+      id="EmployeeIds"
+      name="EmployeeIds"
+      closeMenuOnSelect={false}
+      components={animatedComponents}
+      isMulti
+      options={employeeOptions}
+      value={employeeOptions.filter((opt) =>
+        (formData.EmployeeIds || []).includes(opt.value)
+      )}
+      onChange={(selectedOptions) => {
+        const selectedValues = selectedOptions.map((opt) => opt.value);
+
+        // Auto-update Persons count based on selected EmployeeIds
+        setFormData((prev) => ({
+          ...prev,
+          EmployeeIds: selectedValues,
+          Persons: selectedValues.length.toString(), // auto-updating
+        }));
+      }}
+      isDisabled={!!formData.selectedMonth}
+      getOptionLabel={(e) => e.label}
+      formatOptionLabel={(data, { context }) =>
+        context === "menu" ? data.label : data.value
+      }
+      required
+      autoComplete="off"
+      className=" text-gray-900 bg-white cursor-pointer"
+      styles={{
+        control: (base, state) => ({
+          ...base,
+          cursor: formData.selectedMonth ? "not-allowed" : "pointer",
+          backgroundColor: formData.selectedMonth ? "#f3f4f6" : "#fff",
+          borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
+          boxShadow: state.isFocused
+            ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
+            : "none",
+          padding: "1px",
+          borderRadius: "0.5rem",
+          minHeight: "2rem",
+          display: "flex",
+          alignItems: "center",
+        }),
+        option: (base) => ({
+          ...base,
+          cursor: 'pointer',
+        }),
+        menu: (base) => ({
+          ...base,
+          zIndex: 50,
+        }),
+        multiValue: (base) => ({
+          ...base,
+          backgroundColor: "#f3f4f6",
+        }),
+        multiValueLabel: (base) => ({
+          ...base,
+          color: "#111827",
+        }),
+        multiValueRemove: (base) => ({
+          ...base,
+          color: "#6b7280",
+          ":hover": {
+            backgroundColor: "#e5e7eb",
+            color: "#111827",
+          },
+        }),
+      }}
+    />
+  </div>
+</div>
+<div className="flex items-center gap-2 mt-6">
+          <label htmlFor="Cancel" className="font-medium">
+            Cancel
+          </label>
+          <input
+                      type="checkbox"
+                      id="Cancel"
+                      name="Cancel"
+                      className="w-5 h-4 cursor-pointer"
+                      checked={isCancelChecked}
+                      onChange={() => setIsCancelChecked((prev) => !prev)}
+                      disabled={!!formData.Training_Date}
+                    />
+        </div>
+</div>{" "}
         <br></br>
         <div className="flex justify-end mt-1" style={{ marginRight: "100px" }}>
           <button
             type="submit"
-            className="px-6 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
+            className="px-6 py-2 cursor-pointer text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
           >
             Submit
           </button>
@@ -1279,7 +1383,7 @@ const programOptions = options.map((option) => ({
                       onClick={() =>
                         generatePdfForEmployees(formData.Program_Id)
                       }
-                      className="flex items-center justify-end bg-gray-600 text-white px-4 py-2 mx-2 rounded-sm hover:bg-gray-900 transition"
+                      className="flex items-center cursor-pointer justify-end bg-gray-600 text-white px-4 py-2 mx-2 rounded-sm hover:bg-gray-900 transition"
                     >
                       <FaPrint />
                     </button>
@@ -1352,7 +1456,7 @@ const programOptions = options.map((option) => ({
                               {item.Designation}
                             </td>
                             <td className="px-4 py-2 border">
-                              {item.DOJ ? item.DOJ.split("T")[0] : ""}
+                              {item.DOJ}
                             </td>
                           </tr>
                         ))

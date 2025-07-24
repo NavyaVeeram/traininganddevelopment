@@ -15,6 +15,8 @@ export default async function handler(req, res) {
       `EXEC Get_Training_Budget_First_Report @Year_No = ${parseInt(year, 10)}`
     );
 
+    console.log('Stored procedure result:', result); // Debug log
+
     res.status(200).json(result);
   } catch (error) {
     console.error('Error executing stored procedure:', error);

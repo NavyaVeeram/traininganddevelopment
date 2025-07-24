@@ -24,43 +24,49 @@ const EmployeeHistoryList = () => {
   const [error, setError] = useState(null);
   const [tableSearchTerm, setTableSearchTerm] = useState("");
   const dropdownRef = useRef(null);
-const [selectedEmployee, setSelectedEmployee] = useState(null);
-    const [accessRole, setAccessRole] = useState(null);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [accessRole, setAccessRole] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(null);
-   useEffect(() => {
-       const storedEmployeeId = localStorage.getItem('employeeId');
-     
-       if (storedEmployeeId) {
-         setEmployeeId(storedEmployeeId);
-       }
-      
-       const fetchAccessRole = async () => {
-         try {
-           const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-           const data = await res.json();
-     
-           if (res.ok && data.Access_Role) {
-             // Restrict access for HR_Res and HR_HOD roles
-             if (data.Access_Role === "Res_Person" || data.Access_Role === "HOS" || data.Access_Role === "HOD") {
-               setIsAuthorized(false);
-               // Optionally redirect to unauthorized page
-               // window.location.href = '/unauthorized';
-               return;
-             }
-             setAccessRole(data.Access_Role);
-             setIsAuthorized(true);
-           } else {
-             setIsAuthorized(false);
-           }
-         } catch (error) {
-           console.error('Error fetching access role:', error);
-           setIsAuthorized(false);
-         }
-       };
-     
-       fetchAccessRole();
-     }, []);
-     
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    // Removed setting EmployeeId from localStorage to avoid default display in Select dropdown
+
+    const fetchAccessRole = async () => {
+      try {
+        const res = await fetch(
+          `/api/get_access_role?employeeId=${localStorage.getItem(
+            "employeeId"
+          )}`
+        );
+        const data = await res.json();
+
+        if (res.ok && data.Access_Role) {
+          // Restrict access for HR_Res and HR_HOD roles
+          if (
+            data.Access_Role === "Res_Person" ||
+            data.Access_Role === "HOS" ||
+            data.Access_Role === "HOD"
+          ) {
+            setIsAuthorized(false);
+            // Optionally redirect to unauthorized page
+            // window.location.href = '/unauthorized';
+            return;
+          }
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+        }
+      } catch (error) {
+        console.error("Error fetching access role:", error);
+        setIsAuthorized(false);
+      }
+    };
+
+    fetchAccessRole();
+  }, []);
+
   // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(event) {
@@ -123,19 +129,31 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
   const filteredData = sortedData.filter(
     (trainer) =>
       tableSearchTerm === "" ||
-      trainer.EmployeeId?.toLowerCase().includes(tableSearchTerm.toLowerCase()) ||
-      trainer.Training_Name?.toLowerCase().includes(tableSearchTerm.toLowerCase()) ||
-      trainer.Program_Name?.toLowerCase().includes(tableSearchTerm.toLowerCase()) ||
-      trainer.Train_Mode?.toLowerCase().includes(tableSearchTerm.toLowerCase()) ||
+      trainer.EmployeeId?.toLowerCase().includes(
+        tableSearchTerm.toLowerCase()
+      ) ||
+      trainer.Training_Name?.toLowerCase().includes(
+        tableSearchTerm.toLowerCase()
+      ) ||
+      trainer.Program_Name?.toLowerCase().includes(
+        tableSearchTerm.toLowerCase()
+      ) ||
+      trainer.Train_Mode?.toLowerCase().includes(
+        tableSearchTerm.toLowerCase()
+      ) ||
       trainer.No_Hrs?.toString().includes(tableSearchTerm) ||
       trainer.Training_Date?.toString().includes(tableSearchTerm)
   );
 
-  const totalPages = rowsPerPage === "All" ? 1 : Math.ceil(filteredData.length / rowsPerPage);
+  const totalPages =
+    rowsPerPage === "All" ? 1 : Math.ceil(filteredData.length / rowsPerPage);
   const paginatedData =
     rowsPerPage === "All"
       ? filteredData
-      : filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+      : filteredData.slice(
+          (currentPage - 1) * rowsPerPage,
+          currentPage * rowsPerPage
+        );
 
   useEffect(() => {
     const fetchEmployeeOptions = async () => {
@@ -171,51 +189,57 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
   };
 
   const fetchQualifiedTrainers = async (empId) => {
-  if (!empId) return;
-  setLoading(true);
-  setError(null);
+    if (!empId) return;
+    setLoading(true);
+    setError(null);
 
-  try {
-    const url = `/api/get_employee_history_table?EmployeeId=${empId}`;
-    const res = await fetch(url);
-    const data = await res.json();
+    try {
+      const url = `/api/get_employee_history_table?EmployeeId=${empId}`;
+      const res = await fetch(url);
+      const data = await res.json();
 
-    if (res.status === 200) {
-      if (Array.isArray(data)) {
-        const formattedData = data.map(item => ({
-          ...item,
-          Training_DateFormatted: item.Training_Date || "", // Use the formatted string directly
-        }));
-
-        setQualifiedTrainers(formattedData);
-
-        if (data.length === 0) {
+      if (res.status === 200) {
+        if (Array.isArray(data)) {
+          const formatDateYYYYMMDD = (date) => {
+            const d = new Date(date);
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, "0");
+            const day = String(d.getDate()).padStart(2, "0");
+            return `${year}-${month}-${day}`;
+          };
+          const formattedData = data.map((item) => ({
+            ...item,
+            Training_DateFormatted: item.Training_Date
+              ? formatDateYYYYMMDD(item.Training_Date)
+              : "",
+          }));
+          setQualifiedTrainers(formattedData);
+          if (data.length === 0) {
+            setError("No data found for the selected employee.");
+          }
+        } else if (Object.keys(data).length === 0) {
+          setQualifiedTrainers([]);
           setError("No data found for the selected employee.");
+        } else {
+          console.error("Unexpected response:", data);
+          setQualifiedTrainers([]);
+          setError(data.message || "Error fetching qualified trainers data");
         }
-      } else if (Object.keys(data).length === 0) {
+      } else if (res.status === 404) {
         setQualifiedTrainers([]);
-        setError("No data found for the selected employee.");
+        setError(null);
       } else {
         console.error("Unexpected response:", data);
         setQualifiedTrainers([]);
         setError(data.message || "Error fetching qualified trainers data");
       }
-    } else if (res.status === 404) {
-      setQualifiedTrainers([]);
-      setError(null);
-    } else {
-      console.error("Unexpected response:", data);
-      setQualifiedTrainers([]);
-      setError(data.message || "Error fetching qualified trainers data");
+    } catch (err) {
+      console.error("Fetch error:", err);
+      setError("Failed to fetch qualified trainers data");
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error("Fetch error:", err);
-    setError("Failed to fetch qualified trainers data");
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const handleEmployeeIdChange = async (selectedOption) => {
     if (!selectedOption) {
@@ -252,7 +276,9 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`/api/get_emp_history?EmployeeId=${selectedEmployeeId}`);
+        const res = await fetch(
+          `/api/get_emp_history?EmployeeId=${selectedEmployeeId}`
+        );
         const data = await res.json();
 
         if (res.status === 200) {
@@ -334,7 +360,10 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
     },
     {
       name: "Training Date",
-      selector: (row) => (row.Training_Date ? new Date(row.Training_Date).toLocaleDateString() : ""),
+      selector: (row) =>
+        row.Training_Date
+          ? new Date(row.Training_Date).toLocaleDateString()
+          : "",
       sortable: true,
     },
   ];
@@ -345,15 +374,60 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
     selectAllRowsItem: true,
     selectAllRowsItemText: "All",
   };
- if (isAuthorized === null) {
-    return (
-      <div>Loading..</div>
-      // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
-      //   <div className="bg-white p-10 rounded shadow text-center">
-      //     <h2 className="text-2xl font-bold">Loading...</h2>
-      //   </div>
-      // </div>
-    );
+
+  const handleFileUpload = async (event, item) => {
+    const file = event.target.files[0];
+    if (!file || file.type !== "application/pdf") {
+      alert("Please upload a valid PDF file.");
+      return;
+    }
+    const storedEmployeeId = localStorage.getItem("employeeId");
+    const year = new Date(item.Training_Date).getFullYear();
+    const filename = `${item.Program_Id}_${item.EmployeeId}_${year}.pdf`;
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("filename", filename);
+    formData.append("Program_Id", item.Program_Id);
+    formData.append("Employee_Id", item.EmployeeId);
+    formData.append("CreatedBy", storedEmployeeId);
+    console.log("📤 Uploading with form data:", {
+      file,
+      filename,
+      Program_Id: item.Program_Id,
+      Employee_Id: item.EmployeeId,
+      CreatedBy: storedEmployeeId,
+    });
+
+    const res = await fetch("/api/insert_upload_emp_certificate_status", {
+      method: "POST",
+      body: formData,
+    });
+
+    const contentType = res.headers.get("content-type");
+
+    let result = {};
+    if (contentType && contentType.includes("application/json")) {
+      result = await res.json();
+    }
+
+    if (res.ok) {
+      alert("File uploaded successfully!");
+      await fetchQualifiedTrainers(item.EmployeeId);
+    } else {
+      console.error("Server error:", result);
+      alert(result.message || "Upload failed");
+    }
+  };
+  const handleViewFile = (item) => {
+    const year = new Date(item.Training_Date).getFullYear();
+    const filename = `${item.Program_Id}_${item.EmployeeId}_${year}.pdf`;
+    const url = `/Emp_Certificates/${filename}`;
+    window.open(url, "_blank");
+  };
+
+  if (isAuthorized === null) {
+    return <div>Loading..</div>;
   }
 
   if (isAuthorized === false) {
@@ -366,6 +440,7 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
       </div>
     );
   }
+
   return (
     <div>
       <div className="max-w-full mx-auto bg-white p-2 rounded-lg w-full">
@@ -376,40 +451,52 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
         <br />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label htmlFor="employee" className="block text-sm font-medium text-gray-900">Select EmployeeId:</label>
+            <label
+              htmlFor="employee"
+              className="block text-sm font-medium text-gray-900"
+            >
+              Select EmployeeId:
+            </label>
             <div>
-                   <Select
-               options={options}
-               value={options.find((o) => o.value === EmployeeId) || null}
-               onChange={handleEmployeeIdChange}
-               placeholder="Select EmployeeId"
-               styles={{
-                control: (base, state) => ({   
-                  ...base,
-                  borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
-                  boxShadow: state.isFocused
-                    ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
-                    : "none",
-                  borderRadius: "0.5rem",
-                  minHeight: "2rem",
-                  display: "flex",
-                  alignItems: "center",
-                }),
-                menu: (base) => ({
-                  ...base,
-                  zIndex: 50,
-                }),
-                menuPortal: (base) => ({
-                  ...base,
-                  zIndex: 9999,
-                }),
-              }}
-            />
-          </div>
+              <Select
+                options={options}
+                value={options.find((o) => o.value === EmployeeId) || null}
+                onChange={handleEmployeeIdChange}
+                placeholder="Select EmployeeId"
+                styles={{
+                  control: (base, state) => ({
+                    ...base,
+                    cursor: "pointer",
+                    borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
+                    boxShadow: state.isFocused
+                      ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
+                      : "none",
+                    borderRadius: "0.5rem",
+                    minHeight: "2rem",
+                    display: "flex",
+                    alignItems: "center",
+                  }),
+                  option: (base) => ({
+                    ...base,
+                    cursor: "pointer",
+                  }),
+                  menu: (base) => ({
+                    ...base,
+                    zIndex: 50,
+                  }),
+                  menuPortal: (base) => ({
+                    ...base,
+                    zIndex: 9999,
+                  }),
+                }}
+              />
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900">Username</label>
+            <label className="block text-sm font-medium text-gray-900">
+              Username
+            </label>
             <input
               type="text"
               value={trainingDetails.Username || ""}
@@ -418,7 +505,9 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900">Department</label>
+            <label className="block text-sm font-medium text-gray-900">
+              Department
+            </label>
             <input
               type="text"
               value={trainingDetails.Department || ""}
@@ -427,7 +516,9 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900">Section</label>
+            <label className="block text-sm font-medium text-gray-900">
+              Section
+            </label>
             <input
               type="text"
               value={trainingDetails.Section || ""}
@@ -439,7 +530,9 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-2">
           <div>
-            <label className="block text-sm font-medium text-gray-900">Designation</label>
+            <label className="block text-sm font-medium text-gray-900">
+              Designation
+            </label>
             <input
               type="text"
               value={trainingDetails.Designation || ""}
@@ -448,7 +541,9 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900">Emp Type</label>
+            <label className="block text-sm font-medium text-gray-900">
+              Emp Type
+            </label>
             <input
               type="text"
               value={trainingDetails.Emp_Type || ""}
@@ -457,7 +552,9 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900">Emp Category</label>
+            <label className="block text-sm font-medium text-gray-900">
+              Emp Category
+            </label>
             <input
               type="text"
               value={trainingDetails.Emp_Category || ""}
@@ -466,7 +563,9 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900">Total Hrs</label>
+            <label className="block text-sm font-medium text-gray-900">
+              Total Hrs
+            </label>
             <input
               type="text"
               value={trainingDetails.No_Hrs}
@@ -475,27 +574,38 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900">DOJ</label>
+            <label className="block text-sm font-medium text-gray-900">
+              DOJ
+            </label>
             <input
               type="text"
-              value={trainingDetails.DOJFormatted || ""}
+              value={trainingDetails.DOJ ?? ""}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
           </div>
           <div>
-              <label className="block text-sm font-medium text-gray-900">Status</label>
+            <label className="block text-sm font-medium text-gray-900">
+              Status
+            </label>
             <input
               type="text"
               value={(() => {
-                if (trainingDetails.IsActive === 1 || trainingDetails.IsActive === "1") return "Active";
-                if (trainingDetails.IsActive === 0 || trainingDetails.IsActive === "0") return "Inactive";
+                if (
+                  trainingDetails.IsActive === 1 ||
+                  trainingDetails.IsActive === "1"
+                )
+                  return "Active";
+                if (
+                  trainingDetails.IsActive === 0 ||
+                  trainingDetails.IsActive === "0"
+                )
+                  return "Inactive";
                 return "";
               })()}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
-
           </div>
         </div>
 
@@ -505,7 +615,9 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
             <div className="card-header  text-black rounded-t-lg py-3 px-3">
               <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center">
                 <div className="flex flex-col">
-                  <h2 className="text-sm font-bold">Employee Training History</h2>
+                  <h2 className="text-sm font-bold">
+                    Employee Training History
+                  </h2>
                 </div>
               </div>
             </div>
@@ -519,7 +631,11 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
                       className="border p-1 rounded bg-secondary"
                       value={rowsPerPage}
                       onChange={(e) => {
-                        setRowsPerPage(e.target.value === "All" ? "All" : parseInt(e.target.value));
+                        setRowsPerPage(
+                          e.target.value === "All"
+                            ? "All"
+                            : parseInt(e.target.value)
+                        );
                         setCurrentPage(1);
                       }}
                     >
@@ -559,8 +675,8 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
                           { key: "Train_Mode", label: "Training Mode" },
                           { key: "No_Hrs", label: "Hours" },
                           { key: "Training_Date", label: "Training Date" },
-                           { key: "", label: "Upload" },
-                            { key: "  ", label: "View" },
+                          { key: "  ", label: "Upload" },
+                          { key: "", label: "View" },
                         ].map(({ key, label }, index) => (
                           <th
                             key={key}
@@ -570,7 +686,11 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
                             onClick={() => handleSort(key)}
                           >
                             {label}{" "}
-                            {sortConfig.key === key ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}
+                            {sortConfig.key === key
+                              ? sortConfig.direction === "asc"
+                                ? "▲"
+                                : "▼"
+                              : "↕"}
                           </th>
                         ))}
                       </tr>
@@ -579,16 +699,43 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
                       {paginatedData.length > 0 ? (
                         paginatedData.map((item, index) => (
                           <tr key={index} className="hover:bg-muted border">
-                            <td className="px-4 py-2 border left-0 bg-white z-10">{item.EmployeeId}</td>
-                            <td className="px-4 py-2 border">{item.Training_Name}</td>
-                            <td className="px-4 py-2 border">{item.Program_Name}</td>
-                            <td className="px-4 py-2 border">{item.Train_Mode}</td>
+                            <td className="px-4 py-2 border left-0 bg-white z-10">
+                              {item.EmployeeId}
+                            </td>
+                            <td className="px-4 py-2 border">
+                              {item.Training_Name}
+                            </td>
+                            <td className="px-4 py-2 border">
+                              {item.Program_Name}
+                            </td>
+                            <td className="px-4 py-2 border">
+                              {item.Train_Mode}
+                            </td>
                             <td className="px-4 py-2 border">{item.No_Hrs}</td>
                             <td className="px-4 py-2 border">
-                              {item.Training_Date ? item.Training_DateFormatted : ""}
+                              {item.Training_Date}
                             </td>
-                            <td className="px-4 py-2 border"></td>
-                            <td className="px-4 py-2 border"></td>
+                            <td className="px-4 py-2 border">
+                              <input
+                                disabled={uploading}
+                                type="file"
+                                accept="application/pdf"
+                                onChange={(e) => handleFileUpload(e, item)}
+                              />
+                            </td>
+                            <td className="px-4 py-2 border">
+                              <button
+                                onClick={() => handleViewFile(item)}
+                                className={`text-blue-600 hover:underline ${
+                                  item.IsUpload
+                                    ? ""
+                                    : "text-gray-400 cursor-not-allowed"
+                                }`}
+                                disabled={!item.IsUpload}
+                              >
+                                View
+                              </button>
+                            </td>
                           </tr>
                         ))
                       ) : (
@@ -641,7 +788,9 @@ const [selectedEmployee, setSelectedEmployee] = useState(null);
                     ))}
                     <button
                       className="px-3 py-1 border rounded"
-                      onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                      onClick={() =>
+                        setCurrentPage((p) => Math.min(p + 1, totalPages))
+                      }
                       disabled={currentPage === totalPages}
                     >
                       {">"}

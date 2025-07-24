@@ -428,7 +428,7 @@ const TrainingAgencies = () => {
               >
                 <div className="flex items-center justify-start gap-2">
                   <div>
-                    <span>Contact-2</span>
+                    <span>Contact_2</span>
                   </div>
                   <div>{renderSortIcon("Contact_2")}</div>
                 </div>
@@ -563,7 +563,7 @@ const TrainingAgencies = () => {
                 <button
                   key={i}
                   className={`px-3 py-1 border rounded ${
-                    currentPage === i + 1 ? "bg-primary text-white" : ""
+                    currentPage === i + 1 ? "bg-black text-white" : ""
                   }`}
                   onClick={() => setCurrentPage(i + 1)}
                 >

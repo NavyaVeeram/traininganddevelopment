@@ -6,7 +6,9 @@ import Select from "react-select";
 import EmailRejection from "../email/EmailRejection";
 import EmailApprovalWeek from "../email/EmailApprovalforhrhod";
 import FullYearCalendar from "../calendar/page";
-import MonthCount from "./monthcount"; // Import the MonthCount component
+import dynamic from "next/dynamic";
+
+const MonthCount = dynamic(() => import("./monthcount"), { ssr: false }); // Dynamically import MonthCount with no SSR
 
 export default function TrainingDataTable() {
   // Add tab state
@@ -28,6 +30,11 @@ export default function TrainingDataTable() {
   const [data, setData] = useState([]);
   const [accessRole, setAccessRole] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     const storedDepartment = localStorage.getItem('department');
@@ -165,20 +172,32 @@ export default function TrainingDataTable() {
     setIsModalOpen(false);
   };
 
+  // Improved handleInputChange to parse Training_Budget as number
   const handleInputChange = (e, key) => {
     setEditingData(prevData => {
-      const newData = {
+      let value = e.target.value;
+      if (key === "Training_Budget") {
+        value = value === "" ? "" : parseFloat(value);
+        if (isNaN(value)) value = "";
+      }
+      return {
         ...prevData,
-        [key]: e.target.value
+        [key]: value,
       };
-      return newData;
     });
   };
 
   const handleUpdate = async () => {
-    if (!editingData?.Week || editingData.Week.trim() === "") {
-      alert("Week field should not be empty.");
-      setError("Week field is required and cannot be empty.");
+    if (
+      !editingData?.Week ||
+      editingData.Week.trim() === "" ||
+      editingData.Training_Budget === "" ||
+      editingData.Training_Budget === undefined ||
+      editingData.Training_Budget === null ||
+      isNaN(Number(editingData.Training_Budget))
+    ) {
+      alert("Week and Training_Budget are required and must be valid.");
+      setError("Week and Training_Budget are required and must be valid.");
       return;
     }
     try {
@@ -187,11 +206,15 @@ export default function TrainingDataTable() {
 
       console.log('Updating with data:', editingData);
 
-      const updatedDataWithCreatedBy = { ...editingData, CreatedBy: employeeId };
+      const updatedDataWithCreatedBy = {
+        ...editingData,
+        Training_Budget: Number(editingData.Training_Budget),
+        CreatedBy: employeeId,
+      };
 
       const res = await fetch(`/api/update_approval_form_week?Program_Id=${programId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedDataWithCreatedBy),
       });
       const responseData = await res.json();
@@ -199,17 +222,19 @@ export default function TrainingDataTable() {
         alert(` ${responseData.message}`);
 
         const updatedList = trainingData.map((item) =>
-          item.Program_Id === programId ? { ...item, ...editingData } : item
+          item.Program_Id === programId
+            ? { ...item, ...editingData, Training_Budget: Number(editingData.Training_Budget) }
+            : item
         );
         setTrainingData(updatedList);
-        console.log('Updated trainingData:', updatedList);
+        console.log("Updated trainingData:", updatedList);
         setIsModalOpen(false);
         setError("");
       } else {
-        alert(`Error: ${responseData.message || 'Unknown error'}`);
+        alert(`Error: ${responseData.message || "Unknown error"}`);
       }
     } catch (err) {
-      setError('Failed to update the record');
+      setError("Failed to update the record");
     }
   };
 
@@ -319,116 +344,136 @@ export default function TrainingDataTable() {
               <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("No_Hrs")}>Hours {sortConfig.key === "No_Hrs" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
               <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("No_Times")}>Times {sortConfig.key === "No_Times" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
               <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Req_Months")}>Months {sortConfig.key === "Req_Months" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Week")}>Week {sortConfig.key === "Week" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-              {accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HOD" && (
-                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Evaluation_Period")}>Evaluation Period {sortConfig.key === "Evaluation_Period" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-              )}
+            <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Evaluation_Period")}>Evaluation Period {sortConfig.key === "Evaluation_Period" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
+             <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Week")}>Week {sortConfig.key === "Week" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
+                 <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Training_Budget")}>Training Budget {sortConfig.key === "Training_Budget" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
               <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("IsActive")}>IsActive {sortConfig.key === "IsActive" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
               <th className="border p-2 text-left">Actions</th>
             </tr>
           </thead>
           <tbody>
             {paginatedData.length > 0 ? (
-              paginatedData.map((item) => (
-                <tr key={item.Program_Id} className="hover:bg-gray-50">
-                  <td className="border p-2 text-center">{item.Training_Name}</td>
-                  <td className="border p-2 text-center">{item.Year_No}</td>
-                  <td className="border p-2 text-center">{item.Department}</td>
-                  <td className="border p-2 text-center">{item.Section}</td>
-                  <td className="border p-2 text-center">{item.Program_Name}</td>
-                  <td className="border p-2 text-center">{item.Train_Mode}</td>
-                  <td className="border p-2 text-center">{item.Train_Purpose}</td>
-                  <td className="border p-2 text-center">{item.Persons}</td>
-                  <td className="border p-2 text-center">{item.No_Hrs}</td>
-                  <td className="border p-2 text-center">{item.No_Times}</td>
-                  <td className="border p-2 text-center">{item.Req_Months}</td>
-                  <td className="border p-2 text-center">{item.Week}</td>
-                  <td className="border p-2 text-center">{item.Evaluation_Period}</td>
-                  <td className="border p-2 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={!!item.IsActive}
-                        className="accent-green-500 cursor-pointer"
-                        onChange={() => handleActiveToggle(item.Program_Id, item.IsActive)}
-                      />
-                      <span className={item.IsActive ? "text-green-600 font-medium" : "text-red-500 font-medium"}>
-                        {item.IsActive ? "Active" : "Inactive"}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="border p-2">
-                    <div className="flex justify-center gap-2">
-                      <button onClick={() => handleEdit(item)}>
-                        <FaEdit className="text-blue-500 cursor-pointer" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
+                    paginatedData.map((item) => (
+                      <tr key={item.Program_Id} className="hover:bg-gray-50">
+                        <td className="border p-2 text-left">{item.Training_Name}</td>
+                        <td className="border p-2 text-left">{item.Year_No}</td>
+                        <td className="border p-2 text-left">{item.Department}</td>
+                        <td className="border p-2 text-left">{item.Section}</td>
+                        <td className="border p-2 text-left">{item.Program_Name}</td>
+                        <td className="border p-2 text-left">{item.Train_Mode}</td>
+                        <td className="border p-2 text-left">{item.Persons}</td>
+                        <td className="border p-2 text-left">{item.No_Hrs}</td>
+                        <td className="border p-2 text-left">{item.No_Times}</td>
+                        <td className="border p-2 text-left">{item.Req_Months}</td>
+                        <td className="border p-2 text-left">{item.Week}</td>
+                        <td className="border p-2 text-left">{item.Training_Budget}</td>
+                        <td className="border p-2 text-left">{item.Evaluation_Period}</td>
+                        <td className="border p-2 text-left">
+                          <div className="flex items-center justify-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={!!item.IsActive}
+                              className="accent-green-500 cursor-pointer"
+                              onChange={() =>
+                                handleActiveToggle(
+                                  item.Program_Id,
+                                  item.IsActive
+                                )
+                              }
+                            />
+                            <span
+                              className={
+                                item.IsActive
+                                  ? "text-green-600 font-medium"
+                                  : "text-red-500 font-medium"
+                              }
+                            >
+                              {item.IsActive ? "Active" : "Inactive"}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="border p-2">
+                          <div className="flex justify-center gap-2">
+                            <button onClick={() => handleEdit(item)}>
+                              <FaEdit className="text-blue-500 cursor-pointer" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                     ) : (
               <tr>
-                <td colSpan={15} className="text-center p-4">
+                <td colSpan={15} className="text-center border p-4">
                   No data found.
                 </td>
               </tr>
             )}
           </tbody>
         </table>
-
-        {/* Pagination */}
-        {rowsPerPage !== "All" && filteredData.length > 0 && (
-          <div className="flex justify-between items-center mt-4 text-sm">
-            <span>
-              Showing{" "}
-              {filteredData.length > 0
-                ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
-                  currentPage * rowsPerPage,
-                  filteredData.length
-                )} of ${filteredData.length}`
-                : "0"}{" "}
-              entries
-            </span>
-            <div className="flex gap-1">
-              <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1}
-                className="px-3 py-1 border rounded">
-                {"<<"}
-              </button>
-              <button onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} disabled={currentPage === 1}
-                className="px-3 py-1 border rounded">
-                {"<"}
-              </button>
-              {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i}
-                  className={`px-3 py-1 border rounded ${currentPage === i + 1 ? "bg-black text-primary-foreground" : ""
-                    }`}
-                  onClick={() => setCurrentPage(i + 1)}
-                  type="button"
-                >
-                  {i + 1}
-                </button>
-              ))}
-              <button
-                className="px-3 py-1 border rounded"
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-              >
-                {">"}
-              </button>
-              <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages}
-                className="px-3 py-1 border rounded">
-                {">>"}
-              </button>
-            </div>
-          </div>
-        )}
+     <div className="flex flex-wrap justify-between items-center mt-4 space-y-2">
+        <div style={{ fontSize: "14px" }}>
+          Showing{" "}
+          {paginatedData.length > 0
+            ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
+                currentPage * rowsPerPage,
+                paginatedData.length
+              )} of ${paginatedData.length} entries`
+            : "0 entries"}
+        </div>
+        <div className="flex space-x-2" style={{ fontSize: "14px" }}>
+          <button
+            type="button"
+            className="px-3 py-1 border cursor-pointer rounded"
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
+          >
+            {"<<"}
+          </button>
+          <button
+            type="button"
+            className="px-3 py-1 border cursor-pointer  rounded"
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+          >
+            {"<"}
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i}
+              type="button"
+              className={`px-3 py-1 border cursor-pointer  rounded ${
+                currentPage === i + 1 ? "bg-black text-primary-foreground" : ""
+              }`}
+              onClick={() => setCurrentPage(i + 1)}
+            >
+              {i + 1}
+            </button>
+          ))}
+          <button
+            type="button"
+            className="px-3 py-1 border cursor-pointer  rounded"
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+          >
+            {">"}
+          </button>
+          <button
+            type="button"
+            className="px-3 py-1 border cursor-pointer  rounded"
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={currentPage === totalPages}
+          >
+            {">>"}
+          </button>
+        </div>
+      </div>
 
         {/* Approval Button */}
         {paginatedData.length > 0 && (
           <div className="flex justify-end mt-6 gap-x-2">
             <EmailApprovalWeek
               weeks={paginatedData.map(item => item.Week)}
+              Training_Budget={paginatedData.map(item => item.Training_Budget)}
             />
             <EmailRejection />
           </div>
@@ -437,9 +482,20 @@ export default function TrainingDataTable() {
     );
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!username) {
+    return <div>Loading user information...</div>;
+  }
 
   // Unauthorized view
+  if (isAuthorized === null) {
+    // Authorization not yet determined, render loading or null to avoid hydration mismatch
+    return <div>Loading authorization...</div>;
+  }
+
   if (!isAuthorized) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
@@ -463,7 +519,7 @@ export default function TrainingDataTable() {
             <div className="flex space-x-1 bg-sky-500 rounded-lg p-1">
               <button
                 onClick={() => setActiveTab('approval')}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                className={`px-3 py-1 rounded-md cursor-pointer text-xs font-medium transition-colors ${
                   activeTab === 'approval'
                     ? 'bg-white text-sky-600 shadow-sm'
                     : 'text-white hover:bg-sky-300'
@@ -473,7 +529,7 @@ export default function TrainingDataTable() {
               </button>
               <button
                 onClick={() => setActiveTab('other')}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                className={`px-3 py-1 rounded-md cursor-pointer text-xs font-medium transition-colors ${
                   activeTab === 'other'
                     ? 'bg-white text-sky-600 shadow-sm'
                     : 'text-white hover:bg-sky-300'
@@ -511,13 +567,13 @@ export default function TrainingDataTable() {
               <h3 className="bg-sky-400 text-white p-2 flex justify-between rounded-t-lg">Update Approval Details</h3>
               {editingData && (
                 <div>
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                  <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-4">
                     <div>
                       <label className="block font-semibold">Training Name</label>
                       <input
                         type="text"
                         value={editingData.Training_Name}
-                        onChange={(e) => handleInputChange(e, 'Training_Name')}
+                        onChange={(e) => handleInputChange(e, "Training_Name")}
                         readOnly
                         className="border p-2 w-70 bg-gray-200  border-gray-300 cursor-not-allowed rounded-md"
                       />
@@ -527,7 +583,7 @@ export default function TrainingDataTable() {
                       <input
                         type="text"
                         value={editingData.Year_No}
-                        onChange={(e) => handleInputChange(e, 'Year_No')}
+                        onChange={(e) => handleInputChange(e, "Year_No")}
                         readOnly
                         className="border p-2 w-70 bg-gray-200  border-gray-300 cursor-not-allowed rounded-md"
                       />
@@ -620,7 +676,7 @@ export default function TrainingDataTable() {
                         className="border p-2 w-70 rounded-md bg-gray-200 cursor-not-allowed"
                       />
                     </div>
-                    <div className="mb-10">
+                    <div >
                       <label className="block font-semibold w-32">Months</label>
 
                       <Select
@@ -649,18 +705,37 @@ export default function TrainingDataTable() {
                       <label className="block font-semibold ">Week No</label>
                       <input
                         type="text"
-                        value={editingData.Week ?? ''}
-                        onChange={(e) => handleInputChange(e, 'Week')}
+                        value={editingData.Week ?? ""}
+                        onChange={(e) => handleInputChange(e, "Week")}
                         className="border p-2 w-70 rounded-md"
                         autoComplete="off"
-                        required />
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-semibold ">Training Budget</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={
+                          editingData.Training_Budget !== undefined &&
+                          editingData.Training_Budget !== null
+                            ? editingData.Training_Budget
+                            : ""
+                        }
+                        onChange={(e) => handleInputChange(e, "Training_Budget")}
+                        className="border p-2 w-70 rounded-md"
+                        autoComplete="off"
+                        required
+                      />
                     </div>
                     <div>
                       <label className="block font-semibold ">Evaluation Period</label>
                       <input
                         type="text"
                         value={editingData.Evaluation_Period}
-                        onChange={(e) => handleInputChange(e, 'Evaluation_Period')}
+                        onChange={(e) => handleInputChange(e, "Evaluation_Period")}
                         className="border p-2 w-70 rounded-md"
                       />
                     </div>

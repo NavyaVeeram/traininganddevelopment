@@ -17,8 +17,6 @@ export default function UploadMaterials() {
   const [tableSearchTerm, setTableSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [accessRole, setAccessRole] = useState(null);
-  const [isAuthorized, setIsAuthorized] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -28,6 +26,9 @@ export default function UploadMaterials() {
   const [department, setDepartment] = useState('');
   const [username, setUsername] = useState('');
   const [employeeId, setEmployeeId] = useState('');
+  const [accessRole, setAccessRole] = useState(null);
+const [isAuthorized, setIsAuthorized] = useState(null);
+
   const [formData, setFormData] = useState({
     Program_Id: "",
     Training_Name: "",
@@ -69,102 +70,67 @@ export default function UploadMaterials() {
     setUploadSuccess(null);
     setOptions([]);
   };
-  const mappedTrainerOptions = trainerOptions.map((trainer) => ({
-    value: trainer.Value,
-    label: trainer.Text,
-  }));
-  useEffect(() => {
-  const storedEmployeeId = localStorage.getItem('employeeId');
+const mappedTrainerOptions = trainerOptions.map((trainer) => ({
+  value: trainer.value,
+  label: trainer.label,
+}));
 
-  if (storedEmployeeId) {
-    setEmployeeId(storedEmployeeId);
-  } else {
-    window.location.href = '/';
-    return;
-  }
+// Removed fetching trainers from qualified_trainer_dropdown
+// Trainer options will be set from get_training_att_entry API response
 
-  const fetchAccessRole = async () => {
-    try {
-      const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-      const data = await res.json();
-
-      if (res.ok && data.Access_Role) {
-        // Restrict access for HR_Res and HR_HOD roles
-        if (data.Access_Role === "HR_Res" || data.Access_Role === "HR_Hod" || data.Access_Role === "Res_Person") {
-          setIsAuthorized(false);
-          // Optionally redirect to unauthorized page
-          // window.location.href = '/unauthorized';
-          return;
-        }
-        setAccessRole(data.Access_Role);
-        setIsAuthorized(true);
-      } else {
-        setIsAuthorized(false);
-      }
-    } catch (error) {
-      console.error('Error fetching access role:', error);
-      setIsAuthorized(false);
-    }
-  };
-
-  fetchAccessRole();
+useEffect(() => {
+  // Removed fetchTrainers useEffect as per new plan
 }, []);
 
 useEffect(() => {
-    const fetchTrainers = async () => {
-      try {
-        const res = await fetch("/api/qualified_trainer_dropdown");
-        const data = await res.json();
-        setTrainerOptions(data);
-      } catch (err) {
-        console.error("Failed to fetch trainers:", err);
-      }
-    };
+  if (formData.Program_Id) {
+    fetchTrainingData(formData.Program_Id);
+  }
+}, [formData.Program_Id]);
 
-    fetchTrainers();
-  }, []);
+const fetchTrainingData = async (programId) => {
+  try {
+    const res = await fetch(
+      `/api/get_training_att_entry?program_id=${programId}`
+    );
+    const data = await res.json();
 
-  useEffect(() => {
-    if (formData.Program_Id) {
-      fetchTrainingData(formData.Program_Id);
-    }
-  }, [formData.Program_Id]);
+    if (!res.ok)
+      throw new Error(data.error || "Error fetching training details");
 
-  const fetchTrainingData = async (programId) => {
-    try {
-      const res = await fetch(
-        `/api/get_training_att_entry?program_id=${programId}`
-      );
-      const data = await res.json();
+    const trainingData = data[0] || {};
 
-      if (!res.ok)
-        throw new Error(data.error || "Error fetching training details");
+    // Set trainerOptions from the single trainer in trainingData.Trainer
+    const trainerOption = trainingData.Trainer
+      ? [{ value: trainingData.Trainer, label: trainingData.Trainer }]
+      : [];
 
-      const trainingData = data[0] || {};
+    setTrainerOptions(trainerOption);
 
-      setFormData((prev) => ({
-        ...prev,
-        Training_Name: trainingData.Training_Name || "",
-        Train_Mode: trainingData.Train_Mode || "",
-        Req_Months: trainingData.Req_Months || "",
-        Start_Month: trainingData.Start_Month || "",
-        No_Hrs: trainingData.No_Hrs || "",
-        Persons: trainingData.Persons || "",
-        Training_Date: trainingData.Training_Date || "",
-        selectedMonth: trainingData.Training_Status || "",
-        Forward: trainingData.Forward || "",
-        Schedule_Type: trainingData.Schedule_Type || "",
-        Trainer: trainingData.Trainer || "",
-        Venue: trainingData.Venue || "",
-        Training_Budget: trainingData.Training_Budget || "",
-        EmployeeIds: trainingData.EmployeeId
-          ? trainingData.EmployeeId.split(",").map((id) => id.trim())
-          : [],
-      }));
-    } catch (err) {
-      setError(err.message);
-    }
-  };
+    setFormData((prev) => ({
+      ...prev,
+      Training_Name: trainingData.Training_Name || "",
+      Train_Mode: trainingData.Train_Mode || "",
+      Req_Months: trainingData.Req_Months || "",
+      Start_Month: trainingData.Start_Month || "",
+      No_Hrs: trainingData.No_Hrs || "",
+      Persons: trainingData.Persons || "",
+      Training_Date: trainingData.Training_Date || "",
+      selectedMonth: trainingData.Training_Status || "",
+      Forward: trainingData.Forward || "",
+      Schedule_Type: trainingData.Schedule_Type || "",
+      Trainer: trainingData.Trainer || "",
+      Trainer_Name: trainingData.Trainer_Name || "",
+      Venue: trainingData.Venue || "",
+      Training_Budget: trainingData.Training_Budget || "",
+      EmployeeIds: trainingData.EmployeeId
+        ? trainingData.EmployeeId.split(",").map((id) => id.trim())
+        : [],
+    }));
+  } catch (err) {
+    setError(err.message);
+  }
+};
 
   const handleMonthYearChange = async (date) => {
     if (!date) return;
@@ -179,7 +145,7 @@ useEffect(() => {
 
     try {
       const res = await fetch(
-        `/api/get_training_attendance_dropdown?month=${selectedMonth}&year=${selectedYear}`
+        `/api/upload_certificates_dropdown?month=${selectedMonth}&year=${selectedYear}`
       );
       const data = await res.json();
       if (res.ok) {
@@ -322,7 +288,7 @@ useEffect(() => {
           "Program_Name",
           "Year_No",
           "Department",
-          "Trainer",
+          "Trainer_Name",
           "Training_Date",
           "Train_Mode",
         ].some((field) =>
@@ -335,7 +301,39 @@ useEffect(() => {
       setFilteredData(filtered);
     }
   };
-
+    useEffect(() => {
+    const storedEmployeeId = localStorage.getItem('employeeId');
+  
+    if (storedEmployeeId) {
+      setEmployeeId(storedEmployeeId);
+    }
+   
+    const fetchAccessRole = async () => {
+      try {
+        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+        const data = await res.json();
+  
+        if (res.ok && data.Access_Role) {
+          // Restrict access for HR_Res and HR_HOD roles
+          if (data.Access_Role === "HOS" || data.Access_Role === "HOD" || data.Access_Role === "Res_Person") {
+            setIsAuthorized(false);
+            // Optionally redirect to unauthorized page
+            // window.location.href = '/unauthorized';
+            return;
+          }
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+        }
+      } catch (error) {
+        console.error('Error fetching access role:', error);
+        setIsAuthorized(false);
+      }
+    };
+  
+    fetchAccessRole();
+  }, []);
 const handleSort = (key) => {
   if (!key) return; // Ignore empty keys or non-sortable columns
 
@@ -372,6 +370,31 @@ const programOptions = options.map((option) => ({
   value: option.Value,
   label: option.Text,
 }));
+  // if (data.length === 0) return <div>No records found.</div>;
+  // 🔒 Unauthorized view
+  if (isAuthorized === null) {
+    return (
+      <div>
+        Loading...
+      </div>
+      // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+      //   <div className="bg-white p-10 rounded shadow text-center">
+      //     <h2 className="text-2xl font-bold">Loading...</h2>
+      //   </div>
+      // </div>
+    );
+  }
+
+  if (isAuthorized === false) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+        <div className="bg-white p-10 rounded shadow text-center">
+          <h2 className="text-2xl font-bold">Unauthorized</h2>
+          <p className="mt-2">You do not have access to view this page.</p>
+        </div>
+      </div>
+    );
+  }
   // useEffect(() => {
   //   fetch(`/api/get_file_by_program_id?id=${formData.Program_Id}`)
   //     .then(res => res.json())
@@ -384,19 +407,6 @@ const programOptions = options.map((option) => ({
   //       console.error("Failed to fetch file", err);
   //     });
   // }, [formData.Program_Id]);
-   
- 
-  if (! isAuthorized) {
-    return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
-        <div className="bg-white p-10 rounded shadow text-center">
-          <h2 className="text-2xl font-bold">Unauthorized</h2>
-          <p className="mt-2">You do not have access to view this page.</p>
-        </div>
-</div>
-);
-}
-
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
@@ -421,7 +431,7 @@ const programOptions = options.map((option) => ({
     {/* Program */}
     <div className="flex flex-col mx-2">
       <label className="block font-medium mb-1">Program</label>
-      <Select
+  <Select
   isRequired // Note: react-select does not natively support 'required'
   isDisabled={!selectedDate || loading}
   onChange={(selectedOption) =>
@@ -439,6 +449,7 @@ const programOptions = options.map((option) => ({
   styles={{
     control: (base, state) => ({
       ...base,
+      cursor: 'pointer',
       borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
       boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
       padding: "1px",
@@ -446,6 +457,10 @@ const programOptions = options.map((option) => ({
       minHeight: "2rem",
       display: "flex",
       alignItems: "center",
+    }),
+    option: (base) => ({
+      ...base,
+      cursor: 'pointer',
     }),
     menu: (base) => ({
       ...base,
@@ -461,42 +476,25 @@ const programOptions = options.map((option) => ({
 
     {/* Trainer */}
     <div className="flex flex-col mx-2">
-      <label htmlFor="Trainer" className="block font-medium mb-1">
-        Trainer
-      </label>
-      <Select
-        id="Trainer"
-        name="Trainer"
-        options={mappedTrainerOptions}
-        placeholder=""
+        <label className="block font-medium mb-1">Trainer</label>
+      <input
+        type="text"
         value={
-          mappedTrainerOptions.find(
-            (opt) => opt.value === formData.Trainer
-          ) || null
+          formData.Trainer_Name || ""
         }
-        isDisabled={true}
-        className="w-full"
-        styles={{
-          control: (base, state) => ({
-            ...base,
-            backgroundColor: "#f3f4f6",
-            borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
-            boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
-            padding: "1px",
-            borderRadius: "0.5rem",
-            minHeight: "2rem",
-          }),
-        }}
+        readOnly
+        className="w-full pl-4 py-2 border border-gray-300 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
+
     </div>
 
     {/* Training Date */}
     <div className="flex flex-col mx-2">
       <label className="block font-medium mb-1">Training Date</label>
       <input
-        type="date"
+        type="text"
         value={
-          formData.Training_Date ? formData.Training_Date.split("T")[0] : ""
+          formData.Training_Date || ""
         }
         readOnly
         className="w-full pl-4 py-2 border border-gray-300 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -522,9 +520,9 @@ const programOptions = options.map((option) => ({
   <button
       type="submit"
       disabled={!formData.Training_Date || !file || !formData.Program_Id}
-      className={`px-6 w-30 mt-2 py-2 text-sm font-semibold  rounded-md shadow-md focus:ring-2  ${
-        formData.Training_Date
-          ? "bg-gray-600 text-white hover:bg-gray-800"
+      className={`px-6 w-30 mt-2 py-2 text-sm font-semibold rounded-md shadow-md focus:ring-2  ${
+        formData.Training_Date && file && formData.Program_Id
+          ? "bg-gray-600 text-white hover:bg-gray-800 cursor-pointer"
           : "bg-gray-300 text-gray-400 cursor-not-allowed"
       }`}
     >
@@ -538,7 +536,7 @@ const programOptions = options.map((option) => ({
         <div className="text-center py-4">Loading data...</div>
       ) : error ? (
         <div className="text-center py-4 text-red-500">{error}</div>
-      ) : uploadedData.length > 0 ? (
+      ) : (
         <div className="card-body p-0 overflow-x-auto pb-3">
           <div className="card-body p-0 overflow-x-auto pb-3">
             <div className="p-4 bg-card">
@@ -572,7 +570,7 @@ const programOptions = options.map((option) => ({
                     type="text"
                     className="border p-1 pl-8 rounded bg-secondary"
                     placeholder="Search..."
-                    value={tableSearchTerm}
+                    value={tableSearchTerm || ""}
                     onChange={handleTableSearchChange}
                   />
                   <FaSearch className="absolute left-2 top-2 text-gray-400" />
@@ -595,7 +593,7 @@ const programOptions = options.map((option) => ({
   { key: "Program_Name", label: "Program Name" },
   { key: "Year_No", label: "Year No" },
   { key: "Department", label: "Department" },
-  { key: "Trainer", label: "Trainer" },
+  { key: "Trainer", label: "Trainer " },
   { key: "Training_Date", label: "Training Date" },
   { key: "", label: "Training Materials" },
 ].map(({ key, label }, index) => (
@@ -628,15 +626,11 @@ const programOptions = options.map((option) => ({
                           </td>
                           <td className="px-4 py-2 border">{item.Program_Name}</td>
                           <td className="px-4 py-2 border">{item.Year_No}</td>
-                          <td className="px-4 py-2 border">{item.Department}
-</td>
+                          <td className="px-4 py-2 border">{item.Department}</td>
                           <td className="px-4 py-2 border">{item.Trainer}</td>
                           <td className="px-4 py-2 border">
                             {item.Training_Date
-                              ? new Date(
-                                  item.Training_Date
-                                ).toLocaleDateString()
-                              : ""}
+                          }
                           </td>
                           <td className="px-4 py-2 border text-blue-600 underline cursor-pointer">
                             <a
@@ -695,7 +689,7 @@ const programOptions = options.map((option) => ({
                       <button
                         key={i}
                         className={`px-3 py-1 border rounded ${
-                          currentPage === i + 1 ? "bg-primary text-white" : ""
+                           currentPage === i + 1 ? "bg-black text-white" : ""
                         }`}
                         onClick={() => setCurrentPage(i + 1)}
                       >
@@ -723,10 +717,6 @@ const programOptions = options.map((option) => ({
               }
             </div>
           </div>
-        </div>
-      ) : (
-        <div className="text-center py-4 text-gray-500">
-          No Files Uploaded Yet.
         </div>
       )}
     </div>

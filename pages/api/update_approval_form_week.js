@@ -1,5 +1,3 @@
-// pages/api/update-approval-form.ts
-
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -17,6 +15,7 @@ export default async function handler(req, res) {
     No_Hrs,
     Req_Months,
     Week,
+    Training_Budget,
     Evaluation_Period,
     CreatedBy,
   } = req.body;
@@ -33,6 +32,7 @@ export default async function handler(req, res) {
     No_Hrs,
     Req_Months,
     Week,
+    Training_Budget,
     Evaluation_Period,
     CreatedBy,
   });
@@ -48,6 +48,7 @@ export default async function handler(req, res) {
         @No_Hrs = ${No_Hrs},
         @Req_Months = ${Req_Months},
         @Week = ${Week},
+        @Training_Budget = ${Training_Budget},
         @Evaluation_Period = ${Evaluation_Period},
         @CreatedBy = ${CreatedBy};
     `;
