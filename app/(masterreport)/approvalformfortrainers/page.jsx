@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { FaSearch, FaEdit } from "react-icons/fa";
 import Select from "react-select";
-import EmailApprovalForTrainers from "../emailfortrainers/EmailApprovalForTrainers";
+import EmailApprovalTrainers from "../emailfortrainers/EmailApprovalTrainers"
 import EmailRejectionForTrainers from "../emailfortrainers/EmailRejectionForTrainers";
 import {
   Pagination,
@@ -16,6 +16,7 @@ import {
 
 export default function TrainerApprovalForm() {
     const [selectedQualIds, setSelectedQualIds] = useState([]);
+    const [selectedQualNames, setSelectedQualNames] = useState([]);
   const [trainerData, setTrainerData] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -359,8 +360,10 @@ export default function TrainerApprovalForm() {
                                    console.log('Checkbox change for Qual_Id:', item.Qual_Id, 'Checked:', e.target.checked);
                                    if (e.target.checked) {
                                      setSelectedQualIds(prev => [...prev, item.Qual_Id]);
+                                     setSelectedQualNames(prev => [...prev, item.Training_Name]);
                                    } else {
                                      setSelectedQualIds(prev => prev.filter(id => id !== item.Qual_Id));
+                                     setSelectedQualNames(prev => prev.filter(name => name !== item.Training_Name));
                                    }
                                  }}
                                  className="accent-green-500 cursor-pointer"
@@ -545,8 +548,9 @@ export default function TrainerApprovalForm() {
           {selectedQualIds.length > 0 && (
                            <div className="flex justify-end mt-6 gap-x-2">
                      
-                             <EmailApprovalForTrainers
+                             <EmailApprovalTrainers
                                selectedQualIds={selectedQualIds}
+                               selectedQualNames={selectedQualNames}
                              />
                    {accessRole !== "HOS" &&(
                              <EmailRejectionForTrainers

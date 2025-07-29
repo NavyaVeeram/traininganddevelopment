@@ -991,16 +991,16 @@ const programOptions = programs.map(program => ({
           textOverflow: "ellipsis",
         }}
       >
-        <thead className="bg-muted sticky top-0 z-10">
+          <thead className="bg-muted sticky top-0 z-10">
           <tr className="bg-gray-100">
-            <th className="px-4 py-2 border text-left"></th> {/* New checkbox header */}
+            <th className="px-4 py-2 border text-left"></th>{/* New checkbox header */}
             {Object.keys(columnKeyMap).map((key) => (
               <th
                 key={key}
                 onClick={() => handleSort(key)}
                 className="cursor-pointer px-4 py-2 border text-left"
               >
-                {key}{" "}
+                {key}
                 {sortConfig.key === columnKeyMap[key] ? (
                   sortConfig.direction === "asc" ? "▲" : "▼"
                 ) : (
@@ -1124,6 +1124,8 @@ const programOptions = programs.map(program => ({
             employeeId={employeeId}
             selectedProgramIds={selectedProgramIds}
           />
+          
+
         </div>
       )}
     </div>

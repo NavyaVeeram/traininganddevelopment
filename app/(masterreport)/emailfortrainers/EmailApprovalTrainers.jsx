@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 
-export default function EmailApprovalSubmit() {
+export default function EmailApprovalTrainers({selectedQualIds, selectedQualNames}) {
   const [employeeId, setEmployeeId] = useState("");
   const [email, setEmail] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -17,15 +17,15 @@ export default function EmailApprovalSubmit() {
   }, []);
 
   const handleSendToApproval = async () => {
-    if (isCallingApi.current || !employeeId) return;
+    if (isCallingApi.current || !employeeId|| !selectedQualIds ) return;
 
     isCallingApi.current = true;
     setLoading(true);
     try {
-      const res = await fetch("/api/generate_email_qualified_trainers_submit", {
+      const res = await fetch("/api/generate_email_qualified_trainers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ employeeId, approve: true }),
+        body: JSON.stringify({ employeeId, QualId: selectedQualIds, approve: true }),
       });
 
       if (res.status === 404) {
@@ -56,10 +56,14 @@ export default function EmailApprovalSubmit() {
       <button
         onClick={handleSendToApproval}
         className="px-6 mt-2 py-2 text-sm cursor-pointer font-semibold text-white bg-green-400 rounded-md shadow-md hover:bg-green-800 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
-        disabled={loading || !employeeId}
       >
         {loading ? "Processing..." : "Approve"}
       </button>
+      {/* {selectedQualNames && selectedQualNames.length > 0 && (
+        <div className="mb-2 text-sm text-gray-700">
+          Selected Qualifiers: {selectedQualNames.join(", ")}
+        </div>
+      )} */}
       {/* {email && (
         <div>
           <h3>Email Sent To:</h3>

@@ -221,13 +221,13 @@ console.log("Navbar accessRole (raw): '" + accessRole + "'");
         {/* Hamburger Icon for Mobile */}
         {/* Hamburger Icon and Profile Icon aligned to the Right */}
         <div className="md:hidden flex items-center space-x-4 ml-auto">
-          <button onClick={toggleMenu} className="text-black">
+          <button onClick={toggleMenu} className="text-black cursor-pointer">
             {isMenuOpen ? (
-              <X className="h-6 w-6" />
+              <X className="h-6 w-6 cursor-pointer" />
             ) : (
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
+                className="h-6 w-6 cursor-pointer"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -252,7 +252,7 @@ console.log("Navbar accessRole (raw): '" + accessRole + "'");
           )}
         >
       
-<NavigationMenuItem className="bg-gray-100 cursor-pointer">
+          <NavigationMenuItem className="bg-gray-100 cursor-pointer">
   <NavigationMenuTrigger className="hover:text-sky-400 cursor-pointer">Training Calendar</NavigationMenuTrigger>
   <NavigationMenuContent className="grid gap-2 p-1 md:w-[280px] max-h-[280px] cursor-pointer">
     <ul className="grid gap-2 cursor-pointer">

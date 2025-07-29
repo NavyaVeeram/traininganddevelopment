@@ -28,11 +28,14 @@ const QualifiedTrainerList = () => {
   // Computed variables to check DOJ experience for enabling/disabling checkboxes
   const dojDate = trainingDetails.DOJ ? new Date(trainingDetails.DOJ) : null;
   const today = new Date();
-  const threeYearsAgo = new Date(today.getFullYear() - 3, today.getMonth(), today.getDate());
+const threeYearsAgo = new Date(today.getFullYear() - 3, today.getMonth(), today.getDate());
 
-  const isExperienceLessThan3Years = dojDate ? dojDate > threeYearsAgo : false;
-  // Adjust logic: if DOJ is greater than 3 years ago, enable Experience (5 Years)
-  const isExperienceAtLeast3Years = dojDate ? dojDate <= threeYearsAgo : false;
+const isExperienceLessThan3Years = dojDate ? dojDate > threeYearsAgo : false;
+// Adjust logic: if DOJ is greater than 3 years ago, enable Experience (5 Years)
+const isExperienceAtLeast3Years = dojDate ? dojDate <= threeYearsAgo : false;
+
+const fiveYearsAgo = new Date(today.getFullYear() - 5, today.getMonth(), today.getDate());
+const isExperienceAtLeast5Years = dojDate ? dojDate <= fiveYearsAgo : false;
   const [qualifiedTrainers, setQualifiedTrainers] = useState([]);
     const [trainerData, setTrainerData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -693,18 +696,18 @@ const QualifiedTrainerList = () => {
        
 
         
-          <div className="flex  justify-around">
-            <div className="flex space-x-2">
-            <label className="block text-sm font-medium text-gray-900">
-              OverAll Exp (5 years)
-            </label>
-              <input
-                type="checkbox"
-                checked={exp5Yr}
-                onChange={() => handleCheckboxChange(setExp5Yr, exp5Yr, "exp5Yr")}
-                className="h-4 w-4 "
-              />
-            </div>
+<div className="flex  justify-around">
+  <div className="flex space-x-2">
+    <label className="block text-sm font-medium text-gray-900">
+      OverAll Exp (5 years)
+    </label>
+      <input
+        type="checkbox"
+        checked={exp5Yr}
+        onChange={() => handleCheckboxChange(setExp5Yr, exp5Yr, "exp5Yr")}
+        className="h-4 w-4 "
+      />
+    </div>
                <div className="flex  space-x-2">
             <label className="block text-sm font-medium text-gray-900">
               GTI Exp (3 yrs)
@@ -714,7 +717,7 @@ const QualifiedTrainerList = () => {
               checked={exp3Yr}
               onChange={() => handleCheckboxChange(setExp3Yr, exp3Yr, "exp3Yr")}
               className="h-4 w-4 "
-              disabled={false}
+              disabled={!isExperienceAtLeast3Years}
             />
           </div>
           </div>

@@ -1,0 +1,10 @@
+method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ employeeId ,QualId :selectedQualIds}),
+      });
+=======
+      const res = await fetch("/api/generate_email_qualified_trainers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ employeeId, QualId: selectedQualIds, approve: true }),
+      });
