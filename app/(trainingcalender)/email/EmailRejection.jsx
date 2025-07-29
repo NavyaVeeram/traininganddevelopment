@@ -1,21 +1,19 @@
 "use client"
 import { useState, useEffect, useRef } from 'react';
 
-export default function RejectEmail() {
-  const [employeeId, setEmployeeId] = useState('');
+export default function RejectEmail({ employeeId, selectedProgramIds, selectedProgramNames }) {
   const [email, setEmail] = useState(null);
   const [loading, setLoading] = useState(false);
   const isCallingApi = useRef(false);
 
-  useEffect(() => {
-    const storedEmployeeId = localStorage.getItem('employeeId');
-    if (storedEmployeeId) {
-      setEmployeeId(storedEmployeeId);
-    }
-  }, []);
-
   const handleReject = async () => {
-    if (isCallingApi.current || !employeeId) return;
+    if (isCallingApi.current || !employeeId || !selectedProgramIds || selectedProgramIds.length === 0) return;
+
+    if (selectedProgramIds.length > 1) {
+      alert("you can only reject one record");
+      return;
+    }
+
     isCallingApi.current = true;
     setLoading(true);
 
@@ -23,7 +21,7 @@ export default function RejectEmail() {
       const res = await fetch('/api/generate_reject_email_all', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ employeeId }),
+        body: JSON.stringify({ employeeId, programIds: selectedProgramIds, programNames: selectedProgramNames }),
       });
 
       const data = await res.json();
@@ -46,8 +44,12 @@ export default function RejectEmail() {
     <div>
       <button
         onClick={handleReject}
-        className="px-6 mt-2 py-2 text-sm cursor-pointer font-semibold text-white bg-red-500 rounded-md shadow-md hover:bg-red-700 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
-        disabled={loading || !employeeId}
+        className={`px-6 mt-2 py-2 text-sm  font-semibold text-white rounded-md shadow-md focus:ring-2 focus:ring-black-600 focus:ring-offset-2 ${
+          loading || !employeeId || !selectedProgramIds || selectedProgramIds.length === 0 || selectedProgramIds.length > 1
+            ? 'bg-red-400 cursor-not-allowed'
+            : 'bg-red-500 hover:bg-red-700'
+        }`}
+      disabled={loading || !employeeId || !selectedProgramIds || selectedProgramIds.length === 0 || selectedProgramIds.length > 1}
       >
         {loading ? 'Sending...' : 'Reject'}
       </button>

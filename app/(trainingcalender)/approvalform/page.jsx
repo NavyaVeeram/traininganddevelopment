@@ -13,7 +13,8 @@ const MonthCount = dynamic(() => import("./monthcount"), { ssr: false }); // Dyn
 export default function TrainingDataTable() {
   // Add tab state
   const [activeTab, setActiveTab] = useState('approval'); // Default to approval tab
-  
+  const [selectedProgramIds, setSelectedProgramIds] = useState([]);
+
   const [trainingData, setTrainingData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -331,81 +332,76 @@ export default function TrainingDataTable() {
         </div>
 
         {/* Table */}
-        <table className="w-full border-collapse text-sm">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Training_Name")}>Training Name {sortConfig.key === "Training_Name" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Year_No")}>Year {sortConfig.key === "Year_No" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Department")}>Department {sortConfig.key === "Department" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Section")}>Section {sortConfig.key === "Section" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Program_Name")}>Program Name {sortConfig.key === "Program_Name" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Train_Mode")}>Training Mode {sortConfig.key === "Train_Mode" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Persons")}>Persons {sortConfig.key === "Persons" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("No_Hrs")}>Hours {sortConfig.key === "No_Hrs" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("No_Times")}>Times {sortConfig.key === "No_Times" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Req_Months")}>Months {sortConfig.key === "Req_Months" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-            <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Evaluation_Period")}>Evaluation Period {sortConfig.key === "Evaluation_Period" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-               <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("IsActive")}>IsActive {sortConfig.key === "IsActive" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-              <th className="border p-2 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedData.length > 0 ? (
-                    paginatedData.map((item) => (
-                      <tr key={item.Program_Id} className="hover:bg-gray-50">
-                        <td className="border p-2 text-left">{item.Training_Name}</td>
-                        <td className="border p-2 text-left">{item.Year_No}</td>
-                        <td className="border p-2 text-left">{item.Department}</td>
-                        <td className="border p-2 text-left">{item.Section}</td>
-                        <td className="border p-2 text-left">{item.Program_Name}</td>
-                        <td className="border p-2 text-left">{item.Train_Mode}</td>
-                        <td className="border p-2 text-left">{item.Persons}</td>
-                        <td className="border p-2 text-left">{item.No_Hrs}</td>
-                        <td className="border p-2 text-left">{item.No_Times}</td>
-                        <td className="border p-2 text-left">{item.Req_Months}</td>
-                        <td className="border p-2 text-left">{item.Evaluation_Period}</td>
-                        <td className="border p-2 text-left">
-                          <div className="flex items-center justify-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={!!item.IsActive}
-                              className="accent-green-500 cursor-pointer"
-                              onChange={() =>
-                                handleActiveToggle(
-                                  item.Program_Id,
-                                  item.IsActive
-                                )
-                              }
-                            />
-                            <span
-                              className={
-                                item.IsActive
-                                  ? "text-green-600 font-medium"
-                                  : "text-red-500 font-medium"
-                              }
-                            >
-                              {item.IsActive ? "Active" : "Inactive"}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="border p-2">
-                          <div className="flex justify-center gap-2">
-                            <button onClick={() => handleEdit(item)}>
-                              <FaEdit className="text-blue-500 cursor-pointer" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                     ) : (
-              <tr>
-                <td colSpan={15} className="text-center border p-4">
-                  No data found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+         {/* Table */}
+           <table className="w-full border-collapse text-sm">
+             <thead className="bg-gray-100">
+               <tr>
+                 <th></th>     
+                 <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Training_Name")}>Training Name {sortConfig.key === "Training_Name" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
+                 <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Year_No")}>Year {sortConfig.key === "Year_No" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
+                 <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Department")}>Department {sortConfig.key === "Department" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
+                 <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Section")}>Section {sortConfig.key === "Section" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
+                 <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Train_Mode")}>Training Mode {sortConfig.key === "Train_Mode" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
+                 <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Persons")}>Persons {sortConfig.key === "Persons" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
+                 <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("No_Hrs")}>Hours {sortConfig.key === "No_Hrs" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
+                 <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("No_Times")}>Times {sortConfig.key === "No_Times" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
+                 <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Req_Months")}>Months {sortConfig.key === "Req_Months" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
+               <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Evaluation_Period")}>Evaluation Period {sortConfig.key === "Evaluation_Period" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
+                               <th className="border p-2 text-left">Actions</th>
+               </tr>
+             </thead>
+             <tbody>
+               {paginatedData.length > 0 ? (
+                       paginatedData.map((item) => (
+                         <tr key={item.Program_Id} className="hover:bg-gray-50">
+                                   <td className="border p-2 text-left">
+                             <div className="flex items-center justify-center gap-2">
+                               <input
+                                 type="checkbox"
+                                 checked={selectedProgramIds.includes(item.Program_Id)}
+                                 onChange={(e) => {
+                                   console.log('Checkbox change for Program_Id:', item.Program_Id, 'Checked:', e.target.checked);
+                                   if (e.target.checked) {
+                                     setSelectedProgramIds(prev => [...prev, item.Program_Id]);
+                                   } else {
+                                     setSelectedProgramIds(prev => prev.filter(id => id !== item.Program_Id));
+                                   }
+                                 }}
+                                 className="accent-green-500 cursor-pointer"
+                                 title={selectedProgramIds.includes(item.Program_Id) ? "Selected" : "Not selected"}
+                               />
+                             </div>
+                           </td>
+                           <td className="border p-2 text-left">{item.Training_Name}</td>
+                           <td className="border p-2 text-left">{item.Year_No}</td>
+                           <td className="border p-2 text-left">{item.Department}</td>
+                           <td className="border p-2 text-left">{item.Section}</td>
+                           {/* <td className="border p-2 text-left">{item.Program_Name}</td> */}
+                           <td className="border p-2 text-left">{item.Train_Mode}</td>
+                           <td className="border p-2 text-left">{item.Persons}</td>
+                           <td className="border p-2 text-left">{item.No_Hrs}</td>
+                           <td className="border p-2 text-left">{item.No_Times}</td>
+                           <td className="border p-2 text-left">{item.Req_Months}</td>
+                           <td className="border p-2 text-left">{item.Evaluation_Period}</td>
+                           <td className="border p-2">
+                             <div className="flex justify-center gap-2">
+                               <button onClick={() => handleEdit(item)}>
+                                 <FaEdit className="text-blue-500 cursor-pointer" />
+                               </button>
+                             </div>
+                           </td>
+                         </tr>
+                       ))
+                        ) : (
+                 <tr>
+                   <td colSpan={15} className="text-center border p-4">
+                     No data found.
+                   </td>
+                 </tr>
+               )}
+             </tbody>
+   
+           </table>
      <div className="flex flex-wrap justify-between items-center mt-4 space-y-2">
         <div style={{ fontSize: "14px" }}>
           Showing{" "}
@@ -413,7 +409,7 @@ export default function TrainingDataTable() {
             ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
                 currentPage * rowsPerPage,
                 paginatedData.length
-              )} of ${paginatedDataS.length} entries`
+              )} of ${paginatedData.length} entries`
             : "0 entries"}
         </div>
         <div className="flex space-x-2" style={{ fontSize: "14px" }}>
@@ -463,14 +459,19 @@ export default function TrainingDataTable() {
           </button>
         </div>
       </div>
-        {/* Approval Button */}
-        {paginatedData.length > 0 && (
-          <div className="flex justify-end mt-6 gap-x-2">
-            <EmailApproval
-            />
-            <EmailRejection />
-          </div>
-        )}
+            {/* Approval Button */}
+                {selectedProgramIds.length > 0 && (
+                  <div className="flex justify-end mt-6 gap-x-2">
+                    <EmailApproval
+                      employeeId={employeeId}
+                      selectedProgramIds={selectedProgramIds}
+                    />
+                    <EmailRejection
+                      employeeId={employeeId}
+                      selectedProgramIds={selectedProgramIds}
+                    />
+                  </div>
+                )}
       </div>
     );
   };

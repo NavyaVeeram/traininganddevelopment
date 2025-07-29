@@ -1,13 +1,23 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 
-export default function EmailApprovalForTrainers({ selectedQualIds, selectedEmployeeId, selectedUsername }) {
+export default function EmailApprovalSubmit() {
+  const [employeeId, setEmployeeId] = useState("");
   const [email, setEmail] = useState(null);
   const [loading, setLoading] = useState(false);
   const isCallingApi = useRef(false);
 
+  useEffect(() => {
+    const storedEmployeeId = localStorage.getItem("employeeId");
+    if (storedEmployeeId) {
+      setEmployeeId(storedEmployeeId);
+    } else {
+      setEmployeeId("");
+    }
+  }, []);
+
   const handleSendToApproval = async () => {
-    if (isCallingApi.current || !selectedEmployeeId) return;
+    if (isCallingApi.current || !employeeId) return;
 
     isCallingApi.current = true;
     setLoading(true);
@@ -15,7 +25,7 @@ export default function EmailApprovalForTrainers({ selectedQualIds, selectedEmpl
       const res = await fetch("/api/generate_email_qualified_trainers_submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ employeeId: selectedEmployeeId, username: selectedUsername, approve: true }),
+        body: JSON.stringify({ employeeId, approve: true }),
       });
 
       if (res.status === 404) {
@@ -46,10 +56,16 @@ export default function EmailApprovalForTrainers({ selectedQualIds, selectedEmpl
       <button
         onClick={handleSendToApproval}
         className="px-6 mt-2 py-2 text-sm cursor-pointer font-semibold text-white bg-green-400 rounded-md shadow-md hover:bg-green-800 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
-        disabled={loading || !selectedEmployeeId}
+        disabled={loading || !employeeId}
       >
         {loading ? "Processing..." : "Approve"}
       </button>
+      {/* {email && (
+        <div>
+          <h3>Email Sent To:</h3>
+          <p>{email}</p>
+        </div>
+      )} */}
     </div>
   );
 }

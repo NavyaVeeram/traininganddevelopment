@@ -7,10 +7,22 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  const { Qual_Id, IsActive } = req.body;
+  const { Qual_Id, IsActive, userRole, approvalStatus } = req.body;
 
   if (Qual_Id === undefined || IsActive === undefined) {
     return res.status(400).json({ message: 'Qual_Id and IsActive are required' });
+  }
+
+  // Validate based on role and approval status
+  const status = approvalStatus?.trim().toLowerCase();
+  const role = userRole?.toLowerCase();
+
+  if (
+    (status === "pending with hod" && role === "hos") ||
+    (status === "pending with hr_res" && role === "hod") ||
+    (status === "pending with hr_hod" && role === "hr_res")
+  ) {
+    return res.status(403).json({ message: 'You are not authorized to change the active status for this record.' });
   }
 
   try {

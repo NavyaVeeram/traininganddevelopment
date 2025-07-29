@@ -28,6 +28,7 @@ export default function Requirement() {
   const [isSubmitted, setIsSubmitted] = useState(false); // State to control visibility
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingData, setEditingData] = useState(null);
+  const [selectedProgramIds, setSelectedProgramIds] = useState([]); // New state for selected program IDs
   const [formData, setFormData] = useState({
     Training_Name: '',
     Year_No: new Date().getFullYear().toString(),
@@ -992,6 +993,7 @@ const programOptions = programs.map(program => ({
       >
         <thead className="bg-muted sticky top-0 z-10">
           <tr className="bg-gray-100">
+            <th className="px-4 py-2 border text-left"></th> {/* New checkbox header */}
             {Object.keys(columnKeyMap).map((key) => (
               <th
                 key={key}
@@ -1010,39 +1012,54 @@ const programOptions = programs.map(program => ({
             <th className="px-4 py-2 border text-left">Actions</th>
           </tr>
         </thead>
-        <tbody>
-          {paginatedData.length > 0 ? (
-            paginatedData.map((training) => (
-              <tr className="border hover:bg-muted" key={training.Program_Id}>
-                <td className="px-4 py-2 border">{training.Training_Name}</td>
-                <td className="px-4 py-2 border">{training.Year_No}</td>
-                <td className="px-4 py-2 border">{training.Department}</td>
-                <td className="px-4 py-2 border">{training.Section}</td>
-                <td className="px-4 py-2 border">{training.Program_Name}</td>
-                <td className="px-4 py-2 border">{training.Train_Mode}</td>
-                <td className="px-4 py-2 border">{training.Train_Purpose}</td>
-                <td className="px-4 py-2 border">{training.Persons}</td>
-                <td className="px-4 py-2 border">{training.No_Hrs}</td>
-                <td className="px-4 py-2 border">{training.No_Times}</td>
-                <td className="px-4 py-2 border">{training.Req_Months}</td>
-                <td className="px-4 py-2 border">{training.Evaluation_Period}</td>
-                <td className="px-4 py-2 border">
-                  <div className="flex justify-center">
-                    <button type="button" onClick={() => handleDelete(training.Program_Id)}>
-                      <FaTrash style={{ color: "red", cursor: "pointer", fontSize: "15px" }} />
-                    </button>
-                  </div>
+          <tbody>
+            {paginatedData.length > 0 ? (
+              paginatedData.map((training) => (
+                <tr className="border hover:bg-muted" key={training.Program_Id}>
+                  <td className="px-4 py-2 border">
+                    <input
+                      type="checkbox"
+                      checked={selectedProgramIds.includes(training.Program_Id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedProgramIds(prev => [...prev, training.Program_Id]);
+                        } else {
+                          setSelectedProgramIds(prev => prev.filter(id => id !== training.Program_Id));
+                        }
+                      }}
+                      className="cursor-pointer"
+                      title={selectedProgramIds.includes(training.Program_Id) ? "Selected" : "Not selected"}
+                    />
+                  </td>
+                  <td className="px-4 py-2 border">{training.Training_Name}</td>
+                  <td className="px-4 py-2 border">{training.Year_No}</td>
+                  <td className="px-4 py-2 border">{training.Department}</td>
+                  <td className="px-4 py-2 border">{training.Section}</td>
+                  <td className="px-4 py-2 border">{training.Program_Name}</td>
+                  <td className="px-4 py-2 border">{training.Train_Mode}</td>
+                  <td className="px-4 py-2 border">{training.Train_Purpose}</td>
+                  <td className="px-4 py-2 border">{training.Persons}</td>
+                  <td className="px-4 py-2 border">{training.No_Hrs}</td>
+                  <td className="px-4 py-2 border">{training.No_Times}</td>
+                  <td className="px-4 py-2 border">{training.Req_Months}</td>
+                  <td className="px-4 py-2 border">{training.Evaluation_Period}</td>
+                  <td className="px-4 py-2 border">
+                    <div className="flex justify-center">
+                      <button type="button" onClick={() => handleDelete(training.Program_Id)}>
+                        <FaTrash style={{ color: "red", cursor: "pointer", fontSize: "15px" }} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={Object.keys(columnKeyMap).length + 2} className="text-center py-4">
+                  No results found.
                 </td>
               </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan={Object.keys(columnKeyMap).length + 1} className="text-center py-4">
-                No results found.
-              </td>
-            </tr>
-          )}
-        </tbody>
+            )}
+          </tbody>
       </table>
       <div className="flex flex-wrap justify-between items-center mt-4 space-y-2">
         <div style={{ fontSize: "14px" }}>
@@ -1101,9 +1118,14 @@ const programOptions = programs.map(program => ({
           </button>
         </div>
       </div>
-      <div className="flex justify-end mt-3">
-<EmailApprovalMain/>
-      </div>
+      {selectedProgramIds.length > 0 && (
+        <div className="flex justify-end mt-3">
+          <EmailApprovalMain
+            employeeId={employeeId}
+            selectedProgramIds={selectedProgramIds}
+          />
+        </div>
+      )}
     </div>
   </div>
 ) : (

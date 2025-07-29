@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/pagination";
 
 export default function TrainerApprovalForm() {
+    const [selectedQualIds, setSelectedQualIds] = useState([]);
   const [trainerData, setTrainerData] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -23,6 +24,8 @@ export default function TrainerApprovalForm() {
   const [loading, setLoading] = useState(true);
   const [employeeId, setEmployeeId] = useState("");
   const [username, setUsername] = useState("");
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
+  const [selectedUsername, setSelectedUsername] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingData, setEditingData] = useState(null);
   const [error, setError] = useState("");
@@ -63,33 +66,12 @@ export default function TrainerApprovalForm() {
 
     fetchData();
   }, []);
- useEffect(() => {
+  useEffect(() => {
     const storedEmployeeId = localStorage.getItem("employeeId");
     if (storedEmployeeId) {
       setEmployeeId(storedEmployeeId);
     }
-
-    const fetchAccessRole = async () => {
-      try {
-        const res = await fetch(
-          `/api/get_access_role?employeeId=${storedEmployeeId}`
-        );
-        const data = await res.json();
-
-        if (res.ok && data.Access_Role) {
-          setAccessRole(data.Access_Role);
-          setIsAuthorized(true);
-        } else {
-          setIsAuthorized(false);
-        }
-      } catch (error) {
-        console.error("Error fetching access role:", error);
-        setIsAuthorized(false);
-      }
-    };
-
-    fetchAccessRole();
-  }, []);
+  });
 
   const handleSort = (key) => {
     if (!key) return;
@@ -145,6 +127,7 @@ export default function TrainerApprovalForm() {
 
     setTrainerData(sortedData);
   };
+
 
   const filteredData = useMemo(() => {
     return trainerData.filter(
@@ -221,6 +204,7 @@ export default function TrainerApprovalForm() {
           <table className="w-full border-collapse text-sm">
             <thead className="bg-gray-100">
               <tr>
+                <th></th>
                 <th
                   className="border p-2 cursor-pointer text-left"
                   onClick={() => handleSort("Training_Name")}
@@ -331,7 +315,7 @@ export default function TrainerApprovalForm() {
                       : " ▼"
                     : " ↕"}
                 </th>
-                <th
+                {/* <th
                   className="border p-2 cursor-pointer text-left"
                   onClick={() => handleSort("IsActive")}
                 >
@@ -341,7 +325,7 @@ export default function TrainerApprovalForm() {
                       ? " ▲"
                       : " ▼"
                     : " ↕"}
-                </th>
+                </th> */}
                 {/* <th
                   className="border p-2 cursor-pointer text-left"
                   onClick={() => handleSort("Qual_Id")}
@@ -353,21 +337,37 @@ export default function TrainerApprovalForm() {
                       : " ▼"
                     : " ↕"}
                 </th> */}
-                
-                  {accessRole !== "HOS"  &&(
-                    <th
+              <th
                       className="border p-2 cursor-pointer text-left"
                       onClick={() => handleSort("Approval_Status")}
                     >
                       Approval Status
                     </th>
-                  )}
+
               </tr>
             </thead>
             <tbody>
               {paginatedData.length > 0 ? (
                 paginatedData.map((item) => (
                   <tr key={item.Qual_Id} className="hover:bg-gray-50">
+                              <td className="border p-2 text-left">
+                             <div className="flex items-center justify-center gap-2">
+                               <input
+                                 type="checkbox"
+                                 checked={selectedQualIds.includes(item.Qual_Id)}
+                                 onChange={(e) => {
+                                   console.log('Checkbox change for Qual_Id:', item.Qual_Id, 'Checked:', e.target.checked);
+                                   if (e.target.checked) {
+                                     setSelectedQualIds(prev => [...prev, item.Qual_Id]);
+                                   } else {
+                                     setSelectedQualIds(prev => prev.filter(id => id !== item.Qual_Id));
+                                   }
+                                 }}
+                                 className="accent-green-500 cursor-pointer"
+                                 title={selectedQualIds.includes(item.Qual_Id) ? "Selected" : "Not selected"}
+                               />
+                             </div>
+                           </td>
                     <td className="border p-2 text-left">
                       {item.Training_Name}
                     </td>
@@ -391,11 +391,26 @@ export default function TrainerApprovalForm() {
                       {item.HOD_Rec ? "Yes" : "No"}
                     </td>
                     
-                    <td className="border p-2 text-left">
+                    {/* <td className="border p-2 text-left">
                       <label className="flex items-center gap-2 cursor-pointer select-none">
-                        <input
+                      <input
                           type="checkbox"
                           checked={item.IsActive}
+                          disabled={(() => {
+                            const status = item.Approval_Status?.trim().toLowerCase();
+                            const role = accessRole?.toLowerCase();
+                            // Rules:
+                              if (status === "pending with hos"  && role === "hos" && role === "res_person") return true;
+                            // If status is 'pending with hod', then 'pending with hos' cannot change active status 
+                            if (status === "pending with hod" && role === "hos" && role === "res_person" ) return true;
+                            // If status is 'pending with hr_res', then hod cannot change active status
+                            if (status === "pending with hr_res" && role === "hod" && role ==="hos") return true;
+                            // If status is 'pending with hr_hod', then 'pending with hr_res' cannot change active status
+                            if (status === "pending with hr_hod" && role === "hr_res" && role === "hod" && role ==="hos") return true;
+                            // If status is 'approved', no one can change active status
+                            if (status === "approved") return true;
+                            return false;
+                          })()}
                           onChange={async (e) => {
                             const newStatus = e.target.checked;
                             try {
@@ -440,25 +455,25 @@ export default function TrainerApprovalForm() {
                           {item.IsActive ? "Active" : "Inactive"}
                         </span>
                       </label>
-                    </td>
+                    </td> */}
                     {/* <td className="border p-2 text-left">{item.Qual_Id}</td> */}
                     
-{accessRole !== "HOS" &&(
+
   <td className="border p-2 text-left font-bold">
-{(() => {
-  const status = item.Approval_Status?.trim().toLowerCase();
-  const pendingStatuses = ["Pending with HOD", "Pending with HR_Res", "pending with hr_hod"];
-  const isPending = pendingStatuses.includes(status);
-  const isApproved = status === "approved";
-  const colorClass = isPending ? "text-red-600" : isApproved ? "text-green-600" : "";
-  return (
-    <span className={colorClass}>
-      {item.Approval_Status}
-    </span>
-  );
-})()}
+    {(() => {
+      const status = item.Approval_Status?.trim().toLowerCase();
+      const pendingStatuses = ["pending with hos","pending with hod", "pending with hr_res", "pending with hr_hod"];
+      const isPending = pendingStatuses.includes(status);
+      const isApproved = status === "approved";
+      const colorClass = isPending ? "text-red-600" : isApproved ? "text-green-600" : "";
+      return (
+        <span className={colorClass}>
+          {item.Approval_Status}
+        </span>
+      );
+    })()}
   </td>
-)}             
+        
                   </tr>
                 ))
               ) : (
@@ -527,15 +542,20 @@ export default function TrainerApprovalForm() {
               </div>
             </div>
           )}
-          {trainerData.length > 0 && (
-            <div className="flex justify-end mt-6 gap-x-2">
-              <EmailApprovalForTrainers />
-               {accessRole !== "HOS" &&(
-              <EmailRejectionForTrainers />
-               )}
+          {selectedQualIds.length > 0 && (
+                           <div className="flex justify-end mt-6 gap-x-2">
+                     
+                             <EmailApprovalForTrainers
+                               selectedQualIds={selectedQualIds}
+                             />
+                   {accessRole !== "HOS" &&(
+                             <EmailRejectionForTrainers
+                               selectedQualIds={selectedQualIds}
+                             />
+                                   )}  
+                           </div>
+                         )} 
             </div>
-          )}
-        </div>
       </div>
     </div>
   );

@@ -286,15 +286,14 @@ const RatingDistributionPage = () => {
           </div>
 
           {/* Program Name Dropdown */}
-          {programNames.length > 0 && (
-            <div className="flex mt-3 items-center space-x-1">
-              <label className="block mb-1 font-semibold">Select Program Name:</label>
-              <Select
-              value={programNames.length > 0 ? programNames.map(program => ({ value: program.id, label: program.name })).find(option => option.value === selectedProgramName?.value) : null}
+          <div className="flex mt-3 items-center space-x-1">
+            <label className="block mb-1 font-semibold">Select Program Name:</label>
+            <Select
+              value={selectedProgramName && programNames.some(program => program.id === selectedProgramName.value) ? { value: selectedProgramName.value, label: programNames.find(program => program.id === selectedProgramName.value)?.name } : null}
               onChange={setSelectedProgramName}
               options={programNames.map(program => ({ value: program.id, label: program.name }))}
               isSearchable={true}
-               className="w-[400px]"
+              className="w-[400px]"
               classNamePrefix="react-select"
               styles={{
                 control: (provided) => ({
@@ -314,11 +313,10 @@ const RatingDistributionPage = () => {
               }}
               placeholder="Select Program Name"
             />
-            </div>
-          )}
+          </div>
         </div>
-    {data.length > 0 && (
-    <div className="flex flex-col md:flex-row items-stretch justify-around  bg-white rounded  mt-6">
+    {data.length > 0 ? (
+      <div className="flex flex-col md:flex-row items-stretch justify-around  bg-white rounded  mt-6">
 
 
 
@@ -455,6 +453,10 @@ label={({ x, y, width, value }) => {
         </Card>
       </div>
     </div>
+    ) : (
+      (!selectedYear && !selectedTrainingName && !selectedProgramName) && (
+        <div className="text-center text-gray-500 mt-6 font-semibold">No records found</div>
+      )
     )}
     </div>
   );

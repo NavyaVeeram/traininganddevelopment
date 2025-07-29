@@ -1,39 +1,51 @@
 "use client"
 import { useState, useEffect, useRef } from 'react';
 
-export default function EmailApprovalWeek({ weeks,Training_Budget}) {
-  const [employeeId, setEmployeeId] = useState('');
+export default function EmailApprovalWeek({ weeks, Training_Budget, isActiveList, trainModeList, selectedProgramIds, employeeId }) {
+  // Remove employeeId state and use prop instead
   const [email, setEmail] = useState(null);
   const [loading, setLoading] = useState(false);
   const isCallingApi = useRef(false);
 
-  useEffect(() => {
-    const storedEmployeeId = localStorage.getItem('employeeId');
-    if (storedEmployeeId) {
-      setEmployeeId(storedEmployeeId);
-    } else {
-      setEmployeeId('');
-    }
-  }, []);
-
   const handleApprove = async () => {
     if (isCallingApi.current || !employeeId) return;
-    // Check if any week or Budget is empty
-    const isWeekEmpty = weeks.some(week => week === null || week === undefined || week === '');
-    const isBudgetEmpty = Training_Budget.some(budget => budget === null || budget === undefined || budget === '');
+
+    // Defensive check for array lengths
+    if (!weeks || !Training_Budget || !trainModeList) {
+      console.error('Missing data arrays in approval');
+      alert('Data arrays are missing.');
+      return;
+    }
+    if (
+      weeks.length !== Training_Budget.length ||
+      weeks.length !== trainModeList.length
+    ) {
+      console.error('Data arrays length mismatch in approval');
+      alert('Data arrays length mismatch.');
+      return;
+    }
+
+    // Check if any week or Budget is empty and Train_Mode is not Internal
+    const isWeekEmpty = weeks.some((week, index) => {
+      return (week === null || week === undefined || week === '') && trainModeList[index] !== "Internal";
+    });
+    const isBudgetEmpty = Training_Budget.some((budget, index) => {
+      return (budget === null || budget === undefined || budget === '') && trainModeList[index] !== "Internal";
+    });
 
     if (isWeekEmpty || isBudgetEmpty) {
-      alert('Please enter both the week and Training Budget');
+      alert('Please enter both the week and Training Budget for non-internal entries');
       return;
     }
 
     isCallingApi.current = true;
     setLoading(true);
     try {
+      const programIdString = selectedProgramIds.join(',');
       const res = await fetch('/api/generate_email_all', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ employeeId, approve: true }),
+        body: JSON.stringify({ employeeId, programId: programIdString, approve: true }),
       });
 
       if (res.status === 404) {
@@ -63,10 +75,10 @@ export default function EmailApprovalWeek({ weeks,Training_Budget}) {
       <button
         onClick={handleApprove}
         className="px-6 mt-2 py-2 text-sm cursor-pointer font-semibold text-white bg-green-500 rounded-md shadow-md hover:bg-green-700 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
-        disabled={loading || !employeeId }
-        title= "Please update all changes before approving"
+        disabled={loading || !employeeId}
+        title="Please update all changes before approving"
       >
-        {loading ? 'Processing...' : 'Send for Approval'}
+        {loading ? 'Processing...' : 'Approve'}
       </button>
       {/* {email && (
         <div>

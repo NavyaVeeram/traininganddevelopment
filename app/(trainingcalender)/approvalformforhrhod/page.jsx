@@ -13,7 +13,8 @@ const MonthCount = dynamic(() => import("./monthcount"), { ssr: false }); // Dyn
 export default function TrainingDataTable() {
   // Add tab state
   const [activeTab, setActiveTab] = useState('approval'); // Default to approval tab
-  
+  const [selectedProgramIds, setSelectedProgramIds] = useState([]);
+
   const [trainingData, setTrainingData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -191,10 +192,11 @@ export default function TrainingDataTable() {
     if (
       !editingData?.Week ||
       editingData.Week.trim() === "" ||
-      editingData.Training_Budget === "" ||
-      editingData.Training_Budget === undefined ||
-      editingData.Training_Budget === null ||
-      isNaN(Number(editingData.Training_Budget))
+      (editingData.Train_Mode !== "Internal" &&
+        (editingData.Training_Budget === "" ||
+          editingData.Training_Budget === undefined ||
+          editingData.Training_Budget === null ||
+          isNaN(Number(editingData.Training_Budget))))
     ) {
       alert("Week and Training_Budget are required and must be valid.");
       setError("Week and Training_Budget are required and must be valid.");
@@ -208,7 +210,7 @@ export default function TrainingDataTable() {
 
       const updatedDataWithCreatedBy = {
         ...editingData,
-        Training_Budget: Number(editingData.Training_Budget),
+        Training_Budget: editingData.Train_Mode === "Internal" ? (editingData.Training_Budget === "" ? 0 : Number(editingData.Training_Budget)) : Number(editingData.Training_Budget),
         CreatedBy: employeeId,
       };
 
@@ -223,7 +225,7 @@ export default function TrainingDataTable() {
 
         const updatedList = trainingData.map((item) =>
           item.Program_Id === programId
-            ? { ...item, ...editingData, Training_Budget: Number(editingData.Training_Budget) }
+            ? { ...item, ...editingData, Training_Budget: editingData.Train_Mode === "Internal" ? (editingData.Training_Budget === "" ? 0 : Number(editingData.Training_Budget)) : Number(editingData.Training_Budget) }
             : item
         );
         setTrainingData(updatedList);
@@ -238,38 +240,8 @@ export default function TrainingDataTable() {
     }
   };
 
-  const handleActiveToggle = async (programId, currentStatus) => {
-    try {
-      const newStatus = !currentStatus;
-
-      const response = await fetch('/api/update_status_approval', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ programId, newStatus }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update status');
-      }
-
-      const data = await response.json();
-      console.log(data.message);
-      alert(`Status has been ${newStatus ? 'activated' : 'deactivated'}`);
-
-      setTrainingData(prev =>
-        prev.map(item =>
-          item.Program_Id === programId
-            ? { ...item, IsActive: newStatus }
-            : item
-        )
-      );
-
-    } catch (error) {
-      console.error('Error updating status:', error);
-    }
-  };
+  // const handleActiveToggle = async (programId, currentStatus) => {
+  // };
 
   // Function to render tab content
   const renderTabContent = () => {
@@ -334,11 +306,11 @@ export default function TrainingDataTable() {
         <table className="w-full border-collapse text-sm">
           <thead className="bg-gray-100">
             <tr>
+              <th></th>    
               <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Training_Name")}>Training Name {sortConfig.key === "Training_Name" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
               <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Year_No")}>Year {sortConfig.key === "Year_No" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
               <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Department")}>Department {sortConfig.key === "Department" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
               <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Section")}>Section {sortConfig.key === "Section" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Program_Name")}>Program Name {sortConfig.key === "Program_Name" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
               <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Train_Mode")}>Training Mode {sortConfig.key === "Train_Mode" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
               <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Persons")}>Persons {sortConfig.key === "Persons" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
               <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("No_Hrs")}>Hours {sortConfig.key === "No_Hrs" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
@@ -347,51 +319,44 @@ export default function TrainingDataTable() {
             <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Evaluation_Period")}>Evaluation Period {sortConfig.key === "Evaluation_Period" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Week")}>Week {sortConfig.key === "Week" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
                  <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Training_Budget")}>Training Budget {sortConfig.key === "Training_Budget" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("IsActive")}>IsActive {sortConfig.key === "IsActive" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-              <th className="border p-2 text-left">Actions</th>
+                      <th className="border p-2 text-left">Actions</th>
             </tr>
           </thead>
           <tbody>
             {paginatedData.length > 0 ? (
                     paginatedData.map((item) => (
                       <tr key={item.Program_Id} className="hover:bg-gray-50">
+                                <td className="border p-2 text-left">
+                          <div className="flex items-center justify-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedProgramIds.includes(item.Program_Id)}
+                              onChange={(e) => {
+                                console.log('Checkbox change for Program_Id:', item.Program_Id, 'Checked:', e.target.checked);
+                                if (e.target.checked) {
+                                  setSelectedProgramIds(prev => [...prev, item.Program_Id]);
+                                } else {
+                                  setSelectedProgramIds(prev => prev.filter(id => id !== item.Program_Id));
+                                }
+                              }}
+                              className="accent-green-500 cursor-pointer"
+                              title={selectedProgramIds.includes(item.Program_Id) ? "Selected" : "Not selected"}
+                            />
+                          </div>
+                        </td>
                         <td className="border p-2 text-left">{item.Training_Name}</td>
                         <td className="border p-2 text-left">{item.Year_No}</td>
                         <td className="border p-2 text-left">{item.Department}</td>
                         <td className="border p-2 text-left">{item.Section}</td>
-                        <td className="border p-2 text-left">{item.Program_Name}</td>
+                        {/* <td className="border p-2 text-left">{item.Program_Name}</td> */}
                         <td className="border p-2 text-left">{item.Train_Mode}</td>
                         <td className="border p-2 text-left">{item.Persons}</td>
                         <td className="border p-2 text-left">{item.No_Hrs}</td>
                         <td className="border p-2 text-left">{item.No_Times}</td>
                         <td className="border p-2 text-left">{item.Req_Months}</td>
-                        <td className="border p-2 text-left">{item.Week}</td>
-                        <td className="border p-2 text-left">{item.Training_Budget}</td>
                         <td className="border p-2 text-left">{item.Evaluation_Period}</td>
-                        <td className="border p-2 text-left">
-                          <div className="flex items-center justify-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={!!item.IsActive}
-                              className="accent-green-500 cursor-pointer"
-                              onChange={() =>
-                                handleActiveToggle(
-                                  item.Program_Id,
-                                  item.IsActive
-                                )
-                              }
-                            />
-                            <span
-                              className={
-                                item.IsActive
-                                  ? "text-green-600 font-medium"
-                                  : "text-red-500 font-medium"
-                              }
-                            >
-                              {item.IsActive ? "Active" : "Inactive"}
-                            </span>
-                          </div>
-                        </td>
+                        <td className="border p-2 text-left">{item.Week}</td>
+                                     <td className="border p-2 text-left">{item.Training_Budget}</td>
                         <td className="border p-2">
                           <div className="flex justify-center gap-2">
                             <button onClick={() => handleEdit(item)}>
@@ -409,6 +374,7 @@ export default function TrainingDataTable() {
               </tr>
             )}
           </tbody>
+
         </table>
      <div className="flex flex-wrap justify-between items-center mt-4 space-y-2">
         <div style={{ fontSize: "14px" }}>
@@ -469,15 +435,53 @@ export default function TrainingDataTable() {
       </div>
 
         {/* Approval Button */}
-        {paginatedData.length > 0 && (
+        {selectedProgramIds.length > 0 && (
           <div className="flex justify-end mt-6 gap-x-2">
-            <EmailApprovalWeek
-              weeks={paginatedData.map(item => item.Week)}
-              Training_Budget={paginatedData.map(item => item.Training_Budget)}
-            />
-            <EmailRejection />
+              <EmailApprovalWeek
+                weeks={paginatedData.filter(item => selectedProgramIds.includes(item.Program_Id)).map(item => item.Week)}
+                Training_Budget={paginatedData.filter(item => selectedProgramIds.includes(item.Program_Id)).map(item => item.Training_Budget)}
+                trainModeList={paginatedData.filter(item => selectedProgramIds.includes(item.Program_Id)).map(item => item.Train_Mode)}
+                selectedProgramIds={selectedProgramIds}
+                employeeId={employeeId}
+                onApproveSuccess={() => {
+                  // Refresh data or handle post-approval logic here
+                }}
+                onApprove={() => {
+                  // Debug log selectedProgramIds and employeeId before API call
+                  console.log('Selected Program IDs:', selectedProgramIds);
+                  console.log('Employee ID:', employeeId);
+                  // Call the API with employeeId and programId as comma-separated string
+                  const programIdString = selectedProgramIds.join(',');
+                  console.log('Program ID string to send:', programIdString);
+                  fetch('/api/generate_email_all', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ employeeId, programId: programIdString, approve: true }),
+                  })
+                  .then(res => res.json())
+                  .then(data => {
+                    console.log('Approval response:', data);
+                    // Handle success or error feedback here
+                  })
+                  .catch(err => {
+                    console.error('Approval error:', err);
+                  });
+                }}
+              />
+              <EmailRejection
+                weeks={paginatedData.filter(item => selectedProgramIds.includes(item.Program_Id)).map(item => item.Week)}
+                Training_Budget={paginatedData.filter(item => selectedProgramIds.includes(item.Program_Id)).map(item => item.Training_Budget)}
+                trainModeList={paginatedData.filter(item => selectedProgramIds.includes(item.Program_Id)).map(item => item.Train_Mode)}
+                selectedProgramIds={selectedProgramIds}
+                selectedProgramNames={paginatedData.filter(item => selectedProgramIds.includes(item.Program_Id)).map(item => item.Program_Name)}
+                employeeId={employeeId}
+                onRejectSuccess={() => {
+                  // Refresh data or handle post-rejection logic here
+                }}
+              />
           </div>
         )}
+
       </div>
     );
   };
@@ -507,10 +511,12 @@ export default function TrainingDataTable() {
     );
   }
 
+  
   return (
     <div>
       <div className="max-w-full mx-auto bg-white p-2 w-full">
-        {/* Header with Tabs */}
+        {/* Header with Tabs */} 
+
         <div className="bg-sky-400 text-white p-2 flex justify-between items-center rounded-t-lg">
           <div className="flex items-center gap-6">
             <p className="font-semibold">Approval Form</p>

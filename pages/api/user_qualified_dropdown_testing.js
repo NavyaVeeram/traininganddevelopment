@@ -3,11 +3,11 @@ const prisma = new PrismaClient();
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
-    const { deptCode } = req.query;
+    const { employeeId } = req.query;
 
     try {
       const employeeDetails = await prisma.$queryRaw`
-        EXEC [dbo].[User_Qualified_Dropdown_Testing] @LoggedInUserDeptCode = ${deptCode}
+        EXEC [dbo].[User_Qualified_Dropdown_Testing] @EmployeeId = ${employeeId}
       `;
 
       if (employeeDetails.length === 0) {

@@ -98,9 +98,9 @@ const QualifiedTrainerList = () => {
         setError(null);
         try {
           // Get department code from localStorage or other source
-          const deptCode = localStorage.getItem("department") || "";
+          const storedEmployeeId = localStorage.getItem("employeeId") || "";
 
-          const res = await fetch(`/api/user_qualified_dropdown_testing?deptCode=${encodeURIComponent(deptCode)}`);
+          const res = await fetch(`/api/user_qualified_dropdown_testing?employeeId=${encodeURIComponent(storedEmployeeId)}`);
           const data = await res.json();
           if (res.status === 200) {
             setEmployeeOptions(data);
@@ -285,6 +285,59 @@ const QualifiedTrainerList = () => {
         alert(` ${responseData.message}`);
         fetchQualifiedTrainers();
         resetForm();
+
+        // Call the email submission API after successful insert
+          try {
+          const emailRes = await fetch("/api/generate_email_qualified_trainers_submit", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              localEmployeeId: localStorage.getItem("employeeId"),
+              trainingEmployeeId: EmployeeId,
+              username: trainingDetails.Username,
+              approve: true,
+            }),
+          });
+
+          console.log("DEBUG Email API call data:", {
+            localEmployeeId: localStorage.getItem("employeeId"),
+            trainingEmployeeId: EmployeeId,
+            username: trainingDetails.Username,
+            approve: true,
+          });
+
+          if (emailRes.status === 404) {
+            alert("The data is already submitted or not found");
+          } else if (emailRes.ok) {
+            const emailData = await emailRes.json();
+            if (emailData.email) {
+              alert("Email sent successfully");
+            } else {
+              alert("Submission successful, no email sent");
+            }
+          } else {
+            const errorData = await emailRes.json();
+            alert(`Email API error: ${errorData.message || "Unknown error"}`);
+          }
+        } catch (emailError) {
+          alert("An error occurred while sending email");
+          console.error(emailError);
+        }
+
+        // Call the additional API after insert
+        try {
+          const approvalRes = await fetch(`/api/trainer_approval_form_data?employeeId=${createdByFromStorage}`);
+          if (!approvalRes.ok) {
+            console.error('Failed to fetch trainer approval form data');
+          }
+        } catch (error) {
+          console.error('Error fetching trainer approval form data:', error);
+        }
+
+        // Removed window.location.reload() to avoid full page reload
+        window.location.reload();
       } else {
         alert(`Error: ${responseData.message || "Unknown error"}`);
       }
@@ -701,6 +754,7 @@ const QualifiedTrainerList = () => {
               Submit
             </button>
           </div>
+     
         </div>
       </form>
       </div>
@@ -773,8 +827,8 @@ const QualifiedTrainerList = () => {
   { key: "Training_Name", label: "Training Name" },
   { key: "Certified", label: "Certified" },
   { key :"Cert_Des",label:"Cert_Des"},
-  { key: "Exp_5_Yr", label: "OverAll Exp (5 yrs)" },
-  { key: "Exp_3_yr", label: "GTI Exp (3 yrs)" },
+{ key: "Exp_5_Yr", label: "OverAll Exp (5 yrs)" },
+{ key: "Exp_3_Yr", label: "GTI Exp (3 yrs)" },
   { key: "HOD_Rec", label: "Nominated by HOD" },
   { key: "Qualified", label: "Qualified" },
 ].map(({ key, label }, index) => (
@@ -838,9 +892,9 @@ const QualifiedTrainerList = () => {
         <td className="px-4 py-2 border">
           {item.Exp_5_Yr ? "Yes" : "No"}
         </td>
-        <td className="px-4 py-2 border">
-          {item.Exp_3_yr ? "Yes" : "No"}
-        </td>
+<td className="px-4 py-2 border">
+  {item.Exp_3_Yr ? "Yes" : "No"}
+</td>
         <td className="px-4 py-2 border">
           {item.HOD_Rec ? "Yes" : "No"}
         </td>

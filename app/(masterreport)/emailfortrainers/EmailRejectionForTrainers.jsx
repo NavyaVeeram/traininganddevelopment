@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 
-export default function EmailRejectionForTrainers() {
+export default function EmailRejectionForTrainers({  selectedQualIds}) {
   const [employeeId, setEmployeeId] = useState("");
   const [email, setEmail] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -17,15 +17,18 @@ export default function EmailRejectionForTrainers() {
   }, []);
 
   const handleSendRejectionEmail = async () => {
-    if (isCallingApi.current || !employeeId) return;
-
+    if (isCallingApi.current || !employeeId || !selectedQualIds || selectedQualIds.length === 0) return;
+   if (selectedQualIds.length > 1) {
+      alert("you can only reject one record only");
+      return;
+    }
     isCallingApi.current = true;
     setLoading(true);
     try {
       const res = await fetch("/api/generate_rejection_email_for_trainers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ employeeId }),
+        body: JSON.stringify({ employeeId ,QualId :selectedQualIds}),
       });
 
       if (res.status === 404) {
@@ -55,8 +58,12 @@ export default function EmailRejectionForTrainers() {
     <div>
       <button
         onClick={handleSendRejectionEmail}
-        className="px-6 mt-2 py-2 text-sm cursor-pointer font-semibold text-white bg-red-500 rounded-md shadow-md hover:bg-red-800 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
-        disabled={loading || !employeeId}
+        className={`px-6 mt-2 py-2 text-sm  font-semibold text-white rounded-md shadow-md focus:ring-2 focus:ring-black-600 focus:ring-offset-2 ${
+          loading || !employeeId || !selectedQualIds || selectedQualIds.length === 0 || selectedQualIds.length > 1
+            ? 'bg-red-400 cursor-not-allowed'
+            : 'bg-red-500 hover:bg-red-700'
+        }`}
+      disabled={loading || !employeeId || !selectedQualIds || selectedQualIds.length === 0 || selectedQualIds.length > 1}
       >
         {loading ? "Processing..." : "Reject"}
       </button>
