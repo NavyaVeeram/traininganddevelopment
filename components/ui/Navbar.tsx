@@ -1,12 +1,13 @@
+
 "use client";
 
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import  { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils"
-import {  X, User, ChevronDown, ChevronUp } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { X, Menu, User, ChevronDown, ChevronUp } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,189 +17,143 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu"
 
-const training: { title: string; href: string }[] = [
+const training = [
+  { title: "Annual Training Calender - IATF/HSE", href: "/annualtraining" },
+  { title: "Requirement - IATF/HSE", href: "requirement" },
+  { title: "Approval Form", href: "/approvalform" },
+  { title: "Approval Form ", href: "/approvalformforhrhod" },
+  { title: "Approved Data", href: "/approveddata" },
+];
 
-  {
-    title: "Annual Training Calender - IATF/HSE",
-    href: "/annualtraining",
-  },
-  {
-    title: "Requirement - IATF/HSE",
-    href: "requirement",
-  },
-   {
-    title: "Approval Form",
-    href: "/approvalform",
-  },
-    {
-    title: "Approval Form ",
-    href: "/approvalformforhrhod",
-  },
-  {
-    title: "Approved Data",
-    href: "/approveddata"
-  }
-]
+const transaction = [
+  { title: "Training Attendance Entry", href: "/trainingattendance" },
+  { title: "Monthly Training Particulars", href: "/montrainparticulars" },
+];
 
-const transaction: { title: string; href: string }[] = [
-  {
-    title: "Training Attendance Entry",
-    href: "/trainingattendance",
-  },
-  {
-    title: "Monthly Training Particulars",
-    href: "/montrainparticulars",
-  },
-  // {
-  //   title: "Temporary to regular",
-  //   href: "/temptoreg",
-  // },
-]
+const tet = [
+  { title: "Generate TEE Forms", href: "tetformsgenerate" },
+  { title: "Generic Forms", href: "tetformsgeneric" },
+  { title: "Reports", href: "/ratingdistribution" },
+];
 
-const tet: { title: string; href: string }[] = [
+const masterreport = [
+  { title: "Employee History", href: "/emphistory" },
+  { title: "Qualified Trainers List", href: "/quatrainlist" },
+  { title: "Training Cost/Budget", href: "/traincost" },
+  { title: "Training Agencies", href: "/trainingagencies" },
+  { title: "Add Training Record", href: "/trainingrecord" },
+  { title: "Update TL", href: "/tetformgeneratefortl" },
+  { title: "Total Head Count", href: "/headcount" },
+  { title: "Training Hours", href: "/totrainhrs" },
+];
+
+const trainingcertificates = [
+  { title: "Upload Certificates", href: "/uploadcer" },
+  { title: "Upload Materials", href: "/uploadmaterials" },
+];
+
+const menuGroups = [
+  { title: "Training Calendar", items: training },
   {
-    title: "Generate TEE Forms",
-    href: "tetformsgenerate",
-  },
-    {
-    title: "Generic Forms",
-    href: "tetformsgeneric",
-  },
-     {
-    title: "Reports",
-    href: "/ratingdistribution",
-  },
-]
-const masterreport: { title: string; href: string }[] = [
-  {
-    title: "Employee History",
-    href: "/emphistory",
-  },
-  {
-    title: "Qualified Trainers List",
-    href: "/quatrainlist",
-  },
-  {
-    title: "Training Cost/Budget",
-    href: "/traincost",
+    title: "Transaction",
+    items: transaction,
+    show: (role: string) =>
+      role !== "Res_Person" && role !== "HOS" && role !== "HOD",
   },
   {
-    title: "Training Agencies",
-    href: "/trainingagencies",
+    title: "Training Effectiveness",
+    items: tet,
+    show: (role: string) => role !== "Res_Person",
   },
-    {
-    title: "Add Training Record",
-    href: "/trainingrecord",
-  },
-     {
-    title: "Update TL",
-    href: "/tetformgeneratefortl",
-  },
-      {
-    title: "Total Head Count",
-    href: "/headcount",
-  },
-      {
-    title: "Training Hours",
-    href: "/totrainhrs",
-  },
-]
-const trainingcertificates: { title: string; href: string }[] = [
   {
-    title: "Upload Certificates",
-    href: "/uploadcer",
+    title: "Upload",
+    items: trainingcertificates,
+    show: (role: string) =>
+      role !== "Res_Person" && role !== "HOS" && role !== "HOD",
   },
-    {
-    title: "Upload Materials",
-    href: "/uploadmaterials",
+  {
+    title: "T & D Report",
+    items: masterreport,
+    show: (role: string, dept: string) =>
+      ["Res_Person", "HR_Res", "HR_Hod", "HOS", "HOD"].includes(role) &&
+      !(role === "Res_Person" && dept !== "MS" && dept !== "FNTRY"),
   },
-]
-// const trainingmaterials: { title: string; href: string }[] = [
-//   {
-//     title: "Upload Materials",
-//     href: "/uploadmaterials",
-//   },
-// ]
+];
 
 export default function NavigationMenuDemo() {
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false)
-  const [isOpen] = useState(false);
-  const [openGroup, setOpenGroup] = useState<string | null>(null);
-const [department, setDepartment] = useState('');
-const [username, setUsername] = useState('');
-const [employeeId, setEmployeeId] = useState('');
-const [accessRole, setAccessRole] = useState<string | null>(null);
-const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
+  const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [department, setDepartment] = useState("");
+  const [username, setUsername] = useState("");
+  const [employeeId, setEmployeeId] = useState("");
+  const [accessRole, setAccessRole] = useState<string | null>(null);
+  const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
 
-console.log("Navbar accessRole (raw): '" + accessRole + "'");
+  // const router = useRouter();
+  const closeTimeout = useRef<NodeJS.Timeout | null>(null);
+  const navRef = useRef<HTMLDivElement>(null);
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen)
-  }
-
-  const toggleGroup = (group: string) => {
-    setOpenGroup(openGroup === group ? null : group);
-  };
- 
   useEffect(() => {
-  const storedEmployeeId = localStorage.getItem('employeeId');
-   const storedDepartment = localStorage.getItem("department");
-  if (storedEmployeeId && storedDepartment) {
-    setEmployeeId(storedEmployeeId);
-    setDepartment(storedDepartment);
-  } else {
-    window.location.href = '/';
-    return;
-  }
+    const storedEmployeeId = localStorage.getItem("employeeId");
+    const storedDepartment = localStorage.getItem("department");
+    if (storedEmployeeId && storedDepartment) {
+      setEmployeeId(storedEmployeeId);
+      setDepartment(storedDepartment);
+    } else {
+      window.location.href = "/";
+      return;
+    }
 
-  const fetchAccessRole = async () => {
-    try {
-      const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-      const data = await res.json();
-      if (res.ok && data.Access_Role ) {
-        setAccessRole(data.Access_Role);
-        setIsAuthorized(true);
-      } else {
+    const fetchAccessRole = async () => {
+      try {
+        const res = await fetch(
+          `/api/get_access_role?employeeId=${storedEmployeeId}`
+        );
+        const data = await res.json();
+        if (res.ok && data.Access_Role) {
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+        }
+      } catch {
         setIsAuthorized(false);
       }
-    } catch (error) {
-      console.error('Error fetching access role:', error);
-      setIsAuthorized(false);
-    }
-  };
+    };
 
-  fetchAccessRole();
-}, []);
+    fetchAccessRole();
+  }, []);
 
   useEffect(() => {
-    // Retrieve the department, username, and employeeId from localStorage
-    const storedDepartment = localStorage.getItem('department');
-    const storedUsername = localStorage.getItem('username');
-    const storedEmployeeId = localStorage.getItem('employeeId');
-
-    // If data is found, update state
+    const storedDepartment = localStorage.getItem("department");
+    const storedUsername = localStorage.getItem("username");
+    const storedEmployeeId = localStorage.getItem("employeeId");
     if (storedDepartment && storedUsername && storedEmployeeId) {
       setDepartment(storedDepartment);
       setUsername(storedUsername);
       setEmployeeId(storedEmployeeId);
     } else {
-      // If no data found, redirect to login page
-      window.location.href = '/';
+      window.location.href = "/";
     }
-    // Removed fetchData and trainingData usage as trainingData state is unused
   }, [department, username, employeeId]);
- if (isAuthorized === null) return null;
 
-  // 🔒 Unauthorized view
+  // --- Outside click handler for desktop dropdown ---
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) {
+        setOpenMenu(null);
+        setHoveredMenu(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  if (isAuthorized === null) return null;
   if (isAuthorized === false) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
@@ -209,378 +164,365 @@ console.log("Navbar accessRole (raw): '" + accessRole + "'");
       </div>
     );
   }
-  return (
-    <div>
-      <nav className="flex items-center z-10  bg-gray-100 justify-between p-2" >
-        {/* Brand Name on the Left */} 
-        <div className="text-black font-semibold text-xl">
-        <Link href="/dashboard"> Greentech Industries</Link> 
-        </div>
-       
 
-        {/* Hamburger Icon for Mobile */}
-        {/* Hamburger Icon and Profile Icon aligned to the Right */}
-        <div className="md:hidden flex items-center space-x-4 ml-auto">
-          <button onClick={toggleMenu} className="text-black cursor-pointer">
-            {isMenuOpen ? (
-              <X className="h-6 w-6 cursor-pointer" />
-            ) : (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 cursor-pointer"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+  // Helper for menu filtering
+  const filterMenu = (menu: { title: string; href: string }[]) =>
+    menu.filter((component) => {
+      if (
+        component.title === "Requirement - IATF/HSE" &&
+        accessRole !== "Res_Person" &&
+        accessRole !== "HOS" &&
+        accessRole !== "HR_Res"
+      )
+        return false;
+      if (
+        component.title === "Approval Form" &&
+        accessRole !== "HOS" &&
+        accessRole !== "HOD"
+      )
+        return false;
+      if (
+        component.title === "Approval Form " &&
+        accessRole !== "HR_Res" &&
+        accessRole !== "HR_Hod"
+      )
+        return false;
+      if (
+        component.title === "Training Attendance Entry" &&
+        accessRole !== "HOS" &&
+        accessRole !== "HOD" &&
+        accessRole !== "HR_Res" &&
+        accessRole !== "HR_Hod"
+      )
+        return false;
+      if (
+        component.title === "Monthly Training Particulars" &&
+        accessRole !== "HOS" &&
+        accessRole !== "HOD" &&
+        accessRole !== "HR_Res" &&
+        accessRole !== "HR_Hod"
+      )
+        return false;
+      if (
+        component.title === "Generate TEE Forms" &&
+        accessRole !== "Res_Person" &&
+        accessRole !== "HOS" &&
+        accessRole !== "HOD" &&
+        accessRole !== "HR_Res" &&
+        accessRole !== "HR_Hod"
+      )
+        return false;
+      if (
+        component.title === "Generic Forms" &&
+        accessRole !== "HR_Res" &&
+        accessRole !== "HR_Hod"
+      )
+        return false;
+      if (
+        component.title === "Upload Certificates" &&
+        accessRole !== "HR_Res" &&
+        accessRole !== "HR_Hod"
+      )
+        return false;
+      if (
+        component.title === "Upload Materials" &&
+        accessRole !== "HR_Res" &&
+        accessRole !== "HR_Hod"
+      )
+        return false;
+      // Masterreport logic
+      const normalizedAccessRole = accessRole
+        ? accessRole.trim().toUpperCase()
+        : "";
+      if (component.title === "Employee History" && accessRole !== "HR_Res")
+        return false;
+      if (
+        component.title === "Qualified Trainers List" &&
+        accessRole !== "HR_Res" &&
+        accessRole !== "HR_Hod" &&
+        accessRole !== "HOS" &&
+        accessRole !== "HOD"
+      )
+        return false;
+      if (component.title === "Training Cost/Budget" && accessRole !== "HR_Res")
+        return false;
+      if (component.title === "Training Agencies" && accessRole !== "HR_Res")
+        return false;
+      if (
+        component.title === "Add Training Record" &&
+        normalizedAccessRole !== "HR_RES"
+      )
+        return false;
+      if (
+        component.title === "Total Head Count" &&
+        normalizedAccessRole !== "HR_RES" &&
+        normalizedAccessRole !== "HR_HOD"
+      )
+        return false;
+      if (
+        component.title === "Training Hours" &&
+        normalizedAccessRole !== "HR_RES" &&
+        normalizedAccessRole !== "HR_HOD"
+      )
+        return false;
+      return true;
+    });
+
+  // Desktop Navbar with robust hover/click logic
+  const handleMenuClick = (title: string) => {
+    if (openMenu === title) {
+      setOpenMenu(null);
+      setHoveredMenu(null);
+    } else {
+      setOpenMenu(title);
+      setHoveredMenu(title);
+    }
+  };
+
+  // Use same handlers for parent and submenu
+  const handleMouseEnter = (title: string) => {
+    if (closeTimeout.current) clearTimeout(closeTimeout.current);
+    setHoveredMenu(title);
+    setOpenMenu(title);
+  };
+
+  const handleMouseLeave = () => {
+    closeTimeout.current = setTimeout(() => {
+      setHoveredMenu(null);
+      setOpenMenu(null);
+    }, 100);
+  };
+
+  const DesktopNav = () => (
+    <div
+      ref={navRef}
+      className="flex items-center z-10 bg-gray-100 justify-between p-0"
+    >
+      <div className="text-black font-semibold text-xl ml-2">
+        <Link href="/dashboard">Greentech Industries</Link>
+      </div>
+      <div className="flex items-center space-x-2 ml-auto mr-12">
+        {menuGroups.map((group) => {
+          const show = group.show
+            ? group.show(accessRole ?? "", department)
+            : true;
+          if (!show) return null;
+          const filteredItems = filterMenu(group.items);
+          if (!filteredItems.length) return null;
+          const isOpen =
+            hoveredMenu === group.title || openMenu === group.title;
+          return (
+            <div
+              key={group.title}
+              className="relative"
+              onMouseEnter={() => handleMouseEnter(group.title)}
+              onMouseLeave={handleMouseLeave}
+            >
+              <button
+                className={cn(
+                  "flex items-center justify-between gap-2 px-3 py-2 font-medium text-sm transition-colors",
+                  isOpen ? "text-sky-400" : "text-gray-800",
+                  "hover:text-sky-400"
+                )}
+                type="button"
+                onClick={() => handleMenuClick(group.title)}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M4 6h16M4 12h16M4 18h16"
+                <span>{group.title}</span>
+                <ChevronDown
+                  className={cn(
+                    "h-3 w-3 transition-transform duration-200",
+                    isOpen && "rotate-180"
+                  )}
                 />
-              </svg>
-            )}
-          </button>
-        </div>
-
-        {/* Navigation Menu for Desktop and Toggleable for Mobile */}
-        <NavigationMenu className="mx-10">
-        <NavigationMenuList
-          className={cn(
-            "flex space-x-4 overflow-hidden",
-            isMenuOpen ? "flex-col mt-4 space-y-2 md:flex-row md:mt-0 md:space-y-0" : "hidden md:flex"
-          )}
-        >
-      
-          <NavigationMenuItem className="bg-gray-100 cursor-pointer">
-  <NavigationMenuTrigger className="hover:text-sky-400 cursor-pointer">Training Calendar</NavigationMenuTrigger>
-  <NavigationMenuContent className="grid gap-2 p-1 md:w-[280px] max-h-[280px] cursor-pointer">
-    <ul className="grid gap-2 cursor-pointer">
-   {training.map((component) => {
-  if (component.title === "Requirement - IATF/HSE" && accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HR_Res" ) {
-      return null; // skip if not Employee or HOS
-  }
- if (component.title === "Approval Form" && accessRole !== "HOS" && accessRole !== "HOD") {
-      return null; 
-  }
- if (component.title === "Approval Form " && accessRole !== "HR_Res" && accessRole !== "HR_Hod" ) {
-      return null; 
-  }
-
-  return (
-    <ListItem key={component.title} title={component.title} href={component.href} />
-  );
-})}
-    </ul>
-  </NavigationMenuContent>
-</NavigationMenuItem>
-
-{accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HOD" && (
-<NavigationMenuItem className="bg-gray-100 cursor-pointer" >
-              <NavigationMenuTrigger className="hover:text-sky-400 cursor-pointer" >Transaction</NavigationMenuTrigger>
-              <NavigationMenuContent className="grid gap-2 p-1 md:w-[250px] px-3 max-h-[300px] ">
-                <ul className="grid gap-2 p-1">
-                  {transaction.map((component) => {
-                     if (component.title === "Training Attendance Entry" && accessRole !== "HOS" && accessRole !== "HOD" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
-                     return null; // skip if not Employee or HOS
-                  }
-
-                    if (component.title === "Monthly Training Particulars" && accessRole !== "HOS" && accessRole !== "HOD" && accessRole !== "HR_Res" && accessRole !== "HR_Hod" ) {
-                    return null; 
-                 }
-                         if (component.title === "Temporary to regular" && accessRole !== "HOS" && accessRole !== "HOD"  && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
-                    return null; 
-                 }
-                 
-          return(
-                    <ListItem key={component.title} title={component.title} href={component.href} />
+              </button>
+              {isOpen && (
+                <div className="absolute left-0 top-full bg-white shadow-lg rounded-2xl z-20 ">
+                  <ul className="py-2">
+                    {filteredItems.map((item) => (
+                      <li key={item.title}>
+                        <Link
+                          href={item.href}
+                          className="block px-4 py-2 text-sm font-medium text-black hover:text-sky-400 transition-colors duration-150 whitespace-nowrap"
+                        >
+                          {item.title}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           );
-})}
-                </ul>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
-            )}
-{accessRole !== "Res_Person" && (
-<NavigationMenuItem className="bg-gray-100 cursor-pointer">
-              <NavigationMenuTrigger className="hover:text-sky-400 cursor-pointer">Training Effectiveness</NavigationMenuTrigger>
-              <NavigationMenuContent className="grid gap-2 p-1 md:w-[200px] max-h-[300px] ">
-                <ul className="grid gap-2 p-1">
-                  {tet.map((component) => {
-                        if (component.title === "Generate TEE Forms" && accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HOD" && accessRole !== "HR_Res"  && accessRole !== "HR_Hod") {
-                    return null; 
-                    
-                 }
-                    if (component.title === "Generic Forms"  && accessRole !== "HR_Res"  && accessRole !== "HR_Hod") {
-                    return null; 
-                    
-                 }
-          return(
-                    <ListItem key={component.title} title={component.title} href={component.href} />
-          );
-                  })}
-                </ul>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
-)}
-       
-          {/* <NavigationMenuItem>
-            <NavigationMenuTrigger>Training Agencies</NavigationMenuTrigger>
-            <NavigationMenuContent>
-              <ul className="grid w-[200px] gap-1 p-1 md:w-[500px] md:grid-cols lg:w-[300px]">
-                {trainingagencies.map((component) => (
-                  <ListItem key={component.title} title={component.title} href={component.href} />
-                ))}
-              </ul>
-            </NavigationMenuContent>
-          </NavigationMenuItem> */}
-          {accessRole !== "Res_Person" && accessRole !== "HOS"  && accessRole !== "HOD" &&(
-          <NavigationMenuItem className="bg-gray-100 cursor-pointer">
-            <NavigationMenuTrigger className="hover:text-sky-400 cursor-pointer">Upload </NavigationMenuTrigger>
-            <NavigationMenuContent
-              className="overflow-hidden"
-              style={{ "--radix-navigation-menu-viewport-height": "auto" } as React.CSSProperties}
-            >
-              <ul className="grid w-[150px] gap-1 p-1 md:w-[200px] md:grid-cols lg:w-[200px]">
-                {trainingcertificates.map((component) => {
-                     if (component.title === "Upload Certificates" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
-                    return null; 
-                    
-                 }  if (component.title === "Upload Materials" && accessRole !== "HR_Res" && accessRole !== "HR_Hod") {
-                    return null; 
-                    
-                 }
-                 
-          return(
-                    <ListItem key={component.title} title={component.title} href={component.href} />
-          );
-})}
-
-              </ul>
-            </NavigationMenuContent>
-          </NavigationMenuItem>
-          )}
-          {/* {accessRole !== "Res_Person" && accessRole !== "HOS" && accessRole !== "HOD" &&(
-          <NavigationMenuItem className="bg-gray-100 cursor-pointer">
-            <NavigationMenuTrigger className="hover:text-sky-400 cursor-pointer">Training Materials</NavigationMenuTrigger>
-            <NavigationMenuContent
-              className="overflow-hidden"
-              style={{ "--radix-navigation-menu-viewport-height": "auto" } as React.CSSProperties}
-            >
-              <ul className="grid w-[100px] gap-1 p-1 md:w-[200px] md:grid-cols lg:w-[200px] ">
-                {trainingmaterials.map((component) =>  {
-                     if (component.title === "Upload Materials" && accessRole !== "HR_Res" && accessRole !== "HR_Hod" ) {
-                    return null; 
-                 }
-                 
-          return(
-                    <ListItem key={component.title} title={component.title} href={component.href} />
-          );
-})}
-              </ul>
-            </NavigationMenuContent>
-          </NavigationMenuItem>
-          )} */}
-{(accessRole === "Res_Person" || accessRole === "HR_Res" || accessRole ==="HR_Hod" || accessRole === "HOS" || accessRole === "HOD") && !(accessRole === "Res_Person" && (department !== "MS" && department !== "FNTRY")) && (
-            <NavigationMenuItem className="bg-gray-100 cursor-pointer">
-              <NavigationMenuTrigger className="hover:text-sky-400 cursor-pointer">T & D Report</NavigationMenuTrigger>
-              <NavigationMenuContent className="grid gap-2 p-1 md:w-[200px] max-h-[400px] ">
-                <ul className="grid gap-2 p-1 cursor-pointer">
-                  {masterreport.map((component) => {
-                    console.log("Rendering masterreport item:", component.title, "accessRole:", accessRole);
-                    if (component.title === "Employee History" && accessRole !== "HR_Res" ) {
-                      console.log("Skipping Employee History for accessRole:", accessRole);
-                      return null; // skip if not Employee or HOS
-                    }
-                    if (component.title === "Qualified Trainers List" && accessRole !== "HR_Res" && accessRole !== "HR_Hod" && accessRole !== "HOS" && accessRole !== "HOD") {
-                      console.log("Skipping Qualified Trainers List for accessRole:", accessRole);
-                      return null; 
-                    }
-                    if (component.title === "Training Cost/Budget" && accessRole !== "HR_Res" ) {
-                      console.log("Skipping Training Cost/Budget for accessRole:", accessRole);
-                      return null; 
-                    }
-                    if (component.title === "Training Agencies" && accessRole !== "HR_Res" ) {
-                      console.log("Skipping Training Agencies for accessRole:", accessRole);
-                      return null; 
-                    }
-                    const normalizedAccessRole = accessRole ? accessRole.trim().toUpperCase() : "";
-
-                    if (component.title === "Add Training Record" && normalizedAccessRole !== "HR_RES"  ) {
-                      console.log("Skipping Add Training Record for accessRole:", accessRole);
-                      return null; // skip
-                    }
-                          if (component.title === "Total Head Count" && normalizedAccessRole !== "HR_RES" && normalizedAccessRole !== "HR_HOD"  ) {
-                      console.log("Skipping Add Training Record for accessRole:", accessRole);
-                      return null; // skip
-                    }
-                          if (component.title === "Training Hours" && normalizedAccessRole !== "HR_RES" && normalizedAccessRole !== "HR_HOD" ) {
-                      console.log("Skipping Add Training Record for accessRole:", accessRole);
-                      return null; // skip
-                    }
-// if (component.title === "Update TL" && (accessRole !== "Res_Person" || (department !== "MS" && department !== "FNTRY"))) {
-//                       console.log("Skipping Update TL for accessRole or department:", accessRole, department);
-//                       return null; // skip
-//                     }
-                    return(
-                      <ListItem key={component.title} title={component.title} href={component.href} />
-                    );
-                  })}
-                </ul>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
-            )}
-          <NavigationMenuItem className="bg-gray-100 hover:bg-gray-200 hover:text-sky-400 focus:bg-gray-300 transition-all cursor-pointer duration-300">
-            <div className="mx-5 cursor-pointer">  <ProfileDropdown   username={username} /></div>
-        
-            </NavigationMenuItem>
-
-          </NavigationMenuList>
-
-        </NavigationMenu>
-
-        {isOpen && (
-  <div className="md:hidden max-h-[80vh]  px-4 pt-2 pb-4 space-y-4 bg-background border-t animate-slide-in-left">
-    {/* Training Group */}
-    <MobileNavGroup title="Training" isOpen={openGroup === "training"} toggle={() => toggleGroup("training")}>
-      {training.map((item) => (
-        <MobileNavLink key={item.title} href={item.href}>
-          {item.title}
-        </MobileNavLink>
-      ))}
-    </MobileNavGroup>
-
-    {/* Transaction Group */}
-    <MobileNavGroup title="Transaction" isOpen={openGroup === "transaction"} toggle={() => toggleGroup("transaction")}>
-      {transaction.map((item) => (
-        <MobileNavLink key={item.title} href={item.href}>
-          {item.title}
-        </MobileNavLink>
-      ))}
-    </MobileNavGroup>
-
-    {/* TET Group */}
-    <MobileNavGroup title="TET" isOpen={openGroup === "tet"} toggle={() => toggleGroup("tet")}>
-      {tet.map((item) => (
-        <MobileNavLink key={item.title} href={item.href}>
-          {item.title}
-        </MobileNavLink>
-      ))}
-    </MobileNavGroup>
-
-    {/* Master Report Group */}
-    <MobileNavGroup title="Master Report" isOpen={openGroup === "masterreport"} toggle={() => toggleGroup("masterreport")}>
-      {masterreport.map((item) => (
-        <MobileNavLink key={item.title} href={item.href}>
-          {item.title}
-        </MobileNavLink>
-      ))}
-    </MobileNavGroup>
-
-    {/* Training Agencies Group
-    <MobileNavGroup title="Training Agencies" isOpen={openGroup === "trainingagencies"} toggle={() => toggleGroup("trainingagencies")}>
-      {trainingagencies.map((item) => (
-        <MobileNavLink key={item.title} href={item.href}>
-          {item.title}
-        </MobileNavLink>
-      ))}
-    </MobileNavGroup> */}
-
-    {/* Training Certificates Group */}
-    <MobileNavGroup title="Training Certificates" isOpen={openGroup === "trainingcertificates"} toggle={() => toggleGroup("trainingcertificates")}>
-      {trainingcertificates.map((item) => (
-        <MobileNavLink key={item.title} href={item.href}>
-          {item.title}
-        </MobileNavLink>
-      ))}
-    </MobileNavGroup>
-
-    {/* Training Materials Group */}
-    {/* <MobileNavGroup title="Training Materials" isOpen={openGroup === "trainingmaterials"} toggle={() => toggleGroup("trainingmaterials")}>
-      {trainingmaterials.map((item) => (
-        <MobileNavLink key={item.title} href={item.href}>
-          {item.title}
-        </MobileNavLink>
-      ))}
-    </MobileNavGroup> */}
-  </div>
-)}
-
-      </nav>
-    </div>
-  )
-}
-function MobileNavLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <Link href={href} className="block px-4 py-3 rounded-md text-base font-medium text-muted-foreground hover:text-foreground hover:bg-muted">
-      {children}
-    </Link>
-  );
-}
-
-function MobileNavGroup({ title, children, isOpen, toggle }: { title: string; children: React.ReactNode; isOpen: boolean; toggle: () => void }) {
-  return (
-    <div>
-      <button onClick={toggle} className="w-full flex items-center justify-between px-2 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground">
-        {title}
-        {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-      </button>
-      <div className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-[500px] mt-1 space-y-1' : 'max-h-0'} px-2`}>
-        {isOpen && children}
+        })}
+        <ProfileDropdown username={username} />
       </div>
     </div>
   );
-}
-function ProfileDropdown({ username }: { username: string }) {
-  
-  const router = useRouter();
-  const handleLogout = () => {
-  
-    // Remove the Logged data from localStorage
-    localStorage.removeItem('isLoggedIn');
-    // Redirect to the login page
-    router.push('/');
-  };
+
+  // Mobile Navbar
+  const MobileNav = () => (
+    <div className="md:hidden flex items-center justify-between w-full">
+      <div className="text-black font-semibold text-xl">
+        <Link href="/dashboard">Greentech Industries</Link>
+
+      </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setMobileOpen(!mobileOpen)}
+      >
+        {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+      </Button>
+      {mobileOpen && (
+        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-40 z-50">
+          <div className="absolute top-0 right-0 w-3/4 h-full bg-white shadow-lg p-6 flex flex-col gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="self-end mb-2"
+              onClick={() => setMobileOpen(false)}
+            >
+              <X className="h-6 w-6" />
+            </Button>
+            <MobileMenuGroup
+              title="Training Calendar"
+              items={filterMenu(training)}
+            />
+            {accessRole !== "Res_Person" &&
+              accessRole !== "HOS" &&
+              accessRole !== "HOD" && (
+                <MobileMenuGroup
+                  title="Transaction"
+                  items={filterMenu(transaction)}
+                />
+              )}
+            {accessRole !== "Res_Person" && (
+              <MobileMenuGroup
+                title="Training Effectiveness"
+                items={filterMenu(tet)}
+              />
+            )}
+            {accessRole !== "Res_Person" &&
+              accessRole !== "HOS" &&
+              accessRole !== "HOD" && (
+                <MobileMenuGroup
+                  title="Upload"
+                  items={filterMenu(trainingcertificates)}
+                />
+              )}
+            {(accessRole === "Res_Person" ||
+              accessRole === "HR_Res" ||
+              accessRole === "HR_Hod" ||
+              accessRole === "HOS" ||
+              accessRole === "HOD") &&
+              !(
+                accessRole === "Res_Person" &&
+                department !== "MS" &&
+                department !== "FNTRY"
+              ) && (
+                <MobileMenuGroup
+                  title="T & D Report"
+                  items={filterMenu(masterreport)}
+                />
+              )}
+            <div className="mt-4">
+              <ProfileDropdown username={username} />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   return (
-    <DropdownMenu>
+    <nav className="w-full bg-gray-100 px-4 py-2 shadow-sm z-10">
+      {DesktopNav()}
+      {MobileNav()}
+    </nav>
+  );
+}
+
+function MobileMenuGroup({ title, items }: { title: string; items: { title: string; href: string }[] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <button
+        className="w-full flex items-center justify-between px-2 py-2 text-base font-semibold text-muted-foreground hover:text-foreground"
+        onClick={() => setOpen(!open)}
+      >
+        {title}
+        {open ? (
+          <ChevronUp className="h-4 w-4" />
+        ) : (
+          <ChevronDown className="h-4 w-4" />
+        )}
+      </button>
+      {open && (
+        <ul className="pl-4">
+          {items.map((item) => (
+            <li key={item.title} className="py-1">
+              <Link
+                href={item.href}
+                className="block text-sm text-black hover:text-sky-400 transition-colors"
+              >
+                {item.title}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function ProfileDropdown({ username }: { username: string }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+
+  const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn");
+    router.push("/");
+    setOpen(false);
+  };
+
+  const handleDashboard = () => {
+    router.push("/dashboard");
+    setOpen(false);
+  };
+
+  return (
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="cursor-pointer">
-          <User className="h-5 w-5 cursor-pointer"  />
+          <User className="h-5 w-5 cursor-pointer" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56 mr-2">
-        <DropdownMenuLabel className="text-center text-xl font-bold">{username}</DropdownMenuLabel>
+        <DropdownMenuLabel className="text-center text-xl font-bold">
+          {username}
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem><a href="/dashboard">Dashboard</a></DropdownMenuItem> 
+          <DropdownMenuItem asChild>
+            <button
+              type="button"
+              className="w-full text-left px-4 py-2"
+              onClick={handleDashboard}
+            >
+              Dashboard
+            </button>
+          </DropdownMenuItem>
         </DropdownMenuGroup>
-        <DropdownMenuItem><button type="button" className="px-6 mt-2 py-2 text-sm cursor-pointer font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2 " onClick={handleLogout}>Logout</button></DropdownMenuItem>
+        <DropdownMenuItem>
+          <button
+            type="button"
+            className="px-6 mt-2 py-2 text-sm cursor-pointer font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
+            onClick={handleLogout}
+          >
+            Logout
+          </button>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
-
-const ListItem = React.forwardRef<React.ElementRef<"a">, React.ComponentPropsWithoutRef<"a">>(
-  ({ className, title, children, ...props }, ref) => {
-    return (
-      <li>
-        <NavigationMenuLink asChild>
-          <a
-            ref={ref}
-            className={cn(
-              "block px-4 py-3 rounded-md text-sm font-medium text-black hover:text-sky-400 hover:bg-gray-100",
-              className
-            )}
-            {...props}
-          >
-            <div className="text-sm font-medium leading-none">{title}</div>
-            <p className="line-clamp-2 text-sm leading-snug text-black">
-              {children}
-            </p>
-          </a>
-        </NavigationMenuLink>
-      </li>
-    )
-  }
-)
-
-ListItem.displayName = "ListItem"

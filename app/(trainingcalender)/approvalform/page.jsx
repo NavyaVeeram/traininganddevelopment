@@ -173,14 +173,11 @@ export default function TrainingDataTable() {
     setIsModalOpen(false);
   };
 
-  // Improved handleInputChange to parse Training_Budget as number
+  // Improved handleInputChange without Training_Budget parsing
   const handleInputChange = (e, key) => {
     setEditingData(prevData => {
       let value = e.target.value;
-      if (key === "Training_Budget") {
-        value = value === "" ? "" : parseFloat(value);
-        if (isNaN(value)) value = "";
-      }
+      // Removed Training_Budget special parsing as per request
       return {
         ...prevData,
         [key]: value,
@@ -189,18 +186,6 @@ export default function TrainingDataTable() {
   };
 
   const handleUpdate = async () => {
-    if (
-      !editingData?.Week ||
-      editingData.Week.trim() === "" ||
-      editingData.Training_Budget === "" ||
-      editingData.Training_Budget === undefined ||
-      editingData.Training_Budget === null ||
-      isNaN(Number(editingData.Training_Budget))
-    ) {
-      alert("Week and Training_Budget are required and must be valid.");
-      setError("Week and Training_Budget are required and must be valid.");
-      return;
-    }
     try {
       const programId = editingData?.Program_Id;
       console.log('Program_Id:', programId);
@@ -209,7 +194,7 @@ export default function TrainingDataTable() {
 
       const updatedDataWithCreatedBy = {
         ...editingData,
-        Training_Budget: Number(editingData.Training_Budget),
+        // Removed Training_Budget from update payload as per request
         CreatedBy: employeeId,
       };
 
@@ -224,7 +209,7 @@ export default function TrainingDataTable() {
 
         const updatedList = trainingData.map((item) =>
           item.Program_Id === programId
-            ? { ...item, ...editingData, Training_Budget: Number(editingData.Training_Budget) }
+            ? { ...item, ...editingData }
             : item
         );
         setTrainingData(updatedList);
@@ -464,12 +449,18 @@ export default function TrainingDataTable() {
                   <div className="flex justify-end mt-6 gap-x-2">
                     <EmailApproval
                       employeeId={employeeId}
+                        selectedProgramNames={paginatedData.filter(item => selectedProgramIds.includes(item.Program_Id)).map(item => item.Program_Name)}
                       selectedProgramIds={selectedProgramIds}
                     />
-                    <EmailRejection
-                      employeeId={employeeId}
-                      selectedProgramIds={selectedProgramIds}
-                    />
+                      <EmailRejection
+                                       trainModeList={paginatedData.filter(item => selectedProgramIds.includes(item.Program_Id)).map(item => item.Train_Mode)}
+                                    selectedProgramIds={selectedProgramIds}
+                                    selectedProgramNames={paginatedData.filter(item => selectedProgramIds.includes(item.Program_Id)).map(item => item.Program_Name)}
+                                    employeeId={employeeId}
+                                    onRejectSuccess={() => {
+                                      // Refresh data or handle post-rejection logic here
+                                    }}
+                                  />
                   </div>
                 )}
       </div>

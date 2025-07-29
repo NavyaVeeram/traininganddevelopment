@@ -1,9 +1,11 @@
+
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
 import { FaSearch, FaEdit } from "react-icons/fa";
 import Select from "react-select";
 import EmailApprovalTrainers from "../emailfortrainers/EmailApprovalTrainers"
 import EmailRejectionForTrainers from "../emailfortrainers/EmailRejectionForTrainers";
+
 import {
   Pagination,
   PaginationContent,
@@ -545,20 +547,19 @@ export default function TrainerApprovalForm() {
               </div>
             </div>
           )}
-          {selectedQualIds.length > 0 && (
-                           <div className="flex justify-end mt-6 gap-x-2">
-                     
-                             <EmailApprovalTrainers
-                               selectedQualIds={selectedQualIds}
-                               selectedQualNames={selectedQualNames}
-                             />
-                   {accessRole !== "HOS" &&(
-                             <EmailRejectionForTrainers
-                               selectedQualIds={selectedQualIds}
-                             />
-                                   )}  
-                           </div>
-                         )} 
+{selectedQualIds.length > 0 && (
+  <div className="flex justify-end mt-6 gap-x-2">
+    <EmailApprovalTrainers
+      selectedQualIds={selectedQualIds}
+      selectedQualNames={selectedQualNames}
+    />
+    {accessRole !== "HOS" &&(
+      <EmailRejectionForTrainers
+        selectedQualIds={selectedQualIds}
+      />
+    )}
+  </div>
+)} 
             </div>
       </div>
     </div>
