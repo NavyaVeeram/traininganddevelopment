@@ -189,16 +189,18 @@ export default function TrainingDataTable() {
   };
 
   const handleUpdate = async () => {
+    console.log("handleUpdate called with Train_Mode:", editingData?.Train_Mode);
     if (
-      !editingData?.Week ||
-      editingData.Week.trim() === "" ||
+      (editingData.Train_Mode !== "Internal" && (!editingData?.Week || editingData.Week.trim() === "")) ||
       (editingData.Train_Mode !== "Internal" &&
         (editingData.Training_Budget === "" ||
           editingData.Training_Budget === undefined ||
           editingData.Training_Budget === null ||
           isNaN(Number(editingData.Training_Budget))))
     ) {
-      alert("Week and Training_Budget are required and must be valid.");
+      if (editingData.Train_Mode !== "Internal") {
+        alert("Week and Training_Budget are required and must be valid.");
+      }
       setError("Week and Training_Budget are required and must be valid.");
       return;
     }
@@ -707,35 +709,39 @@ export default function TrainingDataTable() {
                         }}
                       />
                     </div>
-                    <div>
-                      <label className="block font-semibold ">Week No</label>
-                      <input
-                        type="text"
-                        value={editingData.Week ?? ""}
-                        onChange={(e) => handleInputChange(e, "Week")}
-                        className="border p-2 w-70 rounded-md"
-                        autoComplete="off"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-semibold ">Training Budget</label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={
-                          editingData.Training_Budget !== undefined &&
-                          editingData.Training_Budget !== null
-                            ? editingData.Training_Budget
-                            : ""
-                        }
-                        onChange={(e) => handleInputChange(e, "Training_Budget")}
-                        className="border p-2 w-70 rounded-md"
-                        autoComplete="off"
-                        required
-                      />
-                    </div>
+                    {editingData.Train_Mode !== "Internal" && (
+                      <>
+                        <div>
+                          <label className="block font-semibold ">Week No</label>
+                          <input
+                            type="text"
+                            value={editingData.Week ?? ""}
+                            onChange={(e) => handleInputChange(e, "Week")}
+                            className="border p-2 w-70 rounded-md"
+                            autoComplete="off"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block font-semibold ">Training Budget</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={
+                              editingData.Training_Budget !== undefined &&
+                              editingData.Training_Budget !== null
+                                ? editingData.Training_Budget
+                                : ""
+                            }
+                            onChange={(e) => handleInputChange(e, "Training_Budget")}
+                            className="border p-2 w-70 rounded-md"
+                            autoComplete="off"
+                            required
+                          />
+                        </div>
+                      </>
+                    )}
                     <div>
                       <label className="block font-semibold ">Evaluation Period</label>
                       <input

@@ -57,7 +57,7 @@ export default async function handler(req, res) {
     const userResult = await prisma.$queryRawUnsafe(
       `SELECT qtl.Qual_Id, umh.Username, umh.EmployeeId
        FROM Qualified_Trainer_List qtl
-       LEFT JOIN UserMaster_HR umh ON qtl.EmployeeId = umh.EmployeeId
+       INNER JOIN UserMaster_HR umh ON qtl.EmployeeId = umh.EmployeeId
        WHERE qtl.Qual_Id IN (${QualId.join(',')})`
     );
 

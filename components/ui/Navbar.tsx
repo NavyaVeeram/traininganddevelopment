@@ -211,6 +211,7 @@ export default function NavigationMenuDemo() {
         accessRole !== "HR_Res" &&
         accessRole !== "HR_Hod"
       )
+
         return false;
       if (
         component.title === "Generic Forms" &&
@@ -265,6 +266,10 @@ export default function NavigationMenuDemo() {
         normalizedAccessRole !== "HR_HOD"
       )
         return false;
+        // if (component.title === "Update TL" && (accessRole !== "Res_Person" || (department !== "MS" && department !== "FNTRY"))) {
+        //               console.log("Skipping Update TL for accessRole or department:", accessRole, department);
+        //               return null; // skip
+        //            }
       return true;
     });
 
