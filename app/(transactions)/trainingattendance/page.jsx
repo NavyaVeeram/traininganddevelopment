@@ -1007,9 +1007,8 @@ const programOptions = options.map((option) => ({
             </div>
             {/* Align these fields in a single row */}
             <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mt-2 w-full">
-              {/* Training Name */}
               <div>
-              <label className="block font-medium">Training Name:</label>
+              <label className="block font-medium">Category :</label>
               <input
                 type="text"
                 value={formData.Training_Name}

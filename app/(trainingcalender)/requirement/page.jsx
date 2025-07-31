@@ -227,7 +227,7 @@ export default function Requirement() {
         setPrograms([]);
       }
     } else {
-      setPrograms([]); // Clear programs if no training name is selected
+      setPrograms([]); 
     }
   };
   const monthOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -398,7 +398,7 @@ const programOptions = programs.map(program => ({
     setIsModalOpen(false); // Close the modal without making any changes
   };
   const columnKeyMap = {
-    "Training Name": "Training_Name",
+    "Category": "Training_Name",
     Year: "Year_No",
     Department: "Department",
     Section: "Section",
@@ -600,7 +600,7 @@ const programOptions = programs.map(program => ({
       {/* Training */}
       <div className="space-y-0.5">
         <label htmlFor="Training_Name" className="block text-sm font-medium text-gray-900">
-    Training Name
+Category
         </label>
         <div className="relative">
           <Select
@@ -608,7 +608,7 @@ const programOptions = programs.map(program => ({
             name="Training_Name"
             value={
               formData.Training_Name === ""
-                ? { value: "", label: "Select Training Name" }
+                ? { value: "", label: "Select Category" }
                 : formData.Training_Name === "IATF"
                 ? { value: "IATF", label: "International Automotive Task Force - (IATF)" }
                 : { value: "HSE", label: "Health, Safety, and Environment - (HSE)" }
@@ -623,7 +623,7 @@ const programOptions = programs.map(program => ({
               })
             }
             options={[
-              { value: "", label: "Select Training Name" },
+              { value: "", label: "Select Category" },
               { value: "IATF", label: "International Automotive Task Force - (IATF)" },
               { value: "HSE", label: "Health, Safety, and Environment - (HSE)" },
             ]}

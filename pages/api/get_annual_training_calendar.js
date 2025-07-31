@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   const { year, trainingName } = req.query;
 
   if (!year) return res.status(400).json({ error: 'Year is required' });
-  if (!trainingName) return res.status(400).json({ error: 'Training name is required' });
+  if (!trainingName) return res.status(400).json({ error: 'Category is required' });
 
   try {
     const data = await prisma.$queryRawUnsafe(

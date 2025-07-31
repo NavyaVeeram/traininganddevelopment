@@ -212,7 +212,7 @@ export default function TrainerApprovalForm() {
                   className="border p-2 cursor-pointer text-left"
                   onClick={() => handleSort("Training_Name")}
                 >
-                  Training Name
+                  Category
                   {sortConfig.key === "Training_Name"
                     ? sortConfig.direction === "asc"
                       ? " ▲"

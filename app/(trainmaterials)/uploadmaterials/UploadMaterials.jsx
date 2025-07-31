@@ -589,7 +589,7 @@ const programOptions = options.map((option) => ({
                   <thead className="bg-muted sticky top-0">
                     <tr>
 {[
-  { key: "Training_Name", label: "Training Name" },
+  { key: "Training_Name", label: "Category" },
   { key: "Program_Name", label: "Program Name" },
   { key: "Year_No", label: "Year No" },
   { key: "Department", label: "Department" },

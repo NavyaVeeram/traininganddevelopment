@@ -225,7 +225,7 @@ const handleEdit = (data) => {
   };
   
    const columnKeyMap = {
-   Training_Name:"Training Name",   
+   Training_Name:"Category",   
   Department:"Department",
   Program_Name:"Program Name",
   Train_Mode:"Mode",

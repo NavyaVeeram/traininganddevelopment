@@ -28,7 +28,7 @@ useEffect(() => {
 // Mapping of raw column names to user-friendly display names
 const columnNameMap = {
 "programid": "Program ID",
-"training_name":'Training Name',
+"training_name":'Category',
 "year_no":"Year No",
 "program_name":"Program Name",
 "train_mode":"Training Mode ",

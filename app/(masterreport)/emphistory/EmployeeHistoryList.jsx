@@ -338,7 +338,7 @@ const EmployeeHistoryList = () => {
       width: "10%",
     },
     {
-      name: "Training Name",
+      name: "Category",
       selector: (row) => row.Training_Name,
       sortable: true,
     },
@@ -670,7 +670,7 @@ const EmployeeHistoryList = () => {
                       <tr>
                         {[
                           { key: "EmployeeId", label: "Employee ID" },
-                          { key: "Training_Name", label: "Training Name" },
+                          { key: "Training_Name", label: "Category" },
                           { key: "Program_Name", label: "Program Name" },
                           { key: "Train_Mode", label: "Training Mode" },
                           { key: "No_Hrs", label: "Hours" },

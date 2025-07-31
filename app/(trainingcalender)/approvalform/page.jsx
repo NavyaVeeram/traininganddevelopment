@@ -322,7 +322,7 @@ export default function TrainingDataTable() {
              <thead className="bg-gray-100">
                <tr>
                  <th></th>     
-                 <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Training_Name")}>Training Name {sortConfig.key === "Training_Name" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
+                 <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Training_Name")}>Category {sortConfig.key === "Training_Name" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
                  <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Year_No")}>Year {sortConfig.key === "Year_No" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
                  <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Department")}>Department {sortConfig.key === "Department" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
                  <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Section")}>Section {sortConfig.key === "Section" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
@@ -554,7 +554,7 @@ export default function TrainingDataTable() {
                 <div>
                   <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-4">
                     <div>
-                      <label className="block font-semibold">Training Name</label>
+                      <label className="block font-semibold">Category</label>
                       <input
                         type="text"
                         value={editingData.Training_Name}

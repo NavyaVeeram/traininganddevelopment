@@ -140,7 +140,7 @@ const RatingDistributionPage = () => {
   }, [selectedYear, selectedTrainingName]);
 
   useEffect(() => {
-    // Fetch program names on initial load or when training name is not selected
+  
     const fetchInitialProgramNames = async () => {
       try {
         const response = await fetch(
@@ -253,7 +253,7 @@ const RatingDistributionPage = () => {
             />
           </div>
 
-          {/* Training Name Dropdown */}
+      
           <div className="flex mt-3 items-center space-x-1">
             <label className="block mb-1 font-semibold">Select Training:</label>
             <Select

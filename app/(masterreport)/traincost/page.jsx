@@ -789,7 +789,7 @@ const sortedBudgetVsActualData = getSortedData(budgetVsActualFilteredData, sortC
                     <thead className="bg-muted sticky top-0">
                       <tr>
                         {[
-                          { key: "Program_Name", label: "Training Name" },
+                          { key: "Program_Name", label: "Category" },
                           { key: "Department", label: "Department" },
                           { key: "Req_Months", label: "Scheduled Month" },
                           { key: "Training_Name", label: "Type" },
@@ -1000,7 +1000,7 @@ const sortedBudgetVsActualData = getSortedData(budgetVsActualFilteredData, sortC
                       <thead className="bg-muted sticky top-0">
                         <tr>
                           {[
-                            { key: "Program_Name", label: "Training Name" },
+                            { key: "Program_Name", label: "Category" },
                             { key: "Department", label: "Department" },
                             { key: "Req_Months", label: "Scheduled Month" },
                             { key: "Training_Date", label: "Conducted Date" },

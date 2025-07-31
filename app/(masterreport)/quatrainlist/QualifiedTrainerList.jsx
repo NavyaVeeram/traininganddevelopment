@@ -634,7 +634,7 @@ const isExperienceAtLeast5Years = dojDate ? dojDate <= fiveYearsAgo : false;
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
           </div>
-          {/* Training Name Label and Radio buttons */}
+  
           <div>
             <label className="block text-sm font-medium text-gray-900">
               Category
@@ -827,7 +827,7 @@ const isExperienceAtLeast5Years = dojDate ? dojDate <= fiveYearsAgo : false;
   { key: "Designation", label: "Designation" },
   { key: "Section", label: "Section" },
   { key: "Department", label: "Department" },
-  { key: "Training_Name", label: "Training Name" },
+  { key: "Training_Name", label: "Category" },
   { key: "Certified", label: "Certified" },
   { key :"Cert_Des",label:"Cert_Des"},
 { key: "Exp_5_Yr", label: "OverAll Exp (5 yrs)" },

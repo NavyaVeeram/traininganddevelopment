@@ -215,7 +215,7 @@ const handleDownloadPDF = () => {
     const headers = [
       [
         "S.No",
-        "Training Name",
+        "Category",
         "Scheduled Month",
         "Conducted on",
         "Type",
@@ -422,7 +422,7 @@ const handleDownloadPDF = () => {
                 <thead className="bg-muted top-0 z-0">
                   <tr>
                     {[
-                      { key: "Program_Name", label: "Training Name" },
+                      { key: "Program_Name", label: "Category" },
                       { key: "Req_Months", label: "Scheduled Month" },
                       { key: "Training_Date", label: "Conducted Date" },
                       { key: "Training_Name", label: "Type" },
