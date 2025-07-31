@@ -1,7 +1,5 @@
 import { prisma } from '@/lib/prisma';
 import nodemailer from 'nodemailer';
-import fs from 'fs';
-import path from 'path';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
@@ -10,9 +8,6 @@ export default async function handler(req, res) {
 
   console.log('Received employeeId:', employeeId);
   console.log('Received programIds:', programIds);
-
-  const htmlFilePath = path.join(process.cwd(), 'public', 'reject_email_message.html');
-  let htmlContent = fs.readFileSync(htmlFilePath, 'utf-8');
 
   if (!employeeId || !programIds || !Array.isArray(programIds) || programIds.length === 0) {
     return res.status(400).json({ message: 'Invalid employeeId or programIds' });
@@ -46,12 +41,50 @@ export default async function handler(req, res) {
       programNamesList = Array.from(programNamesSet).join(', ');
     }
 
-    // Inject program names into the email content
-    htmlContent = htmlContent.replace('<!-- PROGRAM_NAMES_PLACEHOLDER -->', `<p><strong>Programs:</strong> ${programNamesList}</p>`);
-
     if (aggregatedResults.length === 0) {
       return res.status(404).json({ message: 'No emails found to send' });
     }
+
+    // Generate email HTML content dynamically
+    const htmlContent = `
+    <div style="max-width: 650px;margin:auto; margin-top:100px; font-family: Arial, sans-serif; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); background-color: #fff;">
+  <!-- Header -->
+  <div style="background-color: #0566c7ff; padding: 20px; color: white; text-align: center;">
+    <h2 style="margin: 0;">Training Rejection Notification</h2>
+  </div>
+
+  <!-- Body Content -->
+  <div style="padding: 20px; font-size: 14px; color: #333;">
+    <p>Dear Sir/Madam,</p>
+    <p>
+      <strong>  You have a rejection email. </strong>
+    </p>
+
+    <div style="margin: 20px 0; overflow-x: auto;">
+      <table style="border-collapse: collapse; font-size: 14px; table-layout: auto;">
+        <thead>
+          <tr style="background-color: #e6ecff; color: #003366;">
+            <th style="border: 1px solid #ccc; padding: 8px; text-align: left; white-space: nowrap;">Rejected Program</th>
+                 </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="border: 1px solid #ccc; padding: 8px;">${programNamesList}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+<p>If you believe this email was sent in error, please ignore it or contact support for assistance.</p>
+      <p>Thanks & Regards</p>
+  </div>
+
+  <!-- Footer -->
+  <div style="background-color: #f4f4f4; padding: 10px; text-align: center; font-size: 12px; color: #777;">
+    © QA-MIS | Greentech Industries
+  </div>
+</div>
+
+    `;
 
     // Setup email transport (example with SMTP)
     const transporter = nodemailer.createTransport({

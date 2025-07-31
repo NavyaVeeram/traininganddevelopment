@@ -547,19 +547,23 @@ export default function TrainerApprovalForm() {
               </div>
             </div>
           )}
-{selectedQualIds.length > 0 && (
-  <div className="flex justify-end mt-6 gap-x-2">
-    <EmailApprovalTrainers
-      selectedQualIds={selectedQualIds}
-      selectedQualNames={selectedQualNames}
-    />
-    {accessRole !== "HOS" &&(
-      <EmailRejectionForTrainers
-        selectedQualIds={selectedQualIds}
-      />
+    {selectedQualIds.length > 0 && (
+      <div className="flex justify-end mt-6 gap-x-2">
+        <EmailApprovalTrainers
+          selectedQualIds={selectedQualIds}
+          selectedQualNames={selectedQualNames}
+          selectedUsernames={selectedQualIds.map(id => {
+            const user = trainerData.find(item => item.Qual_Id === id);
+            return user ? user.Username : '';
+          })}
+        />
+        {accessRole !== "HOS" &&(
+          <EmailRejectionForTrainers
+            selectedQualIds={selectedQualIds}
+          />
+        )}
+      </div>
     )}
-  </div>
-)} 
             </div>
       </div>
     </div>

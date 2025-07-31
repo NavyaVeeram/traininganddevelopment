@@ -769,7 +769,7 @@ const formattedOptions = data.map((item) => ({
                     : "text-gray-600"
                 }`}
               >
-                The Employee was{" "}
+                The Employee is{" "}
                 {selectedEmployee.activeStatus === "Y" ||
                 (selectedEmployee.data && selectedEmployee.data.activeStatus === "Y")
                   ? "Active"

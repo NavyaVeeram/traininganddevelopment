@@ -1,7 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import nodemailer from 'nodemailer';
-import fs from 'fs';
-import path from 'path';
+
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
@@ -19,8 +18,7 @@ export default async function handler(req, res) {
     qualIdArray = QualId.split(',').map(id => id.trim());
   }
 
-  const htmlFilePath = path.join(process.cwd(), 'public', 'reject_email_qualified_trainer.html');
-  let htmlContent = fs.readFileSync(htmlFilePath, 'utf-8');
+  console.log('QualId array for SQL query:', qualIdArray);
 
   try {
     // Run stored procedure
@@ -34,25 +32,65 @@ export default async function handler(req, res) {
 
     // Query usernames and EmployeeIds for the selected Qual_Id values
     const usernamesData = await prisma.$queryRawUnsafe(`
-      SELECT DISTINCT U.Username, U.EmployeeId
+       SELECT DISTINCT EM.EmpName AS Username, Q.EmployeeId
       FROM Qualified_Trainer_List Q
-      INNER JOIN UserMaster_HR U ON Q.EmployeeId = U.EmployeeId
+      LEFT JOIN MISQA..Employee_Master em ON EM.EmpCode = Q.EmployeeId
       WHERE Q.Qual_Id IN (${qualIdArray.map(id => parseInt(id)).join(',')})
     `);
 
     // Log usernames and EmployeeIds to console
     console.log('Usernames and EmployeeIds for selected Qual_Id:', usernamesData.map(row => ({ Username: row.Username, EmployeeId: row.EmployeeId })));
 
-    // Generate HTML list of usernames and EmployeeIds
-    let usernamesHtml = '<p><strong>Rejected trainers:</strong></p><ul>';
+    // Generate HTML table rows of usernames and EmployeeIds
+    let tableRowsHtml = '';
     for (const row of usernamesData) {
-      usernamesHtml += `<li>${row.Username} (EmployeeId: ${row.EmployeeId})</li>`;
+      tableRowsHtml += `
+        <tr>
+          <td style="border: 1px solid #ccc; padding: 8px;">${row.Username}</td>
+          <td style="border: 1px solid #ccc; padding: 8px;">${row.EmployeeId}</td>
+        </tr>
+      `;
     }
-    usernamesHtml += '</ul>';
 
-    // Replace placeholder in email template with usernames HTML
-    htmlContent = htmlContent.replace('<!-- PROGRAM_NAMES_PLACEHOLDER -->', usernamesHtml);
+    // Replace placeholder in email template with table rows HTML
+       // Generate email HTML content dynamically
+    const htmlContent = `
+    <div style="max-width: 650px; margin: auto; margin-top:100px; font-family: Arial, sans-serif; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); background-color: #fff;">
+  <!-- Header -->
+  <div style="background-color: #0566c7ff; padding: 20px; color: white; text-align: center;">
+    <h2 style="margin: 0;">Trainer Rejection Notification</h2>
+  </div>
 
+  <!-- Body Content -->
+  <div style="padding: 20px; font-size: 14px; color: #333;">
+    <p>Dear Sir/Madam,</p>
+     <p>
+      <strong>  You have a rejection email. </strong>
+    </p>
+    <div style="margin: 20px 0; overflow-x: auto;">
+      <table style="border-collapse: collapse; font-size: 14px; table-layout: auto;">
+        <thead>
+          <tr style="background-color: #e6ecff; color: #003366;">
+            <th style="border: 1px solid #ccc; padding: 8px; text-align: left; white-space: nowrap;">Username</th>
+            <th style="border: 1px solid #ccc; padding: 8px; text-align: left; white-space: nowrap;">EmployeeId</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tableRowsHtml}
+        </tbody>
+      </table>
+    </div>
+<p>If you believe this email was sent in error, please ignore it or contact support for assistance.</p>
+      <p>Thanks & Regards</p>
+  </div>
+
+  <!-- Footer -->
+  <div style="background-color: #f4f4f4; padding: 10px; text-align: center; font-size: 12px; color: #777;">
+    © QA-MIS | Greentech Industries
+  </div>
+</div>
+
+    `;
     // Setup email transport (example with SMTP)
     const transporter = nodemailer.createTransport({
       host: '10.40.10.250',       // Internal SMTP server IP

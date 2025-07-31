@@ -17,7 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
+import {  usePathname } from "next/navigation";
 const training = [
   { title: "Annual Training Calender - IATF/HSE", href: "/annualtraining" },
   { title: "Requirement - IATF/HSE", href: "requirement" },
@@ -94,7 +94,8 @@ export default function NavigationMenuDemo() {
   // const router = useRouter();
   const closeTimeout = useRef<NodeJS.Timeout | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
-
+const pathname = usePathname();
+  const router = useRouter();
   useEffect(() => {
     const storedEmployeeId = localStorage.getItem("employeeId");
     const storedDepartment = localStorage.getItem("department");
@@ -295,7 +296,7 @@ export default function NavigationMenuDemo() {
     closeTimeout.current = setTimeout(() => {
       setHoveredMenu(null);
       setOpenMenu(null);
-    }, 100);
+    }, 800);
   };
 
   const DesktopNav = () => (
@@ -340,22 +341,36 @@ export default function NavigationMenuDemo() {
                   )}
                 />
               </button>
-              {isOpen && (
-                <div className="absolute left-0 top-full bg-white shadow-lg rounded-2xl z-20 ">
+      {isOpen && (
+        
+                <div className="absolute left-0 top-full bg-white shadow-lg rounded-2xl z-30 mt-0">
                   <ul className="py-2">
                     {filteredItems.map((item) => (
-                      <li key={item.title}>
-                        <Link
-                          href={item.href}
-                          className="block px-4 py-2 text-sm font-medium text-black hover:text-sky-400 transition-colors duration-150 whitespace-nowrap"
+                      <li
+                        key={item.title + item.href}
+                        className="cursor-pointer"
+                      >
+                        <a
+                          className="block px-4 py-2.5 text-sm font-medium text-black hover:text-sky-400 transition-colors duration-150 whitespace-nowrap cursor-pointer" // ✅ Added cursor-pointer
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setHoveredMenu(null);
+                            setOpenMenu(null);
+                            if (pathname === item.href) {
+                              router.replace(item.href);
+                            } else {
+                              router.push(item.href);
+                            }
+                          }}
                         >
                           {item.title}
-                        </Link>
+                        </a>
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
+ 
             </div>
           );
         })}

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 
-export default function EmailApprovalTrainers({selectedQualIds, selectedQualNames}) {
+export default function EmailApprovalTrainers({selectedQualIds, selectedQualNames, selectedUsernames}) {
   const [employeeId, setEmployeeId] = useState("");
   const [email, setEmail] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -17,7 +17,7 @@ export default function EmailApprovalTrainers({selectedQualIds, selectedQualName
   }, []);
 
   const handleSendToApproval = async () => {
-    if (isCallingApi.current || !employeeId|| !selectedQualIds ) return;
+    if (isCallingApi.current || !employeeId || !selectedQualIds) return;
 
     isCallingApi.current = true;
     setLoading(true);
@@ -25,7 +25,7 @@ export default function EmailApprovalTrainers({selectedQualIds, selectedQualName
       const res = await fetch("/api/generate_email_qualified_trainers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ employeeId, QualId: selectedQualIds, approve: true }),
+        body: JSON.stringify({ employeeId, QualId: selectedQualIds, Usernames: selectedUsernames, approve: true }),
       });
 
       if (res.status === 404) {
@@ -59,17 +59,6 @@ export default function EmailApprovalTrainers({selectedQualIds, selectedQualName
       >
         {loading ? "Processing..." : "Approve"}
       </button>
-      {/* {selectedQualNames && selectedQualNames.length > 0 && (
-        <div className="mb-2 text-sm text-gray-700">
-          Selected Qualifiers: {selectedQualNames.join(", ")}
-        </div>
-      )} */}
-      {/* {email && (
-        <div>
-          <h3>Email Sent To:</h3>
-          <p>{email}</p>
-        </div>
-      )} */}
     </div>
   );
 }
