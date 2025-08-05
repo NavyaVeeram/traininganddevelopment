@@ -5,6 +5,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import Select from "react-select";
 import { FaSearch } from "react-icons/fa";
 import Link from "next/link";
+import BackButton from "@/components/BackButton";
 const TETForms = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [trainingName, setTrainingName] = useState("IATF");
@@ -31,6 +32,9 @@ const TETForms = () => {
   const [userDropdownData, setUserDropdownData] = useState([]);
   const [userDropdownLoading, setUserDropdownLoading] = useState(false);
   const [userDropdownError, setUserDropdownError] = useState(null);
+
+  // New state for view report date restrictions
+  const [viewReportRestrictions, setViewReportRestrictions] = useState({});
 
   const getMonthNumber = (date) => (date ? date.getMonth() + 1 : null);
 
@@ -229,8 +233,9 @@ const TETForms = () => {
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
-        <h1 className="font-semibold">TET Forms</h1>
+        <h1 className="font-semibold">TEE Forms</h1>
       </div>
+      <BackButton />
       <div className="mb-4 mt-2 flex justify-between items-center space-x-4">
         <div className="flex">
           <div>
@@ -357,7 +362,7 @@ const TETForms = () => {
                         { key: "Year_No", label: "Year" },
                         { key: "Department", label: "Department" },
                         { key: "Program_Name", label: "Program Name" },
-                        { key: "Training_Name", label: "Type" },
+                        { key: "Training_Name", label: "Category" },
                         { key: "Training_Date", label: "Training Date" },
                         { key: "Evaluation_Date", label: "Evaluation Date" },
                         { key: "actions", label: "Report" },
@@ -419,14 +424,20 @@ const TETForms = () => {
                             {item.Training_Status}
                           </td>
                           <td className="px-4 py-2 border text-blue-600 underline">
-                            <Link
-                              href={`/tetreports?id=${item.Program_Id}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 underline"
-                            >
-                              View Report
-                            </Link>
+                            {item.isViewReportEnabled ? (
+                              <Link
+                                href={`/tetreports?id=${item.Program_Id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 underline"
+                              >
+                                View Report
+                              </Link>
+                            ) : (
+                              <span className="text-gray-400 cursor-not-allowed">
+                                View Report
+                              </span>
+                            )}
                           </td>
                         </tr>
                       ))

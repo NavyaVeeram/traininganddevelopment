@@ -4,6 +4,9 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { FaSearch } from "react-icons/fa";
 import Select from "react-select";
+import * as XLSX from "xlsx";
+import { FaFileExcel } from "react-icons/fa";
+import BackButton from "@/components/BackButton";
 
 const HeadCount = () => {
   // Tab state
@@ -21,20 +24,22 @@ const HeadCount = () => {
   const [isAuthorized, setIsAuthorized] = useState(null);
   const [employeeId, setEmployeeId] = useState(null);
   const [designationwiseData, setdesignationwiseData] = useState([]);
+  const [departmentwiseData, setDepartmentwiseData] = useState([]);
   const [designationwiseSearchTerm, setdesignationwiseSearchTerm] =
     useState("");
   const [designationwiseFilteredData, setdesignationwiseFilteredData] =
     useState([]);
   const [designationwiseLoading, setdesignationwiseLoading] = useState(false);
   const [designationwiseError, setdesignationwiseError] = useState(null);
-  const [designationwiseSelectedDate, setdesignationwiseSelectedDate] =
-    useState(null);
+
+  // Added missing state declarations for departmentwise tab
+  const [departmentwiseSearchTerm, setdepartmentwiseSearchTerm] = useState("");
+  const [departmentwiseFilteredData, setdepartmentwiseFilteredData] = useState([]);
   const [programwiseData, setprogramwiseData] = useState([]);
   const [programwiseSearchTerm, setprogramwiseSearchTerm] = useState("");
   const [programwiseFilteredData, setprogramwiseFilteredData] = useState([]);
   const [programwiseLoading, setprogramwiseLoading] = useState(false);
   const [programwiseError, setprogramwiseError] = useState(null);
-  const [programwiseSelectedDate, setprogramwiseSelectedDate] = useState(null);
 
   useEffect(() => {
     const storedEmployeeId = localStorage.getItem("employeeId");
@@ -68,6 +73,99 @@ const HeadCount = () => {
     };
     fetchAccessRole();
   }, []);
+  const exportToExcel = () => {
+    let dataToExport = [];
+    let sheetName = "";
+    let formattedData = [];
+
+    if (activeTab === "programwise") {
+      dataToExport = programwiseFilteredData;
+      sheetName = "Program Wise Summary";
+      formattedData = dataToExport.map((item) => ({
+        Month: item.Month_Name || "",
+        "Program Name": item.Program_Name || "",
+        Department: item.Department || "",
+        Persons: item.Persons || "",
+        "Total No. Of Hrs": item.No_Hrs || "",
+      }));
+    } else if (activeTab === "departmentwise") {
+      dataToExport = departmentwiseFilteredData;
+      sheetName = "Department Wise Summary";
+      formattedData = dataToExport.map((item) => ({
+        Department: item.Department || "",
+        Jan_Emp: item.Jan_Emp || "",
+        Jan_Hrs: item.Jan_Hrs || "",
+        Feb_Emp: item.Feb_Emp || "",
+        Feb_Hrs: item.Feb_Hrs || "",
+        Mar_Emp: item.Mar_Emp || "",
+        Mar_Hrs: item.Mar_Hrs || "",
+        Apr_Emp: item.Apr_Emp || "",
+        Apr_Hrs: item.Apr_Hrs || "",
+        May_Emp: item.May_Emp || "",
+        May_Hrs: item.May_Hrs || "",
+        Jun_Emp: item.Jun_Emp || "",
+        Jun_Hrs: item.Jun_Hrs || "",
+        Jul_Emp: item.Jul_Emp || "",
+        Jul_Hrs: item.Jul_Hrs || "",
+        Aug_Emp: item.Aug_Emp || "",
+        Aug_Hrs: item.Aug_Hrs || "",
+        Sep_Emp: item.Sep_Emp || "",
+        Sep_Hrs: item.Sep_Hrs || "",
+        Oct_Emp: item.Oct_Emp || "",
+        Oct_Hrs: item.Oct_Hrs || "",
+        Nov_Emp: item.Nov_Emp || "",
+        Nov_Hrs: item.Nov_Hrs || "",
+        Dec_Emp: item.Dec_Emp || "",
+        Dec_Hrs: item.Dec_Hrs || "",
+        Total_Emp: item.Total_Emp || "",
+        Total_Hrs: item.Total_Hrs || "",
+      }));
+    } else if (activeTab === "designationwise") {
+      dataToExport = designationwiseFilteredData;
+      sheetName = "Designation Wise Summary";
+      formattedData = dataToExport.map((item) => ({
+        Designation: item.Emp_Type || "",
+        Jan_Emp: item.Jan_Emp || "",
+        Jan_Hrs: item.Jan_Hrs || "",
+        Feb_Emp: item.Feb_Emp || "",
+        Feb_Hrs: item.Feb_Hrs || "",
+        Mar_Emp: item.Mar_Emp || "",
+        Mar_Hrs: item.Mar_Hrs || "",
+        Apr_Emp: item.Apr_Emp || "",
+        Apr_Hrs: item.Apr_Hrs || "",
+        May_Emp: item.May_Emp || "",
+        May_Hrs: item.May_Hrs || "",
+        Jun_Emp: item.Jun_Emp || "",
+        Jun_Hrs: item.Jun_Hrs || "",
+        Jul_Emp: item.Jul_Emp || "",
+        Jul_Hrs: item.Jul_Hrs || "",
+        Aug_Emp: item.Aug_Emp || "",
+        Aug_Hrs: item.Aug_Hrs || "",
+        Sep_Emp: item.Sep_Emp || "",
+        Sep_Hrs: item.Sep_Hrs || "",
+        Oct_Emp: item.Oct_Emp || "",
+        Oct_Hrs: item.Oct_Hrs || "",
+        Nov_Emp: item.Nov_Emp || "",
+        Nov_Hrs: item.Nov_Hrs || "",
+        Dec_Emp: item.Dec_Emp || "",
+        Dec_Hrs: item.Dec_Hrs || "",
+        Total_Emp: item.Total_Emp || "",
+        Total_Hrs: item.Total_Hrs || "",
+      }));
+    } else {
+      return;
+    }
+
+    if (!dataToExport || dataToExport.length === 0) {
+      alert("No data to export");
+      return;
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(formattedData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+    XLSX.writeFile(workbook, `${sheetName}.xlsx`);
+  };
 
   const fetchData = async (date) => {
     if (!date) {
@@ -183,21 +281,61 @@ const HeadCount = () => {
     }
   };
 
-  useEffect(() => {
-    if (selectedDate && activeTab === "departmentwise") fetchData(selectedDate);
-  }, [selectedDate, activeTab]);
+  const fetchdepartmentwiseData = async (date) => {
+    console.log("fetchdepartmentwiseData called with date:", date);
+    if (!date) {
+      alert("Please select a year");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const year = date.getFullYear();
+      const response = await fetch(
+        `/api/get_data_by_dept_wise_mnthsVShrs?year=${year}`
+      );
+      if (!response.ok) {
+        throw new Error("No data available.");
+      }
+      const data = await response.json();
+      if (data && data.length === 0) {
+        setError("No data available for the selected Year.");
+        setdepartmentwiseFilteredData([]);
+        setFilteredData([]);
+      } else {
+        setDepartmentwiseData(data);
+        setdepartmentwiseFilteredData(data);
+        setFilteredData(data);
+      }
+    } catch (err) {
+      setError(err.message || "An error occurred while fetching data.");
+      setdepartmentwiseFilteredData([]);
+      setFilteredData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (designationwiseSelectedDate && activeTab === "designationwise") {
-      fetchdesignationwiseData(designationwiseSelectedDate);
+  if (selectedDate) {
+    if (activeTab === "designationwise") {
+      fetchdesignationwiseData(selectedDate);
+    } else if (activeTab === "departmentwise") {
+      fetchdepartmentwiseData(selectedDate);
+    } else if (activeTab === "programwise") {
+      fetchprogramwiseData(selectedDate);
     }
-  }, [designationwiseSelectedDate, activeTab]);
-
+  }
+}, [selectedDate, activeTab]);
   useEffect(() => {
-    if (programwiseSelectedDate && activeTab === "programwise") {
-      fetchprogramwiseData(programwiseSelectedDate);
-    }
-  }, [programwiseSelectedDate, activeTab]);
+    // setSelectedDate(null);
+    setFilteredData([]);
+    setdesignationwiseFilteredData([]);
+    setprogramwiseFilteredData([]);
+    setTableSearchTerm("");
+    setdesignationwiseSearchTerm("");
+    setprogramwiseSearchTerm("");
+  }, [activeTab]);
 
   const groupedData = programwiseFilteredData.reduce((acc, row) => {
     if (!acc[row.Month_Name]) acc[row.Month_Name] = [];
@@ -249,9 +387,9 @@ const HeadCount = () => {
     rowsPerPage === "All"
       ? sorteddesignationwiseData
       : sorteddesignationwiseData.slice(
-          (currentPage - 1) * rowsPerPage,
-          currentPage * rowsPerPage
-        );
+        (currentPage - 1) * rowsPerPage,
+        currentPage * rowsPerPage
+      );
 
   const totalPages =
     rowsPerPage === "All" ? 1 : Math.ceil(sortedData.length / rowsPerPage);
@@ -259,9 +397,9 @@ const HeadCount = () => {
     rowsPerPage === "All"
       ? sortedData
       : sortedData.slice(
-          (currentPage - 1) * rowsPerPage,
-          currentPage * rowsPerPage
-        );
+        (currentPage - 1) * rowsPerPage,
+        currentPage * rowsPerPage
+      );
 
   const totalPagespaginatedprogramwiseData =
     rowsPerPage === "All"
@@ -271,17 +409,17 @@ const HeadCount = () => {
     rowsPerPage === "All"
       ? sortedprogramwiseData
       : sortedprogramwiseData.slice(
-          (currentPage - 1) * rowsPerPage,
-          currentPage * rowsPerPage
-        );
+        (currentPage - 1) * rowsPerPage,
+        currentPage * rowsPerPage
+      );
   const handleTableSearchChange = (e) => {
     const searchQuery = e.target.value;
     setTableSearchTerm(searchQuery);
     if (!searchQuery) {
-      setFilteredData(trainingData);
+      setFilteredData(departmentwiseData);
     } else {
       const lowerSearchQuery = searchQuery.toLowerCase();
-      const filtered = trainingData.filter((trainer) => {
+      const filtered = departmentwiseData.filter((trainer) => {
         return [
           "Department",
           "Jan_Emp",
@@ -387,7 +525,7 @@ const HeadCount = () => {
     setFilteredData(trainingData);
   };
 
-  const handleClearBepartmentwiseSearch = () => {
+  const handleClearDepartmentwiseSearch = () => {
     setdepartmentwiseSearchTerm("");
     setdepartmentwiseFilteredData(departmentwiseData);
   };
@@ -496,69 +634,90 @@ const HeadCount = () => {
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
       <div className="bg-sky-400 text-white p-2 rounded-t-lg flex items-center justify-between">
         {/* Left side: Title + Tabs */}
+        <BackButton/>
         <div className="flex items-center space-x-4">
           <h1 className="font-semibold">Training Details</h1>
           <button
-            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-              activeTab === "programwise"
+            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${activeTab === "programwise"
                 ? "bg-white text-sky-600 shadow-sm"
                 : "text-white hover:bg-sky-300"
-            }`}
+              }`}
             onClick={() => setActiveTab("programwise")}
           >
             Program Wise
           </button>
           <button
-            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-              activeTab === "departmentwise"
+            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${activeTab === "departmentwise"
                 ? "bg-white text-sky-600 shadow-sm"
                 : "text-white hover:bg-sky-300"
-            }`}
+              }`}
             onClick={() => setActiveTab("departmentwise")}
           >
             Department Wise
           </button>
           <button
-            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-              activeTab === "designationwise"
+            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${activeTab === "designationwise"
                 ? "bg-white text-sky-600 shadow-sm"
                 : "text-white hover:bg-sky-300"
-            }`}
+              }`}
             onClick={() => setActiveTab("designationwise")}
           >
             Designation Wise
           </button>
         </div>
       </div>
+      {/* <div className="p-2 bg-white  flex justify-end">
+        <button
+          onClick={() => exportToExcel()}
+          className=" p-8 flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-medium cursor-pointer"
+          title="Export to Excel"
+        >
+          <FaFileExcel size={18}  />
+
+          
+        </button>
+      </div> */}
+
+      {/* Year Picker outside tabs */}
+      <div className="my-4 relative">
+         <div className="p-2 bg-white flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center space-x-2">
+            <label className="font-semibold whitespace-nowrap">Year</label>
+            <DatePicker
+              selected={selectedDate}
+              onChange={(date) => setSelectedDate(date)}
+              dateFormat="yyyy"
+              showYearPicker
+              placeholderText="Select Year"
+              className="p-2 border border-gray-300 rounded-lg min-w-[120px]"
+           
+              popperPlacement="top-start"
+              isClearable
+              required
+              popperModifiers={{
+                preventOverflow: {
+                  enabled: true,
+                  boundariesElement: "viewport",
+                },
+              }}
+            />
+          </div>
+           <div className="p-2 bg-white  flex justify-end">
+        <button
+          onClick={() => exportToExcel()}
+          className=" p-8 flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-medium cursor-pointer"
+          title="Export to Excel"
+        >
+          <FaFileExcel size={18}  />
+
+          
+        </button>
+      </div>
+        </div>
+      </div>
 
       {activeTab === "programwise" && (
         <>
-          <div className="my-4 relative z-50">
-            <div className="mt-2 flex flex-wrap items-center gap-4">
-              {/* Year Picker */}
-              <div className="flex items-center space-x-2">
-                <label className="font-semibold whitespace-nowrap">Year</label>
-                <DatePicker
-                  selected={programwiseSelectedDate}
-                  onChange={(date) => setprogramwiseSelectedDate(date)}
-                  dateFormat="yyyy"
-                  showYearPicker
-                  placeholderText="Select Year"
-                  className="p-2 border border-gray-300 rounded-lg min-w-[120px]"
-                  calendarClassName="z-50"
-                  popperPlacement="top-start"
-                  isClearable
-                  required
-                  popperModifiers={{
-                    preventOverflow: {
-                      enabled: true,
-                      boundariesElement: "viewport",
-                    },
-                  }}
-                />
-              </div>
-            </div>
-          </div>
 
           {programwiseLoading && <p>Loading...</p>}
           {programwiseError && (
@@ -566,7 +725,7 @@ const HeadCount = () => {
               <p>{programwiseError}</p>
             </div>
           )}
-          {programwiseSelectedDate &&
+          {selectedDate &&
             !programwiseLoading &&
             !programwiseError && (
               <div className="card-body p-0 pb-3">
@@ -654,30 +813,6 @@ const HeadCount = () => {
 
       {activeTab === "departmentwise" && (
         <>
-          <div className="my-4 relative z-50">
-            <div className="flex items-center space-x-2">
-              <label className="text-sm font-medium">Year</label>
-              <DatePicker
-                selected={selectedDate}
-                onChange={(date) => setSelectedDate(date)}
-                dateFormat="yyyy"
-                showYearPicker
-                placeholderText="Select Year"
-                className="p-2 border border-gray-300 rounded-lg"
-                calendarClassName="z-50"
-                popperPlacement="top-start"
-                isClearable
-                isSearchable
-                required
-                popperModifiers={{
-                  preventOverflow: {
-                    enabled: true,
-                    boundariesElement: "viewport",
-                  },
-                }}
-              />
-            </div>
-          </div>
 
           {loading && <p>Loading...</p>}
           {error && (
@@ -779,32 +914,6 @@ const HeadCount = () => {
 
       {activeTab === "designationwise" && (
         <>
-          <div className="my-4 relative">
-            <div className="mt-2 flex flex-wrap items-center gap-4">
-              {/* Year Picker */}
-              <div className="flex items-center space-x-2">
-                <label className="font-semibold whitespace-nowrap">Year</label>
-                <DatePicker
-                  selected={designationwiseSelectedDate}
-                  onChange={(date) => setdesignationwiseSelectedDate(date)}
-                  dateFormat="yyyy"
-                  showYearPicker
-                  placeholderText="Select Year"
-                  className="p-2 border border-gray-300 rounded-lg min-w-[120px]"
-                  calendarClassName="z-50"
-                  popperPlacement="top-start"
-                  isClearable
-                  required
-                  popperModifiers={{
-                    preventOverflow: {
-                      enabled: true,
-                      boundariesElement: "viewport",
-                    },
-                  }}
-                />
-              </div>
-            </div>
-          </div>
 
           {designationwiseLoading && <p>Loading...</p>}
           {designationwiseError && (
@@ -813,7 +922,7 @@ const HeadCount = () => {
             </div>
           )}
 
-          {designationwiseSelectedDate &&
+          {selectedDate &&
             !designationwiseLoading &&
             !designationwiseError && (
               <div className="card-body p-0 pb-3">
@@ -913,3 +1022,4 @@ const HeadCount = () => {
 };
 
 export default HeadCount;
+

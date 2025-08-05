@@ -1,7 +1,15 @@
 import { prisma } from '../../lib/prisma';
 import nodemailer from 'nodemailer';
 
-const generateEmailHTML = (employeeId,usernameHtml) => `
+const generateEmailHTML = (employeeId, usernames) => {
+  const usernameRows = usernames.map(({ empCode, empName }) => `
+    <tr>
+      <td style="border: 1px solid #ccc; padding: 8px;">${empCode}</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">${empName}</td>
+    </tr>
+  `).join('');
+
+  return `
 <div style="max-width: 650px; margin: auto;margin-top:100px;  font-family: Arial, sans-serif; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); background-color: #fff;">
   <!-- Header -->
   <div style="background-color: #0566c7ff; padding: 20px; color: white; text-align: center;">
@@ -19,7 +27,7 @@ const generateEmailHTML = (employeeId,usernameHtml) => `
           href="http://10.40.20.5:3000"
           target="_blank"
           rel="noopener noreferrer"
-          class="inline-block bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 text-white font-semibold text-base sm:text-lg py-3 mx-6 px-6 rounded-full shadow-md transition duration-300"
+          class="inline-block bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 text-white font-semibold text-base sm:text-lg py-6 my-3 mx-6 px-6 rounded-full shadow-md transition duration-300"
       >
           View Request
         </a>
@@ -27,14 +35,12 @@ const generateEmailHTML = (employeeId,usernameHtml) => `
       <table style="border-collapse: collapse; font-size: 14px; table-layout: auto; padding-left: 0; margin-left: 0;width: 100%;">
         <thead>
           <tr style="background-color: #e6ecff; color: #003366;">
-            <th style="border: 1px solid #ccc; padding: 8px; text-align: left; white-space: nowrap;">EmployeeId and Username</th>
-      
+            <th style="border: 1px solid #ccc; padding: 8px; text-align: left; white-space: nowrap;">EmployeeId</th>
+            <th style="border: 1px solid #ccc; padding: 8px; text-align: left; white-space: nowrap;">Username</th>
           </tr>
         </thead>
         <tbody style="margin:2px;">
-          <tr>
-            <td style="border: 1px solid #ccc;padding:8px;">${usernameHtml}</td>
-          </tr>
+          ${usernameRows}
         </tbody>
       </table>
     </div>
@@ -47,8 +53,8 @@ const generateEmailHTML = (employeeId,usernameHtml) => `
     © QA-MIS | Greentech Industries
   </div>
 </div>
-
 `;
+};
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -69,6 +75,8 @@ export default async function handler(req, res) {
   if (!Array.isArray(QualId)) {
     QualId = QualId ? [QualId] : [];
   }
+
+  const firstQualId = QualId.length > 0 ? QualId[0] : null;
 
   try {
     if (!approve) {
@@ -111,17 +119,19 @@ export default async function handler(req, res) {
     // Removed reading email template file and placeholder replacements
 
     // Construct Username list HTML from request body Usernames array
-    let usernameHtml = '';
+    let usernames = [];
     console.log('Received Usernames:', req.body.Usernames);
     if (Array.isArray(req.body.Usernames) && req.body.Usernames.length > 0) {
-      for (const username of req.body.Usernames) {
-        usernameHtml += `<ul style="padding-left:0px !important;"margin-left:0px !important;">`
-        usernameHtml += `<li style="list-style-type:square;">${username}</li>`;
-      }
-      console.log('Constructed usernameHtml:', usernameHtml);
-usernameHtml += `</ul>`;
+      usernames = req.body.Usernames.map(username => {
+        const parts = username.split(' | ');
+        return {
+          empCode: parts[0] || '',
+          empName: parts[1] || ''
+        };
+      });
+      console.log('Parsed usernames:', usernames);
     } else {
-      usernameHtml = '<p><strong>Usernames:</strong> Not provided</p>';
+      usernames = [{ empCode: 'N/A', empName: 'Usernames not provided' }];
     }
 
     // Replace placeholders with actual values globally
@@ -152,7 +162,7 @@ usernameHtml += `</ul>`;
         from: process.env.EMAIL,
         to: Email,
         subject: 'Trainer Approval',
-        html: generateEmailHTML(employeeId,usernameHtml),
+        html: generateEmailHTML(employeeId, usernames),
       });
       console.log('Email sent successfully.');
       return res.status(200).json({ message: 'Email sent', email: Email });

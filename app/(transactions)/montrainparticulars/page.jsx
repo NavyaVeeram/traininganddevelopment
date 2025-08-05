@@ -5,6 +5,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { FaSearch, FaPrint } from "react-icons/fa";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import BackButton from "@/components/BackButton";
 
 const MonthlyTrainingParticulars = () => {
   const [selectedDate, setSelectedDate] = useState(null);
@@ -215,10 +216,10 @@ const handleDownloadPDF = () => {
     const headers = [
       [
         "S.No",
-        "Category",
+        "Program Name",
         "Scheduled Month",
         "Conducted on",
-        "Type",
+        "Category",
         "Mode",
         "*P vs. *A",
         "Status",
@@ -324,7 +325,7 @@ const handleDownloadPDF = () => {
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
         <h1 className="font-semibold">Monthly Training Particulars</h1>
       </div>
-
+<BackButton/>
       {/* Display only month dropdown initially */}
       <div className="my-4 flex justify-between items-center">
         {/* Left: Month Picker */}
@@ -422,10 +423,10 @@ const handleDownloadPDF = () => {
                 <thead className="bg-muted top-0 z-0">
                   <tr>
                     {[
-                      { key: "Program_Name", label: "Category" },
+                      { key: "Program_Name", label: "Program_Name" },
                       { key: "Req_Months", label: "Scheduled Month" },
                       { key: "Training_Date", label: "Conducted Date" },
-                      { key: "Training_Name", label: "Type" },
+                      { key: "Training_Name", label: "Category" },
                       { key: "Train_Mode", label: "Mode" },
                       { key: "Schedule_Type", label: "Schedule Type" },
                       { key: "Training_Status", label: "Training Status" },

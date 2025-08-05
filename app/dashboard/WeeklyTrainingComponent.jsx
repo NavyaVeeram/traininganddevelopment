@@ -116,7 +116,7 @@ const nextWeekHse = hseData.next || [];
     
     return (
       <div className={`rounded-lg border-2 border-dashed border-gray-200 p-8 text-center ${bgColor}`}>
-        <Users className={`w-12 h-12 mx-auto mb-3 ${textColor} opacity-50`} />
+        {/* <Users className={`w-12 h-12 mx-auto mb-3 ${textColor} opacity-50`} /> */}
         <p className="text-gray-500 font-medium">
           No {isCurrentWeek ? 'current' : 'next'} week {trainingLabel} trainings
         </p>

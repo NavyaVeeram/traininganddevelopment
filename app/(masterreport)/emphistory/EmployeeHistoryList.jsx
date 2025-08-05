@@ -29,6 +29,9 @@ const EmployeeHistoryList = () => {
   const [isAuthorized, setIsAuthorized] = useState(null);
   const [uploading, setUploading] = useState(false);
 
+  // New state to store file extensions for uploaded files keyed by `${Program_Id}_${EmployeeId}_${year}`
+  const [fileExtensions, setFileExtensions] = useState({});
+
   useEffect(() => {
     // Removed setting EmployeeId from localStorage to avoid default display in Select dropdown
 
@@ -377,13 +380,30 @@ const EmployeeHistoryList = () => {
 
   const handleFileUpload = async (event, item) => {
     const file = event.target.files[0];
-    if (!file || file.type !== "application/pdf") {
-      alert("Please upload a valid PDF file.");
+    if (!file || !["application/pdf", "image/jpeg", "image/png"].includes(file.type)) {
+      alert("Please upload a valid PDF, JPG, or PNG file.");
       return;
     }
     const storedEmployeeId = localStorage.getItem("employeeId");
     const year = new Date(item.Training_Date).getFullYear();
-    const filename = `${item.Program_Id}_${item.EmployeeId}_${year}.pdf`;
+
+    // Determine file extension based on MIME type
+    let extension = "";
+    switch (file.type) {
+      case "application/pdf":
+        extension = "pdf";
+        break;
+      case "image/jpeg":
+        extension = "jpg";
+        break;
+      case "image/png":
+        extension = "png";
+        break;
+      default:
+        extension = "pdf"; // fallback
+    }
+
+    const filename = `${item.Program_Id}_${item.EmployeeId}_${year}.${extension}`;
 
     const formData = new FormData();
     formData.append("file", file);
@@ -413,6 +433,11 @@ const EmployeeHistoryList = () => {
 
     if (res.ok) {
       alert("File uploaded successfully!");
+      // Update fileExtensions state with the new extension
+      setFileExtensions((prev) => ({
+        ...prev,
+        [`${item.Program_Id}_${item.EmployeeId}_${year}`]: extension,
+      }));
       await fetchQualifiedTrainers(item.EmployeeId);
     } else {
       console.error("Server error:", result);
@@ -421,7 +446,9 @@ const EmployeeHistoryList = () => {
   };
   const handleViewFile = (item) => {
     const year = new Date(item.Training_Date).getFullYear();
-    const filename = `${item.Program_Id}_${item.EmployeeId}_${year}.pdf`;
+    const key = `${item.Program_Id}_${item.EmployeeId}_${year}`;
+    const extension = fileExtensions[key] || "pdf"; // default to pdf if not found
+    const filename = `${item.Program_Id}_${item.EmployeeId}_${year}.${extension}`;
     const url = `/Emp_Certificates/${filename}`;
     window.open(url, "_blank");
   };
@@ -719,7 +746,7 @@ const EmployeeHistoryList = () => {
                               <input
                                 disabled={uploading}
                                 type="file"
-                                accept="application/pdf"
+                                accept="application/pdf,image/jpeg,image/png"
                                 onChange={(e) => handleFileUpload(e, item)}
                               />
                             </td>

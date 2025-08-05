@@ -3,6 +3,7 @@ import { FaEdit, FaSearch, FaSortUp } from "react-icons/fa";
 import { useState, useEffect, useRef, useMemo } from "react";
 import Select from "react-select";
 import TrainerApprovalForm from "../approvalformfortrainers/page";
+import BackButton from "@/components/BackButton";
 const QualifiedTrainerList = () => {
   const [data, setData] = useState([]);
   const [EmployeeId, setEmployeeId] = useState(null);
@@ -41,7 +42,7 @@ const isExperienceAtLeast5Years = dojDate ? dojDate <= fiveYearsAgo : false;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [tableSearchTerm, setTableSearchTerm] = useState("");
-  const [trainingName, setTrainingName] = useState("");
+const [trainingName, setTrainingName] = useState([]);
   const [certified, setCertified] = useState(false);
   const [certifiedInput, setCertifiedInput] = useState("");
   const [showCertifiedInput, setShowCertifiedInput] = useState(false);
@@ -243,6 +244,11 @@ const isExperienceAtLeast5Years = dojDate ? dojDate <= fiveYearsAgo : false;
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (trainingName.length === 0) {
+      alert("Please select at least one Category (IATF or HSE)!");
+      return;
+    }
+
     if (!qualified) {
       alert("You must check the Qualified checkbox!");
       return;
@@ -259,7 +265,7 @@ const isExperienceAtLeast5Years = dojDate ? dojDate <= fiveYearsAgo : false;
     const createdByFromStorage = localStorage.getItem('employeeId');
 
     const dataToSubmit = {
-      Training_Name: trainingName,
+      Training_Name: trainingName.join(","),
       EmployeeId: EmployeeId,
       Certified: certified ? 1 : 0,
       Cert_Des: certifiedInput,
@@ -518,7 +524,7 @@ const isExperienceAtLeast5Years = dojDate ? dojDate <= fiveYearsAgo : false;
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
         <h2 className="text-lg font-semibold">Add Qualified Trainers List</h2>
       </div>
- 
+ <BackButton/>
       <form onSubmit={handleSubmit} className="mt-3">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* React Select Dropdown */}
@@ -642,25 +648,41 @@ const isExperienceAtLeast5Years = dojDate ? dojDate <= fiveYearsAgo : false;
             <div className="flex space-x-6 mt-2">
               <label className="flex items-center space-x-2">
               <input
-                type="radio"
+                type="checkbox"
                 name="trainingName"
                 value="IATF"
-                checked={trainingName === "IATF"}
-                onChange={() => setTrainingName("IATF")}
+                checked={trainingName.includes("IATF")}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setTrainingName((prev) => {
+                    if (checked) {
+                      return [...prev, "IATF"];
+                    } else {
+                      return prev.filter((item) => item !== "IATF");
+                    }
+                  });
+                }}
                 className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
-                required
               />
                 <span>IATF</span>
               </label>
               <label className="flex items-center space-x-2">
               <input
-                type="radio"
+                type="checkbox"
                 name="trainingName"
                 value="HSE"
-                checked={trainingName === "HSE"}
-                onChange={() => setTrainingName("HSE")}
+                checked={trainingName.includes("HSE")}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setTrainingName((prev) => {
+                    if (checked) {
+                      return [...prev, "HSE"];
+                    } else {
+                      return prev.filter((item) => item !== "HSE");
+                    }
+                  });
+                }}
                 className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
-                required
               />
                 <span>HSE</span>
               </label>

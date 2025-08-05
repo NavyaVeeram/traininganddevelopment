@@ -7,6 +7,7 @@ import EmailRejection from "../email/EmailRejection";
 import FullYearCalendar from "../calendar/page";
 import dynamic from "next/dynamic";
 import EmailApproval from "../email/EmailApproval";
+import BackButton from "@/components/BackButton";
 
 const MonthCount = dynamic(() => import("./monthcount"), { ssr: false }); // Dynamically import MonthCount with no SSR
 
@@ -315,8 +316,7 @@ export default function TrainingDataTable() {
             </div>
           </div>
         </div>
-
-        {/* Table */}
+<BackButton/>
          {/* Table */}
            <table className="w-full border-collapse text-sm">
              <thead className="bg-gray-100">

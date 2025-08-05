@@ -1,9 +1,13 @@
+
 "use client";
 import { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { FaSearch } from "react-icons/fa";
 import Select from "react-select";
+import * as XLSX from "xlsx";
+import { FaFileExcel } from "react-icons/fa";
+import BackButton from "@/components/BackButton";
 
 const HeadCount = () => {
   // Tab state
@@ -62,6 +66,56 @@ const HeadCount = () => {
     };
     fetchAccessRole();
   }, []);
+
+  // Export to Excel function moved inside component to access state
+  const exportToExcel = () => {
+    let dataToExport = [];
+    let sheetName = "";
+
+    if (activeTab === "overall") {
+      dataToExport = trainingData;
+      sheetName = "Overall Summary";
+    } else if (activeTab === "departmentwise") {
+      dataToExport = departmentwiseData;
+      sheetName = "Department Wise Summary";
+    } else {
+      return;
+    }
+
+    if (!dataToExport || dataToExport.length === 0) {
+      alert("No data to export");
+      return;
+    }
+
+    // Format data for export: map keys to readable headers
+    const formattedData = dataToExport.map((item) => ({
+      "Emp ID": item.EmployeeId || item.Employee_Id || "",
+      Username: item.Username || "",
+      Department: item.Department || "",
+      Section: item.Section || "",
+      Designation: item.Designation || "",
+      DOJ: item.DOJ || "",
+      Status: item.IsActive == 1 ? "Active" : "Left",
+      Jan: item.Jan || "",
+      Feb: item.Feb || "",
+      Mar: item.Mar || "",
+      Apr: item.Apr || "",
+      May: item.May || "",
+      Jun: item.Jun || "",
+      Jul: item.Jul || "",
+      Aug: item.Aug || "",
+      Sep: item.Sep || "",
+      Oct: item.Oct || "",
+      Nov: item.Nov || "",
+      Dec: item.Dec || "",
+      Total: item.Total || "",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(formattedData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+    XLSX.writeFile(workbook, `${sheetName}.xlsx`);
+  };
 
   useEffect(() => {
     fetch("/api/get_data_by_department_dropdown_head_count")
@@ -201,18 +255,18 @@ const HeadCount = () => {
     rowsPerPage === "All"
       ? sorteddepartmentwiseData
       : sorteddepartmentwiseData.slice(
-          (currentPage - 1) * rowsPerPage,
-          currentPage * rowsPerPage
-        );
+        (currentPage - 1) * rowsPerPage,
+        currentPage * rowsPerPage
+      );
   const totalPages =
     rowsPerPage === "All" ? 1 : Math.ceil(sortedData.length / rowsPerPage);
   const paginatedData =
     rowsPerPage === "All"
       ? sortedData
       : sortedData.slice(
-          (currentPage - 1) * rowsPerPage,
-          currentPage * rowsPerPage
-        );
+        (currentPage - 1) * rowsPerPage,
+        currentPage * rowsPerPage
+      );
   const handleTableSearchChange = (e) => {
     const searchQuery = e.target.value;
     setTableSearchTerm(searchQuery);
@@ -379,24 +433,23 @@ const HeadCount = () => {
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
       <div className="bg-sky-400 text-white p-2 rounded-t-lg flex items-center justify-between">
         {/* Left side: Title + Tabs */}
+        <BackButton/>
         <div className="flex items-center space-x-4">
           <h1 className="font-semibold">Head Count</h1>
           <button
-            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-              activeTab === "overall"
-                ? "bg-white text-sky-600 shadow-sm"
-                : "text-white hover:bg-sky-300"
-            }`}
+            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${activeTab === "overall"
+              ? "bg-white text-sky-600 shadow-sm"
+              : "text-white hover:bg-sky-300"
+              }`}
             onClick={() => setActiveTab("overall")}
           >
             Overall Summary
           </button>
           <button
-            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-              activeTab === "departmentwise"
-                ? "bg-white text-sky-600 shadow-sm"
-                : "text-white hover:bg-sky-300"
-            }`}
+            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${activeTab === "departmentwise"
+              ? "bg-white text-sky-600 shadow-sm"
+              : "text-white hover:bg-sky-300"
+              }`}
             onClick={() => setActiveTab("departmentwise")}
           >
             Department Wise Summary
@@ -404,9 +457,23 @@ const HeadCount = () => {
         </div>
       </div>
 
+      {/* Export Button below the sky blue header */}
+      {/* <div className="p-2 bg-white  flex justify-end">
+  <button
+    onClick={() => exportToExcel()}
+    className="flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-medium"
+    title="Export to Excel"
+  >
+    <FaFileExcel size={18}  />
+    <span>Export Excel</span>
+  </button>
+</div> */}
+
+
       {activeTab === "overall" && (
         <>
-          <div className="my-4 relative z-50">
+          <div className="p-2 bg-white flex items-center justify-between flex-wrap gap-4">
+            {/* Year dropdown */}
             <div className="flex items-center space-x-2">
               <label className="text-sm font-medium">Year</label>
               <DatePicker
@@ -429,6 +496,16 @@ const HeadCount = () => {
                 }}
               />
             </div>
+
+            {/* Excel Export Button */}
+            <button
+              onClick={() => exportToExcel()}
+              className="flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-medium"
+              title="Export to Excel"
+            >
+              <FaFileExcel size={18} />
+
+            </button>
           </div>
 
           {loading && <p>Loading...</p>}
@@ -508,9 +585,8 @@ const HeadCount = () => {
                         ].map(({ key, label }, index) => (
                           <th
                             key={key}
-                            className={`px-4 py-2 border text-left cursor-pointer ${
-                              index === 0 ? "sticky left-0 bg-muted z-20" : ""
-                            }`}
+                            className={`px-4 py-2 border text-left cursor-pointer ${index === 0 ? "sticky left-0 bg-muted z-20" : ""
+                              }`}
                             onClick={() => handleSort(key)}
                           >
                             {label}{" "}
@@ -531,9 +607,9 @@ const HeadCount = () => {
                     Showing{" "}
                     {filteredData.length > 0
                       ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
-                          currentPage * rowsPerPage,
-                          filteredData.length
-                        )} of ${filteredData.length} entries`
+                        currentPage * rowsPerPage,
+                        filteredData.length
+                      )} of ${filteredData.length} entries`
                       : "0 entries"}
                   </div>
 
@@ -555,9 +631,8 @@ const HeadCount = () => {
                     {Array.from({ length: totalPages }, (_, i) => (
                       <button
                         key={i}
-                        className={`px-3 py-1 border rounded ${
-                          currentPage === i + 1 ? "bg-black text-white" : ""
-                        }`}
+                        className={`px-3 py-1 border rounded ${currentPage === i + 1 ? "bg-black text-white" : ""
+                          }`}
                         onClick={() => setCurrentPage(i + 1)}
                       >
                         {i + 1}
@@ -590,71 +665,86 @@ const HeadCount = () => {
       {activeTab === "departmentwise" && (
         <>
           <div className="my-4 relative z-50">
-            <div className="mt-2 flex flex-wrap items-center gap-4">
-              {/* Year Picker */}
-              <div className="flex items-center space-x-2">
-                <label className="font-semibold whitespace-nowrap">Year</label>
-                <DatePicker
-                  selected={departmentwiseSelectedDate}
-                  onChange={(date) => setdepartmentwiseSelectedDate(date)}
-                  dateFormat="yyyy"
-                  showYearPicker
-                  placeholderText="Select Year"
-                  className="p-2 border border-gray-300 rounded-lg min-w-[120px]"
-                  calendarClassName="z-50"
-                  popperPlacement="top-start"
-                  isClearable
-                  required
-                  popperModifiers={{
-                    preventOverflow: {
-                      enabled: true,
-                      boundariesElement: "viewport",
-                    },
-                  }}
-                />
+            <div className="mt-2 flex flex-wrap items-center gap-4 justify-between">
+              {/* Left Section: Year + Department */}
+              <div className="flex flex-wrap items-center gap-4">
+                {/* Year Picker */}
+                <div className="flex items-center space-x-2">
+                  <label className="font-semibold whitespace-nowrap">Year</label>
+                  <DatePicker
+                    selected={departmentwiseSelectedDate}
+                    onChange={(date) => setdepartmentwiseSelectedDate(date)}
+                    dateFormat="yyyy"
+                    showYearPicker
+                    placeholderText="Select Year"
+                    className="p-2 border border-gray-300 rounded-lg min-w-[120px]"
+                    calendarClassName="z-50"
+                    popperPlacement="top-start"
+                    isClearable
+                    required
+                    popperModifiers={{
+                      preventOverflow: {
+                        enabled: true,
+                        boundariesElement: "viewport",
+                      },
+                    }}
+                  />
+                </div>
+
+                {/* Department Dropdown */}
+                <div className="flex items-center space-x-2 min-w-[250px]">
+                  <label className="font-semibold whitespace-nowrap">Department</label>
+                  <Select
+                    options={options}
+                    value={
+                      options.find((o) => o.value === selectedDepartment) || null
+                    }
+                    onChange={(option) =>
+                      setSelectedDepartment(option?.value || "")
+                    }
+                    placeholder="Select Department"
+                    styles={{
+                      control: (base, state) => ({
+                        ...base,
+                        borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
+                        boxShadow: state.isFocused
+                          ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
+                          : "none",
+                        borderRadius: "0.5rem",
+                        minHeight: "2rem",
+                        display: "flex",
+                        alignItems: "center",
+                        minWidth: "200px",
+                      }),
+                      menu: (base) => ({
+                        ...base,
+                        zIndex: 50,
+                      }),
+                      menuPortal: (base) => ({
+                        ...base,
+                        zIndex: 9999,
+                      }),
+                    }}
+                    menuPortalTarget={document.body}
+                  />
+                </div>
               </div>
 
-              {/* Department Dropdown */}
-              <div className="flex items-center space-x-2 min-w-[250px]">
-                <label className="font-semibold whitespace-nowrap">
-                  Department
-                </label>
-                <Select
-                  options={options}
-                  value={
-                    options.find((o) => o.value === selectedDepartment) || null
-                  }
-                  onChange={(option) =>
-                    setSelectedDepartment(option?.value || "")
-                  }
-                  placeholder="Select Department"
-                  styles={{
-                    control: (base, state) => ({
-                      ...base,
-                      borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
-                      boxShadow: state.isFocused
-                        ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
-                        : "none",
-                      borderRadius: "0.5rem",
-                      minHeight: "2rem",
-                      display: "flex",
-                      alignItems: "center",
-                      minWidth: "200px",
-                    }),
-                    menu: (base) => ({
-                      ...base,
-                      zIndex: 50,
-                    }),
-                    menuPortal: (base) => ({
-                      ...base,
-                      zIndex: 9999,
-                    }),
-                  }}
-                  menuPortalTarget={document.body}
-                />
-              </div>
+              {/* Right Section: Export Button */}
+              <div className="p-2 bg-white  flex justify-end">
+        <button
+          onClick={() => exportToExcel()}
+          className=" p-8 flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-medium cursor-pointer"
+          title="Export to Excel"
+        >
+          <FaFileExcel size={18}  />
+
+          
+        </button>
+      </div>
             </div>
           </div>
+
 
           {departmentwiseLoading && <p>Loading...</p>}
           {departmentwiseError && (
@@ -735,9 +825,8 @@ const HeadCount = () => {
                           ].map(({ key, label }, index) => (
                             <th
                               key={key}
-                              className={`px-4 py-2 border text-left cursor-pointer ${
-                                index === 0 ? "sticky left-0 bg-muted z-20" : ""
-                              }`}
+                              className={`px-4 py-2 border text-left cursor-pointer ${index === 0 ? "sticky left-0 bg-muted z-20" : ""
+                                }`}
                               onClick={() => handleSort(key)}
                             >
                               {label}{" "}
@@ -763,9 +852,9 @@ const HeadCount = () => {
                       Showing{" "}
                       {departmentwiseFilteredData.length > 0
                         ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
-                            currentPage * rowsPerPage,
-                            departmentwiseFilteredData.length
-                          )} of ${departmentwiseFilteredData.length} entries`
+                          currentPage * rowsPerPage,
+                          departmentwiseFilteredData.length
+                        )} of ${departmentwiseFilteredData.length} entries`
                         : "0 entries"}
                     </div>
 
@@ -791,9 +880,8 @@ const HeadCount = () => {
                         (_, i) => (
                           <button
                             key={i}
-                            className={`px-3 py-1 border rounded ${
-                              currentPage === i + 1 ? "bg-black text-white" : ""
-                            }`}
+                            className={`px-3 py-1 border rounded ${currentPage === i + 1 ? "bg-black text-white" : ""
+                              }`}
                             onClick={() => setCurrentPage(i + 1)}
                           >
                             {i + 1}
@@ -839,3 +927,61 @@ const HeadCount = () => {
 };
 
 export default HeadCount;
+
+function exportToExcel() {
+  let dataToExport = [];
+  let sheetName = "";
+
+  if (typeof window === "undefined") return;
+
+  const activeTab = document.querySelector(
+    ".bg-white.text-sky-600.shadow-sm"
+  )?.textContent;
+
+  if (activeTab === "Overall Summary") {
+    // Get data from the overall tab table
+    const table = document.querySelector("table");
+    if (!table) return;
+    dataToExport = extractTableData(table);
+    sheetName = "Overall Summary";
+  } else if (activeTab === "Department Wise Summary") {
+    // Get data from the departmentwise tab table
+    const table = document.querySelector("table");
+    if (!table) return;
+    dataToExport = extractTableData(table);
+    sheetName = "Department Wise Summary";
+  } else {
+    return;
+  }
+
+  if (dataToExport.length === 0) {
+    alert("No data to export");
+    return;
+  }
+
+  const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+  XLSX.writeFile(workbook, `${sheetName}.xlsx`);
+}
+
+function extractTableData(table) {
+  const data = [];
+  const headers = [];
+  const headerCells = table.querySelectorAll("thead tr th");
+  headerCells.forEach((headerCell) => {
+    headers.push(headerCell.textContent.trim());
+  });
+
+  const rows = table.querySelectorAll("tbody tr");
+  rows.forEach((row) => {
+    const rowData = {};
+    const cells = row.querySelectorAll("td");
+    cells.forEach((cell, index) => {
+      rowData[headers[index]] = cell.textContent.trim();
+    });
+    data.push(rowData);
+  });
+
+  return data;
+}

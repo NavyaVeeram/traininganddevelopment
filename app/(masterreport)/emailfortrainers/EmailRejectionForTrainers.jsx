@@ -60,8 +60,8 @@ export default function EmailRejectionForTrainers({  selectedQualIds}) {
         onClick={handleSendRejectionEmail}
         className={`px-6 mt-2 py-2 text-sm  font-semibold text-white rounded-md shadow-md focus:ring-2 focus:ring-black-600 focus:ring-offset-2 ${
           loading || !employeeId || !selectedQualIds || selectedQualIds.length === 0 || selectedQualIds.length > 1
-            ? 'bg-red-400 cursor-not-allowed'
-            : 'bg-red-500 hover:bg-red-700'
+            ? 'bg-red-200 cursor-not-allowed'
+            : 'bg-red-500 hover:bg-red-700 cursor-pointer'
         }`}
       disabled={loading || !employeeId || !selectedQualIds || selectedQualIds.length === 0 || selectedQualIds.length > 1}
       >

@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import DatePicker from "react-datepicker";
@@ -6,6 +7,7 @@ import Select from "react-select";
 import { FaPrint } from "react-icons/fa";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import BackButton from "@/components/BackButton";
 
 const monthsOrder = [
   "January",
@@ -207,7 +209,7 @@ const AnnualTraining = () => {
     });
   });
 
-const generatePDF = async () => {
+  const generatePDF = async () => {
     const doc = new jsPDF("landscape", "mm", "a4");
     const year = selectedDate.getFullYear();
     const trainingType = trainingName;
@@ -478,7 +480,7 @@ const generatePDF = async () => {
       <div className="bg-sky-400 text-white p-2 flex justify-between rounded-t-lg">
         <p className="font-semibold">Annual Training Calendar</p>
       </div>
-
+<BackButton/>
       <div className="mb-4 mt-2 flex justify-between items-center space-x-4">
         <div className="flex">
           <div>
@@ -566,7 +568,7 @@ const generatePDF = async () => {
             </button>
           </div>
         )}
-      
+
       </div>
       {loading && <p>Loading training calendar...</p>}
       {error && <p className="text-red-600">Error: {error}</p>}
@@ -591,11 +593,14 @@ const generatePDF = async () => {
                   <div className="text-center">
                     Annual Training Calendar for {trainingName}
                   </div>
-                   <div className="mr-2 absolute right-2 transform -translate-y-5 flex space-x-4 text-sm">
+                  <div className="mr-2 absolute right-2 transform -translate-y-5 flex space-x-4 text-sm">
+                    <span className="text-green-600 font-semibold">
+                      ● Special Position
+                    </span>
                     <span className="text-blue-600 font-semibold">
                       ● Additional
                     </span>
-                    <span className="text-green-600 font-semibold">
+                    <span className="text-purple-600 font-semibold">
                       ● External
                     </span>
                   </div>
@@ -651,18 +656,19 @@ const generatePDF = async () => {
                             className={`border border-gray-300 px-4 py-3 w-12 break-words whitespace-normal max-w-12 ${bgColor}`}
                           >
                             {groupedData[monthKey] &&
-                            groupedData[monthKey][week] ? (
+                              groupedData[monthKey][week] ? (
                               <ul className="list-disc list-outside pl-5 m-0 p-0">
                                 {groupedData[monthKey][week].map(
                                   (item, idx) => {
                                     // Use Tailwind classes conditionally
                                     let textClass = "";
 
-                                    if (item.Is_Additional) {
+                                    if (item.Special_Position) {
+                                      textClass = "text-green-600 font-semibold";
+                                    } else if (item.Is_Additional) {
                                       textClass = "text-blue-600 font-semibold";
                                     } else if (item.Is_External) {
-                                      textClass =
-                                        "text-green-600 font-semibold";
+                                      textClass = "text-purple-600 font-semibold";
                                     }
                                     return (
                                       <li

@@ -6,6 +6,7 @@ import { FaSearch, FaPrint } from "react-icons/fa";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import autoTable from "jspdf-autotable";
+import BackButton from "@/components/BackButton";
 
 const TrainingBudget = () => {
   // Tab state
@@ -687,6 +688,7 @@ const sortedBudgetVsActualData = getSortedData(budgetVsActualFilteredData, sortC
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
       <div className="bg-sky-400 text-white p-2 rounded-t-lg flex items-center justify-between">
         {/* Left side: Title + Tabs */}
+        <BackButton/>
         <div className="flex items-center space-x-4">
           <h1 className="font-semibold">Training Cost</h1>
           <button
@@ -789,10 +791,10 @@ const sortedBudgetVsActualData = getSortedData(budgetVsActualFilteredData, sortC
                     <thead className="bg-muted sticky top-0">
                       <tr>
                         {[
-                          { key: "Program_Name", label: "Category" },
+                          { key: "Program_Name", label: "Program_Name" },
                           { key: "Department", label: "Department" },
                           { key: "Req_Months", label: "Scheduled Month" },
-                          { key: "Training_Name", label: "Type" },
+                          { key: "Training_Name", label: "Category" },
                           { key: "Training_Budget", label: "Estimated Budget" },
                           { key: "Note", label: "Note" },
                         ].map(({ key, label }, index) => (
@@ -1000,11 +1002,11 @@ const sortedBudgetVsActualData = getSortedData(budgetVsActualFilteredData, sortC
                       <thead className="bg-muted sticky top-0">
                         <tr>
                           {[
-                            { key: "Program_Name", label: "Category" },
+                            { key: "Program_Name", label: "Program Name" },
                             { key: "Department", label: "Department" },
                             { key: "Req_Months", label: "Scheduled Month" },
                             { key: "Training_Date", label: "Conducted Date" },
-                            { key: "Training_Name", label: "Type" },
+                            { key: "Training_Name", label: "Category" },
                             { key: "Train_Mode", label: "Mode" },
                             { key: "Schedule_Type", label: "Schedule Type" },
                             {

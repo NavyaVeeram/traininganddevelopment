@@ -80,8 +80,28 @@ const TrainingAgencies = () => {
     return  "↕";
   };
 
-  const validatePhoneNumber = (number) => /^\d{10}$/.test(number);
+  // Validation to accept telecom numbers with optional country code, spaces, dashes, parentheses, 7-10 digits for Contact_1
+  const validatePhoneNumber = (number) => {
+    const telecomRegex = /^(\+?\d{1,3}[- ]?)?(\(?\d{3}\)?[- ]?)?[\d\- ]{7,10}$/;
+    return telecomRegex.test(number);
+  };
+
+  // New validation for Contact_2 to accept telecom numbers with 4 or more digits
+  const validatePhoneNumberContact2 = (number) => {
+    const telecomRegexContact2 = /^(\+?\d{1,3}[- ]?)?(\(?\d{1,3}\)?[- ]?)?[\d\- ]{4,}$/;
+    return telecomRegexContact2.test(number);
+  };
   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  // Function to check if a string is a valid URL
+  const isValidUrl = (string) => {
+    try {
+      const url = new URL(string);
+      return url.protocol === "http:" || url.protocol === "https:";
+    } catch (_) {
+      return false;
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -91,9 +111,9 @@ const TrainingAgencies = () => {
     // Validate phone numbers
     if (
       !validatePhoneNumber(formData.Contact_1) ||
-      !validatePhoneNumber(formData.Contact_2)
+      !validatePhoneNumberContact2(formData.Contact_2)
     ) {
-      setError("Please enter valid 10-digit phone numbers.");
+      setError("Please enter a valid 10-digit phone number for Contact 1 and a valid telecom number with 4 or more digits for Contact 2.");
       setTimeout(() => setError(""), 3000);
       return;
     }
@@ -261,7 +281,7 @@ const TrainingAgencies = () => {
               htmlFor="Contact_2"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Contact 2
+              Contact 2 (Telecom numbers allowed)
             </Label>
             <Input
               type="text"
@@ -271,6 +291,7 @@ const TrainingAgencies = () => {
               onChange={handleChange}
               required
               autoComplete="off"
+              placeholder="+1 (555) 123-4567"
               className="w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -316,8 +337,8 @@ const TrainingAgencies = () => {
               id="Website"
               value={formData.Website}
               onChange={handleChange}
-              required
               autoComplete="off"
+              required
               className="w-full px-1 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -486,23 +507,21 @@ const TrainingAgencies = () => {
                       {agency.Mailid}
                     </a>
                   </td>
-
-                  
-                  <td className="px-4 py-2 border">
-                    <a
-                      href={
-                        agency.Website.startsWith("http")
-                          ? agency.Website
-                          : `https://${agency.Website}`
-                      } 
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 underline hover:text-blue-800"
-                    >
-                      {agency.Website}
-                    </a>
-                  </td>
-                </tr>
+<td className="px-4 py-2 border">
+  {(agency.Website && agency.Website.toLowerCase() !== "no website" && isValidUrl(agency.Website)) ? (
+    <a
+      href={agency.Website.startsWith('www.') ? `http://${agency.Website}` : agency.Website}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-600 underline hover:text-blue-800"
+    >
+      {agency.Website}
+    </a>
+  ) : (
+    <span className="text-black no-underline cursor-default">{agency.Website || 'No website available'}</span>
+  )}
+</td>
+  </tr>
               ))
             ) : (
               <tr>

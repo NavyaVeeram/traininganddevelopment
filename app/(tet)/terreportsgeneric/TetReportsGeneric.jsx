@@ -917,15 +917,16 @@ const font = await mergedPdf.embedFont(fontBytes);
         </div>
 
      {/* Footer */}
-      <div className="flex justify-between text-xs text-gray-600 mt-9">
+   <div className="flex justify-between text-xs text-gray-600 mt-9">
               <div>
                 <div>T & D - HR</div>
                 <div>Greentech Industries (India) Pvt. Ltd.</div>
              
               </div>
-              <div></div>
+         <div>
                  <div>{employeeDetails.Res_Person}</div>
               <div>Authorized Person from concerned Dept</div>
+              </div>
              </div>
              <div className="flex justify-end text-xs text-gray-600 mb-2 gap-90">
                  <div>Greentech Industries (India) Pvt. Ltd.</div>

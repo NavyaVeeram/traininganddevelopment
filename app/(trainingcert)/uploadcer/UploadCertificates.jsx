@@ -1,4 +1,5 @@
 "use client";
+import BackButton from "@/components/BackButton";
 import React, { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -415,6 +416,7 @@ Loading...
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
         <h2 className="font-semibold">Upload Certificates</h2>
       </div>
+      <BackButton/>
       <form onSubmit={handleUpload} className="space-y-6 mt-4">
   {/* Grid Layout */}
   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

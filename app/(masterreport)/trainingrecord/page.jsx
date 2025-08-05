@@ -1,4 +1,5 @@
 "use client";
+import BackButton from "@/components/BackButton";
 import React, { useState, useEffect } from "react";
 import Select from "react-select";
 export default function TrainingRecord() {
@@ -134,6 +135,7 @@ export default function TrainingRecord() {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 text-white">
+      <BackButton/>
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-2xl p-8 bg-white rounded-lg shadow-lg space-y-8"

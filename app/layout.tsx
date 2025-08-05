@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import NavigationMenuDemo from "@/components/ui/Navbar";
+import Footer from "@/components/Footer";
+// import BackButton from "@/components/BackButton";
 
 import { useMemo } from "react";
 import { usePathname } from "next/navigation";
@@ -108,9 +110,15 @@ export default function RootLayout({
 
         {/* Render the login page content if not logged in */}
         {!isLoggedIn ? (
-          <>{children}</> // Show login page (children) when not logged in
+          <>
+            {children}
+          </>
         ) : (
-          <>{children}</> // Render the actual page content after login (this part can contain your dashboard or any other content)
+          <>
+            {children}
+            {!isLoginPage && <Footer />}
+            {/* {!isLoginPage && <BackButton />} */}
+          </>
         )}
       </body>
     </html>

@@ -355,22 +355,23 @@ export default function TrainerApprovalForm() {
                   <tr key={item.Qual_Id} className="hover:bg-gray-50">
                               <td className="border p-2 text-left">
                              <div className="flex items-center justify-center gap-2">
-                               <input
-                                 type="checkbox"
-                                 checked={selectedQualIds.includes(item.Qual_Id)}
-                                 onChange={(e) => {
-                                   console.log('Checkbox change for Qual_Id:', item.Qual_Id, 'Checked:', e.target.checked);
-                                   if (e.target.checked) {
-                                     setSelectedQualIds(prev => [...prev, item.Qual_Id]);
-                                     setSelectedQualNames(prev => [...prev, item.Training_Name]);
-                                   } else {
-                                     setSelectedQualIds(prev => prev.filter(id => id !== item.Qual_Id));
-                                     setSelectedQualNames(prev => prev.filter(name => name !== item.Training_Name));
-                                   }
-                                 }}
-                                 className="accent-green-500 cursor-pointer"
-                                 title={selectedQualIds.includes(item.Qual_Id) ? "Selected" : "Not selected"}
-                               />
+<input
+  type="checkbox"
+  checked={selectedQualIds.includes(item.Qual_Id)}
+  disabled={item.Flag === 1}
+  onChange={(e) => {
+    console.log('Checkbox change for Qual_Id:', item.Qual_Id, 'Checked:', e.target.checked);
+    if (e.target.checked) {
+      setSelectedQualIds(prev => [...prev, item.Qual_Id]);
+      setSelectedQualNames(prev => [...prev, item.Training_Name]);
+    } else {
+      setSelectedQualIds(prev => prev.filter(id => id !== item.Qual_Id));
+      setSelectedQualNames(prev => prev.filter(name => name !== item.Training_Name));
+    }
+  }}
+  className={item.Flag === 1 ? "accent-gray-400 cursor-not-allowed" : "accent-green-500 cursor-pointer"}
+  title={item.Flag === 1 ? "Selection disabled for approved items" : (selectedQualIds.includes(item.Qual_Id) ? "Selected" : "Not selected")}
+/>
                              </div>
                            </td>
                     <td className="border p-2 text-left">
@@ -547,23 +548,31 @@ export default function TrainerApprovalForm() {
               </div>
             </div>
           )}
-    {selectedQualIds.length > 0 && (
-      <div className="flex justify-end mt-6 gap-x-2">
-        <EmailApprovalTrainers
-          selectedQualIds={selectedQualIds}
-          selectedQualNames={selectedQualNames}
-          selectedUsernames={selectedQualIds.map(id => {
-            const user = trainerData.find(item => item.Qual_Id === id);
-            return user ? user.Username : '';
-          })}
-        />
-        {accessRole !== "HOS" &&(
-          <EmailRejectionForTrainers
-            selectedQualIds={selectedQualIds}
-          />
-        )}
-      </div>
+{selectedQualIds.length > 0 && (
+  <div className="flex justify-end mt-6 gap-x-2">
+    <EmailApprovalTrainers
+      selectedQualIds={selectedQualIds}
+      selectedQualNames={selectedQualNames}
+      selectedUsernames={selectedQualIds.map(id => {
+        const user = trainerData.find(item => item.Qual_Id === id);
+        return user ? user.Username : '';
+      })}
+      disabled={selectedQualIds.some(id => {
+        const user = trainerData.find(item => item.Qual_Id === id);
+        return user && user.Flag === 1;
+      })}
+      title={selectedQualIds.some(id => {
+        const user = trainerData.find(item => item.Qual_Id === id);
+        return user && user.Flag === 1 ? "Approve disabled for already approved items" : "";
+      })}
+    />
+    {accessRole !== "HOS" &&(
+      <EmailRejectionForTrainers
+        selectedQualIds={selectedQualIds}
+      />
     )}
+  </div>
+)}
             </div>
       </div>
     </div>

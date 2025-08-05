@@ -305,7 +305,7 @@ const pathname = usePathname();
       className="flex items-center z-10 bg-gray-100 justify-between p-0"
     >
       <div className="text-black font-semibold text-xl ml-2">
-        <Link href="/dashboard">Greentech Industries</Link>
+        <Link href="/dashboard">Training Management System</Link>
       </div>
       <div className="flex items-center space-x-2 ml-auto mr-12">
         {menuGroups.map((group) => {

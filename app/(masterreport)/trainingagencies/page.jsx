@@ -6,6 +6,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { FaArrowUp, FaArrowDown, FaArrowsAltV, FaSearch } from "react-icons/fa";
 import Pagination from "@mui/material/Pagination"; // Material UI Pagination
+import BackButton from "@/components/BackButton";
 
 const Upload = () => {
   const [agencies, setAgencies] = useState([]);
@@ -141,7 +142,7 @@ const Upload = () => {
     return "↕";
   };
 
-  const validatePhoneNumber = (number) => /^\d{10}$/.test(number);
+  const validatePhoneNumber = (number) => /^\d{4,15}$/.test(number);
   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleSubmit = async (e) => {
@@ -149,7 +150,7 @@ const Upload = () => {
     setError("");
     setSuccessMessage("");
 
-    // Validate phone numbers
+    // Validate phone numbers for Contact_1 and Contact_2
     if (
       !validatePhoneNumber(formData.Contact_1) ||
       !validatePhoneNumber(formData.Contact_2)
@@ -262,6 +263,7 @@ const Upload = () => {
       <div className="bg-sky-400 text-white p-2  flex justify-between rounded-t-lg">
         <p className="font-semibold"> External Training Agencies Entry</p>
       </div>
+      <BackButton/>
       {/* Header */}
       {/* <div className="sticky top-0 z-10 p-1 bg-sky-600 text-white font-semibold text-lg shadow-md">
         External Training Agencies Entry
@@ -404,7 +406,6 @@ const Upload = () => {
               id="Website"
               value={formData.Website}
               onChange={handleChange}
-              required
               autoComplete="off"
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 pr-10"
             />
@@ -577,20 +578,25 @@ const Upload = () => {
                             </a>
                           </td>
 
-                          {/* Website - opens in new tab */}
+                          {/* Website - display as plain text */}
                           <td className="border px-2 py-2 text-gray-800 font-bold">
-                            <a
-                              href={
-                                agency.Website.startsWith("http")
-                                  ? agency.Website
-                                  : `https://${agency.Website}`
-                              }
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 underline hover:text-blue-800"
-                            >
-                              {agency.Website}
-                            </a>
+                            {agency.Website ? (
+                              <a
+                                href={
+                                  agency.Website.startsWith("http://") ||
+                                  agency.Website.startsWith("https://")
+                                    ? agency.Website
+                                    : `http://${agency.Website}`
+                                }
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 underline hover:text-blue-800"
+                              >
+                                {agency.Website}
+                              </a>
+                            ) : (
+                              ""
+                            )}
                           </td>
                         </tr>
                       ))

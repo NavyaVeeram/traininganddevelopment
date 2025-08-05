@@ -5,6 +5,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import Select from "react-select";
 import { FaSearch } from "react-icons/fa";
 import Link from "next/link";
+import BackButton from "@/components/BackButton";
 const TETForms = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [trainingName, setTrainingName] = useState("IATF");
@@ -229,8 +230,9 @@ const TETForms = () => {
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
-        <h1 className="font-semibold">TET Forms</h1>
+        <h1 className="font-semibold">TEE Forms</h1>
       </div>
+      <BackButton/>
       <div className="mb-4 mt-2 flex justify-between items-center space-x-4">
         <div className="flex">
           <div>
@@ -357,7 +359,7 @@ const TETForms = () => {
                         { key: "Year_No", label: "Year" },
                         { key: "Department", label: "Department" },
                         { key: "Program_Name", label: "Program Name" },
-                        { key: "Training_Name", label: "Type" },
+                        { key: "Training_Name", label: "Category" },
                         { key: "Training_Date", label: "Training Date" },
                         { key: "Evaluation_Date", label: "Evaluation Date" },
                         { key: "actions", label: "Report" },

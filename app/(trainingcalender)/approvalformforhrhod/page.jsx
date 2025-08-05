@@ -7,6 +7,7 @@ import EmailRejection from "../email/EmailRejection";
 import EmailApprovalWeek from "../email/EmailApprovalforhrhod";
 import FullYearCalendar from "../calendar/page";
 import dynamic from "next/dynamic";
+import BackButton from "@/components/BackButton";
 
 const MonthCount = dynamic(() => import("./monthcount"), { ssr: false }); // Dynamically import MonthCount with no SSR
 
@@ -435,7 +436,7 @@ export default function TrainingDataTable() {
           </button>
         </div>
       </div>
-
+<BackButton/>
         {/* Approval Button */}
         {selectedProgramIds.length > 0 && (
           <div className="flex justify-end mt-6 gap-x-2">
