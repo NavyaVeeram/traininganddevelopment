@@ -14,6 +14,7 @@ import * as React from "react";
 import { useSearchParams } from "next/navigation";
 import { PDFDocument, rgb } from "pdf-lib";
 import fontkit from '@pdf-lib/fontkit';
+import BackButton from "@/components/BackButton";
 const animatedComponents = makeAnimated();
 
 const TrainingAttendanceForm = () => {
@@ -964,7 +965,7 @@ const programOptions = options.map((option) => ({
           </div>
         </div>
       )}
-
+<BackButton/>
       <form onSubmit={handleFormSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-8 gap-4 mt-3 w-full">
           {/* Year Selection */} 
@@ -1153,7 +1154,7 @@ const programOptions = options.map((option) => ({
                 step="1"
                 min="1"
                 readOnly
-                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-gray-100 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
               </div>
