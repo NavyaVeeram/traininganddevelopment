@@ -859,7 +859,7 @@ const [trainingName, setTrainingName] = useState([]);
 ].map(({ key, label }, index) => (
   <th
     key={key}
-    className={`px-4 py-2 border text-left cursor-pointer ${
+    className={`px-2 py-2 border text-left cursor-pointer ${
       index === 0 ? "sticky left-0 bg-muted z-20" : ""
     }`}
     onClick={() => handleSort(key)}
@@ -894,40 +894,40 @@ const [trainingName, setTrainingName] = useState([]);
     console.log('Rendering item:', item);
     return (
       <tr key={index} className="border hover:bg-muted">
-        <td className="px-4 py-2 border">{item.EmployeeId}</td>
-        <td className="px-4 py-2 border">{item.Username}</td>
-        <td className="px-4 py-2 border">
+        <td className="px-2 py-2 border">{item.EmployeeId}</td>
+        <td className="px-2 py-2 border">{item.Username}</td>
+        <td className="px-2 py-2 border">
           {" "}
           {new Date(item.DOJ).toLocaleDateString()}
         </td>
-        <td className="px-4 py-2 border">
+        <td className="px-2 py-2 border">
           {item.Designation}{" "}
         </td>
-        <td className="px-4 py-2 border">{item.Section}</td>
-        <td className="px-4 py-2 border">{item.Department}</td>
-        <td className="px-4 py-2 border">
+        <td className="px-2 py-2 border">{item.Section}</td>
+        <td className="px-2 py-2 border">{item.Department}</td>
+        <td className="px-2 py-2 border">
           {item.Training_Name}
         </td>
-        <td className="px-4 py-2 border">
+        <td className="px-2 py-2 border">
           {item.Certified ? "Yes" : "No"}
         </td>
-         <td className="px-4 py-2 border">
+         <td className="px-2 py-2 border">
           {item.Cert_Des}
         </td>
-        <td className="px-4 py-2 border">
+        <td className="px-2 py-2 border">
           {item.Exp_5_Yr ? "Yes" : "No"}
         </td>
-<td className="px-4 py-2 border">
+<td className="px-2 py-2 border">
   {item.Exp_3_Yr ? "Yes" : "No"}
 </td>
-        <td className="px-4 py-2 border">
+        <td className="px-2 py-2 border">
           {item.HOD_Rec ? "Yes" : "No"}
         </td>
-        <td className="px-4 py-2 border">
+        <td className="px-2 py-2 border">
           {item.Qualified ? "Yes" : "No"}
         </td>
           {accessRole !== "HOS" &&  accessRole !== "HOD" &&(
-      <td className="px-4 py-2 border flex items-center space-x-2">
+      <td className="px-2 py-2 border flex items-center space-x-2">
       <input
         type="checkbox"
         checked={item.Status}

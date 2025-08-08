@@ -666,17 +666,6 @@ const HeadCount = () => {
           </button>
         </div>
       </div>
-      {/* <div className="p-2 bg-white  flex justify-end">
-        <button
-          onClick={() => exportToExcel()}
-          className=" p-8 flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-medium cursor-pointer"
-          title="Export to Excel"
-        >
-          <FaFileExcel size={18}  />
-
-          
-        </button>
-      </div> */}
 
       {/* Year Picker outside tabs */}
       <div className="my-4 relative">
@@ -702,6 +691,7 @@ const HeadCount = () => {
               }}
             />
           </div>
+          {selectedDate && ( 
            <div className="p-2 bg-white  flex justify-end">
         <button
           onClick={() => exportToExcel()}
@@ -710,10 +700,11 @@ const HeadCount = () => {
         >
           <FaFileExcel size={18}  />
 
-          
         </button>
       </div>
+          )}
         </div>
+        
       </div>
 
       {activeTab === "programwise" && (

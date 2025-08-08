@@ -20,6 +20,8 @@ const TrainingAttendanceForm = () => {
     const [mounted, setMounted] = useState(false);
     const [year, setYear] = useState("");
     const [selectedMonth, setSelectedMonth] = useState(null);
+    const [Training_Name, setTraining_Name] = useState("");
+      const [trainingName, setTrainingName] = useState("IATF");
     const [formData, setFormData] = useState({
       Program_Id: "",
       Training_Name: "",
@@ -291,15 +293,20 @@ const TrainingAttendanceForm = () => {
       fetchTrainingData(formData.Program_Id);
     }
   }, [formData.Program_Id]);
-
-  const fetchTrainingData = async (programId) => {
+useEffect(() => {
+  if (selectedDate && trainingName) {
+    handleMonthYearChange(selectedDate);
+  }
+}, [trainingName]);
+  const fetchTrainingData = async (programId, trainingName) => {
     try {
-      if (!programId) {
+      setTimeout(() => {
+    if (!programId || !trainingName) {
         setDialogVisible(false);
         setDialogMessage("");
         return;
       }
-
+}, 0);
       const res = await fetch(
         `/api/get_training_att_entry?program_id=${programId}`
       );
@@ -380,35 +387,41 @@ const TrainingAttendanceForm = () => {
     }
     fetchVenueOptions();
   }, []);
-  const handleMonthYearChange = async (date) => {
-    if (!date) return;
-    setSelectedDate(date);
+const handleMonthYearChange = async (date) => {
+  if (!date) return;
+  setSelectedDate(date);
 
-    const selectedMonth = date.getMonth() + 1;
-    const selectedYear = date.getFullYear();
-    setFormData((prev) => ({
-      ...prev,
-      selectedMonth: `${selectedMonth}-${selectedYear}`,
-    }));
+  const selectedMonth = date.getMonth() + 1;
+  const selectedYear = date.getFullYear();
+  setFormData((prev) => ({
+    ...prev,
+    selectedMonth: `${selectedMonth}-${selectedYear}`,
+  }));
 
-    try {
-      const res = await fetch(
-        `/api/get_training_attendance_dropdown?month=${selectedMonth}&year=${selectedYear}`
-      );
-      const data = await res.json();
-      if (res.ok) {
-        if (data.length === 0) {
-          resetForm();
-        } else {
-          setOptions(data);
-        }
+  // Use the current trainingName state instead of formData.Training_Name
+  if (!trainingName) {
+    setOptions([]);
+    return;
+  }
+
+  try {
+    const res = await fetch(
+     `/api/get_training_attendance_dropdown?month=${selectedMonth}&year=${selectedYear}&Training_Name=${encodeURIComponent(trainingName)}`
+    );
+    const data = await res.json();
+    if (res.ok) {
+      if (data.length === 0) {
+        resetForm();
       } else {
-        throw new Error(data.error || "Error fetching data");
+        setOptions(data);
       }
-    } catch (err) {
-      setError(err.message);
+    } else {
+      throw new Error(data.error || "Error fetching data");
     }
-  };
+  } catch (err) {
+    setError(err.message);
+  }
+};
   useEffect(() => {
     const storedEmployeeId = localStorage.getItem('employeeId');
 
@@ -442,37 +455,46 @@ const TrainingAttendanceForm = () => {
  
    fetchAccessRole();
  }, []);
-  const handleProgramChange = async (e) => {
-    const selectedProgramId = e.target.value;
-    if (!selectedProgramId) return;
-    setFormData((prev) => ({
-      ...prev,
-      Program_Id: selectedProgramId,
-    }));
-    setMessage("");
-    setIsMessageVisible(false);
-    setLoading(true);
-    setTableSearchTerm("");
-    try {
-      await fetchTrainingData(selectedProgramId);
-      const [empRes, nameRes] = await Promise.all([
-        fetch(`/api/get_tet_form_emp_details?id=${selectedProgramId}`),
-        fetch(`/api/get_tet_form_program_name?id=${selectedProgramId}`),
-      ]);
-      const empData = await empRes.json();
-      const nameData = await nameRes.json();
-      if (nameData?.[0]) {
-        setProgramDetails(empData);
-        setFilteredData(empData);
-      } else {
-        throw new Error("No training data available");
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+ const handleProgramChange = async (e) => {
+  const selectedProgramId = Number(e.target.value);
+  if (!selectedProgramId) return;
+  
+  setFormData((prev) => ({
+    ...prev,
+    Program_Id: selectedProgramId,
+  }));
+  setMessage("");
+  setIsMessageVisible(false);
+  setLoading(true);
+  setTableSearchTerm("");
+  
+  try {
+    // Always fetch training data first
+    await fetchTrainingData(selectedProgramId, trainingName);
+    
+    // Always fetch employee details regardless of training data
+    const empRes = await fetch(`/api/get_tet_form_emp_details?id=${selectedProgramId}`);
+    const empData = await empRes.json();
+    
+    if (empRes.ok) {
+      setProgramDetails(empData);
+      setFilteredData(empData);
+    } else {
+      // Even if employee API fails, show empty array instead of error
+      setProgramDetails([]);
+      setFilteredData([]);
+      console.warn("Failed to fetch employee details:", empData);
     }
-  };
+    
+  } catch (err) {
+    console.error("Error in handleProgramChange:", err);
+    // Still set empty arrays to show the table structure
+    setProgramDetails([]);
+    setFilteredData([]);
+  } finally {
+    setLoading(false);
+  }
+};
   const handleSubmit = async (e) => {
     try {
       e.preventDefault();
@@ -542,7 +564,6 @@ const TrainingAttendanceForm = () => {
     : formData.EmployeeIds.split(','),
   CreatedBy: (formData.CreatedBy || localStorage.getItem("employeeId") || "").trim(),
 }),
-
             }
           );
 
@@ -556,11 +577,19 @@ const TrainingAttendanceForm = () => {
             console.error("Attendance insert failed:", attendanceData.message);
           }
         }
-        setMessage("");
-        setIsMessageVisible(false);
-        setDialogVisible(false);
-        setDialogMessage("");
-        resetForm();
+        // Refresh the training data without resetting the form
+        await fetchTrainingData(formData.Program_Id);
+         const empRes = await fetch(`/api/get_tet_form_emp_details?id=${formData.Program_Id}`);
+  const empData = await empRes.json();
+  
+  if (empRes.ok) {
+    setProgramDetails(empData);
+    setFilteredData(empData);
+  }
+  
+  alert("Training attendance submitted successfully.");
+  setIsMessageVisible(true);
+        // Keep the form populated with current data
       } else {
         throw new Error(responseData.message || "Unknown error");
       }
@@ -582,6 +611,7 @@ const TrainingAttendanceForm = () => {
       setShowConfirmPopup(true);
       // Store the event for later use
       submitEventRef.current = e;
+       
     } else {
       // Directly call the original handleSubmit
       handleSubmit(e);
@@ -674,7 +704,7 @@ const TrainingAttendanceForm = () => {
       mergedPdf.registerFontkit(fontkit);
 
       // const font = await mergedPdf.embedFont(StandardFonts.HelveticaBold);
-const fontBytes = await fetch("/fonts/Cambria-01.ttf").then(res => res.arrayBuffer());
+const fontBytes = await fetch("/fonts/cambriab.ttf").then(res => res.arrayBuffer());
 
 // Embed it in the PDF
 const font = await mergedPdf.embedFont(fontBytes);
@@ -719,7 +749,7 @@ const font = await mergedPdf.embedFont(fontBytes);
                                   page.drawText(firstLine, {
                                     x: 140,
                                     y: height - 70,
-                                    size: 11,
+                                    size: 10,
                                     font,
                                     color: rgb(0, 0, 0),
                                   });
@@ -727,7 +757,7 @@ const font = await mergedPdf.embedFont(fontBytes);
                                   page.drawText(secondLine, {
                                     x: 140,
                                     y: height - 85,
-                                    size: 11,
+                                    size: 10,
                                     font,
                                     color: rgb(0, 0, 0),
                                   });
@@ -736,7 +766,7 @@ const font = await mergedPdf.embedFont(fontBytes);
                                   page.drawText(Username, {
                                     x: 140,
                                     y: height - 70,
-                                    size: 11,
+                                    size: 10,
                                     font,
                                     color: rgb(0, 0, 0),
                                   });
@@ -745,28 +775,28 @@ const font = await mergedPdf.embedFont(fontBytes);
           page.drawText(String(emp.EmployeeId || "") , {
             x: 140,
             y: height - 104,
-            size: 11,
+            size: 10,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(String(emp.Designation || "") , {
             x: 140,
             y: height - 138,
-            size: 11,
+            size: 10,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(String(emp.Section || "") , {
             x: 140,
             y: height - 173,
-            size: 11,
+            size: 10,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(String(emp.Department || "") , {
             x: 140,
             y: height - 208,
-            size: 11,
+            size: 10,
             font,
             color: rgb(0, 0, 0),
           });
@@ -779,14 +809,14 @@ const font = await mergedPdf.embedFont(fontBytes);
                                   page.drawText(firstLine, {
                                     x: 375,
                                     y: height - 70,
-                                    size: 11,
+                                    size: 10,
                                     font,
                                     color: rgb(0, 0, 0),
                                   });
                                   page.drawText(secondLine, {
                                     x: 375,
                                     y: height - 85,
-                                    size: 11,
+                                    size: 10,
                                     font,
                                     color: rgb(0, 0, 0),
                                   });
@@ -794,7 +824,7 @@ const font = await mergedPdf.embedFont(fontBytes);
                                   page.drawText(ProgramName, {
                                     x: 375,
                                     y: height - 70,
-                                    size: 11,
+                                    size: 10,
                                     font,
                                     color: rgb(0, 0, 0),
                                   });
@@ -802,30 +832,38 @@ const font = await mergedPdf.embedFont(fontBytes);
           page.drawText(String(emp.Trainer || "") , {
             x: 375,
             y: height - 104,
-            size: 11,
+            size: 10,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(String(emp.Train_Mode || "") , {
             x: 375,
             y: height - 139,
-            size: 11,
+            size: 10,
             font,
             color: rgb(0, 0, 0),
           });
 
-          page.drawText(String(emp.No_Hrs + "hr") || "", {
-            x: 375,
-            y: height - 173,
-            size: 11,
-            font,
-            color: rgb(0, 0, 0),
-          });
+    const noHrsText =
+  emp.No_Hrs > 1
+    ? `${emp.No_Hrs} hrs`
+    : emp.No_Hrs == 1
+    ? "1 hr"
+    : "";
+
+page.drawText(noHrsText, {
+  x: 375,
+  y: height - 173,
+  size: 10,
+  font,
+  color: rgb(0, 0, 0),
+});
+
 
           page.drawText(String(emp.Training_Date) || "", {
             x: 375,
             y: height - 208,
-            size: 11,
+            size: 10,
             font,
             color: rgb(0, 0, 0),
           });
@@ -928,7 +966,7 @@ const programOptions = options.map((option) => ({
       )}
 
       <form onSubmit={handleFormSubmit}>
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mt-3 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-8 gap-4 mt-3 w-full">
           {/* Year Selection */} 
           <div className="md:col-span-1">
             <label className="block font-medium w-full">Select Year:</label>
@@ -941,9 +979,55 @@ const programOptions = options.map((option) => ({
               className="w-full pl-4 pr-20 py-2 text-left border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+                   <div className="md:col-span-2">
+           <label htmlFor="training-select" className="mr-2  font-semibold ">
+            Category :
+            </label>
+            <Select
+              inputId="training-select"
+              value={{
+                value: trainingName,
+                label:
+                  trainingName === "IATF"
+                    ? "IATF (International Automotive Task Force)"
+                    : "HSE (Health, Safety, and Environment)",
+              }}
+              onChange={(selectedOption) =>
+                setTrainingName(selectedOption.value)
+              }
+              options={[
+                {
+                  value: "IATF",
+                  label: "IATF (International Automotive Task Force)",
+                },
+                {
+                  value: "HSE",
+                  label: "HSE (Health, Safety, and Environment)",
+                },
+              ]}
+              isSearchable={false}
+              classNamePrefix="react-select"
 
+              styles={{
+                control: (provided) => ({
+                  ...provided,
+                  padding: "2px",
+                  borderColor: "#D1D5DB", // Tailwind sky-500
+                  borderRadius: "0.5rem", // rounded-lg
+                  cursor: "pointer",
+                  minHeight: "38px",
+                }),
+                option: (provided, state) => ({
+                  ...provided,
+                  cursor: "pointer",
+                  backgroundColor: state.isFocused ? "#E0F2FE" : "white", // Tailwind sky-100
+                  color: "black", 
+                }),
+              }}
+            />
+              </div>
           {/* Program Selection */}
-          <div className="md:col-span-4">
+          <div className="md:col-span-3">
             <label className="block font-medium">Select Program:</label>
             <div className="relative">
               <Select
@@ -959,7 +1043,7 @@ const programOptions = options.map((option) => ({
     (opt) => opt.value === formData.Program_Id
   ) || null}
                 options={programOptions}
-      className="w-[500px] cursor-pointer"
+      className=" cursor-pointer"
                 placeholder="Select Program"
                 styles={{
                   control: (base, state) => ({
@@ -996,6 +1080,9 @@ const programOptions = options.map((option) => ({
               </div>
               
               </div>
+           <div className="md:col-span-1">
+            </div>     
+              <div className="md:col-span-1">
   <div className="flex items-center justify-start">
               <div className="flex items-center  gap-2 mt-6">
           <label htmlFor="Cancel" className="font-medium">
@@ -1012,18 +1099,11 @@ const programOptions = options.map((option) => ({
                     />
         </div>
         </div>
+        </div>
             </div>
             {/* Align these fields in a single row */}
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mt-2 w-full">
-              <div>
-              <label className="block font-medium">Category :</label>
-              <input
-                type="text"
-                value={formData.Training_Name}
-                readOnly
-                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
-              />
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mt-2 w-full">
+    
               {/* Training Mode */}
               <div>
               <label className="block font-medium mb-1">Training Mode:</label>
@@ -1045,8 +1125,8 @@ const programOptions = options.map((option) => ({
               </div>
               </div>
               {/* Number of Hours */}
-              <div>
-              <label className="block font-medium">Number of Hours:</label>
+              <div className="ml-8">
+              <label className="block font-medium">No of Hours:</label>
               <input
                 type="number"
                 name="No_Hrs"
@@ -1060,7 +1140,7 @@ const programOptions = options.map((option) => ({
               {/* Number of Persons */}
               <div>
               <label htmlFor="Persons" className="block font-medium">
-                Number of Persons:
+                No of Persons:
               </label>
               <input
                 type="number"
@@ -1072,7 +1152,8 @@ const programOptions = options.map((option) => ({
                 onChange={handleFormDataChange}
                 step="1"
                 min="1"
-                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                readOnly
+                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
               </div>
@@ -1661,17 +1742,6 @@ const programOptions = options.map((option) => ({
             {dialogVisible && dialogMessage && (
               <div className="w-100 bg-blue-100 border border-blue-500 text-blue-700 px-4 py-3 rounded shadow z-50">
                 <p className="text-sm">{dialogMessage}</p>
-              </div>
-            )}
-            {isMessageVisible && (
-              <div className="mt-4 flex flex-col items-start">
-                <label className="block font-medium">Message:</label>
-                <input
-                  type="text"
-                  value={message}
-                  readOnly
-                  className="w-1/4 p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
-                />
               </div>
             )}
             No data available.

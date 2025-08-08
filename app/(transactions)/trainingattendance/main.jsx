@@ -14,12 +14,10 @@ import * as React from "react";
 import { useSearchParams } from "next/navigation";
 import { PDFDocument, rgb } from "pdf-lib";
 import fontkit from '@pdf-lib/fontkit';
-import BackButton from "@/components/BackButton";
 const animatedComponents = makeAnimated();
 
 const TrainingAttendanceForm = () => {
     const [mounted, setMounted] = useState(false);
-    const [venues, setVenues] = useState([]);
     const [year, setYear] = useState("");
     const [selectedMonth, setSelectedMonth] = useState(null);
     const [formData, setFormData] = useState({
@@ -123,6 +121,7 @@ const TrainingAttendanceForm = () => {
   const storedEmployeeId = typeof window !== "undefined" ? localStorage.getItem("employeeId") : null;
   const [employeeId, setEmployeeId] = useState(storedEmployeeId);
   const [isCancelChecked, setIsCancelChecked] = useState(false);
+  const [venueOptions, setVenueOptions] = React.useState([]);
 
   useEffect(() => {
     setFormData((prev) => ({
@@ -164,28 +163,7 @@ const TrainingAttendanceForm = () => {
     setSortConfig({ key, direction });
   };
 
-  const [venueOptions, setVenueOptions] = React.useState([]);
 
-  React.useEffect(() => {
-    async function fetchVenueOptions() {
-      try {
-        const response = await fetch('/api/get_venue_dropdown');
-        if (!response.ok) {
-          throw new Error('Failed to fetch venue options');
-        }
-        const data = await response.json();
-        // Assuming data is an array of objects with Venue property
-        const options = data.map((item) => ({
-          value: item.Venue,
-          label: item.Venue,
-        }));
-        setVenueOptions(options);
-      } catch (error) {
-        console.error('Error fetching venue options:', error);
-      }
-    }
-    fetchVenueOptions();
-  }, []);
   // RESET FORM including Cancel checkbox
   const resetForm = () => {
     setFormData({
@@ -302,25 +280,7 @@ const TrainingAttendanceForm = () => {
 
     fetchTrainers();
   }, []);
-  useEffect(() => {
-    const fetchVenues = async () => {
-      try {
-        const response = await fetch('/api/get_venue_dropdown');
-        const data = await response.json();
-        setVenues(data);
-      } catch (error) {
-        console.error('Error fetching venues:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    fetchVenues();
-  }, []);
-
-  if (loading) {
-    return <p>Loading venues...</p>;
-  }
   const dialogMessageRef = useRef("");
 
   useEffect(() => {
@@ -400,6 +360,26 @@ const TrainingAttendanceForm = () => {
     }
   };
 
+  React.useEffect(() => {
+    async function fetchVenueOptions() {
+      try {
+        const response = await fetch('/api/get_venue_dropdown');
+        if (!response.ok) {
+          throw new Error('Failed to fetch venue options');
+        }
+        const data = await response.json();
+        // Assuming data is an array of objects with Venue property
+        const options = data.map((item) => ({
+          value: item.Venue,
+          label: item.Venue,
+        }));
+        setVenueOptions(options);
+      } catch (error) {
+        console.error('Error fetching venue options:', error);
+      }
+    }
+    fetchVenueOptions();
+  }, []);
   const handleMonthYearChange = async (date) => {
     if (!date) return;
     setSelectedDate(date);
@@ -694,7 +674,7 @@ const TrainingAttendanceForm = () => {
       mergedPdf.registerFontkit(fontkit);
 
       // const font = await mergedPdf.embedFont(StandardFonts.HelveticaBold);
-const fontBytes = await fetch("/fonts/CALIBRI.ttf").then(res => res.arrayBuffer());
+const fontBytes = await fetch("/fonts/Cambria-01.ttf").then(res => res.arrayBuffer());
 
 // Embed it in the PDF
 const font = await mergedPdf.embedFont(fontBytes);
@@ -946,7 +926,7 @@ const programOptions = options.map((option) => ({
           </div>
         </div>
       )}
-<BackButton/>
+
       <form onSubmit={handleFormSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mt-3 w-full">
           {/* Year Selection */} 
@@ -1092,9 +1072,8 @@ const programOptions = options.map((option) => ({
                 onChange={handleFormDataChange}
                 step="1"
                 min="1"
-                className="w-full p-2 border border-gray-300 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
                 required
-                readOnly
               />
               </div>
               {/* Training Date */}

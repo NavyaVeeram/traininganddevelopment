@@ -7,7 +7,6 @@ import { FaSearch } from "react-icons/fa";
 import Select from "react-select";
 import * as XLSX from "xlsx";
 import { FaFileExcel } from "react-icons/fa";
-import BackButton from "@/components/BackButton";
 
 const HeadCount = () => {
   // Tab state
@@ -18,8 +17,7 @@ const HeadCount = () => {
   const [tableSearchTerm, setTableSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
+  // Pagination removed - displaying all data
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [accessRole, setAccessRole] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(null);
@@ -95,7 +93,7 @@ const HeadCount = () => {
       Section: item.Section || "",
       Designation: item.Designation || "",
       DOJ: item.DOJ || "",
-      Status: item.IsActive == 1 ? "Active" : "Left",
+      IsActive: item.Active_Status || "",
       Jan: item.Jan || "",
       Feb: item.Feb || "",
       Mar: item.Mar || "",
@@ -143,20 +141,31 @@ const HeadCount = () => {
         throw new Error("No data available.");
       }
       const data = await response.json();
-      console.log(
-        "First data item full object:",
-        data.length > 0 ? data[0] : "No data"
+      
+      // Filter out any header rows or invalid data
+      const filteredData = data.filter(item => 
+        item && 
+        item.EmployeeId && 
+        typeof item.EmployeeId === 'string' &&
+        item.EmployeeId.trim() !== '' &&
+        item.EmployeeId !== 'EmployeeId' && 
+        item.EmployeeId !== 'Emp ID' &&
+        !item.EmployeeId.toString().toLowerCase().includes('total')
       );
+      
       console.log(
-        "First data item keys:",
-        data.length > 0 ? Object.keys(data[0]) : "No data"
+        "Filtered data count:",
+        filteredData.length,
+        "Original count:",
+        data.length
       );
-      if (data && data.length === 0) {
+      
+      if (filteredData && filteredData.length === 0) {
         setError("No data available for the selected Year.");
         setFilteredData([]);
       } else {
-        setTrainingData(data);
-        setFilteredData(data);
+        setTrainingData(filteredData);
+        setFilteredData(filteredData);
       }
     } catch (err) {
       setError(err.message || "An error occurred while fetching data.");
@@ -184,16 +193,31 @@ const HeadCount = () => {
         throw new Error("No data available.");
       }
       const data = await response.json();
-      console.log(
-        "departmentwise first data item keys:",
-        data.length > 0 ? Object.keys(data[0]) : "No data"
+      
+      // Filter out any header rows or invalid data
+      const filteredData = data.filter(item => 
+        item && 
+        item.EmployeeId && 
+        typeof item.EmployeeId === 'string' &&
+        item.EmployeeId.trim() !== '' &&
+        item.EmployeeId !== 'EmployeeId' && 
+        item.EmployeeId !== 'Emp ID' &&
+        !item.EmployeeId.toString().toLowerCase().includes('total')
       );
-      if (data && data.length === 0) {
+      
+      console.log(
+        "Filtered departmentwise data count:",
+        filteredData.length,
+        "Original count:",
+        data.length
+      );
+      
+      if (filteredData && filteredData.length === 0) {
         setdepartmentwiseError("No data available for the selected Year.");
         setdepartmentwiseFilteredData([]);
       } else {
-        setdepartmentwiseData(data);
-        setdepartmentwiseFilteredData(data);
+        setdepartmentwiseData(filteredData);
+        setdepartmentwiseFilteredData(filteredData);
       }
     } catch (err) {
       setdepartmentwiseError(
@@ -247,26 +271,7 @@ const HeadCount = () => {
     }
   );
 
-  const totalPagespaginateddepartmentwiseData =
-    rowsPerPage === "All"
-      ? 1
-      : Math.ceil(sorteddepartmentwiseData.length / rowsPerPage);
-  const paginateddepartmentwiseData =
-    rowsPerPage === "All"
-      ? sorteddepartmentwiseData
-      : sorteddepartmentwiseData.slice(
-        (currentPage - 1) * rowsPerPage,
-        currentPage * rowsPerPage
-      );
-  const totalPages =
-    rowsPerPage === "All" ? 1 : Math.ceil(sortedData.length / rowsPerPage);
-  const paginatedData =
-    rowsPerPage === "All"
-      ? sortedData
-      : sortedData.slice(
-        (currentPage - 1) * rowsPerPage,
-        currentPage * rowsPerPage
-      );
+  // Pagination removed - displaying all data
   const handleTableSearchChange = (e) => {
     const searchQuery = e.target.value;
     setTableSearchTerm(searchQuery);
@@ -276,7 +281,7 @@ const HeadCount = () => {
       const lowerSearchQuery = searchQuery.toLowerCase();
       const filtered = trainingData.filter((trainer) => {
         return [
-          "Employee_Id",
+          "EmployeeId",
           "Username",
           "Department",
           "Section",
@@ -297,7 +302,7 @@ const HeadCount = () => {
           "Dec",
           "Total",
         ].some((field) =>
-          trainer[field]?.toString().toLowerCase().includes(lowerSearchQuery)
+          String(trainer[field] || '').toLowerCase().includes(lowerSearchQuery)
         );
       });
       setFilteredData(filtered);
@@ -308,12 +313,12 @@ const HeadCount = () => {
     const searchQuery = e.target.value;
     setdepartmentwiseSearchTerm(searchQuery);
     if (!searchQuery) {
-      setdepartmentwiseData(departmentwiseData);
+      setdepartmentwiseFilteredData(departmentwiseData);
     } else {
       const lowerSearchQuery = searchQuery.toLowerCase();
       const filtered = departmentwiseData.filter((trainer) => {
         return [
-          "Employee_Id",
+          "EmployeeId",
           "Username",
           "Department",
           "Section",
@@ -337,7 +342,7 @@ const HeadCount = () => {
           trainer[field]?.toString().toLowerCase().includes(lowerSearchQuery)
         );
       });
-      setdepartmentwiseData(filtered);
+      setdepartmentwiseFilteredData(filtered);
     }
   };
 
@@ -351,67 +356,139 @@ const HeadCount = () => {
     setdepartmentwiseFilteredData(departmentwiseData);
   };
 
-  // Render table rows with conditional text field for additional training programs in actual tab
-  const renderoverallTableRows = (data, isActualTab = true) => {
-    return data.map((item, index) => {
-      return (
-        <tr key={item.EmployeeId || index}>
-          <td className="px-4 py-2 border">{item.EmployeeId}</td>
-          <td className="px-4 py-2 border">{item.Username}</td>
-          <td className="px-4 py-2 border">{item.Department}</td>
-          <td className="px-4 py-2 border">{item.Section}</td>
-          <td className="px-4 py-2 border">{item.Designation}</td>
-          <td className="px-4 py-2 border">{item.DOJ}</td>
-          <td className="px-4 py-2 border">
-            {item.IsActive == 1 ? "Active" : "Left"}
-          </td>
-          <td className="px-4 py-2 border text-right">{item.Jan}</td>
-          <td className="px-4 py-2 border text-right">{item.Feb}</td>
-          <td className="px-4 py-2 border text-right">{item.Mar}</td>
-          <td className="px-4 py-2 border text-right">{item.Apr}</td>
-          <td className="px-4 py-2 border text-right">{item.May}</td>
-          <td className="px-4 py-2 border text-right">{item.Jun}</td>
-          <td className="px-4 py-2 border text-right">{item.Jul}</td>
-          <td className="px-4 py-2 border text-right">{item.Aug}</td>
-          <td className="px-4 py-2 border text-right">{item.Sep}</td>
-          <td className="px-4 py-2 border text-right">{item.Oct}</td>
-          <td className="px-4 py-2 border text-right">{item.Nov}</td>
-          <td className="px-4 py-2 border text-right">{item.Dec}</td>
-          <td className="px-4 py-2 border text-right">{item.Total}</td>
-        </tr>
-      );
+  // Calculate totals for the data
+  const calculateTotals = (data) => {
+    const totals = {
+      Jan: 0,
+      Feb: 0,
+      Mar: 0,
+      Apr: 0,
+      May: 0,
+      Jun: 0,
+      Jul: 0,
+      Aug: 0,
+      Sep: 0,
+      Oct: 0,
+      Nov: 0,
+      Dec: 0,
+      Total: 0
+    };
+    
+    data.forEach(item => {
+      Object.keys(totals).forEach(key => {
+        const value = parseInt(item[key]) || 0;
+        totals[key] += value;
+      });
     });
+    
+    return totals;
+  };
+
+  // Render table rows with totals row
+  const renderoverallTableRows = (data, isActualTab = true) => {
+    const totals = calculateTotals(data);
+    
+    return (
+      <>
+        {data.map((item, index) => (
+          <tr key={item.EmployeeId || index}>
+            <td className="px-4 py-2 border">{item.EmployeeId}</td>
+            <td className="px-4 py-2 border">{item.Username}</td>
+            <td className="px-4 py-2 border">{item.Department}</td>
+            <td className="px-4 py-2 border">{item.Section}</td>
+            <td className="px-4 py-2 border">{item.Designation}</td>
+            <td className="px-4 py-2 border">{item.DOJ}</td>
+            <td className="px-4 py-2 border">
+              {item.IsActive}
+            </td>
+            <td className="px-4 py-2 border text-right">{item.Jan}</td>
+            <td className="px-4 py-2 border text-right">{item.Feb}</td>
+            <td className="px-4 py-2 border text-right">{item.Mar}</td>
+            <td className="px-4 py-2 border text-right">{item.Apr}</td>
+            <td className="px-4 py-2 border text-right">{item.May}</td>
+            <td className="px-4 py-2 border text-right">{item.Jun}</td>
+            <td className="px-4 py-2 border text-right">{item.Jul}</td>
+            <td className="px-4 py-2 border text-right">{item.Aug}</td>
+            <td className="px-4 py-2 border text-right">{item.Sep}</td>
+            <td className="px-4 py-2 border text-right">{item.Oct}</td>
+            <td className="px-4 py-2 border text-right">{item.Nov}</td>
+            <td className="px-4 py-2 border text-right">{item.Dec}</td>
+            <td className="px-4 py-2 border text-right">{item.Total}</td>
+          </tr>
+        ))}
+        {data.length > 0 && (
+          <tr className="bg-gray-100 font-bold sticky bottom-0">
+            <td className="px-4 py-2 border text-center" colSpan="7">Grand Total</td>
+            <td className="px-4 py-2 border text-right">{totals.Jan}</td>
+            <td className="px-4 py-2 border text-right">{totals.Feb}</td>
+            <td className="px-4 py-2 border text-right">{totals.Mar}</td>
+            <td className="px-4 py-2 border text-right">{totals.Apr}</td>
+            <td className="px-4 py-2 border text-right">{totals.May}</td>
+            <td className="px-4 py-2 border text-right">{totals.Jun}</td>
+            <td className="px-4 py-2 border text-right">{totals.Jul}</td>
+            <td className="px-4 py-2 border text-right">{totals.Aug}</td>
+            <td className="px-4 py-2 border text-right">{totals.Sep}</td>
+            <td className="px-4 py-2 border text-right">{totals.Oct}</td>
+            <td className="px-4 py-2 border text-right">{totals.Nov}</td>
+            <td className="px-4 py-2 border text-right">{totals.Dec}</td>
+            <td className="px-4 py-2 border text-right">{totals.Total}</td>
+          </tr>
+        )}
+      </>
+    );
   };
 
   const renderdepartmentwiseTableRows = (data, isActualTab = true) => {
-    return data.map((item, index) => {
-      return (
-        <tr key={item.EmployeeId || index}>
-          <td className="px-4 py-2 border">{item.EmployeeId}</td>
-          <td className="px-4 py-2 border">{item.Username}</td>
-          <td className="px-4 py-2 border">{item.Department}</td>
-          <td className="px-4 py-2 border">{item.Section}</td>
-          <td className="px-4 py-2 border">{item.Designation}</td>
-          <td className="px-4 py-2 border">{item.DOJ}</td>
-          <td className="px-4 py-2 border">
-            {item.IsActive == 1 ? "Active" : "Left"}
-          </td>
-          <td className="px-4 py-2 border text-right">{item.Jan}</td>
-          <td className="px-4 py-2 border text-right">{item.Feb}</td>
-          <td className="px-4 py-2 border text-right">{item.Mar}</td>
-          <td className="px-4 py-2 border text-right">{item.Apr}</td>
-          <td className="px-4 py-2 border text-right">{item.May}</td>
-          <td className="px-4 py-2 border text-right">{item.Jun}</td>
-          <td className="px-4 py-2 border text-right">{item.Jul}</td>
-          <td className="px-4 py-2 border text-right">{item.Aug}</td>
-          <td className="px-4 py-2 border text-right">{item.Sep}</td>
-          <td className="px-4 py-2 border text-right">{item.Oct}</td>
-          <td className="px-4 py-2 border text-right">{item.Nov}</td>
-          <td className="px-4 py-2 border text-right">{item.Dec}</td>
-          <td className="px-4 py-2 border text-right">{item.Total}</td>
-        </tr>
-      );
-    });
+    const totals = calculateTotals(data);
+    
+    return (
+      <>
+        {data.map((item, index) => (
+          <tr key={item.EmployeeId || index}>
+            <td className="px-4 py-2 border">{item.EmployeeId}</td>
+            <td className="px-4 py-2 border">{item.Username}</td>
+            <td className="px-4 py-2 border">{item.Department}</td>
+            <td className="px-4 py-2 border">{item.Section}</td>
+            <td className="px-4 py-2 border">{item.Designation}</td>
+            <td className="px-4 py-2 border">{item.DOJ}</td>
+            <td className="px-4 py-2 border">
+              {item.IsActive}
+            </td>
+            <td className="px-4 py-2 border text-right">{item.Jan}</td>
+            <td className="px-4 py-2 border text-right">{item.Feb}</td>
+            <td className="px-4 py-2 border text-right">{item.Mar}</td>
+            <td className="px-4 py-2 border text-right">{item.Apr}</td>
+            <td className="px-4 py-2 border text-right">{item.May}</td>
+            <td className="px-4 py-2 border text-right">{item.Jun}</td>
+            <td className="px-4 py-2 border text-right">{item.Jul}</td>
+            <td className="px-4 py-2 border text-right">{item.Aug}</td>
+            <td className="px-4 py-2 border text-right">{item.Sep}</td>
+            <td className="px-4 py-2 border text-right">{item.Oct}</td>
+            <td className="px-4 py-2 border text-right">{item.Nov}</td>
+            <td className="px-4 py-2 border text-right">{item.Dec}</td>
+            <td className="px-4 py-2 border text-right">{item.Total}</td>
+          </tr>
+        ))}
+        {data.length > 0 && (
+          <tr className="bg-gray-100 font-bold sticky bottom-0">
+            <td className="px-4 py-2 border text-center" colSpan="7">Grand Total</td>
+            <td className="px-4 py-2 border text-right">{totals.Jan}</td>
+            <td className="px-4 py-2 border text-right">{totals.Feb}</td>
+            <td className="px-4 py-2 border text-right">{totals.Mar}</td>
+            <td className="px-4 py-2 border text-right">{totals.Apr}</td>
+            <td className="px-4 py-2 border text-right">{totals.May}</td>
+            <td className="px-4 py-2 border text-right">{totals.Jun}</td>
+            <td className="px-4 py-2 border text-right">{totals.Jul}</td>
+            <td className="px-4 py-2 border text-right">{totals.Aug}</td>
+            <td className="px-4 py-2 border text-right">{totals.Sep}</td>
+            <td className="px-4 py-2 border text-right">{totals.Oct}</td>
+            <td className="px-4 py-2 border text-right">{totals.Nov}</td>
+            <td className="px-4 py-2 border text-right">{totals.Dec}</td>
+            <td className="px-4 py-2 border text-right">{totals.Total}</td>
+          </tr>
+        )}
+      </>
+    );
   };
 
   if (isAuthorized === null) {
@@ -433,7 +510,6 @@ const HeadCount = () => {
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
       <div className="bg-sky-400 text-white p-2 rounded-t-lg flex items-center justify-between">
         {/* Left side: Title + Tabs */}
-        <BackButton/>
         <div className="flex items-center space-x-4">
           <h1 className="font-semibold">Head Count</h1>
           <button
@@ -498,166 +574,99 @@ const HeadCount = () => {
             </div>
 
             {/* Excel Export Button */}
-            <button
-              onClick={() => exportToExcel()}
-              className="flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-medium"
-              title="Export to Excel"
-            >
-              <FaFileExcel size={18} />
-
-            </button>
+            {selectedDate && !loading && !error && filteredData.length > 0 && (
+              <button
+                onClick={() => exportToExcel()}
+                className="flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-medium"
+                title="Export to Excel"
+              >
+                <FaFileExcel size={18} />
+              </button>
+            )}
           </div>
 
-          {loading && <p>Loading...</p>}
-          {error && (
-            <div className="flex justify-center items-center h-64 text-center text-red-500 mt-4">
-              <p>{error}</p>
-            </div>
-          )}
+         
 
-          {selectedDate && !loading && !error && (
-            <div className="card-body p-0 pb-3">
-              <div className="p-4 bg-card">
-                <div className="flex flex-wrap justify-between items-center mb-4 space-y-2">
-                  <div className="flex items-center space-x-2 text-sm">
-                    <span>Show</span>
-                    <select
-                      className="border p-1 rounded bg-secondary"
-                      value={rowsPerPage}
-                      onChange={(e) => {
-                        setRowsPerPage(
-                          e.target.value === "All"
-                            ? "All"
-                            : parseInt(e.target.value)
-                        );
-                        setCurrentPage(1);
-                      }}
-                    >
-                      <option value="10">10</option>
-                      <option value="15">15</option>
-                      <option value="25">25</option>
-                      <option value="50">50</option>
-                      <option value="100">100</option>
-                      <option value="All">All</option>
-                    </select>
-                    <span>entries</span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-sm"></div>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={tableSearchTerm}
-                      onChange={handleTableSearchChange}
-                      placeholder="Search..."
-                      className="border p-1 pl-8 rounded bg-secondary"
-                    />
-                    <FaSearch className="absolute left-2 top-2 text-gray-400" />
-                  </div>
-                </div>
-                <div>
-                  <table
-                    className="min-w-full border z-0 rounded-lg bg-card text-sm"
-                    style={{ tableLayout: "fixed", fontSize: "13px" }}
-                  >
-                    <thead className="bg-muted sticky top-0">
-                      <tr>
-                        {[
-                          { key: "EmployeeId", label: "Emp ID" },
-                          { key: "Username", label: "Username" },
-                          { key: "Department", label: "Department" },
-                          { key: "Section", label: "Section" },
-                          { key: "Designation", label: "Designation" },
-                          { key: "DOJ", label: "DOJ" },
-                          { key: "IsActive", label: "Status" },
-                          { key: "Jan", label: "Jan" },
-                          { key: "Feb", label: "Feb" },
-                          { key: "Mar", label: "Mar" },
-                          { key: "Apr", label: "Apr" },
-                          { key: "May", label: "May" },
-                          { key: "Jun", label: "Jun" },
-                          { key: "Jul", label: "Jul" },
-                          { key: "Aug", label: "Aug" },
-                          { key: "Sep", label: "Sep" },
-                          { key: "Oct", label: "Oct" },
-                          { key: "Nov", label: "Nov" },
-                          { key: "Dec", label: "Dec" },
-                          { key: "Total", label: "Total" },
-                        ].map(({ key, label }, index) => (
-                          <th
-                            key={key}
-                            className={`px-4 py-2 border text-left cursor-pointer ${index === 0 ? "sticky left-0 bg-muted z-20" : ""
-                              }`}
-                            onClick={() => handleSort(key)}
-                          >
-                            {label}{" "}
-                            {sortConfig.key === key
-                              ? sortConfig.direction === "asc"
-                                ? "▲"
-                                : "▼"
-                              : "↕"}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>{renderoverallTableRows(paginatedData, true)}</tbody>
-                  </table>
-                </div>
-                <div className="flex flex-wrap justify-between items-center mt-4 text-sm">
-                  <div>
-                    Showing{" "}
-                    {filteredData.length > 0
-                      ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
-                        currentPage * rowsPerPage,
-                        filteredData.length
-                      )} of ${filteredData.length} entries`
-                      : "0 entries"}
-                  </div>
+         {selectedDate && (
+  <>
+    {loading && <p>Loading...</p>}
 
-                  <div className="flex space-x-1">
-                    <button
-                      className="px-3 py-1 border rounded"
-                      onClick={() => setCurrentPage(1)}
-                      disabled={currentPage === 1}
-                    >
-                      {"<<"}
-                    </button>
-                    <button
-                      className="px-3 py-1 border rounded"
-                      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                      disabled={currentPage === 1}
-                    >
-                      {"<"}
-                    </button>
-                    {Array.from({ length: totalPages }, (_, i) => (
-                      <button
-                        key={i}
-                        className={`px-3 py-1 border rounded ${currentPage === i + 1 ? "bg-black text-white" : ""
-                          }`}
-                        onClick={() => setCurrentPage(i + 1)}
+    {error && (
+      <div className="flex justify-center items-center h-64 text-center text-red-500 mt-4">
+        <p>{error}</p>
+      </div>
+    )}
+             {!loading && !error && (
+                <div className="card-body p-0 pb-3">
+                  <div className="p-4 bg-card">
+                    <div className="flex flex-wrap justify-between items-center mb-4 space-y-2">
+                      <div className="flex items-center space-x-2 text-sm"></div>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={tableSearchTerm}
+                          onChange={handleTableSearchChange}
+                          placeholder="Search..."
+                          className="border p-1 pl-8 rounded bg-secondary"
+                        />
+                        <FaSearch className="absolute left-2 top-2 text-gray-400" />
+                      </div>
+                    </div>
+                    <div>
+                      <table
+                        className="min-w-full border z-0 rounded-lg bg-card text-sm"
+                        style={{ tableLayout: "fixed", fontSize: "13px" }}
                       >
-                        {i + 1}
-                      </button>
-                    ))}
-                    <button
-                      className="px-3 py-1 border rounded"
-                      onClick={() =>
-                        setCurrentPage((p) => Math.min(p + 1, totalPages))
-                      }
-                      disabled={currentPage === totalPages}
-                    >
-                      {">"}
-                    </button>
-                    <button
-                      className="px-3 py-1 border rounded"
-                      onClick={() => setCurrentPage(totalPages)}
-                      disabled={currentPage === totalPages}
-                    >
-                      {">>"}
-                    </button>
+                        <thead className="bg-muted sticky top-0">
+                          <tr>
+                            {[
+                              { key: "EmployeeId", label: "Emp ID" },
+                              { key: "Username", label: "Username" },
+                              { key: "Department", label: "Department" },
+                              { key: "Section", label: "Section" },
+                              { key: "Designation", label: "Designation" },
+                              { key: "DOJ", label: "DOJ" },
+                              { key: "IsActive", label: "Status" },
+                              { key: "Jan", label: "Jan" },
+                              { key: "Feb", label: "Feb" },
+                              { key: "Mar", label: "Mar" },
+                              { key: "Apr", label: "Apr" },
+                              { key: "May", label: "May" },
+                              { key: "Jun", label: "Jun" },
+                              { key: "Jul", label: "Jul" },
+                              { key: "Aug", label: "Aug" },
+                              { key: "Sep", label: "Sep" },
+                              { key: "Oct", label: "Oct" },
+                              { key: "Nov", label: "Nov" },
+                              { key: "Dec", label: "Dec" },
+                              { key: "Total", label: "Total" },
+                            ].map(({ key, label }, index) => (
+                              <th
+                                key={key}
+                                className={`px-4 py-2 border text-left cursor-pointer ${index === 0 ? "sticky left-0 bg-muted z-20" : ""
+                                  }`}
+                                onClick={() => handleSort(key)}
+                              >
+                                {label}{" "}
+                                {sortConfig.key === key
+                                  ? sortConfig.direction === "asc"
+                                    ? "▲"
+                                    : "▼"
+                                  : "↕"}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                      <tbody>{renderoverallTableRows(sortedData, true)}</tbody>
+                      </table>
+                    </div>
+                    <div className="flex flex-wrap justify-between items-center mt-4 text-sm">
+                      {/* Pagination removed - displaying all data */}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
+              )}
+            </>
           )}
         </>
       )}
@@ -731,17 +740,17 @@ const HeadCount = () => {
               </div>
 
               {/* Right Section: Export Button */}
-              <div className="p-2 bg-white  flex justify-end">
-        <button
-          onClick={() => exportToExcel()}
-          className=" p-8 flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-medium cursor-pointer"
-          title="Export to Excel"
-        >
-          <FaFileExcel size={18}  />
-
-          
-        </button>
-      </div>
+              {departmentwiseSelectedDate && selectedDepartment && !departmentwiseLoading && !departmentwiseError && departmentwiseFilteredData.length > 0 && (
+                <div className="flex items-center">
+                  <button
+                    onClick={() => exportToExcel()}
+                    className="flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-medium"
+                    title="Export to Excel"
+                  >
+                    <FaFileExcel size={18} />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -759,29 +768,6 @@ const HeadCount = () => {
               <div className="card-body p-0 pb-3">
                 <div className="p-4 bg-card">
                   <div className="flex flex-wrap justify-between items-center mb-4 space-y-2">
-                    <div className="flex items-center space-x-2 text-sm">
-                      <span>Show</span>
-                      <select
-                        className="border p-1 rounded bg-secondary"
-                        value={rowsPerPage}
-                        onChange={(e) => {
-                          setRowsPerPage(
-                            e.target.value === "All"
-                              ? "All"
-                              : parseInt(e.target.value)
-                          );
-                          setCurrentPage(1);
-                        }}
-                      >
-                        <option value="10">10</option>
-                        <option value="15">15</option>
-                        <option value="25">25</option>
-                        <option value="50">50</option>
-                        <option value="100">100</option>
-                        <option value="All">All</option>
-                      </select>
-                      <span>entries</span>
-                    </div>
                     <div className="flex items-center space-x-2 text-sm"></div>
                     <div className="relative">
                       <input
@@ -841,81 +827,14 @@ const HeadCount = () => {
                       </thead>
                       <tbody>
                         {renderdepartmentwiseTableRows(
-                          paginateddepartmentwiseData,
+                          sorteddepartmentwiseData,
                           true
                         )}
                       </tbody>
                     </table>
                   </div>
                   <div className="flex flex-wrap justify-between items-center mt-4 text-sm">
-                    <div>
-                      Showing{" "}
-                      {departmentwiseFilteredData.length > 0
-                        ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
-                          currentPage * rowsPerPage,
-                          departmentwiseFilteredData.length
-                        )} of ${departmentwiseFilteredData.length} entries`
-                        : "0 entries"}
-                    </div>
-
-                    <div className="flex space-x-1">
-                      <button
-                        className="px-3 py-1 border rounded"
-                        onClick={() => setCurrentPage(1)}
-                        disabled={currentPage === 1}
-                      >
-                        {"<<"}
-                      </button>
-                      <button
-                        className="px-3 py-1 border rounded"
-                        onClick={() =>
-                          setCurrentPage((p) => Math.max(p - 1, 1))
-                        }
-                        disabled={currentPage === 1}
-                      >
-                        {"<"}
-                      </button>
-                      {Array.from(
-                        { length: totalPagespaginateddepartmentwiseData },
-                        (_, i) => (
-                          <button
-                            key={i}
-                            className={`px-3 py-1 border rounded ${currentPage === i + 1 ? "bg-black text-white" : ""
-                              }`}
-                            onClick={() => setCurrentPage(i + 1)}
-                          >
-                            {i + 1}
-                          </button>
-                        )
-                      )}
-                      <button
-                        className="px-3 py-1 border rounded"
-                        onClick={() =>
-                          setCurrentPage((p) =>
-                            Math.min(
-                              p + 1,
-                              totalPagespaginateddepartmentwiseData
-                            )
-                          )
-                        }
-                        disabled={
-                          currentPage === totalPagespaginateddepartmentwiseData
-                        }
-                      >
-                        {">"}
-                      </button>
-                      <button
-                        className="px-3 py-1 border rounded"
-                        onClick={() =>
-                          setCurrentPage(totalPagespaginateddepartmentwiseData)
-                        }
-                        disabled={
-                          currentPage === totalPagespaginateddepartmentwiseData
-                        }
-                      >
-                        {">>"}
-                      </button>
-                    </div>
+                    {/* Pagination removed - displaying all data */}
                   </div>
                 </div>
               </div>

@@ -117,7 +117,7 @@ export default function Home() {
               >
                 Training & Development
                 <br />
-                <span className="text-xl md:text-2xl font-semibold">Information System</span>
+                <span className="text-xl md:text-2xl font-semibold">Management System</span>
               </motion.h2>
             </motion.div>
           </motion.header>
@@ -261,7 +261,7 @@ export default function Home() {
                     className="text-center mb-8"
                   >
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent mb-2">
-                      Welcome Back
+                      Welcome
                     </h1>
                     <p className="text-slate-500 font-medium">Sign into your account</p>
                   </motion.div>
