@@ -42,7 +42,15 @@ const TrainingAttendanceForm = () => {
       EmployeeIds: [],
       selectedMonth: "",
     });
-
+useEffect(() => {
+  if (typeof window !== "undefined") {
+    const storedEmployeeId = localStorage.getItem("employeeId");
+    setFormData(prev => ({
+      ...prev,
+      CreatedBy: storedEmployeeId || ""
+    }));
+  }
+}, []);
     // New state for confirmation popup visibility
     const [showConfirmPopup, setShowConfirmPopup] = useState(false);
 
@@ -474,7 +482,7 @@ const handleMonthYearChange = async (date) => {
     await fetchTrainingData(selectedProgramId, trainingName);
     
     // Always fetch employee details regardless of training data
-    const empRes = await fetch(`/api/get_tet_form_emp_details?id=${selectedProgramId}`);
+const empRes = await fetch(`/api/get_tet_form_emp_details?id=${formData.Program_Id}`);
     const empData = await empRes.json();
     
     if (empRes.ok) {
@@ -522,7 +530,7 @@ const handleMonthYearChange = async (date) => {
         }
       }
       const formDataToSend = {
-        Program_Id: Number(formData.Program_Id),
+        Program_Id: formData.Program_Id,
         Persons: formData.Persons,
         No_Hrs: formData.No_Hrs,
         Training_Date: formData.Training_Date,
@@ -559,7 +567,7 @@ const handleMonthYearChange = async (date) => {
                 "Content-Type": "application/json",
               },
              body: JSON.stringify({
-  Program_Id: Number(formData.Program_Id),
+  Program_Id: formData.Program_Id,
   EmployeeIds: Array.isArray(formData.EmployeeIds)
     ? formData.EmployeeIds
     : formData.EmployeeIds.split(','),
@@ -587,8 +595,7 @@ const handleMonthYearChange = async (date) => {
     setProgramDetails(empData);
     setFilteredData(empData);
   }
-  
-  alert("Training attendance submitted successfully.");
+
   setIsMessageVisible(true);
         // Keep the form populated with current data
       } else {
@@ -705,7 +712,7 @@ const handleMonthYearChange = async (date) => {
       mergedPdf.registerFontkit(fontkit);
 
       // const font = await mergedPdf.embedFont(StandardFonts.HelveticaBold);
-const fontBytes = await fetch("/fonts/cambriab.ttf").then(res => res.arrayBuffer());
+const fontBytes = await fetch("/fonts/timesbd.ttf").then(res => res.arrayBuffer());
 
 // Embed it in the PDF
 const font = await mergedPdf.embedFont(fontBytes);
@@ -750,7 +757,7 @@ const font = await mergedPdf.embedFont(fontBytes);
                                   page.drawText(firstLine, {
                                     x: 140,
                                     y: height - 70,
-                                    size: 10,
+                                    size: 11,
                                     font,
                                     color: rgb(0, 0, 0),
                                   });
@@ -758,7 +765,7 @@ const font = await mergedPdf.embedFont(fontBytes);
                                   page.drawText(secondLine, {
                                     x: 140,
                                     y: height - 85,
-                                    size: 10,
+                                    size: 11,
                                     font,
                                     color: rgb(0, 0, 0),
                                   });
@@ -767,7 +774,7 @@ const font = await mergedPdf.embedFont(fontBytes);
                                   page.drawText(Username, {
                                     x: 140,
                                     y: height - 70,
-                                    size: 10,
+                                    size: 11,
                                     font,
                                     color: rgb(0, 0, 0),
                                   });
@@ -776,28 +783,28 @@ const font = await mergedPdf.embedFont(fontBytes);
           page.drawText(String(emp.EmployeeId || "") , {
             x: 140,
             y: height - 104,
-            size: 10,
+            size: 11,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(String(emp.Designation || "") , {
             x: 140,
             y: height - 138,
-            size: 10,
+            size: 11,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(String(emp.Section || "") , {
             x: 140,
             y: height - 173,
-            size: 10,
+            size: 11,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(String(emp.Department || "") , {
             x: 140,
             y: height - 208,
-            size: 10,
+            size: 11,
             font,
             color: rgb(0, 0, 0),
           });
@@ -810,14 +817,14 @@ const font = await mergedPdf.embedFont(fontBytes);
                                   page.drawText(firstLine, {
                                     x: 375,
                                     y: height - 70,
-                                    size: 10,
+                                    size: 11,
                                     font,
                                     color: rgb(0, 0, 0),
                                   });
                                   page.drawText(secondLine, {
-                                    x: 375,
+                                    x: 375, 
                                     y: height - 85,
-                                    size: 10,
+                                    size: 11,
                                     font,
                                     color: rgb(0, 0, 0),
                                   });
@@ -825,7 +832,7 @@ const font = await mergedPdf.embedFont(fontBytes);
                                   page.drawText(ProgramName, {
                                     x: 375,
                                     y: height - 70,
-                                    size: 10,
+                                    size: 11,
                                     font,
                                     color: rgb(0, 0, 0),
                                   });
@@ -833,14 +840,14 @@ const font = await mergedPdf.embedFont(fontBytes);
           page.drawText(String(emp.Trainer || "") , {
             x: 375,
             y: height - 104,
-            size: 10,
+            size: 11,
             font,
             color: rgb(0, 0, 0),
           });
           page.drawText(String(emp.Train_Mode || "") , {
             x: 375,
             y: height - 139,
-            size: 10,
+            size: 11,
             font,
             color: rgb(0, 0, 0),
           });
@@ -855,7 +862,7 @@ const font = await mergedPdf.embedFont(fontBytes);
 page.drawText(noHrsText, {
   x: 375,
   y: height - 173,
-  size: 10,
+  size: 11,
   font,
   color: rgb(0, 0, 0),
 });
@@ -864,7 +871,7 @@ page.drawText(noHrsText, {
           page.drawText(String(emp.Training_Date) || "", {
             x: 375,
             y: height - 208,
-            size: 10,
+            size: 11,
             font,
             color: rgb(0, 0, 0),
           });

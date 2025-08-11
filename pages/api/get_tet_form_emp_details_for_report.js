@@ -29,6 +29,8 @@ export default async function handler(req, res) {
         return transformedItem;
       });
       res.status(200).json(transformedResult);
+      console.log("Employee details for report fetched successfully.");
+      console.log(result)
     } catch (error) {
       console.error("Error fetching employee details for report:", error);
       res.status(500).json({ error: 'An error occurred while fetching data.' });

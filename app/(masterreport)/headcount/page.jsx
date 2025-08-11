@@ -69,13 +69,16 @@ const HeadCount = () => {
   const exportToExcel = () => {
     let dataToExport = [];
     let sheetName = "";
+    let totals = {};
 
     if (activeTab === "overall") {
       dataToExport = trainingData;
       sheetName = "Overall Summary";
+      totals = calculateTotals(trainingData);
     } else if (activeTab === "departmentwise") {
       dataToExport = departmentwiseData;
       sheetName = "Department Wise Summary";
+      totals = calculateTotals(departmentwiseData);
     } else {
       return;
     }
@@ -85,7 +88,7 @@ const HeadCount = () => {
       return;
     }
 
-    // Format data for export: map keys to readable headers
+    // Format data for export including individual totals
     const formattedData = dataToExport.map((item) => ({
       "Emp ID": item.EmployeeId || item.Employee_Id || "",
       Username: item.Username || "",
@@ -94,25 +97,63 @@ const HeadCount = () => {
       Designation: item.Designation || "",
       DOJ: item.DOJ || "",
       IsActive: item.Active_Status || "",
-      Jan: item.Jan || "",
-      Feb: item.Feb || "",
-      Mar: item.Mar || "",
-      Apr: item.Apr || "",
-      May: item.May || "",
-      Jun: item.Jun || "",
-      Jul: item.Jul || "",
-      Aug: item.Aug || "",
-      Sep: item.Sep || "",
-      Oct: item.Oct || "",
-      Nov: item.Nov || "",
-      Dec: item.Dec || "",
-      Total: item.Total || "",
+      Jan: parseInt(item.Jan) || 0,
+      Feb: parseInt(item.Feb) || 0,
+      Mar: parseInt(item.Mar) || 0,
+      Apr: parseInt(item.Apr) || 0,
+      May: parseInt(item.May) || 0,
+      Jun: parseInt(item.Jun) || 0,
+      Jul: parseInt(item.Jul) || 0,
+      Aug: parseInt(item.Aug) || 0,
+      Sep: parseInt(item.Sep) || 0,
+      Oct: parseInt(item.Oct) || 0,
+      Nov: parseInt(item.Nov) || 0,
+      Dec: parseInt(item.Dec) || 0,
+      Total: parseInt(item.Total) || 0,
     }));
+
+    // Add grand total row
+    const grandTotalRow = {
+      "Emp ID": "GRAND TOTAL",
+      Username: "",
+      Department: "",
+      Section: "",
+      Designation: "",
+      DOJ: "",
+      IsActive: "",
+      Jan: totals.Jan || 0,
+      Feb: totals.Feb || 0,
+      Mar: totals.Mar || 0,
+      Apr: totals.Apr || 0,
+      May: totals.May || 0,
+      Jun: totals.Jun || 0,
+      Jul: totals.Jul || 0,
+      Aug: totals.Aug || 0,
+      Sep: totals.Sep || 0,
+      Oct: totals.Oct || 0,
+      Nov: totals.Nov || 0,
+      Dec: totals.Dec || 0,
+      Total: totals.Total || 0,
+    };
+
+    formattedData.push(grandTotalRow);
 
     const worksheet = XLSX.utils.json_to_sheet(formattedData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
-    XLSX.writeFile(workbook, `${sheetName}.xlsx`);
+    
+    // Auto-size columns
+    const columnWidths = [];
+    Object.keys(formattedData[0]).forEach((key, index) => {
+      const maxLength = Math.max(
+        key.length,
+        ...formattedData.map(row => String(row[key] || '').length)
+      );
+      columnWidths.push({ wch: Math.min(maxLength + 2, 20) });
+    });
+    worksheet['!cols'] = columnWidths;
+
+    XLSX.writeFile(workbook, `${sheetName}_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   useEffect(() => {
@@ -417,7 +458,7 @@ const HeadCount = () => {
           </tr>
         ))}
         {data.length > 0 && (
-          <tr className="bg-gray-100 font-bold sticky bottom-0">
+          <tr className="bg-gray-100 font-bold sticky bottom-6">
             <td className="px-4 py-2 border text-center" colSpan="7">Grand Total</td>
             <td className="px-4 py-2 border text-right">{totals.Jan}</td>
             <td className="px-4 py-2 border text-right">{totals.Feb}</td>
@@ -470,7 +511,7 @@ const HeadCount = () => {
           </tr>
         ))}
         {data.length > 0 && (
-          <tr className="bg-gray-100 font-bold sticky bottom-0">
+          <tr className="bg-gray-100 font-bold sticky bottom-6">
             <td className="px-4 py-2 border text-center" colSpan="7">Grand Total</td>
             <td className="px-4 py-2 border text-right">{totals.Jan}</td>
             <td className="px-4 py-2 border text-right">{totals.Feb}</td>
