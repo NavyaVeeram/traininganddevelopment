@@ -35,6 +35,7 @@ export default function EmailApprovalTrainers({selectedQualIds, selectedQualName
         setEmail(data.email);
         if (data.email || data) {
           alert("Data Submitted Successfully");
+            window.location.reload();
           if (onSubmitSuccess) {
             onSubmitSuccess(selectedQualIds);
           }

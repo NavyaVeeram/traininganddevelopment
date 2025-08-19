@@ -24,7 +24,7 @@ const generateEmailHTML = (employeeId, usernames) => {
     </p>
   <div class="text-center" >
         <a
-          href="http://10.40.20.5:3000"
+          href="http://10.40.20.5:100"
           target="_blank"
           rel="noopener noreferrer"
           class="inline-block bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 text-white font-semibold text-base sm:text-lg py-6 my-3 mx-6 px-6 rounded-full shadow-md transition duration-300"
