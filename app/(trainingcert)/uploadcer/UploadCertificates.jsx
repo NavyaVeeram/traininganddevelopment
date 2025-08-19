@@ -119,7 +119,7 @@ useEffect(() => {
 const fetchTrainingData = async (programId) => {
   try {
     const res = await fetch(
-      `/api/get_training_att_entry?program_id=${programId}`
+      `/api/get_training_att_entry_certificates?program_id=${programId}`
     );
     const data = await res.json();
 
@@ -144,7 +144,7 @@ const fetchTrainingData = async (programId) => {
       No_Hrs: trainingData.No_Hrs || "",
       Persons: trainingData.Persons || "",
       Training_Date: trainingData.Training_Date || "",
-      selectedMonth: trainingData.Training_Status || "",
+      Training_Status: trainingData.Training_Status || "",
       Forward: trainingData.Forward || "",
       Schedule_Type: trainingData.Schedule_Type || "",
       Trainer: trainingData.Trainer || "",
@@ -236,6 +236,7 @@ const fetchTrainingData = async (programId) => {
             Program_Id: formData.Program_Id,
             IsUpload: 1,
             CreatedBy: employeeId || "",
+            fileUrl: data.fileUrl, // Add this line to store the fileUrl
           }),
           });
 
@@ -487,7 +488,7 @@ Loading...
       <input
         type="text"
         value={
-          formData.Trainer_Name || ""
+          formData.Trainer || ""
         }
         readOnly
         className="w-full pl-4 py-2 border border-gray-300 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"

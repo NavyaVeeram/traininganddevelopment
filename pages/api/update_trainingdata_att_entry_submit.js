@@ -4,14 +4,16 @@ const prisma = new PrismaClient();
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
-    const {
-      Program_Id,
+    let {
+      Program_Id,      // comma-separated values like "981,982,983"
       Persons,
       No_Hrs,
+      Train_Mode,
       Training_Date,
       Training_Status,
       Schedule_Type,
-      Trainer,
+      Trainer, // <-- could be array from frontend
+      External_Trainer, // Assuming this is the same as Trainer
       Venue,
       Actual_Budget,
       Cancel,
@@ -19,39 +21,41 @@ export default async function handler(req, res) {
     } = req.body;
 
     try {
-      // Handle empty or null date/status
+      // Ensure Program_Id is a comma-separated string
+      const programIds = String(Program_Id).trim();
+
+      // Convert Trainer array to comma-separated string
+      if (Array.isArray(Trainer)) {
+        Trainer = Trainer.join(',');
+      }
+
+      // Convert numeric values safely
+      const persons = Number(Persons);
+      const noHrs = Number(No_Hrs);
+      const actualBudget = Actual_Budget ? Number(Actual_Budget) : null;
+      const cancel = Cancel ? Number(Cancel) : 0;
+
+      // Handle null/empty date/status
       const formattedTrainingDate = (Training_Date === '' || Training_Date === null) ? null : Training_Date;
       const formattedTrainingStatus = (Training_Status === '' || Training_Status === null) ? null : Training_Status;
 
-      // Call stored procedure using Prisma
+      // Call stored procedure
       const result = await prisma.$queryRaw`
         EXEC [dbo].[Update_TrainingData_Att_Entry_Submit]
-        @Program_Id = ${Program_Id},
-        @Persons = ${Persons},
-        @No_Hrs = ${No_Hrs},
-        @Training_Date = ${formattedTrainingDate},
-        @Training_Status = ${formattedTrainingStatus},
-        @Schedule_Type = ${Schedule_Type},
-        @Trainer = ${Trainer},
-        @Venue = ${Venue},
-        @Actual_Budget = ${Actual_Budget},
-        @Cancel = ${Cancel},
-        @CreatedBy = ${CreatedBy}
+          @Program_Id = ${programIds},
+          @Persons = ${persons},
+          @No_Hrs = ${noHrs},
+          @Train_Mode = ${Train_Mode},
+          @Training_Date = ${formattedTrainingDate},
+          @Training_Status = ${formattedTrainingStatus},
+          @Schedule_Type = ${Schedule_Type},
+          @Trainer = ${Trainer},
+          @External_Trainer = ${External_Trainer},
+          @Venue = ${Venue},
+          @Actual_Budget = ${actualBudget},
+          @Cancel = ${cancel},
+          @CreatedBy = ${CreatedBy}
       `;
-
-      console.log('Stored procedure executed with:', {
-        Program_Id,
-        Persons,
-        No_Hrs,
-        Training_Date,
-        Training_Status,
-        Schedule_Type,
-        Trainer,
-        Venue,
-        Actual_Budget,
-        Cancel,
-        CreatedBy
-      });
 
       res.status(200).json({ message: result[0]?.Result || 'Unknown error' });
     } catch (error) {

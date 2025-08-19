@@ -13,17 +13,25 @@ export default async function handler(req, res) {
 
       const filesDir = path.join(process.cwd(), "public/Certificates");
       const fileList = fs.existsSync(filesDir) ? fs.readdirSync(filesDir) : [];
+const materialsWithFiles = materials.map((item) => {
+  const matchedFile = fileList.find((f) => {
+    const fileNameWithoutExt = f.substring(0, f.lastIndexOf(".")); // "984,985,986"
+    const fileIds = fileNameWithoutExt.split(","); // ["984", "985", "986"]
 
-      const materialsWithFiles = materials.map((item) => {
-        const matchedFile = fileList.find((f) =>
-          f.startsWith(`${item.Program_Id}.`)
-        );
-console.log(matchedFile);
-        return {
-          ...item,
-          fileUrl: matchedFile ? `/Certificates/${matchedFile}` : null,
-        };
-      });
+    const programIds = item.Program_Ids.split(","); // e.g. ["984","985","986"]
+
+    // Check if ANY ProgramId matches the file’s IDs
+    return programIds.some((id) => fileIds.includes(id));
+  });
+
+  return {
+    ...item,
+    fileUrl: matchedFile ? `/Certificates/${matchedFile}` : null,
+  };
+});
+
+console.log("materialsWithFiles:", materialsWithFiles);
+
 
       return res.status(200).json(materialsWithFiles);
     } catch (error) {

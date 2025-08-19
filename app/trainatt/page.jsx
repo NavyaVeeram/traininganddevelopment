@@ -1374,7 +1374,7 @@ const programOptions = options.map((option) => ({
                 />
               </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mt-2">
+              <div className="grid grid-cols-1 md:grid-cols-7 gap-4 mt-2">
                 {/* Schedule Type */}
                 <div>
                   <label className="block font-medium">Schedule Type:</label>
