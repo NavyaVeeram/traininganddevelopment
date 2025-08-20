@@ -11,7 +11,7 @@ export default async function handler(req, res) {
         EXEC [dbo].[View_Upload_Certificates]
       `;
 
-      const filesDir = path.join(process.cwd(), "public/Certificates");
+      const filesDir = path.join(process.cwd(), "public/docs");
       const fileList = fs.existsSync(filesDir) ? fs.readdirSync(filesDir) : [];
 const materialsWithFiles = materials.map((item) => {
   const matchedFile = fileList.find((f) => {
@@ -30,7 +30,7 @@ const materialsWithFiles = materials.map((item) => {
 
   return {
     ...item,
-    fileUrl: matchedFile ? `/Certificates/${matchedFile}` : null,
+    fileUrl: matchedFile ? `/docs/${matchedFile}` : null,
   };
 });
 

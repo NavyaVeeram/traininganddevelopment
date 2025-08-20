@@ -2,7 +2,7 @@ import fs from 'fs';
 import multer from 'multer';
 import path from 'path';
 
-const uploadDir = path.join(process.cwd(), 'public/Certificates');
+const uploadDir = path.join(process.cwd(), 'public/docs');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
