@@ -24,9 +24,9 @@ export default function UploadCertificates() {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [options, setOptions] = useState([]);
   const [fileUrl, setFileUrl] = useState(null);
-  const [department, setDepartment] = useState('');
-  const [username, setUsername] = useState('');
-  const [employeeId, setEmployeeId] = useState('');
+  const [department, setDepartment] = useState("");
+  const [username, setUsername] = useState("");
+  const [employeeId, setEmployeeId] = useState("");
   const [accessRole, setAccessRole] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(null);
   const [formData, setFormData] = useState({
@@ -70,95 +70,101 @@ export default function UploadCertificates() {
     setUploadSuccess(null);
     setOptions([]);
   };
-const mappedTrainerOptions = trainerOptions.map((trainer) => ({
-  value: trainer.value,
-  label: trainer.label,
-}));
-// Trainer options will be set from get_training_att_entry API response
+  const mappedTrainerOptions = trainerOptions.map((trainer) => ({
+    value: trainer.value,
+    label: trainer.label,
+  }));
+  // Trainer options will be set from get_training_att_entry API response
 
-useEffect(() => {
-  const storedEmployeeId = localStorage.getItem('employeeId');
+  useEffect(() => {
+    const storedEmployeeId = localStorage.getItem("employeeId");
 
-  if (storedEmployeeId) {
-    setEmployeeId(storedEmployeeId);
-  }
+    if (storedEmployeeId) {
+      setEmployeeId(storedEmployeeId);
+    }
 
-  const fetchAccessRole = async () => {
-    try {
-      const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-      const data = await res.json();
+    const fetchAccessRole = async () => {
+      try {
+        const res = await fetch(
+          `/api/get_access_role?employeeId=${storedEmployeeId}`
+        );
+        const data = await res.json();
 
-      if (res.ok && data.Access_Role) {
-        // Restrict access for HR_Res and HR_HOD roles
-        if (data.Access_Role === "HOS" || data.Access_Role === "HOD" || data.Access_Role === "Res_Person") {
+        if (res.ok && data.Access_Role) {
+          // Restrict access for HR_Res and HR_HOD roles
+          if (
+            data.Access_Role === "HOS" ||
+            data.Access_Role === "HOD" ||
+            data.Access_Role === "Res_Person"
+          ) {
+            setIsAuthorized(false);
+            // Optionally redirect to unauthorized page
+            // window.location.href = '/unauthorized';
+            return;
+          }
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
           setIsAuthorized(false);
-          // Optionally redirect to unauthorized page
-          // window.location.href = '/unauthorized';
-          return;
         }
-        setAccessRole(data.Access_Role);
-        setIsAuthorized(true);
-      } else {
+      } catch (error) {
+        console.error("Error fetching access role:", error);
         setIsAuthorized(false);
       }
-    } catch (error) {
-      console.error('Error fetching access role:', error);
-      setIsAuthorized(false);
+    };
+
+    fetchAccessRole();
+  }, []);
+
+  useEffect(() => {
+    if (formData.Program_Id) {
+      fetchTrainingData(formData.Program_Id);
+    }
+  }, [formData.Program_Id]);
+
+  const fetchTrainingData = async (programId) => {
+    try {
+      const res = await fetch(
+        `/api/get_training_att_entry_certificates?program_id=${programId}`
+      );
+      const data = await res.json();
+
+      if (!res.ok)
+        throw new Error(data.error || "Error fetching training details");
+
+      const trainingData = data[0] || {};
+
+      // Set trainerOptions from the single trainer in trainingData.Trainer
+      const trainerOption = trainingData.Trainer
+        ? [{ value: trainingData.Trainer, label: trainingData.Trainer }]
+        : [];
+
+      setTrainerOptions(trainerOption);
+
+      setFormData((prev) => ({
+        ...prev,
+        Training_Name: trainingData.Training_Name || "",
+        Train_Mode: trainingData.Train_Mode || "",
+        Req_Months: trainingData.Req_Months || "",
+        Start_Month: trainingData.Start_Month || "",
+        No_Hrs: trainingData.No_Hrs || "",
+        Persons: trainingData.Persons || "",
+        Training_Date: trainingData.Training_Date || "",
+        Training_Status: trainingData.Training_Status || "",
+        Forward: trainingData.Forward || "",
+        Schedule_Type: trainingData.Schedule_Type || "",
+        Trainer: trainingData.Trainer || "",
+        Trainer_Name: trainingData.Trainer_Name || "",
+        Venue: trainingData.Venue || "",
+        Training_Budget: trainingData.Training_Budget || "",
+        EmployeeIds: trainingData.EmployeeId
+          ? trainingData.EmployeeId.split(",").map((id) => id.trim())
+          : [],
+      }));
+    } catch (err) {
+      setError(err.message);
     }
   };
-
-  fetchAccessRole();
-}, []);
-
-useEffect(() => {
-  if (formData.Program_Id) {
-    fetchTrainingData(formData.Program_Id);
-  }
-}, [formData.Program_Id]);
-
-const fetchTrainingData = async (programId) => {
-  try {
-    const res = await fetch(
-      `/api/get_training_att_entry_certificates?program_id=${programId}`
-    );
-    const data = await res.json();
-
-    if (!res.ok)
-      throw new Error(data.error || "Error fetching training details");
-
-    const trainingData = data[0] || {};
-
-    // Set trainerOptions from the single trainer in trainingData.Trainer
-    const trainerOption = trainingData.Trainer
-      ? [{ value: trainingData.Trainer, label: trainingData.Trainer }]
-      : [];
-
-    setTrainerOptions(trainerOption);
-
-    setFormData((prev) => ({
-      ...prev,
-      Training_Name: trainingData.Training_Name || "",
-      Train_Mode: trainingData.Train_Mode || "",
-      Req_Months: trainingData.Req_Months || "",
-      Start_Month: trainingData.Start_Month || "",
-      No_Hrs: trainingData.No_Hrs || "",
-      Persons: trainingData.Persons || "",
-      Training_Date: trainingData.Training_Date || "",
-      Training_Status: trainingData.Training_Status || "",
-      Forward: trainingData.Forward || "",
-      Schedule_Type: trainingData.Schedule_Type || "",
-      Trainer: trainingData.Trainer || "",
-      Trainer_Name: trainingData.Trainer_Name || "",
-      Venue: trainingData.Venue || "",
-      Training_Budget: trainingData.Training_Budget || "",
-      EmployeeIds: trainingData.EmployeeId
-        ? trainingData.EmployeeId.split(",").map((id) => id.trim())
-        : [],
-    }));
-  } catch (err) {
-    setError(err.message);
-  }
-};
 
   const handleMonthYearChange = async (date) => {
     if (!date) return;
@@ -188,9 +194,9 @@ const fetchTrainingData = async (programId) => {
 
   useEffect(() => {
     // Retrieve the department, username, and employeeId from localStorage
-    const storedDepartment = localStorage.getItem('department');
-    const storedUsername = localStorage.getItem('username');
-    const storedEmployeeId = localStorage.getItem('employeeId');
+    const storedDepartment = localStorage.getItem("department");
+    const storedUsername = localStorage.getItem("username");
+    const storedEmployeeId = localStorage.getItem("employeeId");
 
     // If data is found, update state
     if (storedDepartment && storedUsername && storedEmployeeId) {
@@ -199,7 +205,7 @@ const fetchTrainingData = async (programId) => {
       setEmployeeId(storedEmployeeId);
     } else {
       // If no data found, redirect to login page
-      window.location.href = '/';
+      window.location.href = "/";
     }
     // Removed fetchData and trainingData usage as trainingData state is unused
   }, [department, username, employeeId]);
@@ -227,18 +233,21 @@ const fetchTrainingData = async (programId) => {
 
       if (response.ok && data.message === "File uploaded successfully") {
         try {
-          const insertRes = await fetch("/api/insert_upload_certificates_status", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          body: JSON.stringify({
-            Program_Id: formData.Program_Id,
-            IsUpload: 1,
-            CreatedBy: employeeId || "",
-            fileUrl: data.fileUrl, // Add this line to store the fileUrl
-          }),
-          });
+          const insertRes = await fetch(
+            "/api/insert_upload_certificates_status",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                Program_Id: formData.Program_Id,
+                IsUpload: 1,
+                CreatedBy: employeeId || "",
+                fileUrl: data.fileUrl, // Add this line to store the fileUrl
+              }),
+            }
+          );
 
           const insertData = await insertRes.json();
 
@@ -340,53 +349,50 @@ const fetchTrainingData = async (programId) => {
     }
   };
 
-const handleSort = (key) => {
-  if (!key) return; // Ignore empty keys or non-sortable columns
+  const handleSort = (key) => {
+    if (!key) return; // Ignore empty keys or non-sortable columns
 
-  let direction = "asc";
-  if (sortConfig.key === key && sortConfig.direction === "asc") {
-    direction = "desc";
-  }
-  setSortConfig({ key, direction });
-
-  const sortedData = [...filteredData].sort((a, b) => {
-    if (!a[key]) return 1;
-    if (!b[key]) return -1;
-
-    if (key === "Training_Date") {
-      const dateA = new Date(a[key]);
-      const dateB = new Date(b[key]);
-      return direction === "asc"
-        ? dateA - dateB
-        : dateB - dateA;
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
     }
+    setSortConfig({ key, direction });
 
-    if (typeof a[key] === "string" && typeof b[key] === "string") {
-      return direction === "asc"
-        ? a[key].localeCompare(b[key])
-        : b[key].localeCompare(a[key]);
-    }
+    const sortedData = [...filteredData].sort((a, b) => {
+      if (!a[key]) return 1;
+      if (!b[key]) return -1;
 
-    return direction === "asc" ? a[key] - b[key] : b[key] - a[key];
-  });
+      if (key === "Training_Date") {
+        const dateA = new Date(a[key]);
+        const dateB = new Date(b[key]);
+        return direction === "asc" ? dateA - dateB : dateB - dateA;
+      }
 
-  setFilteredData(sortedData);
-};
-const programOptions = options.map((option) => ({
-  value: option.Value,
-  label: option.Text,
-}));
+      if (typeof a[key] === "string" && typeof b[key] === "string") {
+        return direction === "asc"
+          ? a[key].localeCompare(b[key])
+          : b[key].localeCompare(a[key]);
+      }
+
+      return direction === "asc" ? a[key] - b[key] : b[key] - a[key];
+    });
+
+    setFilteredData(sortedData);
+  };
+  const programOptions = options.map((option) => ({
+    value: option.Value,
+    label: option.Text,
+  }));
   if (isAuthorized === null) {
     return (
       <div>
-Loading...
-         {/* // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+        Loading...
+        {/* // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
       //   <div className="bg-white p-10 rounded shadow text-center">
       //     <h2 className="text-2xl font-bold">Loading...</h2>
       //   </div>
       // </div> */}
       </div>
-     
     );
   }
 
@@ -417,127 +423,136 @@ Loading...
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
         <h2 className="font-semibold">Upload Certificates</h2>
       </div>
-      <BackButton/>
+      <BackButton />
       <form onSubmit={handleUpload} className="space-y-6 mt-4">
-  {/* Grid Layout */}
-  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-    {/* Select Month */}
-    <div className="flex flex-col mx-2">
-      <label className="block font-medium mb-1">Select Month</label>
-      <DatePicker
-        selected={selectedDate}
-        onChange={handleMonthYearChange}
-        dateFormat="MM/yyyy"
-        showMonthYearPicker
-        placeholderText="Select Month and Year"
-        className="w-full pl-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
+        {/* Grid Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Select Month */}
+          <div className="flex flex-col mx-2">
+            <label className="block font-medium mb-1">Select Month</label>
+            <DatePicker
+              selected={selectedDate}
+              onChange={handleMonthYearChange}
+              dateFormat="MM/yyyy"
+              showMonthYearPicker
+              placeholderText="Select Month and Year"
+              className="w-full pl-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
 
-    {/* Program */}
-    <div className="flex flex-col mx-2">
-      <label className="block font-medium mb-1">Program</label>
-  <Select
-  isRequired // Note: react-select does not natively support 'required'
-  isDisabled={!selectedDate || loading}
-  onChange={(selectedOption) =>
-    setFormData((prev) => ({
-      ...prev,
-      Program_Id: selectedOption ? selectedOption.value : "",
-    }))
-  }
-  value={programOptions.find(
-    (opt) => opt.value === formData.Program_Id
-  ) || null}
-  options={programOptions}
-  placeholder="Select Program"
-  classNamePrefix="react-select"
-  styles={{
-    control: (base, state) => ({
-      ...base,
-      cursor: 'pointer',
-      borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
-      boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
-      padding: "1px",
-      borderRadius: "0.5rem",
-      minHeight: "2rem",
-      display: "flex",
-      alignItems: "center",
-    }),
-    option: (base) => ({
-      ...base,
-      cursor: 'pointer',
-    }),
-    menu: (base) => ({
-      ...base,
-      zIndex: 9999,
-    }),
-    menuPortal: (base) => ({
-      ...base,
-      zIndex: 9999,
-    }),
-  }}
-/>
-    </div>
+          {/* Program */}
+          <div className="flex flex-col mx-2">
+            <label className="block font-medium mb-1">Program</label>
+            <Select
+              isRequired // Note: react-select does not natively support 'required'
+              isDisabled={!selectedDate || loading}
+              onChange={(selectedOption) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  Program_Id: selectedOption ? selectedOption.value : "",
+                }))
+              }
+              value={
+                programOptions.find(
+                  (opt) => opt.value === formData.Program_Id
+                ) || null
+              }
+              options={programOptions}
+              placeholder="Select Program"
+              classNamePrefix="react-select"
+              styles={{
+                control: (base, state) => ({
+                  ...base,
+                  cursor: "pointer",
+                  borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
+                  boxShadow: state.isFocused
+                    ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
+                    : "none",
+                  padding: "1px",
+                  borderRadius: "0.5rem",
+                  minHeight: "2rem",
+                  display: "flex",
+                  alignItems: "center",
+                }),
+                option: (base) => ({
+                  ...base,
+                  cursor: "pointer",
+                }),
+                menu: (base) => ({
+                  ...base,
+                  zIndex: 9999,
+                }),
+                menuPortal: (base) => ({
+                  ...base,
+                  zIndex: 9999,
+                }),
+              }}
+            />
+          </div>
 
-    {/* Trainer */}
-    <div className="flex flex-col mx-2">
-      <label htmlFor="Trainer" className="block font-medium mb-1">
-        Trainer
-      </label>
-      <input
-        type="text"
-        value={
-          formData.Trainer || ""
-        }
-        readOnly
-        className="w-full pl-4 py-2 border border-gray-300 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      /> 
-    </div>
+          {/* Trainer */}
+          <div className="flex flex-col mx-2">
+            <label htmlFor="Trainer" className="block font-medium mb-1">
+              Trainer
+            </label>
+            <input
+              type="text"
+              value={formData.Trainer || ""}
+              readOnly
+              className="w-full pl-4 py-2 border border-gray-300 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
 
-    {/* Training Date */}
-    <div className="flex flex-col mx-2">
-      <label className="block font-medium mb-1">Training Date</label>
-      <input
-        type="text"
-        value={
-          formData.Training_Date || ""
-        }
-        readOnly
-        className="w-full pl-4 py-2 border border-gray-300 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
+          {/* Training Date */}
+          <div className="flex flex-col mx-2">
+            <label className="block font-medium mb-1">Training Date</label>
+            <input
+              type="text"
+              value={formData.Training_Date || ""}
+              readOnly
+              className="w-full pl-4 py-2 border border-gray-300 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
 
-    {/* Upload File - Positioned below Program */}
-    <div className="flex flex-col mx-2 md:col-start-1">
-      <label htmlFor="fileInput" className="block font-medium mb-1">Upload File</label>
-      <input
-        id="fileInput"
-        type="file"
-        accept="*"
-        onChange={(e) => setFile(e.target.files[0])}
-        className="block border rounded-lg p-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
-      />
-    </div>
+          {/* Upload File - Positioned below Program */}
+          <div className="flex flex-col mx-2 md:col-start-1">
+            <label htmlFor="fileInput" className="block font-medium mb-1">
+              Upload File
+            </label>
+            <input
+              id="fileInput"
+              type="file"
+              accept="*"
+              onChange={(e) => setFile(e.target.files[0])}
+              className="block border rounded-lg p-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+            />
+          </div>
 
-
-  {/* Submit Button */}
-  <div className="flex flex-col mx-2 md:col-start-2">
-  <label htmlFor="button" className="block font-medium mb-1 " style={{visibility:"hidden"}}>submit</label>
-  <button
-      type="submit"
-      disabled={!formData.Training_Date || !file || !formData.Program_Id}
-      className={`px-6 w-30 mt-2 py-2 text-sm font-semibold rounded-md shadow-md focus:ring-2  ${
-        formData.Training_Date && file && formData.Program_Id
-          ? "bg-gray-600 text-white hover:bg-gray-800 cursor-pointer"
-          : "bg-gray-300 text-gray-400 cursor-not-allowed"
-      }`}
-    >
-      Submit
-    </button>
-  </div>
-</div>
-</form>
+          {/* Submit Button */}
+          <div className="flex flex-col mx-2 md:col-start-2">
+            <label
+              htmlFor="button"
+              className="block font-medium mb-1 "
+              style={{ visibility: "hidden" }}
+            >
+              submit
+            </label>
+            <button
+              type="submit"
+              disabled={
+                !formData.Training_Date || !file || !formData.Program_Id
+              }
+              className={`px-6 w-30 mt-2 py-2 text-sm font-semibold rounded-md shadow-md focus:ring-2  ${
+                formData.Training_Date && file && formData.Program_Id
+                  ? "bg-gray-600 text-white hover:bg-gray-800 cursor-pointer"
+                  : "bg-gray-300 text-gray-400 cursor-not-allowed"
+              }`}
+            >
+              Submit
+            </button>
+          </div>
+        </div>
+      </form>
 
       {loading ? (
         <div className="text-center py-4">Loading data...</div>
@@ -595,33 +610,33 @@ Loading...
                 >
                   <thead className="bg-muted sticky top-0">
                     <tr>
-{[  
-  { key: "Training_Name", label: "Category" },
-  { key: "Program_Name", label: "Program Name" },
-  { key: "Year_No", label: "Year No" },
-  { key: "Department", label: "Department" },
-  { key: "Trainer", label: "Trainer" },
-  { key: "Training_Date", label: "Training Date" },
-  { key: "", label: "Certificates" },
-].map(({ key, label }, index) => (
-  <th
-    key={key}
-    className={`px-4 py-2 border text-left ${
-      index === 0 ? "sticky left-0 bg-muted z-20" : ""
-    } ${key ? "cursor-pointer" : ""}`}
-    onClick={key ? () => handleSort(key) : undefined}
-  >
-    {label}{" "}
-    {/* {sortConfig.key === key && (sortConfig.direction === "asc" ? "▲" : "▼")} */}
-    {key
-      ? sortConfig.key === key
-        ? sortConfig.direction === "asc"
-          ? "▲"
-          : "▼"
-        : "↕"
-      : ""}
-  </th>
-))}
+                      {[
+                        { key: "Training_Name", label: "Category" },
+                        { key: "Program_Name", label: "Program Name" },
+                        { key: "Year_No", label: "Year No" },
+                        { key: "Department", label: "Department" },
+                        { key: "Trainer", label: "Trainer" },
+                        { key: "Training_Date", label: "Training Date" },
+                        { key: "", label: "Certificates" },
+                      ].map(({ key, label }, index) => (
+                        <th
+                          key={key}
+                          className={`px-4 py-2 border text-left ${
+                            index === 0 ? "sticky left-0 bg-muted z-20" : ""
+                          } ${key ? "cursor-pointer" : ""}`}
+                          onClick={key ? () => handleSort(key) : undefined}
+                        >
+                          {label}{" "}
+                          {/* {sortConfig.key === key && (sortConfig.direction === "asc" ? "▲" : "▼")} */}
+                          {key
+                            ? sortConfig.key === key
+                              ? sortConfig.direction === "asc"
+                                ? "▲"
+                                : "▼"
+                              : "↕"
+                            : ""}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
@@ -640,8 +655,7 @@ Loading...
                           </td>
                           <td className="px-4 py-2 border">{item.Trainer}</td>
                           <td className="px-4 py-2 border">
-                            {item.Training_Date
-                              }
+                            {item.Training_Date}
                           </td>
                           <td className="px-4 py-2 border text-blue-600 underline cursor-pointer">
                             <a
@@ -673,7 +687,9 @@ Loading...
                   <div>
                     Showing{" "}
                     {filteredData.length > 0
-                      ? `${(currentPage - 1) * rowsPerPageNumber + 1} to ${Math.min(
+                      ? `${
+                          (currentPage - 1) * rowsPerPageNumber + 1
+                        } to ${Math.min(
                           currentPage * rowsPerPageNumber,
                           filteredData.length
                         )} of ${filteredData.length} entries`
@@ -697,7 +713,7 @@ Loading...
                     </button>
                     {Array.from({ length: totalPages }, (_, i) => (
                       <button
-                      type="button"
+                        type="button"
                         key={i}
                         className={`px-3 py-1 border rounded ${
                           currentPage === i + 1 ? "bg-black text-white" : ""

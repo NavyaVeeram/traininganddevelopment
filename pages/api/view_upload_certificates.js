@@ -15,12 +15,16 @@ export default async function handler(req, res) {
       const fileList = fs.existsSync(filesDir) ? fs.readdirSync(filesDir) : [];
 const materialsWithFiles = materials.map((item) => {
   const matchedFile = fileList.find((f) => {
-    const fileNameWithoutExt = f.substring(0, f.lastIndexOf(".")); // "984,985,986"
-    const fileIds = fileNameWithoutExt.split(","); // ["984", "985", "986"]
+    const fileNameWithoutExt = f.substring(0, f.lastIndexOf(".")); // e.g. "843,844"
+    const fileIds = fileNameWithoutExt.split(",").map((id) => id.trim());
 
-    const programIds = item.Program_Ids.split(","); // e.g. ["984","985","986"]
+    // Handle both Program_Id (single) and Program_Ids (comma-separated)
+    const programIds = (item.Program_Id || item.Program_Ids || "")
+      .toString()
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean);
 
-    // Check if ANY ProgramId matches the file’s IDs
     return programIds.some((id) => fileIds.includes(id));
   });
 
