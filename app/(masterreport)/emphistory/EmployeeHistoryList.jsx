@@ -449,7 +449,7 @@ const EmployeeHistoryList = () => {
     const key = `${item.Program_Id}_${item.EmployeeId}_${year}`;
     const extension = fileExtensions[key] || "pdf"; // default to pdf if not found
     const filename = `${item.Program_Id}_${item.EmployeeId}_${year}.${extension}`;
-    const url = `/Emp_Certificates/${filename}`;
+    const url = `api/filesemp/${filename}`;
     window.open(url, "_blank");
   };
 

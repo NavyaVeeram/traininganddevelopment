@@ -1,3 +1,52 @@
+// import { PrismaClient } from "@prisma/client";
+// import fs from "fs";
+// import path from "path";
+
+// const prisma = new PrismaClient();
+
+// export default async function handler(req, res) {
+//   if (req.method === "GET") {
+//     try {
+//       const materials = await prisma.$queryRaw`
+//         EXEC [dbo].[View_Upload_Certificates]
+//       `;
+
+//       const filesDir = path.join(process.cwd(), "public/docs");
+//       const fileList = fs.existsSync(filesDir) ? fs.readdirSync(filesDir) : [];
+// const materialsWithFiles = materials.map((item) => {
+//   const matchedFile = fileList.find((f) => {
+//     const fileNameWithoutExt = f.substring(0, f.lastIndexOf(".")); // e.g. "843,844"
+//     const fileIds = fileNameWithoutExt.split(",").map((id) => id.trim());
+
+//     // Handle both Program_Id (single) and Program_Ids (comma-separated)
+//     const programIds = (item.Program_Id || item.Program_Ids || "")
+//       .toString()
+//       .split(",")
+//       .map((id) => id.trim())
+//       .filter(Boolean);
+
+//     return programIds.some((id) => fileIds.includes(id));
+//   });
+
+//   return {
+//     ...item,
+//     fileUrl: matchedFile ? `/docs/${matchedFile}` : null,
+//   };
+// });
+
+// console.log("materialsWithFiles:", materialsWithFiles);
+
+
+//       return res.status(200).json(materialsWithFiles);
+//     } catch (error) {
+//       console.error("Error fetching employee details", error);
+//       return res.status(500).json({ message: "Internal Server Error" });
+//     }
+//   } else {
+//     return res.status(405).json({ message: "Method not allowed" });
+//   }
+// }
+
 import { PrismaClient } from "@prisma/client";
 import fs from "fs";
 import path from "path";
@@ -7,45 +56,43 @@ const prisma = new PrismaClient();
 export default async function handler(req, res) {
   if (req.method === "GET") {
     try {
-      // Call the updated procedure
-      const materials = await prisma.$queryRawUnsafe(`
+      const materials = await prisma.$queryRaw`
         EXEC [dbo].[View_Upload_Materials]
-      `);
+      `;
 
-      // Get the directory path for files
-      const filesDir = path.join(process.cwd(), "public/Files");
+      const filesDir = path.join(process.cwd(), "public/docs1");
       const fileList = fs.existsSync(filesDir) ? fs.readdirSync(filesDir) : [];
+      
+      const materialsWithFiles = materials.map((item) => {
+        const matchedFile = fileList.find((f) => {
+          const fileNameWithoutExt = f.substring(0, f.lastIndexOf(".")); // e.g. "843,844"
+          const fileIds = fileNameWithoutExt.split(",").map((id) => id.trim());
 
-      // Keep output shape the same for frontend
-  
-const materialsWithFiles = materials.map((item) => {
-  const matchedFile = fileList.find((f) => {
-    const fileNameWithoutExt = f.substring(0, f.lastIndexOf(".")); 
-    const fileIds = fileNameWithoutExt.split(",").map((id) => id.trim().toString());
+          // Handle both Program_Id (single) and Program_Ids (comma-separated)
+          const programIds = (item.Program_Id || item.Program_Ids || "")
+            .toString()
+            .split(",")
+            .map((id) => id.trim())
+            .filter(Boolean);
 
-    const programIds = (item.Program_Id || item.Program_Ids || "")
-      .toString()
-      .split(",")
-      .map((id) => id.trim().toString())
-      .filter(Boolean);
+          return programIds.some((id) => fileIds.includes(id));
+        });
 
-    return programIds.some((id) => fileIds.includes(id));
-  });
+        return {
+          ...item,
+          // Use the API route instead of direct static file path
+          fileUrl: matchedFile ? `/api/files1/${matchedFile}` : null,
+        };
+      });
 
-  return {
-    ...item,
-    fileUrl: matchedFile ? `/Files/${matchedFile}` : null,
-  };
-});
+      console.log("materialsWithFiles:", materialsWithFiles);
 
-    console.log("materialsWithFiles:", materialsWithFiles);
       return res.status(200).json(materialsWithFiles);
-  
     } catch (error) {
-      console.error("Error fetching materials", error);
+      console.error("Error fetching employee details", error);
       return res.status(500).json({ message: "Internal Server Error" });
     }
+  } else {
+    return res.status(405).json({ message: "Method not allowed" });
   }
-
-  return res.status(405).json({ message: "Method not allowed" });
 }

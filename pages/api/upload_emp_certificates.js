@@ -2,7 +2,7 @@ import fs from 'fs';
 import multer from 'multer';
 import path from 'path';
 
-const uploadDir = path.join(process.cwd(), 'public/EmpCertificates');
+const uploadDir = path.join(process.cwd(), 'public/docs2');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -55,7 +55,7 @@ export default async function handler(req, res) {
 
     fs.renameSync(oldPath, newPath);
 
-    const filePath = `/EmpCertificates/${newFileName}`;
+    const filePath = `/filesemp/${newFileName}`;
 
     return res.status(200).json({
       message: 'File uploaded successfully',
