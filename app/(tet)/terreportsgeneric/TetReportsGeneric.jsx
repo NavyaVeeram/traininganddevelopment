@@ -359,29 +359,22 @@ const font = await mergedPdf.embedFont(fontBytes);
               height: imageHeight,
             });
 
-            page.drawText(String(emp.No_Hrs +""+ "hrs") || "", {
+            page.drawText(String(emp.No_Hrs ) || "", {
               x: 385,
               y: height - 118,
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
-             page.drawText(String(Evaluation_Date) || "", {
-              x: 385,
-              y: height - 142,
-              size:9,
-              font,
-              color: rgb(0, 0, 0),
-            });   
 
-            page.drawText(String(formattedTrainingDate) || "", {
+            page.drawText(String(emp.Training_Date) || "", {
               x: 385,
               y: height - 142,
               size:9,
               font,
               color: rgb(0, 0, 0),
             });
-            page.drawText(String(formattedEvaluationDate) || "", {
+            page.drawText(String(emp.Evaluation_Date) || "", {
               x: 385,
               y: height - 164,
               size: 9,
@@ -797,7 +790,7 @@ const font = await mergedPdf.embedFont(fontBytes);
         <td className="border px-4 py-2 font-semibold">Section</td>
         <td className="border px-4 py-2">{employeeDetails.Section}</td>
         <td className="border px-4 py-2 font-semibold">Duration</td>
-        <td className="border px-4 py-2">{employeeDetails.No_Hrs} hrs</td>
+        <td className="border px-4 py-2">{employeeDetails.No_Hrs}</td>
       </tr>
       <tr>
         <td className="border px-4 py-2 font-semibold">Department</td>

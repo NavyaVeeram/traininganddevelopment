@@ -199,7 +199,7 @@ async function generatePdfForEmployees(programId) {
       mergedPdf.registerFontkit(fontkit);
 
       // const font = await mergedPdf.embedFont(StandardFonts.HelveticaBold);
-const fontBytes = await fetch("/fonts/CALIBRIB.TTF").then(res => res.arrayBuffer());
+const fontBytes = await fetch("/fonts/cambriab.ttf").then(res => res.arrayBuffer());
 
 // Embed it in the PDF
 const font = await mergedPdf.embedFont(fontBytes);
@@ -244,7 +244,7 @@ const font = await mergedPdf.embedFont(fontBytes);
             //   color: rgb(0, 0, 0),
             // });
              // Split  into two lines for drawing
-                              const Username = emp.Username || "";
+                              const Username = emp.UserName || "";
                               const words = Username.split(" ").filter(Boolean);
                               if (words.length > 4) {
                                 // Draw all words in one line lower
@@ -359,29 +359,22 @@ const font = await mergedPdf.embedFont(fontBytes);
               height: imageHeight,
             });
 
-            page.drawText(String(emp.No_Hrs +""+ "hrs") || "", {
+            page.drawText(String(emp.No_Hrs) || "", {
               x: 385,
               y: height - 118,
               size: 9,
               font,
               color: rgb(0, 0, 0),
             });
-             page.drawText(String(Evaluation_Date) || "", {
-              x: 385,
-              y: height - 142,
-              size:9,
-              font,
-              color: rgb(0, 0, 0),
-            });   
 
-            page.drawText(String(formattedTrainingDate) || "", {
+            page.drawText(String(emp.Training_Date) || "", {
               x: 385,
               y: height - 142,
               size:9,
               font,
               color: rgb(0, 0, 0),
             });
-            page.drawText(String(formattedEvaluationDate) || "", {
+            page.drawText(String(emp.Evaluation_Date) || "", {
               x: 385,
               y: height - 164,
               size: 9,
@@ -819,7 +812,7 @@ const formattedOptions = data.map((item) => ({
         <td className="border px-4 py-2 font-semibold">Section</td>
         <td className="border px-4 py-2">{employeeDetails.Section}</td>
         <td className="border px-4 py-2 font-semibold">Duration</td>
-        <td className="border px-4 py-2">{employeeDetails.No_Hrs} hrs</td>
+        <td className="border px-4 py-2">{employeeDetails.No_Hrs}</td>
       </tr>
       <tr>
         <td className="border px-4 py-2 font-semibold">Department</td>
