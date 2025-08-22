@@ -350,6 +350,7 @@ const handleDownloadPDF = () => {
         </div>
 
         {/* Right: Download Button */}
+       { selectedDate && filteredData.length > 0  && (
         <div>
           <button
             onClick={handleDownloadPDF}
@@ -360,6 +361,7 @@ const handleDownloadPDF = () => {
             <FaPrint />
           </button>
         </div>
+       )}
       </div>
 
       {/* Display loading and error messages */}

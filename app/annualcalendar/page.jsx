@@ -318,7 +318,7 @@ const AnnualTraining = () => {
             </select>
           </div>
         </div>
-
+        { trainingData.length > 0 &&(
         <div>
           <button
             onClick={(e) => {
@@ -333,6 +333,7 @@ const AnnualTraining = () => {
             <span className="ml-1">Print</span>
           </button>
         </div>
+)}
       </div>
       {loading && <p>Loading training calendar...</p>}
       {error && <p className="text-red-600">Error: {error}</p>}
