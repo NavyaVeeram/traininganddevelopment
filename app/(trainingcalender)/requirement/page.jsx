@@ -295,8 +295,6 @@ export default function Requirement() {
            setIsAuthorized(true);
           if (data.Access_Role === "HR_Hod") {
             setIsAuthorized(false);
-            // Optionally redirect to unauthorized page
-            // window.location.href = '/unauthorized';
             return;
           }
           setAccessRole(data.Access_Role);

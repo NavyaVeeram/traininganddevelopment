@@ -21,8 +21,6 @@ const page = () => {
            // Restrict access for HR_Res and HR_HOD roles
            if (data.Access_Role === "HOS" || data.Access_Role === "HOD" || data.Access_Role === "Res_Person" ) {
              setIsAuthorized(false);
-             // Optionally redirect to unauthorized page
-             // window.location.href = '/unauthorized';
              return;
            }
            setAccessRole(data.Access_Role);

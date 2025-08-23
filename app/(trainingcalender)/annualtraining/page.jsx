@@ -60,8 +60,6 @@ const AnnualTraining = () => {
             data.Access_Role === "HOD"
           ) {
             setIsAuthorized(true);
-            // Optionally redirect to unauthorized page
-            // window.location.href = '/unauthorized';
             return;
           }
           if (

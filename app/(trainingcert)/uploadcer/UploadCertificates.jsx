@@ -98,8 +98,6 @@ export default function UploadCertificates() {
             data.Access_Role === "Res_Person"
           ) {
             setIsAuthorized(false);
-            // Optionally redirect to unauthorized page
-            // window.location.href = '/unauthorized';
             return;
           }
           setAccessRole(data.Access_Role);
@@ -598,8 +596,9 @@ export default function UploadCertificates() {
                   <FaSearch className="absolute left-2 top-2 text-gray-400" />
                 </div>
               </div>
-
+                
               <div className="overflow-x-auto">
+                
                 <table
                   className="min-w-full border rounded-lg bg-card text-foreground text-sm"
                   style={{

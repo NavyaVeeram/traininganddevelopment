@@ -72,8 +72,6 @@ const Upload = () => {
             data.Access_Role === "HOD"
           ) {
             setIsAuthorized(false);
-            // Optionally redirect to unauthorized page
-            // window.location.href = '/unauthorized';
             return;
           }
           setAccessRole(data.Access_Role);
