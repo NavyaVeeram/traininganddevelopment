@@ -255,6 +255,7 @@ const RatingDistributionPage = () => {
           <label className="block mb-1 font-semibold">Select Training:</label>
           <Select
             value={selectedTrainingName}
+            isDisabled = {!selectedMonthYear}
             onChange={(newValue) => {
               setSelectedTrainingName(newValue);
               setSelectedProgramName(null);
@@ -289,6 +290,7 @@ const RatingDistributionPage = () => {
             onChange={setSelectedProgramName}
             options={programNames.map(program => ({ value: program.id, label: program.name }))}
             isSearchable={true}
+            isDisabled = {!selectedMonthYear || !selectedTrainingName }
             className="w-[400px]"
             classNamePrefix="react-select"
             styles={{
@@ -444,7 +446,7 @@ const RatingDistributionPage = () => {
           </div>
         </div>
       ) : (
-        (!selectedMonthYear && !selectedTrainingName && !selectedProgramName) && (
+        (!selectedMonthYear && !selectedTrainingName && !selectedProgramName) && data.length > 0 &&(
           <div className="text-center text-gray-500 mt-6 font-semibold">No records found</div>
         )
       )}

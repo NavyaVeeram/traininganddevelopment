@@ -381,19 +381,7 @@ export default function UploadCertificates() {
     value: option.Value,
     label: option.Text,
   }));
-  if (isAuthorized === null) {
-    return (
-      <div>
-        Loading...
-        {/* // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
-      //   <div className="bg-white p-10 rounded shadow text-center">
-      //     <h2 className="text-2xl font-bold">Loading...</h2>
-      //   </div>
-      // </div> */}
-      </div>
-    );
-  }
-
+  
   if (isAuthorized === false) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
@@ -404,18 +392,6 @@ export default function UploadCertificates() {
       </div>
     );
   }
-  // useEffect(() => {
-  //   fetch(`/api/get_file_by_program_id?id=${formData.Program_Id}`)
-  //     .then(res => res.json())
-  //     .then(data => {
-  //       if (data.file) {
-  //         setFileUrl(data.file);
-  //       }
-  //     })
-  //     .catch(err => {
-  //       console.error("Failed to fetch file", err);
-  //     });
-  // }, [formData.Program_Id]);
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
@@ -558,8 +534,11 @@ export default function UploadCertificates() {
         <div className="text-center py-4 text-red-500">{error}</div>
       ) : (
         <div className="card-body p-0 overflow-x-auto pb-3">
-          <div className="card-body p-0 overflow-x-auto pb-3">
+         
+{paginatedData && paginatedData.length > 0 ? (  
+       <div className="card-body p-0 overflow-x-auto pb-3">
             <div className="p-4 bg-card">
+        
               <div className="flex flex-wrap justify-between items-center mb-4 space-y-2">
                 <div className="flex items-center space-x-2 text-sm">
                   <span>Show</span>
@@ -595,10 +574,9 @@ export default function UploadCertificates() {
                   />
                   <FaSearch className="absolute left-2 top-2 text-gray-400" />
                 </div>
-              </div>
-                
+              </div>     
               <div className="overflow-x-auto">
-                
+          
                 <table
                   className="min-w-full border rounded-lg bg-card text-foreground text-sm"
                   style={{
@@ -639,8 +617,8 @@ export default function UploadCertificates() {
                     </tr>
                   </thead>
                   <tbody>
-                    {paginatedData && paginatedData.length > 0 ? (
-                      paginatedData.map((item, index) => (
+                   
+                      {paginatedData.map((item, index) => (
                         <tr key={index} className="hover:bg-muted border">
                           <td className="px-4 py-2 border ">
                             {item.Training_Name}
@@ -668,21 +646,11 @@ export default function UploadCertificates() {
                             </a>
                           </td>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="7" className="text-center py-4">
-                          No results found.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Pagination UI */}
-              {
-                <div className="flex flex-wrap justify-between items-center mt-4 text-sm">
+                      ))}
+                        </tbody>
+                        </table>
+                      </div>
+ <div className="flex flex-wrap justify-between items-center mt-4 text-sm">
                   <div>
                     Showing{" "}
                     {filteredData.length > 0
@@ -740,10 +708,16 @@ export default function UploadCertificates() {
                     </button>
                   </div>
                 </div>
-              }
+                      </div>
+                      </div>
+              
+                    ) : (
+                      <div className="text-center py-4 text-gray-500">No Files Uploaded Yet.</div>
+                    )}
+
+        
             </div>
-          </div>
-        </div>
+        
       )}
     </div>
   );
