@@ -944,21 +944,16 @@ if (emp.External_Trainer && typeof emp.External_Trainer === "string") {
             color: rgb(0, 0, 0),
           });
 
-    const noHrsText =
-  emp.No_Hrs > 1
-    ? `${emp.No_Hrs} hrs`
-    : emp.No_Hrs == 1
-    ? "1 hr"
-    : "";
 
-page.drawText(noHrsText, {
-  x: 375,
-  y: height - 173,
-  size: 10,
-  font,
-  color: rgb(0, 0, 0),
-});
 
+    page.drawText(String(emp.No_Hrs) || "", {
+            x: 375,
+            y: height - 173,
+            size: 10,
+            font,
+            color: rgb(0, 0, 0),
+          });
+      
 
           page.drawText(String(emp.Training_Date) || "", {
             x: 375,
@@ -1055,7 +1050,7 @@ const programOptions = options.map((option) => ({
         <div className="grid grid-cols-1 md:grid-cols-8 gap-4 mt-3 w-full">
           {/* Year Selection */} 
           <div className="md:col-span-1">
-            <label className="block font-medium w-full">Select Year:</label>
+            <label className="block font-medium w-full">Year:</label>
             <DatePicker
             
               selected={selectedDate}
@@ -1116,7 +1111,7 @@ const programOptions = options.map((option) => ({
               </div>
           {/* Program Selection */}
           <div className="md:col-span-3">
-            <label className="block font-medium">Select Program:</label>
+            <label className="block font-medium">Program:</label>
             <div className="relative">
               <Select
                  isRequired
@@ -1814,64 +1809,69 @@ const programOptions = options.map((option) => ({
 
                 {/* Pagination UI */}
                 {
-                  <div className="flex flex-wrap justify-between items-center mt-4 text-sm">
-                    <div>
-                      Showing{" "}
-                      {filteredData.length > 0
-                        ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
-                            currentPage * rowsPerPage,
-                            filteredData.length
-                          )} of ${filteredData.length} entries`
-                        : "0 entries"}
-                    </div>
+                <div className="flex flex-wrap justify-between items-center mt-4 text-sm">
+  <div>
+    Showing{" "}
+    {filteredData.length > 0 ? (
+      rowsPerPage === "All" ? (
+        `1 to ${filteredData.length} of ${filteredData.length} entries`
+      ) : (
+        `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
+          currentPage * rowsPerPage,
+          filteredData.length
+        )} of ${filteredData.length} entries`
+      )
+    ) : (
+      "0 entries"
+    )}
+  </div>
 
-                    <div className="flex space-x-1">
-                      <button
-                        className="px-3 py-1 border rounded"
-                        onClick={() => setCurrentPage(1)}
-                        disabled={currentPage === 1}
-                      >
-                        {"<<"}
-                      </button>
-                      <button
-                        className="px-3 py-1 border rounded"
-                        onClick={() =>
-                          setCurrentPage((p) => Math.max(p - 1, 1))
-                        }
-                        disabled={currentPage === 1}
-                      >
-                        {"<"}
-                      </button>
-                      {Array.from({ length: totalPages }, (_, i) => (
-                        <button
-                        type="button"
-                          key={i}
-                          className={`px-3 py-1 border rounded ${
-                            currentPage === i + 1 ? "bg-black text-white" : ""
-                          }`}
-                          onClick={() => setCurrentPage(i + 1)}
-                        >
-                          {i + 1}
-                        </button>
-                      ))}
-                      <button
-                        className="px-3 py-1 border rounded"
-                        onClick={() =>
-                          setCurrentPage((p) => Math.min(p + 1, totalPages))
-                        }
-                        disabled={currentPage === totalPages}
-                      >
-                        {">"}
-                      </button>
-                      <button
-                        className="px-3 py-1 border rounded"
-                        onClick={() => setCurrentPage(totalPages)}
-                        disabled={currentPage === totalPages}
-                      >
-                        {">>"}
-                      </button>
-                    </div>
-                  </div>
+  {rowsPerPage !== "All" && (
+    <div className="flex space-x-1">
+      <button
+        className="px-3 py-1 border rounded"
+        onClick={() => setCurrentPage(1)}
+        disabled={currentPage === 1}
+      >
+        {"<<"}
+      </button>
+      <button
+        className="px-3 py-1 border rounded"
+        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+        disabled={currentPage === 1}
+      >
+        {"<"}
+      </button>
+      {Array.from({ length: totalPages }, (_, i) => (
+        <button
+          type="button"
+          key={i}
+          className={`px-3 py-1 border rounded ${
+            currentPage === i + 1 ? "bg-black text-white" : ""
+          }`}
+          onClick={() => setCurrentPage(i + 1)}
+        >
+          {i + 1}
+        </button>
+      ))}
+      <button
+        className="px-3 py-1 border rounded"
+        onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+        disabled={currentPage === totalPages}
+      >
+        {">"}
+      </button>
+      <button
+        className="px-3 py-1 border rounded"
+        onClick={() => setCurrentPage(totalPages)}
+        disabled={currentPage === totalPages}
+      >
+        {">>"}
+      </button>
+    </div>
+  )}
+</div>
+
                 }
               </div>
             </div>

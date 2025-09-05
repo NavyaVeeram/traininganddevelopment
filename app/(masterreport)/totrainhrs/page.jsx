@@ -169,7 +169,7 @@ const HeadCount = () => {
 
   const fetchData = async (date) => {
     if (!date) {
-      alert("Please select a year.");
+      alert("Please a year.");
       return;
     }
     setLoading(true);
@@ -208,7 +208,7 @@ const HeadCount = () => {
 
   const fetchdesignationwiseData = async (date) => {
     if (!date) {
-      alert("Please select a year");
+      alert("Please a year");
       return;
     }
     setdesignationwiseLoading(true);
@@ -245,7 +245,7 @@ const HeadCount = () => {
   };
   const fetchprogramwiseData = async (date) => {
     if (!date) {
-      alert("Please select a year");
+      alert("Please a year");
       return;
     }
     setprogramwiseLoading(true);
@@ -284,7 +284,7 @@ const HeadCount = () => {
   const fetchdepartmentwiseData = async (date) => {
     console.log("fetchdepartmentwiseData called with date:", date);
     if (!date) {
-      alert("Please select a year");
+      alert("Please a year");
       return;
     }
     setLoading(true);
@@ -677,7 +677,7 @@ const HeadCount = () => {
               onChange={(date) => setSelectedDate(date)}
               dateFormat="yyyy"
               showYearPicker
-              placeholderText="Select Year"
+              placeholderText="Year"
               className="p-2 border border-gray-300 rounded-lg min-w-[120px]"
            
               popperPlacement="top-start"

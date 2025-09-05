@@ -233,21 +233,21 @@ const TETForms = () => {
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
-        <h1 className="font-semibold">TEE Forms</h1>
+        <h1 className="font-semibold">Training Effectiveness Evaluation Forms</h1>
       </div>
       <BackButton />
       <div className="mb-4 mt-2 flex justify-between items-center space-x-4">
         <div className="flex">
           <div>
             <label htmlFor="year-select" className="mr-2 font-semibold">
-              Select Year:
+              Year:
             </label>
             <DatePicker
               selected={selectedDate}
               onChange={(date) => setSelectedDate(date)}
               dateFormat="yyyy"
               showYearPicker
-              placeholderText="Select Year"
+              placeholderText="Year"
               className="p-2 border border-gray-300 rounded-lg"
               calendarClassName="z-50"
               popperPlacement="top-start"
@@ -261,7 +261,7 @@ const TETForms = () => {
           </div>
           <div className="mx-2 flex items-center" style={{ minWidth: "250px" }}>
             <label htmlFor="training-select" className="mr-2 font-semibold ">
-              Select Training:
+              Category:
             </label>
             <div className="relative" style={{ minWidth: "250px" }}>
               <Select
@@ -359,10 +359,10 @@ const TETForms = () => {
                   <thead className="bg-muted sticky top-0">
                     <tr>
                       {[
-                        { key: "Year_No", label: "Year" },
+                        // { key: "Year_No", label: "Year" },
                         { key: "Department", label: "Department" },
+                         { key: "Training_Name", label: "Category" },
                         { key: "Program_Name", label: "Program Name" },
-                        { key: "Training_Name", label: "Category" },
                         { key: "Training_Date", label: "Training Date" },
                         { key: "Evaluation_Date", label: "Evaluation Date" },
                         { key: "actions", label: "Report" },
@@ -394,15 +394,14 @@ const TETForms = () => {
                           key={`${item.Program_Id}-${index}`}
                           className="hover:bg-gray-100 border"
                         >
-                          <td className="px-4 py-2 border">{item.Year_No}</td>
                           <td className="px-4 py-2 border">
                             {item.Department}
                           </td>
                           <td className="px-4 py-2 border">
-                            {item.Program_Name}
+                            {item.Training_Name}
                           </td>
                           <td className="px-4 py-2 border">
-                            {item.Training_Name}
+                            {item.Program_Name}
                           </td>
                           <td className="px-4 py-2 border">
                             {item.Training_Date}
@@ -453,69 +452,67 @@ const TETForms = () => {
                     )}
                   </tbody>
                 </table>
-                <div className="flex flex-wrap justify-between items-center mt-4 space-y-2">
-                  <div style={{ fontSize: "14px" }}>
-                    Showing{" "}
-                    {filteredData.length > 0
-                      ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
-                          currentPage * rowsPerPage,
-                          filteredData.length
-                        )} of ${filteredData.length} entries`
-                      : "0 entries"}
-                  </div>
-                  <div className="flex space-x-2" style={{ fontSize: "14px" }}>
-                    <button
-                      type="button"
-                      className="px-3 py-1 border cursor-pointer rounded"
-                      onClick={() => setCurrentPage(1)}
-                      disabled={currentPage === 1}
-                    >
-                      {"<<"}
-                    </button>
-                    <button
-                      type="button"
-                      className="px-3 py-1 border cursor-pointer  rounded"
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.max(prev - 1, 1))
-                      }
-                      disabled={currentPage === 1}
-                    >
-                      {"<"}
-                    </button>
-                    {Array.from({ length: totalPages }, (_, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        className={`px-3 py-1 border cursor-pointer  rounded ${
-                          currentPage === i + 1
-                            ? "bg-black text-primary-foreground"
-                            : ""
-                        }`}
-                        onClick={() => setCurrentPage(i + 1)}
-                      >
-                        {i + 1}
-                      </button>
-                    ))}
-                    <button
-                      type="button"
-                      className="px-3 py-1 border cursor-pointer  rounded"
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                      }
-                      disabled={currentPage === totalPages}
-                    >
-                      {">"}
-                    </button>
-                    <button
-                      type="button"
-                      className="px-3 py-1 border cursor-pointer  rounded"
-                      onClick={() => setCurrentPage(totalPages)}
-                      disabled={currentPage === totalPages}
-                    >
-                      {">>"}
-                    </button>
-                  </div>
-                </div>
+          
+<div className="flex flex-wrap justify-between items-center mt-4 text-sm">
+  <div>
+    {rowsPerPage === "All" ? (
+      `Showing all ${filteredData.length} of ${filteredData.length} entries`
+    ) : (
+      `Showing ${filteredData.length > 0
+        ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
+            currentPage * rowsPerPage,
+            filteredData.length
+          )} of ${filteredData.length} entries`
+        : "0 entries"
+      }`
+    )}
+  </div>
+
+  {/* Right: Pagination buttons (hidden if "All" is selected) */}
+  {rowsPerPage !== "All" && (
+    <div className="flex space-x-1">
+      <button
+        className="px-3 py-1 border rounded"
+        onClick={() => setCurrentPage(1)}
+        disabled={currentPage === 1}
+      >
+        {"<<"}
+      </button>
+      <button
+        className="px-3 py-1 border rounded"
+        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+        disabled={currentPage === 1}
+      >
+        {"<"}
+      </button>
+      {Array.from({ length: totalPages }, (_, i) => (
+        <button
+          key={i}
+          className={`px-3 py-1 border rounded ${
+            currentPage === i + 1 ? "bg-black text-white" : ""
+          }`}
+          onClick={() => setCurrentPage(i + 1)}
+        >
+          {i + 1}
+        </button>
+      ))}
+      <button
+        className="px-3 py-1 border rounded"
+        onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+        disabled={currentPage === totalPages}
+      >
+        {">"}
+      </button>
+      <button
+        className="px-3 py-1 border rounded"
+        onClick={() => setCurrentPage(totalPages)}
+        disabled={currentPage === totalPages}
+      >
+        {">>"}
+      </button>
+    </div>
+  )}
+</div>
               </div>
             </div>
           </div>

@@ -1,4 +1,4 @@
-// pages/api/get_training_attendance_dropdown_test.js
+
 
 import { PrismaClient } from '@prisma/client';
 

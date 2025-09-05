@@ -13,7 +13,7 @@ export default function BackButton() {
   return (
     <button
       onClick={handleBack}
-      className="fixed cursor-pointer left-0 top-1/2 -translate-y-1/2 z-50 bg-gradient-to-r from-sky-300 via-sky-400 to-sky-600 text-white p-2 pr-2 pl-1 rounded-r-full shadow-xl hover:opacity-90 transition-all flex items-center space-x-1"
+      className="fixed cursor-pointer left-0 bottom-3 -translate-y-1/2 z-50 bg-gradient-to-r from-sky-300 via-sky-400 to-sky-600 text-white p-2 pr-2 pl-1 rounded-r-full shadow-xl hover:opacity-90 transition-all flex items-center space-x-1"
       aria-label="Go back"
       title="Go back"
     >

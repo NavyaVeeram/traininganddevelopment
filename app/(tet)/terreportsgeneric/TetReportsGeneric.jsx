@@ -705,7 +705,7 @@ const font = await mergedPdf.embedFont(fontBytes);
       </div>
         <div className="my-4 relative z-0">
           <div className="flex items-center space-x-2">
-            <label className="text-sm  font-medium">Select EmpId</label>
+            <label className="text-sm  font-medium"> EmpId</label>
   <Select
   options={options}
   onChange={(selectedOption) => {
@@ -904,7 +904,7 @@ const font = await mergedPdf.embedFont(fontBytes);
             className="w-full border p-2"
             rows="4"
             placeholder="Enter remarks..."
-            value={formData.Remarks ?? ''}
+            value={employeeDetails.Remarks ?? ''}
             onChange={handleInputChange}
           ></textarea>
         </div>
@@ -912,21 +912,16 @@ const font = await mergedPdf.embedFont(fontBytes);
      {/* Footer */}
    <div className="flex justify-between text-xs text-gray-600 mt-9">
               <div>
-                <div>T & D - HR</div>
-                <div>Greentech Industries (India) Pvt. Ltd.</div>
-             
+                 <div className="text-xs text-gray-600"> HR-040-4</div>
+
               </div>
          <div>
                  <div>{employeeDetails.Res_Person}</div>
-              <div>Authorized Person from concerned Dept</div>
+              <div>Evaluated By concerned Dept</div>
               </div>
              </div>
              <div className="flex justify-end text-xs text-gray-600 mb-2 gap-90">
-                 <div>Greentech Industries (India) Pvt. Ltd.</div>
-                 <div className="text-xs text-gray-600"> HR-040-4</div>
-             </div>
-          
-   
+                          </div>
     </form>
     </div>
       )}

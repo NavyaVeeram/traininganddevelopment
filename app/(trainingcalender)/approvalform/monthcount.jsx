@@ -116,7 +116,7 @@ export default function MonthCount() {
     <div className="max-w-full mx-auto p-8">
       <div className="mb-6">
         <label htmlFor="year-select" className="mr-2 font-semibold">
-          Select Year:
+        Year:
         </label>
         <DatePicker
           selected={selectedDate}

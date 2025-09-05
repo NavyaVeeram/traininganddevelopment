@@ -229,7 +229,7 @@ export default function TrainingDataTable() {
       <div className="flex items-center">
         <div className="flex mt-3 mx-2 items-center">
           <label htmlFor="year-select" className="mr-2 font-semibold">
-            Select Year:
+          Year:
           </label>
           <DatePicker
             selected={selectedDate}
@@ -253,7 +253,7 @@ export default function TrainingDataTable() {
 
         <div className="flex mt-3 items-center">
           <label htmlFor="training-select" className="mr-2 font-semibold">
-            Select Training:
+           Category:
           </label>
           <Select
             inputId="training-select"
@@ -550,7 +550,7 @@ export default function TrainingDataTable() {
 <BackButton/>
       {/* Pagination controls */}
       {filteredData.length > 0 && (
-        <div className="flex justify-between items-center mt-4 text-sm">
+        <div className="flex justify-between items-center mt-4 mb-6 text-sm">
           <span>
             Showing{" "}
             {filteredData.length > 0

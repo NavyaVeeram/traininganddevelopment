@@ -387,63 +387,75 @@ export default function TrainingDataTable() {
              </tbody>
    
            </table>
-     <div className="flex flex-wrap justify-between items-center mt-4 space-y-2">
-        <div style={{ fontSize: "14px" }}>
-          Showing{" "}
-          {paginatedData.length > 0
-            ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
-                currentPage * rowsPerPage,
-                paginatedData.length
-              )} of ${paginatedData.length} entries`
-            : "0 entries"}
-        </div>
-        <div className="flex space-x-2" style={{ fontSize: "14px" }}>
-          <button
-            type="button"
-            className="px-3 py-1 border cursor-pointer rounded"
-            onClick={() => setCurrentPage(1)}
-            disabled={currentPage === 1}
-          >
-            {"<<"}
-          </button>
-          <button
-            type="button"
-            className="px-3 py-1 border cursor-pointer  rounded"
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-          >
-            {"<"}
-          </button>
-          {Array.from({ length: totalPages }, (_, i) => (
-            <button
-              key={i}
-              type="button"
-              className={`px-3 py-1 border cursor-pointer  rounded ${
-                currentPage === i + 1 ? "bg-black text-primary-foreground" : ""
-              }`}
-              onClick={() => setCurrentPage(i + 1)}
-            >
-              {i + 1}
-            </button>
-          ))}
-          <button
-            type="button"
-            className="px-3 py-1 border cursor-pointer  rounded"
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-          >
-            {">"}
-          </button>
-          <button
-            type="button"
-            className="px-3 py-1 border cursor-pointer  rounded"
-            onClick={() => setCurrentPage(totalPages)}
-            disabled={currentPage === totalPages}
-          >
-            {">>"}
-          </button>
-        </div>
-      </div>
+ <div className="flex flex-wrap justify-between items-center mt-4 space-y-2">
+  {/* Showing entries */}
+  <div style={{ fontSize: "14px" }}>
+    Showing{" "}
+    {paginatedData.length > 0 ? (
+      rowsPerPage === "All" ? (
+        `1 to ${paginatedData.length} of ${paginatedData.length} entries`
+      ) : (
+        `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
+          currentPage * rowsPerPage,
+          paginatedData.length
+        )} of ${paginatedData.length} entries`
+      )
+    ) : (
+      "0 entries"
+    )}
+  </div>
+
+  {/* Pagination (hidden if "All") */}
+  {rowsPerPage !== "All" && (
+    <div className="flex space-x-2" style={{ fontSize: "14px" }}>
+      <button
+        type="button"
+        className="px-3 py-1 border cursor-pointer rounded"
+        onClick={() => setCurrentPage(1)}
+        disabled={currentPage === 1}
+      >
+        {"<<"}
+      </button>
+      <button
+        type="button"
+        className="px-3 py-1 border cursor-pointer rounded"
+        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+        disabled={currentPage === 1}
+      >
+        {"<"}
+      </button>
+      {Array.from({ length: totalPages }, (_, i) => (
+        <button
+          key={i}
+          type="button"
+          className={`px-3 py-1 border cursor-pointer rounded ${
+            currentPage === i + 1 ? "bg-black text-primary-foreground" : ""
+          }`}
+          onClick={() => setCurrentPage(i + 1)}
+        >
+          {i + 1}
+        </button>
+      ))}
+      <button
+        type="button"
+        className="px-3 py-1 border cursor-pointer rounded"
+        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+        disabled={currentPage === totalPages}
+      >
+        {">"}
+      </button>
+      <button
+        type="button"
+        className="px-3 py-1 border cursor-pointer rounded"
+        onClick={() => setCurrentPage(totalPages)}
+        disabled={currentPage === totalPages}
+      >
+        {">>"}
+      </button>
+    </div>
+  )}
+</div>
+
             {/* Approval Button */}
                 {selectedProgramIds.length > 0 && (
                   <div className="flex justify-end mt-6 gap-x-2">

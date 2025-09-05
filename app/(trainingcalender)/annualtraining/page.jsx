@@ -483,7 +483,7 @@ const AnnualTraining = () => {
         <div className="flex">
           <div>
             <label htmlFor="year-select" className="mr-2 font-semibold">
-              Select Year:
+             Year:
             </label>
             <DatePicker
               selected={selectedDate}
@@ -504,7 +504,7 @@ const AnnualTraining = () => {
           </div>
           <div className="mx-2 flex items-center" style={{ minWidth: "250px" }}>
             <label htmlFor="training-select" className="mr-2 font-semibold ">
-              Select Training:
+              Category:
             </label>
             <Select
               inputId="training-select"

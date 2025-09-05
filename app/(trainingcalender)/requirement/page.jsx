@@ -327,26 +327,41 @@ const isYearEnabled = (date) => {
   return [currentYear, currentYear + 1].includes(year);
 };
 const handleDelete = async (programId) => {
+  console.log('Delete clicked for Program_Id:', programId); // Debug log
+  
+  if (!confirm('Are you sure you want to delete this record?')) {
+    return;
+  }
+
   try {
-    const res = await fetch(`/api/delete_training_data_requirement?Program_Id=${programId}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    console.log('Making DELETE request to:', `/api/delete_training_data_requirement?Program_Id=${programId}`);
+    
+const res = await fetch(`/api/delete_training_data_requirement?Program_Id=${programId}`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
-    if (!res.ok) {
-      throw new Error(`Failed to delete data: ${res.statusText}`);
-    }
+console.log('Response status:', res.status);
+console.log('Response headers:', res.headers);
 
-    // Update the trainingData state, not formData
+if (!res.ok) {
+  const errorText = await res.text();
+  console.log('Error response:', errorText);
+  throw new Error(`HTTP ${res.status}: ${errorText}`);
+}
+
+const responseData = await res.json();
+    // Update the trainingData state
     setTrainingData((prevData) =>
       prevData.filter((item) => item.Program_Id !== programId)
     );
 
     alert('Data deleted successfully');
   } catch (err) {
-    console.error('Error deleting data:', err.message);
+    console.error('Delete error:', err);
+    alert(`Failed to delete: ${err.message}`);
     setError(err.message);
   }
 };
@@ -1042,13 +1057,29 @@ Category
                   <td className="px-4 py-2 border">{training.No_Times}</td>
                   <td className="px-4 py-2 border">{training.Req_Months}</td>
                   <td className="px-4 py-2 border">{training.Evaluation_Period}</td>
-                  <td className="px-4 py-2 border">
-                    <div className="flex justify-center">
-                      <button type="button" onClick={() => handleDelete(training.Program_Id)}>
-                        <FaTrash style={{ color: "red", cursor: "pointer", fontSize: "15px" }} />
-                      </button>
-                    </div>
-                  </td>
+
+<td className="px-4 py-2 border">
+  <div className="flex justify-center">
+    <button 
+      type="button" 
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Delete button clicked for:', training.Program_Id);
+        handleDelete(training.Program_Id);
+      }}
+      onMouseDown={(e) => e.preventDefault()}
+      style={{ 
+        background: 'none', 
+        border: 'none', 
+        padding: '4px',
+        cursor: 'pointer'
+      }}
+    >
+      <FaTrash style={{ color: "red", cursor: "pointer", fontSize: "15px" }} />
+    </button>
+  </div>
+</td>
                 </tr>
               ))
             ) : (

@@ -213,7 +213,7 @@ const TETForms = () => {
       <div className="mt-3 flex relative">
         <div className="flex items-center">
           <label htmlFor="year-select" className="mr-2 font-semibold">
-            Select Year:
+            Year:
           </label>
           <DatePicker
             selected={selectedDate}
@@ -237,7 +237,7 @@ const TETForms = () => {
             htmlFor="Training_Name"
             className=" mr-2 font-semibold whitespace-nowrap"
           >
-            Select Training:
+            Category:
           </label>
           <div className="relative w-full">
             <Select
@@ -330,10 +330,10 @@ const TETForms = () => {
                   <thead className="bg-muted sticky top-0">
                     <tr>
                       {[
-                        { key: "Year_No", label: "Year" },
+                     
                         { key: "Department", label: "Department" },
-                        { key: "Program_Name", label: "Program Name" },
                         { key: "Training_Name", label:"Category" },
+                           { key: "Program_Name", label: "Program Name" },
                         { key: "Training_Date", label: "Training Date" },
                         { key: "Evaluation_Date", label: "Evaluation Date" },
                         // { key: "IsActive", label: "Status" },
@@ -362,16 +362,15 @@ const TETForms = () => {
                     {filteredData.length > 0 ? (
                       paginatedData.map((item, index) => (
                         <tr key={index} className="hover:bg-gray-100 border">
-                          <td className="px-4 py-2 border">{item.Year_No}</td>
                           <td className="px-4 py-2 border">
                             {item.Department}
                           </td>
-                          <td className="px-4 py-2 border">
-                            {item.Program_Name}
-                          </td>
-                          <td className="px-4 py-2 border">
+                           <td className="px-4 py-2 border">
                             {item.Training_Name}
                           </td>
+                          <td className="px-4 py-2 border">
+                            {item.Program_Name}
+                          </td> 
                           <td className="px-4 py-2 border">
                             {item.Training_Date}
                           </td>

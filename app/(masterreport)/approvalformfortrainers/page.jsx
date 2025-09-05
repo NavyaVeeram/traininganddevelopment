@@ -492,7 +492,7 @@ export default function TrainerApprovalForm() {
             </tbody>
           </table>
 
-          {rowsPerPage !== "All"  && (
+
             <div className="flex justify-between items-center mt-4 text-sm">
               <div>
                 Showing{" "}
@@ -547,7 +547,7 @@ export default function TrainerApprovalForm() {
                 </button>
               </div>
             </div>
-          )}
+        
 {selectedQualIds.length > 0 && (
   <div className="flex justify-end mt-6 gap-x-2">
     <EmailApprovalTrainers

@@ -1,9 +1,7 @@
-
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -17,10 +15,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {  usePathname } from "next/navigation";
+
 const training = [
   { title: "Annual Training Calender - IATF/HSE", href: "/annualtraining" },
-  { title: "Requirement - IATF/HSE", href: "requirement" },
+  { title: "Requirement - IATF/HSE", href: "/requirement" },
   { title: "Approval Form", href: "/approvalform" },
   { title: "Approval Form ", href: "/approvalformforhrhod" },
   { title: "Approved Data", href: "/approveddata" },
@@ -29,11 +27,12 @@ const training = [
 const transaction = [
   { title: "Training Attendance Entry", href: "/trainingattendance" },
   { title: "Monthly Training Particulars", href: "/montrainparticulars" },
+   { title: "Generate Training Sessions", href: "/generatesessions" },
 ];
 
 const tet = [
-  { title: "Generate TEE Forms", href: "tetformsgenerate" },
-  { title: "Generic Forms", href: "tetformsgeneric" },
+  { title: "Generate TEE Forms", href: "/tetformsgenerate" },
+  { title: "Generic Forms", href: "/tetformsgeneric" },
   { title: "Reports", href: "/ratingdistribution" },
 ];
 
@@ -61,6 +60,7 @@ const menuGroups = [
     show: (role: string) =>
       role !== "Res_Person" && role !== "HOS" && role !== "HOD",
   },
+  
   {
     title: "Training Effectiveness",
     items: tet,
@@ -91,11 +91,21 @@ export default function NavigationMenuDemo() {
   const [accessRole, setAccessRole] = useState<string | null>(null);
   const [isAuthorized, setIsAuthorized] = useState<null | boolean>(null);
 
-  // const router = useRouter();
   const closeTimeout = useRef<NodeJS.Timeout | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
-const pathname = usePathname();
+
+  const pathname = usePathname();
   const router = useRouter();
+
+const handleNavigation = (href: string) => {
+  const normalizedHref = href.startsWith("/") ? href : `/${href}`;
+  if (pathname === normalizedHref) {
+    window.location.href = normalizedHref; // full refresh
+  } else {
+    router.push(normalizedHref);
+  }
+};
+
   useEffect(() => {
     const storedEmployeeId = localStorage.getItem("employeeId");
     const storedDepartment = localStorage.getItem("department");
@@ -140,7 +150,6 @@ const pathname = usePathname();
     }
   }, [department, username, employeeId]);
 
-  // --- Outside click handler for desktop dropdown ---
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (navRef.current && !navRef.current.contains(event.target as Node)) {
@@ -166,7 +175,6 @@ const pathname = usePathname();
     );
   }
 
-  // Helper for menu filtering
   const filterMenu = (menu: { title: string; href: string }[]) =>
     menu.filter((component) => {
       if (
@@ -204,6 +212,13 @@ const pathname = usePathname();
         accessRole !== "HR_Hod"
       )
         return false;
+         // New condition to hide "Generate Training Sessions" for HR department
+    if (
+      component.title === "Generate Training Sessions" &&
+      // department === "HR" &&
+       accessRole !== "HR_Res"
+    )
+      return false;
       if (
         component.title === "Generate TEE Forms" &&
         accessRole !== "Res_Person" &&
@@ -212,7 +227,6 @@ const pathname = usePathname();
         accessRole !== "HR_Res" &&
         accessRole !== "HR_Hod"
       )
-
         return false;
       if (
         component.title === "Generic Forms" &&
@@ -232,7 +246,6 @@ const pathname = usePathname();
         accessRole !== "HR_Hod"
       )
         return false;
-      // Masterreport logic
       const normalizedAccessRole = accessRole
         ? accessRole.trim().toUpperCase()
         : "";
@@ -267,14 +280,9 @@ const pathname = usePathname();
         normalizedAccessRole !== "HR_HOD"
       )
         return false;
-        // if (component.title === "Update TL" && (accessRole !== "Res_Person" || (department !== "MS" && department !== "FNTRY"))) {
-        //               console.log("Skipping Update TL for accessRole or department:", accessRole, department);
-        //               return null; // skip
-        //            }
       return true;
     });
 
-  // Desktop Navbar with robust hover/click logic
   const handleMenuClick = (title: string) => {
     if (openMenu === title) {
       setOpenMenu(null);
@@ -285,7 +293,6 @@ const pathname = usePathname();
     }
   };
 
-  // Use same handlers for parent and submenu
   const handleMouseEnter = (title: string) => {
     if (closeTimeout.current) clearTimeout(closeTimeout.current);
     setHoveredMenu(title);
@@ -304,8 +311,9 @@ const pathname = usePathname();
       ref={navRef}
       className="flex items-center z-10 bg-gray-100 justify-between p-0"
     >
-      <div className="text-black font-semibold text-xl ml-2">
-        <Link href="/dashboard">Training & Development Management System</Link>
+      <div className="text-black font-semibold text-xl ml-2 cursor-pointer"
+           onClick={() => handleNavigation("/dashboard")}>
+        Training & Development Management System
       </div>
       <div className="flex items-center space-x-2 ml-auto mr-12">
         {menuGroups.map((group) => {
@@ -328,7 +336,7 @@ const pathname = usePathname();
                 className={cn(
                   "flex items-center justify-between gap-2 px-3 py-2 font-medium text-sm transition-colors",
                   isOpen ? "text-sky-400" : "text-gray-800",
-                  "hover:text-sky-400"
+                  "hover:text-sky-400 cursor-pointer"
                 )}
                 type="button"
                 onClick={() => handleMenuClick(group.title)}
@@ -341,36 +349,26 @@ const pathname = usePathname();
                   )}
                 />
               </button>
-      {isOpen && (
-        
+              {isOpen && (
                 <div className="absolute left-0 top-full bg-white shadow-lg rounded-2xl z-30 mt-0">
                   <ul className="py-2">
                     {filteredItems.map((item) => (
-                      <li
-                        key={item.title + item.href}
-                        className="cursor-pointer"
-                      >
-                        <a
-                          className="block px-4 py-2.5 text-sm font-medium text-black hover:text-sky-400 transition-colors duration-150 whitespace-nowrap cursor-pointer" // ✅ Added cursor-pointer
-                          onClick={(e) => {
-                            e.preventDefault();
+                      <li key={item.title + item.href} className="cursor-pointer">
+                        <button
+                          className="block w-full text-left px-4 py-2.5 text-sm font-medium text-black hover:text-sky-400 transition-colors duration-150 whitespace-nowrap cursor-pointer"
+                          onClick={() => {
                             setHoveredMenu(null);
                             setOpenMenu(null);
-                            if (pathname === item.href) {
-                              router.replace(item.href);
-                            } else {
-                              router.push(item.href);
-                            }
+                            handleNavigation(item.href);
                           }}
                         >
                           {item.title}
-                        </a>
+                        </button>
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
- 
             </div>
           );
         })}
@@ -379,12 +377,11 @@ const pathname = usePathname();
     </div>
   );
 
-  // Mobile Navbar
   const MobileNav = () => (
     <div className="md:hidden flex items-center justify-between w-full">
-      <div className="text-black font-semibold text-xl">
-        <Link href="/dashboard">Greentech Industries</Link>
-
+      <div className="text-black font-semibold text-xl cursor-pointer"
+           onClick={() => handleNavigation("/dashboard")}>
+        Greentech Industries
       </div>
       <Button
         variant="ghost"
@@ -404,46 +401,27 @@ const pathname = usePathname();
             >
               <X className="h-6 w-6" />
             </Button>
-            <MobileMenuGroup
-              title="Training Calendar"
-              items={filterMenu(training)}
-            />
+            <MobileMenuGroup title="Training Calendar" items={filterMenu(training)} handleNavigation={handleNavigation} />
             {accessRole !== "Res_Person" &&
               accessRole !== "HOS" &&
               accessRole !== "HOD" && (
-                <MobileMenuGroup
-                  title="Transaction"
-                  items={filterMenu(transaction)}
-                />
+                <MobileMenuGroup title="Transaction" items={filterMenu(transaction)} handleNavigation={handleNavigation} />
               )}
             {accessRole !== "Res_Person" && (
-              <MobileMenuGroup
-                title="Training Effectiveness"
-                items={filterMenu(tet)}
-              />
+              <MobileMenuGroup title="Training Effectiveness" items={filterMenu(tet)} handleNavigation={handleNavigation} />
             )}
             {accessRole !== "Res_Person" &&
               accessRole !== "HOS" &&
               accessRole !== "HOD" && (
-                <MobileMenuGroup
-                  title="Upload"
-                  items={filterMenu(trainingcertificates)}
-                />
+                <MobileMenuGroup title="Upload" items={filterMenu(trainingcertificates)} handleNavigation={handleNavigation} />
               )}
             {(accessRole === "Res_Person" ||
               accessRole === "HR_Res" ||
               accessRole === "HR_Hod" ||
               accessRole === "HOS" ||
               accessRole === "HOD") &&
-              !(
-                accessRole === "Res_Person" &&
-                department !== "MS" &&
-                department !== "FNTRY"
-              ) && (
-                <MobileMenuGroup
-                  title="T & D Report"
-                  items={filterMenu(masterreport)}
-                />
+              !(accessRole === "Res_Person" && department !== "MS" && department !== "FNTRY") && (
+                <MobileMenuGroup title="T & D Report" items={filterMenu(masterreport)} handleNavigation={handleNavigation} />
               )}
             <div className="mt-4">
               <ProfileDropdown username={username} />
@@ -462,31 +440,35 @@ const pathname = usePathname();
   );
 }
 
-function MobileMenuGroup({ title, items }: { title: string; items: { title: string; href: string }[] }) {
+function MobileMenuGroup({
+  title,
+  items,
+  handleNavigation,
+}: {
+  title: string;
+  items: { title: string; href: string }[];
+  handleNavigation: (href: string) => void;
+}) {
   const [open, setOpen] = useState(false);
   return (
     <div>
       <button
-        className="w-full flex items-center justify-between px-2 py-2 text-base font-semibold text-muted-foreground hover:text-foreground"
+        className="w-full flex cursor-pointer items-center justify-between px-2 py-2 text-base font-semibold text-muted-foreground hover:text-foreground"
         onClick={() => setOpen(!open)}
       >
         {title}
-        {open ? (
-          <ChevronUp className="h-4 w-4" />
-        ) : (
-          <ChevronDown className="h-4 w-4" />
-        )}
+        {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
       </button>
       {open && (
-        <ul className="pl-4">
+        <ul className="pl-4 ">
           {items.map((item) => (
             <li key={item.title} className="py-1">
-              <Link
-                href={item.href}
-                className="block text-sm text-black hover:text-sky-400 transition-colors"
+              <button
+                className="block w-full cursor-pointer text-left text-sm text-black hover:text-sky-400 transition-colors"
+                onClick={() => handleNavigation(item.href)}
               >
                 {item.title}
-              </Link>
+              </button>
             </li>
           ))}
         </ul>

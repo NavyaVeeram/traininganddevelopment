@@ -1,41 +1,59 @@
 
-// pages/api/delete_training_data.js
+
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
-
 export default async function handler(req, res) {
-  if (req.method === 'DELETE') {
+  console.log('DELETE API called with method:', req.method);
+  console.log('Query params:', req.query);
+  
+  if (req.method === 'POST') {
     const { Program_Id } = req.query;
+    console.log('Program_Id received:', Program_Id);
 
-    // Validate Program_Id
     if (!Program_Id) {
+      console.log('Program_Id missing');
       return res.status(400).json({ message: 'Program_Id is required for deletion' });
     }
 
-    // Ensure Program_Id is a valid number
     const programIdInt = parseInt(Program_Id, 10);
     if (isNaN(programIdInt)) {
+      console.log('Program_Id is not a valid number:', Program_Id);
       return res.status(400).json({ message: 'Program_Id must be a valid number' });
     }
 
     try {
-      // Execute the stored procedure to delete the record
+      console.log('Attempting to delete Program_Id:', programIdInt);
+      
+      // Test database connection first
+      await prisma.$connect();
+      console.log('Database connected successfully');
+
       const result = await prisma.$queryRaw`
         EXEC dbo.Delete_Training_Data_Requirement @Program_Id = ${programIdInt}
       `;
-
-      // Check if the deletion was successful
-      if (result) {
-        return res.status(200).json({ message: 'Record deleted successfully' });
-      } else {
-        return res.status(404).json({ message: 'Record not found' });
-      }
+      
+      console.log('Stored procedure executed, result:', result);
+      
+      await prisma.$disconnect();
+      return res.status(200).json({ message: 'Record deleted successfully' });
+      
     } catch (error) {
-      console.error('Error executing stored procedure:', error);
-      return res.status(500).json({ message: 'Failed to delete record', error: error.message });
+      console.error('Database error details:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack
+      });
+      
+      await prisma.$disconnect();
+      return res.status(500).json({ 
+        message: 'Failed to delete record', 
+        error: error.message,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
     }
   } else {
+    console.log('Method not allowed:', req.method);
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 }

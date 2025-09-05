@@ -178,135 +178,144 @@ const MonthlyTrainingParticulars = () => {
   }
 
 const handleDownloadPDF = () => {
-    if (!selectedDate) {
-      alert("please select the month and year");
-      return;
-    }
+  if (!selectedDate) {
+    alert("please select the month and year");
+    return;
+  }
 
-    const doc = new jsPDF("p", "mm", "a4");
+  const doc = new jsPDF("p", "mm", "a4");
 
-    // Header
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text("TRAINING AND DEVELOPMENT", 14, 15);
+  // Header
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.text("TRAINING AND DEVELOPMENT", 14, 15);
 
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.text(
-      `Training Particulars - ${
-        selectedDate
-          ? selectedDate.toLocaleString("default", { month: "short" }) +
-            `'${selectedDate.getFullYear().toString().slice(-2)}`
-          : ""
-      }`,
-      14,
-      20
-    );
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text(
+    `Training Particulars - ${
+      selectedDate
+        ? selectedDate.toLocaleString("default", { month: "short" }) +
+          `'${selectedDate.getFullYear().toString().slice(-2)}`
+        : ""
+    }`,
+    14,
+    20
+  );
 
-    doc.setFontSize(7);
-    doc.text(
-      `We are following "IATF 16949 CAPD Method 10.3 Continuous Improvement Spirit to improve our GTI"`,
-      14,
-      24
-    );
+  doc.setFontSize(7);
+  doc.text(
+    `We are following "IATF 16949 CAPD Method 10.3 Continuous Improvement Spirit to improve our GTI"`,
+    14,
+    24
+  );
 
-    // Table headers and rows
-    const headers = [
-      [
-        "S.No",
-        "Program Name",
-        "Scheduled Month",
-        "Conducted on",
-        "Category",
-        "Mode",
-        "*P vs. *A",
-        "Status",
-      ],
-    ];
+  // Table headers
+  const headers = [
+    [
+      "S.No",
+      "Category",
+      "Program Name",
+      "Scheduled Month",
+      "Conducted on",
+      "Mode",
+      "Schedule Type",
+      "Status",
+    ],
+  ];
 
-    const dataRows = trainingData.map((item, index) => [
-      index + 1,
-      item.Program_Name || "",
-      item.Req_Months || "",
-      item.Training_Date || "",
-      item.Training_Name || "",
-      item.Train_Mode || "",
-      item.Schedule_Type || "",
-      item.Training_Status || "",
-    ]);
+  // Table rows aligned with headers (no format change)
+  const dataRows = trainingData.map((item, index) => [
+    index + 1, // S.No
+     // Conducted on
+    item.Training_Name || "", // Category (keep original from your data)
+    item.Program_Name || "", // Program Name
+    item.Req_Months || "", // Scheduled Month
+    item.Training_Date || "",
+    item.Train_Mode || "", // Mode
+    item.Schedule_Type || "", // Schedule Type
+    item.Training_Status || "", // Status
+  ]);
 
-    autoTable(doc, {
-      startY: 32,
-      head: headers,
-      body: dataRows,
-      theme: "grid",
-      styles: {
-        fontSize: 8,
-        cellPadding: 1.8,
-        valign: "middle",
-        halign: "center",
-      },
-      styles: {
-        fontSize: 8,
-        cellPadding: 1.8,
-        valign: "middle",
-        halign: "left",
-        lineWidth: 0.1,
-        lineColor: "#5f5e5e",
-      },
-      headStyles: {
-        fillColor: [240, 240, 240],
-        textColor: 0,
-        fontStyle: "bold",
-        halign: "center",
-        lineWidth: 0.1,
-        lineColor: "#5f5e5e",
-      },
-      didDrawPage: function (data) {
-        // Page number and current date
-        const pageSize = doc.internal.pageSize;
-        const pageWidth = pageSize.getWidth();
-        const pageHeight = pageSize.getHeight();
-        const currentDate = new Date().toLocaleDateString("en-GB");
-        const pageCount = doc.internal.getNumberOfPages();
-        const pageCurrent = doc.internal.getCurrentPageInfo().pageNumber;
-        doc.setFontSize(8);
-        doc.text(
-          `Page: ${String(pageCurrent).padStart(2, "0")} of ${String(
-            pageCount
-          ).padStart(2, "0")}`,
-          pageWidth - 40,
-          20
-        );
-        doc.text(`Date: ${currentDate}`, pageWidth - 40, 24);
-        // Footer
-        doc.setFontSize(10);
-        doc.setTextColor(0);
-        doc.text("Prepared By", 25, pageHeight - 30);
-        doc.text("Checked By", pageWidth / 2 - 15, pageHeight - 30);
-        doc.text("Approved By", pageWidth - 50, pageHeight - 30);
+  autoTable(doc, {
+    startY: 32,
+    head: headers,
+    body: dataRows,
+    theme: "grid",
+    styles: {
+      fontSize: 8,
+      cellPadding: 1.8,
+      valign: "middle",
+      halign: "left",
+      lineWidth: 0.1,
+      lineColor: "#5f5e5e",
+    },
+    columnStyles: {
+      0: { halign: "center" }, // Center align only S.No
+    },
+    headStyles: {
+      fillColor: [240, 240, 240],
+      textColor: 0,
+      fontStyle: "bold",
+      halign: "center",
+      lineWidth: 0.1,
+      lineColor: "#5f5e5e",
+    },
+    didDrawPage: function (data) {
+      const pageSize = doc.internal.pageSize;
+      const pageWidth = pageSize.getWidth();
+      const pageHeight = pageSize.getHeight();
+      const pageCount = doc.internal.getNumberOfPages();
+      const pageCurrent = doc.internal.getCurrentPageInfo().pageNumber;
 
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        doc.text(
-          "Greentech Industries (India) Pvt. Ltd @ HR By Syam Prasad",
-          pageWidth / 2,
-          pageHeight - 5,
-          {
-            align: "center",
-          }
-        );
-      },
-      margin: { top: 32, bottom: 30 },
-    });
+      // Format today's date as dd-MMM-yyyy
+      const today = new Date();
+      const formattedDate = today.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }).replace(/ /g, "-");
 
-    const filename = `Monthly_Training_${selectedDate?.toLocaleString(
-      "default",
-      { month: "short" }
-    )}_${selectedDate?.getFullYear()}.pdf`;
+      // Page number
+      doc.setFontSize(8);
+      doc.text(
+        `Page: ${String(pageCurrent).padStart(2, "0")} of ${String(
+          pageCount
+        ).padStart(2, "0")}`,
+        pageWidth - 40,
+        20
+      );
 
-    doc.save(filename);
-  };
+      // Approval section
+      doc.setFontSize(10);
+      doc.setTextColor(0);
+      doc.text("Prepared By", 25, pageHeight - 30);
+      doc.text("Checked By", pageWidth / 2 - 15, pageHeight - 30);
+      doc.text("Approved By", pageWidth - 50, pageHeight - 30);
+
+      // Footer with date
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        `Greentech Industries (India) Pvt. Ltd @ HR ${formattedDate} By Syam Prasad`,
+        pageWidth / 2,
+        pageHeight - 5,
+        { align: "center" }
+      );
+    },
+    margin: { top: 32, bottom: 30 },
+  });
+
+  const filename = `Monthly_Training_${selectedDate?.toLocaleString(
+    "default",
+    { month: "short" }
+  )}_${selectedDate?.getFullYear()}.pdf`;
+
+  doc.save(filename);
+};
+
+
+
 
   if (isAuthorized === false) {
     return (
@@ -420,129 +429,117 @@ const handleDownloadPDF = () => {
                   textOverflow: "ellipsis",
                 }}
               >
-                <thead className="bg-muted top-0 z-0">
-                  <tr>
-                    {[
-                      { key: "Program_Name", label: "Program_Name" },
-                      { key: "Req_Months", label: "Scheduled Month" },
-                      { key: "Training_Date", label: "Conducted Date" },
-                      { key: "Training_Name", label: "Category" },
-                      { key: "Train_Mode", label: "Mode" },
-                      { key: "Schedule_Type", label: "Schedule Type" },
-                      { key: "Training_Status", label: "Training Status" },
-                    ].map(({ key, label }, index) => (
-                      <th
-                        key={key}
-                        className={`px-4 py-2 border text-left cursor-pointer ${
-                          index === 0 ? "sticky left-0 bg-muted z-20" : ""
-                        }`}
-                        onClick={() => handleSort(key)}
-                      >
-                        {label}{" "}
-                        {sortConfig.key === key
-                          ? sortConfig.direction === "asc"
-                            ? "▲"
-                            : "▼"
-                          : "↕"}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredData.length > 0 ? (
-                    paginatedData.map((item, index) => (
-                      <tr key={index} className="hover:bg-gray-100 border">
-                        <td className="px-4 py-2 border">
-                          {item.Program_Name}
-                        </td>
-                        <td className="px-4 py-2 border">{item.Req_Months}</td>
-                        <td className="px-4 py-2 border">
-                          {item.Training_Date
-                            ? new Date(item.Training_Date).toLocaleDateString()
-                            : ""}
-                        </td>
-                        <td className="px-4 py-2 border">
-                          {item.Training_Name}
-                        </td>
-                        <td className="px-4 py-2 border">{item.Train_Mode}</td>
-                        <td className="px-4 py-2 border">
-                          {item.Schedule_Type}
-                        </td>
-                        <td className="px-4 py-2 border">
-                          {item.Training_Status}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan="7"
-                        className="py-4 text-center text-gray-500"
-                      >
-                        No matching training data available.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
+     <thead className="bg-muted top-0 z-0">
+  <tr>
+    {[
+      { key: "Training_Name", label: "Category" },
+      { key: "Program_Name", label: "Program Name" },
+      { key: "Req_Months", label: "Scheduled Month" },
+      { key: "Training_Date", label: "Conducted Date" },
+      { key: "Train_Mode", label: "Mode" },
+      { key: "Schedule_Type", label: "Schedule Type" },
+      { key: "Training_Status", label: "Training Status" },
+    ].map(({ key, label }, index) => (
+      <th
+        key={key}
+        className={`px-4 py-2 border text-left cursor-pointer ${
+          index === 0 ? "sticky left-0 bg-muted z-20" : ""
+        }`}
+        onClick={() => handleSort(key)}
+      >
+        {label}{" "}
+        {sortConfig.key === key
+          ? sortConfig.direction === "asc"
+            ? "▲"
+            : "▼"
+          : "↕"}
+      </th>
+    ))}
+  </tr>
+</thead> 
+ <tbody>
+{filteredData.length > 0 ? (
+    paginatedData.map((item, index) => (
+      <tr key={index} className="hover:bg-gray-100 border">
+        <td className="px-4 py-2 border">{item.Training_Name}</td>   {/* Category */}
+        <td className="px-4 py-2 border">{item.Program_Name}</td>   {/* Program Name */}
+        <td className="px-4 py-2 border">{item.Req_Months}</td>     {/* Scheduled Month */}
+        <td className="px-4 py-2 border">{item.Training_Date}</td>  {/* Conducted Date */}
+        <td className="px-4 py-2 border">{item.Train_Mode}</td>     {/* Mode */}
+        <td className="px-4 py-2 border">{item.Schedule_Type}</td>  {/* Schedule Type */}
+        <td className="px-4 py-2 border">{item.Training_Status}</td>{/* Training Status */}
+      </tr>
+    ))
+  ) : (
+    <tr>
+      <td colSpan="7" className="py-4 text-center text-gray-500">
+        No matching training data available.
+      </td>
+    </tr> )}</tbody>
               </table>
             </div>
-
             {
-              <div className="flex flex-wrap justify-between items-center mt-4 text-sm">
-                <div>
-                  Showing{" "}
-                  {filteredData.length > 0
-                    ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
-                        currentPage * rowsPerPage,
-                        filteredData.length
-                      )} of ${filteredData.length} entries`
-                    : "0 entries"}
-                </div>
+              // Replace this section in your component:
+<div className="flex flex-wrap justify-between items-center mt-4 text-sm">
+  <div>
+    {rowsPerPage === "All" ? (
+      `Showing all ${filteredData.length} of ${filteredData.length} entries`
+    ) : (
+      `Showing ${filteredData.length > 0
+        ? `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
+            currentPage * rowsPerPage,
+            filteredData.length
+          )} of ${filteredData.length} entries`
+        : "0 entries"
+      }`
+    )}
+  </div>
 
-                <div className="flex space-x-1">
-                  <button
-                    className="px-3 py-1 border rounded"
-                    onClick={() => setCurrentPage(1)}
-                    disabled={currentPage === 1}
-                  >
-                    {"<<"}
-                  </button>
-                  <button
-                    className="px-3 py-1 border rounded"
-                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                    disabled={currentPage === 1}
-                  >
-                    {"<"}
-                  </button>
-                  {Array.from({ length: totalPages }, (_, i) => (
-                    <button
-                      key={i}
-                      className={`px-3 py-1 border rounded ${
-                        currentPage === i + 1 ? "bg-black text-white" : ""
-                      }`}
-                      onClick={() => setCurrentPage(i + 1)}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
-                  <button
-                    className="px-3 py-1 border rounded"
-                    onClick={() =>
-                      setCurrentPage((p) => Math.min(p + 1, totalPages))
-                    }
-                    disabled={currentPage === totalPages}
-                  >
-                    {">"}
-                  </button>
-                  <button
-                    className="px-3 py-1 border rounded"
-                    onClick={() => setCurrentPage(totalPages)}
-                    disabled={currentPage === totalPages}
-                  >
-                    {">>"}
-                  </button>
-                </div>
-              </div>
+  {/* Right: Pagination buttons (hidden if "All" is selected) */}
+  {rowsPerPage !== "All" && (
+    <div className="flex space-x-1">
+      <button
+        className="px-3 py-1 border rounded"
+        onClick={() => setCurrentPage(1)}
+        disabled={currentPage === 1}
+      >
+        {"<<"}
+      </button>
+      <button
+        className="px-3 py-1 border rounded"
+        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+        disabled={currentPage === 1}
+      >
+        {"<"}
+      </button>
+      {Array.from({ length: totalPages }, (_, i) => (
+        <button
+          key={i}
+          className={`px-3 py-1 border rounded ${
+            currentPage === i + 1 ? "bg-black text-white" : ""
+          }`}
+          onClick={() => setCurrentPage(i + 1)}
+        >
+          {i + 1}
+        </button>
+      ))}
+      <button
+        className="px-3 py-1 border rounded"
+        onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+        disabled={currentPage === totalPages}
+      >
+        {">"}
+      </button>
+      <button
+        className="px-3 py-1 border rounded"
+        onClick={() => setCurrentPage(totalPages)}
+        disabled={currentPage === totalPages}
+      >
+        {">>"}
+      </button>
+    </div>
+  )}
+</div>
             }
           </div>
         </div>

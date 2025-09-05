@@ -38,7 +38,22 @@ export default async function handler(req, res) {
       // Handle null/empty date/status
       const formattedTrainingDate = (Training_Date === '' || Training_Date === null) ? null : Training_Date;
       const formattedTrainingStatus = (Training_Status === '' || Training_Status === null) ? null : Training_Status;
-
+ console.log('🚀 Submitting Training Data:');
+      console.log({
+        programIds,
+        persons,
+        noHrs,
+        Train_Mode,
+        formattedTrainingDate,
+        formattedTrainingStatus,
+        Schedule_Type,
+        Trainer,
+        External_Trainer,
+        Venue,
+        actualBudget,
+        cancel,
+        CreatedBy,
+      });
       // Call stored procedure
       const result = await prisma.$queryRaw`
         EXEC [dbo].[Update_TrainingData_Att_Entry_Submit]
@@ -56,7 +71,7 @@ export default async function handler(req, res) {
           @Cancel = ${cancel},
           @CreatedBy = ${CreatedBy}
       `;
-
+console.log('Stored procedure result:', result);
       res.status(200).json({ message: result[0]?.Result || 'Unknown error' });
     } catch (error) {
       console.error('Error executing stored procedure:', error);

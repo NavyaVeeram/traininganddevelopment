@@ -232,7 +232,7 @@ const RatingDistributionPage = () => {
       <BackButton/>
       <div className="mb-4 flex space-x-4 ">
         <div className="flex mt-3 items-center space-x-1">
-          <label className="block mb-1 font-semibold">Select Month and Year:</label>
+          <label className="block mb-1 font-semibold">Month and Year:</label>
           <DatePicker
             selected={selectedMonthYear}
             onChange={(date) => setSelectedMonthYear(date)}
@@ -252,7 +252,7 @@ const RatingDistributionPage = () => {
         </div>
 
         <div className="flex mt-3 items-center space-x-1">
-          <label className="block mb-1 font-semibold">Select Training:</label>
+          <label className="block mb-1 font-semibold">Category:</label>
           <Select
             value={selectedTrainingName}
             isDisabled = {!selectedMonthYear}

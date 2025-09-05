@@ -155,7 +155,7 @@ const Access = () => {
       <div className="flex flex-wrap items-end gap-6 mt-6 m-2">
         <div className="flex flex-col w-100">
           <label className="text-sm font-medium text-gray-900 mb-1">
-            Select Employee ID
+            Employee ID
           </label>
           <Select
             options={employeeOptions}
@@ -168,7 +168,7 @@ const Access = () => {
 
         <div className="flex flex-col w-100">
           <label className="text-sm font-medium text-gray-900 mb-1">
-            Select Access Role
+           Access Role
           </label>
           <Select
             options={designations}
