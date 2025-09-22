@@ -8,7 +8,7 @@ import autoTable from "jspdf-autotable";
 import BackButton from "@/components/BackButton";
 
 const MonthlyTrainingParticulars = () => {
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [trainingData, setTrainingData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [tableSearchTerm, setTableSearchTerm] = useState("");

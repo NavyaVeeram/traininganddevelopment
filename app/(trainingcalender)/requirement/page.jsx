@@ -947,6 +947,67 @@ Category
     required
   />
 </div>
+<div className="space-y-0.5"> 
+  <label htmlFor="For" className="block text-sm font-medium text-gray-900">
+    For:
+  </label>
+  <Select
+    id="For"
+    name="For"
+    options={[
+      { value: "SELF", label: "Self Department" },
+      { value: "COMN", label: "Common (COMN)" },
+      { value: "WOMEN", label: "Women Employees" }, // ✅ Added new option
+    ]}
+    value={
+      [
+        { value: "SELF", label: "Self Department" },
+        { value: "COMN", label: "Common (COMN)" },
+        { value: "WOMEN", label: "Women Employees" },
+      ].find(option => option.value === formData.For) || null
+    }
+    onChange={(selectedOption) => {
+      setFormData((prevData) => ({
+        ...prevData,
+        For: selectedOption ? selectedOption.value : "",
+      }));
+    }}
+    classNamePrefix="react-select"
+    className="mb-1 cursor-pointer"
+    styles={{
+      control: (base, state) => ({
+        ...base,
+        cursor: "pointer",
+        borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
+        boxShadow: state.isFocused
+          ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
+          : "none",
+        padding: "1px",
+        borderRadius: "0.5rem",
+        minHeight: "2rem",
+        display: "flex",
+        alignItems: "center",
+      }),
+      option: (base) => ({
+        ...base,
+        cursor: "pointer",
+      }),
+      menu: (base) => ({
+        ...base,
+        zIndex: 9999,
+      }),
+      menuPortal: (base) => ({
+        ...base,
+        zIndex: 9999,
+      }),
+    }}
+    menuPortalTarget={document.body}
+    menuPosition="fixed"
+    required
+  />
+</div>
+
+
    {/* Buttons */}
 <div>
 <label htmlFor="Evaluation_Period" style={{visibility:"hidden"}} className="block text-sm font-medium text-gray-900">
@@ -957,6 +1018,7 @@ Category
       {loading ? 'Loading...' : 'Submit'}
     </button>
         </div>
+        
 </div>
 
 {trainingData.length > 0 ? (

@@ -7,7 +7,7 @@ import { FaSearch } from "react-icons/fa";
 import Select from "react-select";
 
 export default function UploadCertificates() {
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [uploadedData, setUploadedData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [trainerOptions, setTrainerOptions] = useState([]);
@@ -164,31 +164,38 @@ export default function UploadCertificates() {
     }
   };
 
-  const handleMonthYearChange = async (date) => {
-    if (!date) return;
-    setSelectedDate(date);
+useEffect(() => {
+  if (selectedDate) {
+    handleMonthYearChange(selectedDate); // fetch programs for default date
+  }
+}, [selectedDate]); // run when selectedDate changes
 
-    const selectedMonth = date.getMonth() + 1;
-    const selectedYear = date.getFullYear();
-    setFormData((prev) => ({
-      ...prev,
-      selectedMonth: `${selectedMonth}-${selectedYear}`,
-    }));
+const handleMonthYearChange = async (date) => {
+  if (!date) return;
+  setSelectedDate(date);
 
-    try {
-      const res = await fetch(
-        `/api/upload_certificates_dropdown?month=${selectedMonth}&year=${selectedYear}`
-      );
-      const data = await res.json();
-      if (res.ok) {
-        setOptions(data);
-      } else {
-        throw new Error(data.error || "Error fetching data");
-      }
-    } catch (err) {
-      setError(err.message);
+  const selectedMonth = date.getMonth() + 1;
+  const selectedYear = date.getFullYear();
+
+  setFormData((prev) => ({
+    ...prev,
+    selectedMonth: `${selectedMonth}-${selectedYear}`,
+  }));
+
+  try {
+    const res = await fetch(
+      `/api/upload_certificates_dropdown?month=${selectedMonth}&year=${selectedYear}`
+    );
+    const data = await res.json();
+    if (res.ok) {
+      setOptions(data);
+    } else {
+      throw new Error(data.error || "Error fetching data");
     }
-  };
+  } catch (err) {
+    setError(err.message);
+  }
+};
 
   useEffect(() => {
     // Retrieve the department, username, and employeeId from localStorage

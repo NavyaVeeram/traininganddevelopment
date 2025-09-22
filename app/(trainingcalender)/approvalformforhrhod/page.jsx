@@ -314,6 +314,7 @@ export default function TrainingDataTable() {
               <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Year_No")}>Year {sortConfig.key === "Year_No" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
               <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Department")}>Department {sortConfig.key === "Department" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
               <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Section")}>Section {sortConfig.key === "Section" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
+                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Program_Name")}>Program_Name {sortConfig.key === "Program_Name" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th> 
               <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Train_Mode")}>Training Mode {sortConfig.key === "Train_Mode" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
               <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Persons")}>Persons {sortConfig.key === "Persons" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
               <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("No_Hrs")}>Hours {sortConfig.key === "No_Hrs" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
@@ -351,7 +352,7 @@ export default function TrainingDataTable() {
                         <td className="border p-2 text-left">{item.Year_No}</td>
                         <td className="border p-2 text-left">{item.Department}</td>
                         <td className="border p-2 text-left">{item.Section}</td>
-                        {/* <td className="border p-2 text-left">{item.Program_Name}</td> */}
+                        <td className="border p-2 text-left">{item.Program_Name}</td>
                         <td className="border p-2 text-left">{item.Train_Mode}</td>
                         <td className="border p-2 text-left">{item.Persons}</td>
                         <td className="border p-2 text-left">{item.No_Hrs}</td>

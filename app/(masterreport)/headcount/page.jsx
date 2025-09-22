@@ -10,7 +10,7 @@ import { FaFileExcel } from "react-icons/fa";
 const HeadCount = () => {
   // Tab state
   const [activeTab, setActiveTab] = useState("overall");
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [trainingData, setTrainingData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [tableSearchTerm, setTableSearchTerm] = useState("");
@@ -29,7 +29,7 @@ const HeadCount = () => {
   const [departmentwiseLoading, setdepartmentwiseLoading] = useState(false);
   const [departmentwiseError, setdepartmentwiseError] = useState(null);
   const [departmentwiseSelectedDate, setdepartmentwiseSelectedDate] =
-    useState(null);
+    useState(new Date());
 
   useEffect(() => {
     const storedEmployeeId = localStorage.getItem("employeeId");

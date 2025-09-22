@@ -50,7 +50,7 @@ const RatingDistributionPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [selectedMonthYear, setSelectedMonthYear] = useState(null);
+  const [selectedMonthYear, setSelectedMonthYear] = useState(new Date());
   const [selectedTrainingName, setSelectedTrainingName] = useState(null);
   const [programNames, setProgramNames] = useState([]);
   const [selectedProgramName, setSelectedProgramName] = useState(null);

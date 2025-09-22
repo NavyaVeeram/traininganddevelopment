@@ -2,7 +2,7 @@
 import { FaSearch } from "react-icons/fa";
 import { useMemo, useState, useEffect, useRef } from "react";
 import Select from "react-select";
-
+import AsyncSelect from "react-select/async";
 const EmployeeHistoryList = () => {
   const [EmployeeId, setEmployeeId] = useState(null);
   const [employeeOptions, setEmployeeOptions] = useState([]);
@@ -156,33 +156,47 @@ const EmployeeHistoryList = () => {
           currentPage * rowsPerPage
         );
 
-  useEffect(() => {
-    const fetchEmployeeOptions = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch("/api/user_dropdown");
-        const data = await res.json();
-        if (res.status === 200) {
-          setEmployeeOptions(data);
-          fetchQualifiedTrainers();
-        } else {
-          setError(data.message || "Error fetching employee data");
-        }
-      } catch (err) {
-        setError("Failed to fetch employee data");
-      } finally {
-        setLoading(false);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchEmployeeOptions = async () => {
+  //     setLoading(true);
+  //     setError(null);
+  //     try {
+  //       const res = await fetch("/api/user_dropdown");
+  //       const data = await res.json();
+  //       if (res.status === 200) {
+  //         setEmployeeOptions(data);
+  //         fetchQualifiedTrainers();
+  //       } else {
+  //         setError(data.message || "Error fetching employee data");
+  //       }
+  //     } catch (err) {
+  //       setError("Failed to fetch employee data");
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
 
-    fetchEmployeeOptions();
-  }, []);
+  //   fetchEmployeeOptions();
+  // }, []);
+const loadOptions = async (inputValue) => {
+  try {
+    // Send empty string to API if inputValue is empty
+    const url = `/api/user_dropdown?search=${inputValue || ""}`;
 
-  const handleTableSearchChange = (e) => {
-    const searchQuery = e.target.value;
-    setTableSearchTerm(searchQuery);
-  };
+    const res = await fetch(url);
+    const data = await res.json();
+
+    return data.map((emp) => ({
+      value: emp.Value,
+      label: emp.Text,
+    }));
+  } catch (err) {
+    console.error("Error loading employees", err);
+    return [];
+  }
+};
+
+
 
   const handleClearTableSearch = async () => {
     setTableSearchTerm("");
@@ -368,6 +382,10 @@ const EmployeeHistoryList = () => {
       sortable: true,
     },
   ];
+// ... above your return (
+const handleTableSearchChange = (e) => {
+  setTableSearchTerm(e.target.value);
+};
 
   const paginationComponentOptions = {
     rowsPerPageText: "Rows per page:",
@@ -475,7 +493,7 @@ const EmployeeHistoryList = () => {
         </div>
         <br />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
+          {/* <div>
             <label
               htmlFor="employee"
               className="block text-sm font-medium text-gray-900"
@@ -516,7 +534,31 @@ const EmployeeHistoryList = () => {
                 }}
               />
             </div>
-          </div>
+          </div> */}
+              <div>
+            <label
+              htmlFor="employee"
+              className="block text-sm font-medium text-gray-900"
+            >
+               EmployeeId
+            </label>
+<AsyncSelect
+  cacheOptions
+  loadOptions={loadOptions}
+  defaultOptions={true}   // 👈 show default options when clicked
+  onChange={handleEmployeeIdChange}
+  placeholder="Search Employee..."
+  styles={{
+    control: (base) => ({
+      ...base,
+      cursor: "pointer",
+      borderRadius: "0.5rem",
+      minHeight: "2rem",
+    }),
+    option: (base) => ({ ...base, cursor: "pointer" }),
+  }}
+/>
+</div>
 
           <div>
             <label className="block text-sm font-medium text-gray-900">
@@ -524,7 +566,7 @@ const EmployeeHistoryList = () => {
             </label>
             <input
               type="text"
-              value={trainingDetails.Username || ""}
+              value={trainingDetails?.Username ?? ""}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
@@ -535,7 +577,7 @@ const EmployeeHistoryList = () => {
             </label>
             <input
               type="text"
-              value={trainingDetails.Department || ""}
+              value={trainingDetails?.Department ?? ""}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
@@ -546,7 +588,7 @@ const EmployeeHistoryList = () => {
             </label>
             <input
               type="text"
-              value={trainingDetails.Section || ""}
+              value={trainingDetails?.Section ?? ""}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
@@ -560,7 +602,7 @@ const EmployeeHistoryList = () => {
             </label>
             <input
               type="text"
-              value={trainingDetails.Designation || ""}
+              value={trainingDetails?.Designation ?? ""}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
@@ -571,7 +613,7 @@ const EmployeeHistoryList = () => {
             </label>
             <input
               type="text"
-              value={trainingDetails.Emp_Type || ""}
+              value={trainingDetails?.Emp_Type ?? ""}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
@@ -582,7 +624,7 @@ const EmployeeHistoryList = () => {
             </label>
             <input
               type="text"
-              value={trainingDetails.Emp_Category || ""}
+              value={trainingDetails?.Emp_Category ?? ""}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
@@ -593,7 +635,7 @@ const EmployeeHistoryList = () => {
             </label>
             <input
               type="text"
-              value={trainingDetails.No_Hrs}
+              value={trainingDetails?.No_Hrs ?? ""}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
@@ -604,7 +646,7 @@ const EmployeeHistoryList = () => {
             </label>
             <input
               type="text"
-              value={trainingDetails.DOJ ?? ""}
+              value={trainingDetails?.DOJ ?? ""}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />

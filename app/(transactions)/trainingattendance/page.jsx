@@ -17,11 +17,15 @@ import BackButton from "@/components/BackButton";
 const animatedComponents = makeAnimated();
 
 const TrainingAttendanceForm = () => {
+  
     const [mounted, setMounted] = useState(false);
     const [year, setYear] = useState("");
     const [selectedMonth, setSelectedMonth] = useState(null);
     const [Training_Name, setTraining_Name] = useState("");
       const [trainingName, setTrainingName] = useState("IATF");
+      const currentDate = new Date();
+const currentMonth = currentDate.getMonth() + 1;
+const currentYear = currentDate.getFullYear();
     const [formData, setFormData] = useState({
       Program_Id: "",
       Training_Name: "",
@@ -40,7 +44,7 @@ const TrainingAttendanceForm = () => {
       Actual_Budget: "",
       CreatedBy: typeof window !== "undefined" ? localStorage.getItem("employeeId") || "" : "",
       EmployeeIds: [],
-      selectedMonth: "",
+      selectedMonth: `${currentMonth}-${currentYear}`,
     });
 
     // New state for confirmation popup visibility
@@ -101,7 +105,7 @@ const TrainingAttendanceForm = () => {
       const month = months[monthIndex];
       return `${day}-${month}-${year}`;
     };
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [options, setOptions] = useState([]);
   const [trainerOptions, setTrainerOptions] = useState([]);
   const [employeeOptions, setEmployeeOptions] = useState([]);
@@ -289,7 +293,12 @@ const TrainingAttendanceForm = () => {
 
     fetchTrainers();
   }, []);
-
+useEffect(() => {
+  if (trainingName) {
+    const currentDate = new Date();
+    handleMonthYearChange(currentDate);
+  }
+}, [trainingName]);
   const dialogMessageRef = useRef("");
 
   useEffect(() => {
@@ -838,9 +847,9 @@ const font = await mergedPdf.embedFont(fontBytes);
           // Split Program_Name into two lines for drawing
         // Split Program_Name into two lines for drawing  
          const ProgramName = emp.Program_Name || "";
-                                if (ProgramName.length > 35) {
-                                  const firstLine = ProgramName.substring(0, 35);
-                                  const secondLine = ProgramName.substring(35);
+                                if (ProgramName.length > 30) {
+                                  const firstLine = ProgramName.substring(0, 30);
+                                  const secondLine = ProgramName.substring(30);
                                   page.drawText(firstLine, {
                                     x: 375,
                                     y: height - 70,
@@ -1115,7 +1124,7 @@ const programOptions = options.map((option) => ({
             <div className="relative">
               <Select
                  isRequired
-                isDisabled={!selectedDate || loading  ||Training_Status === 'Completed'}
+                isDisabled={!selectedDate || loading  }
                 onChange={(selectedOption) => {
                   if (!selectedOption) return;
                   handleProgramChange({

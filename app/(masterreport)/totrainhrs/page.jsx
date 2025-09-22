@@ -11,7 +11,7 @@ import BackButton from "@/components/BackButton";
 const HeadCount = () => {
   // Tab state
   const [activeTab, setActiveTab] = useState("programwise");
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [trainingData, setTrainingData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [tableSearchTerm, setTableSearchTerm] = useState("");
@@ -748,6 +748,9 @@ const HeadCount = () => {
                             Program Name
                           </th>
                           <th className="border px-4 py-2 text-center">
+                          Training Date
+                          </th>
+                          <th className="border px-4 py-2 text-center">
                             Department
                           </th>
                           <th className="border px-4 py-2 text-center">
@@ -758,34 +761,53 @@ const HeadCount = () => {
                           </th>
                         </tr>
                       </thead>
-                      <tbody>
-                        {Object.entries(groupedData).map(([month, entries]) =>
-                          entries.map((entry, index) => (
-                            <tr key={`${month}-${index}`}>
-                              {index === 0 && (
-                                <td
-                                  rowSpan={entries.length}
-                                  className="border px-4 py-2 text-center font-semibold bg-muted"
-                                >
-                                  {month}
-                                </td>
-                              )}
-                              <td className="border px-4 py-2">
-                                {entry.Program_Name}
-                              </td>
-                              <td className="border px-4 py-2">
-                                {entry.Department}
-                              </td>
-                              <td className="border px-4 py-2 text-right">
-                                {entry.Persons}
-                              </td>
-                              <td className="border px-4 py-2 text-right">
-                                {entry.No_Hrs}
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
+     <tbody>
+  {Object.entries(groupedData).map(([month, entries]) => {
+    // Group by Program_Name and Training_Date
+    const groupedByProgram = {};
+    entries.forEach(entry => {
+      const key = `${entry.Program_Name}-${entry.Training_Date}`;
+      if (!groupedByProgram[key]) groupedByProgram[key] = [];
+      groupedByProgram[key].push(entry);
+    });
+
+    return Object.entries(groupedByProgram).map(([groupKey, groupEntries], idx) =>
+      groupEntries.map((entry, index) => (
+        <tr key={`${month}-${groupKey}-${index}`} className={entry.Program_Name === "Total" ? "bg-gray-100 font-bold" : ""}>
+                {/* Only display Month in the very first row for the whole month block */}
+          {idx === 0 && index === 0 && (
+            <td rowSpan={entries.length}
+                className="border font-bold text-center px-4 py-2 bg-muted">
+              {month}
+            </td>
+          )}
+      {index === 0 && (
+  <td
+    rowSpan={groupEntries.length}
+    className={`border px-4 py-2 ${
+      entry.Program_Name === "Total" ? "bg-gray-100 font-bold" : ""
+    }`}
+  >
+    {entry.Program_Name}
+  </td>
+)}
+
+          {index === 0 && (
+            <td rowSpan={groupEntries.length}
+                className="border px-4 py-2">
+              {entry.Training_Date}
+            </td>
+          )}
+    
+          <td className="border px-4 py-2">{entry.Department}</td>
+          <td className="border px-4 py-2 text-right">{entry.Persons}</td>
+          <td className="border px-4 py-2 text-right">{entry.No_Hrs}</td>
+        </tr>
+      ))
+    );
+  })}
+</tbody>
+
                     </table>
                   </div>
                   <div className="flex flex-wrap justify-between items-center mt-4 text-sm">

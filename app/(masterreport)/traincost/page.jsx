@@ -13,11 +13,10 @@ const TrainingBudget = () => {
   const [activeTab, setActiveTab] = useState("actual");
 
   // Common states
-  const [selectedDate, setSelectedDate] = useState(() => {
-    // Initialize selectedDate from localStorage if available
-    const storedYear = localStorage.getItem("selectedYear");
-    return storedYear ? new Date(parseInt(storedYear), 0, 1) : null;
-  });
+const [selectedDate, setSelectedDate] = useState(() => {
+  // Always default to current year on page load/refresh
+  return new Date(new Date().getFullYear(), 0, 1);
+});
   const [trainingData, setTrainingData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [tableSearchTerm, setTableSearchTerm] = useState("");
@@ -45,7 +44,7 @@ const TrainingBudget = () => {
   );
   const [budgetVsActualLoading, setBudgetVsActualLoading] = useState(false);
   const [budgetVsActualError, setBudgetVsActualError] = useState(null);
-  const [budgetVsActualSelectedDate, setBudgetVsActualSelectedDate] = useState(null);
+
 
 
   // Add this helper function to separate total rows from regular rows
@@ -266,11 +265,11 @@ const getSortedData = (data, sortConfig) => {
   }
 }, [selectedDate]);
 
-  useEffect(() => {
-    if (budgetVsActualSelectedDate && activeTab === "budgetVsActual")
-      fetchBudgetVsActualData(budgetVsActualSelectedDate);
-  }, [budgetVsActualSelectedDate, activeTab]);
-
+useEffect(() => {
+  if (selectedDate && activeTab === "budgetVsActual") {
+    fetchBudgetVsActualData(selectedDate);
+  }
+}, [selectedDate, activeTab]);
   const handleSort = (key) => {
     let direction = "asc";
     if (sortConfig.key === key && sortConfig.direction === "asc") {
@@ -505,9 +504,7 @@ const sortedBudgetVsActualData = getSortedData(budgetVsActualFilteredData, sortC
     const isActual = type === "actual";
     const orientation = isActual ? "portrait" : "landscape";
     const doc = new jsPDF(orientation, "mm", "a4");
-    const year = isActual
-      ? selectedDate?.getFullYear()
-      : budgetVsActualSelectedDate?.getFullYear();
+  const year = selectedDate?.getFullYear();
     const dateStr = new Date().toLocaleDateString("en-GB");
 
     const data = isActual ? filteredData : budgetVsActualFilteredData;
@@ -950,8 +947,8 @@ const sortedBudgetVsActualData = getSortedData(budgetVsActualFilteredData, sortC
             <div className="flex items-center space-x-2">
               <label className="text-sm font-medium">Year</label>
               <DatePicker
-                selected={budgetVsActualSelectedDate}
-                onChange={(date) => setBudgetVsActualSelectedDate(date)}
+                selected={selectedDate}
+                onChange={(date) => setSelectedDate(date)}
                 dateFormat="yyyy"
                 showYearPicker
                 placeholderText="Select Year"
@@ -976,7 +973,7 @@ const sortedBudgetVsActualData = getSortedData(budgetVsActualFilteredData, sortC
               <p>{budgetVsActualError}</p>
             </div>
           )}
-          {budgetVsActualSelectedDate &&
+          {selectedDate  &&
             !budgetVsActualLoading &&
             !budgetVsActualError && (
               <div className="card-body p-0 pb-3">

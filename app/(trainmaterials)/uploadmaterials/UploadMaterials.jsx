@@ -6,7 +6,7 @@ import { FaSearch } from "react-icons/fa";
 import Select from "react-select";
 
 export default function UploadMaterials() {
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [uploadedData, setUploadedData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [trainerOptions, setTrainerOptions] = useState([]);
@@ -128,31 +128,54 @@ useEffect(() => {
     }
   };
 
-  const handleMonthYearChange = async (date) => {
-    if (!date) return;
-    setSelectedDate(date);
+const handleMonthYearChange = async (date) => {
+  if (!date) return;
+  setSelectedDate(date);
 
-    const selectedMonth = date.getMonth() + 1;
-    const selectedYear = date.getFullYear();
-    setFormData((prev) => ({
-      ...prev,
-      selectedMonth: `${selectedMonth}-${selectedYear}`,
-    }));
+  const selectedMonth = date.getMonth() + 1;
+  const selectedYear = date.getFullYear();
+  setFormData((prev) => ({
+    ...prev,
+    selectedMonth: `${selectedMonth}-${selectedYear}`,
+  }));
 
-    try {
-      const res = await fetch(
-        `/api/upload_certificates_dropdown?month=${selectedMonth}&year=${selectedYear}`
-      );
-      const data = await res.json();
-      if (res.ok) {
-        setOptions(data);
-      } else {
-        throw new Error(data.error || "Error fetching data");
+  try {
+    const res = await fetch(
+      `/api/upload_certificates_dropdown?month=${selectedMonth}&year=${selectedYear}`
+    );
+    const data = await res.json();
+
+    if (res.ok) {
+      setOptions(data);
+
+      // auto-select if any program matches Training_Date
+      const matchedProgram = data.find((program) => {
+        const progDate = new Date(program.Training_Date);
+        return (
+          progDate.getMonth() + 1 === selectedMonth &&
+          progDate.getFullYear() === selectedYear
+        );
+      });
+
+      if (matchedProgram) {
+        setFormData((prev) => ({
+          ...prev,
+          Program_Id: matchedProgram.Value,
+        }));
       }
-    } catch (err) {
-      setError(err.message);
+    } else {
+      throw new Error(data.error || "Error fetching data");
     }
-  };
+  } catch (err) {
+    setError(err.message);
+  }
+};
+// after all your state definitions
+useEffect(() => {
+  if (selectedDate) {
+    handleMonthYearChange(selectedDate); // auto-load current month/year programs
+  }
+}, []); // only run once when component mounts
   useEffect(() => {
     // Retrieve the department, username, and employeeId from localStorage
     const storedDepartment = localStorage.getItem('department');

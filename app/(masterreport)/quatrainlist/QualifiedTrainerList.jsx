@@ -896,7 +896,7 @@ const [trainingName, setTrainingName] = useState([]);
         <td className="px-2 py-2 border">{item.Username}</td>
         <td className="px-2 py-2 border">
           {" "}
-          {new Date(item.DOJ).toLocaleDateString()}
+          {item.DOJ}
         </td>
         <td className="px-2 py-2 border">
           {item.Designation}{" "}
