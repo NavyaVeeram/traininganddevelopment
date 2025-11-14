@@ -5,12 +5,27 @@ import { motion } from "framer-motion";
 import { FiEye, FiEyeOff, FiUser, FiLock } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 
-export default function Home() {
+export default function LoginForm() {
   const [employeeId, setEmployeeId] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+const images = [
+  "/assets/loginimage.png",
+  "/assets/img.jpg",
+  "/assets/img1.jpg",
+  "/assets/img2.jpg",
+  "/assets/img3.jpg",
+     "/assets/img7.jpg",
+  "/assets/img5.jpg",
+    "/assets/img6.jpg",
+  "/assets/ecg.jpg",
+  "/assets/img10.jpg",
+  "/assets/img8.jpg",
+  "/assets/img9.jpg",
+
+];
 
   const router = useRouter();
 
@@ -397,84 +412,116 @@ export default function Home() {
           </motion.footer>
         </div>
 
-        {/* Right Image Panel */}
+ {/* Right Image Panel */}
+<motion.div
+  initial={{ opacity: 0, x: 100, rotateY: -15 }}
+  animate={{ opacity: 1, x: 0, rotateY: 0 }}
+  transition={{ delay: 0.8, duration: 1.5, ease: "backOut" }}
+  className="flex items-center justify-center w-full md:w-1/2 min-h-[250px] md:min-h-0 pr-4"
+>
+  <motion.div
+    whileHover={{ scale: 1.02 }}
+    transition={{ duration: 0.3 }}
+    className="relative w-500 h-40 sm:h-52 md:h-[80vh] overflow-hidden group mr-10"
+  >
+    {/* Gradient Border */}
+    <div className="absolute inset-0 bg-gradient-to-r from-sky-500 via-sky-700 to-sky-800 rounded-[2.5rem] p-0.5 group-hover:p-0.5 transition-all duration-300">
+      <div className="w-full h-full rounded-[2.25rem] overflow-hidden relative">
+        
+        {/* Image Carousel */}
         <motion.div
-          initial={{ opacity: 0, x: 100, rotateY: -15 }}
-          animate={{ opacity: 1, x: 0, rotateY: 0 }}
-          transition={{ delay: 0.8, duration: 1.5, ease: "backOut" }}
-          className="flex items-center justify-center w-full md:w-1/2 min-h-[250px] md:min-h-0 pr-4"
+          animate={{
+            x: [
+              "0%", "0%", "-10%", "-10%", "-20%", "-20%", "-30%", "-30%",
+              "-40%", "-40%", "-50%", "-50%", "-60%", "-60%", "-70%", "-70%",
+              "-80%", "-80%", "-90%", "-90%", "0%" // loop back
+            ],
+          }}
+          transition={{
+            duration: 40, // cycle through all 10
+            times: Array.from({ length: 21 }, (_, i) => i / 20),
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          className="flex w-[1000%] h-full"
         >
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.3 }}
-            className="relative w-full h-56 sm:h-72 md:h-[90vh] overflow-hidden group"
-          >
-            {/* Gradient Border Effect with Increased Radius */}
-            <div className="absolute inset-0 bg-gradient-to-r from-sky-500 via-sky-700 to-sky-800 rounded-[2.5rem] p-0.5 group-hover:p-0.5 transition-all duration-300">
-              <div className="w-full h-full rounded-[2.25rem] overflow-hidden relative">
-                <Image
-                  src="/assets/loginimage.png"
-                  alt="Login Banner"
-                  fill
-                  priority
-                  className="object-cover transition-all duration-700 group-hover:scale-105 rounded-[2.25rem]"
-                  style={{
-                    objectPosition: "right center",
-                  }}
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                />
-                
-                {/* Overlay Effects */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-[2.25rem]" />
-                
-                {/*  Animated Light Effect  */}
-                <motion.div
-                  animate={{
-                    x: ["-190%", "190%"],
-                  }}
-                  transition={{
-                    duration: 4,
-                    repeat: Infinity,
-                    repeatDelay: 3,
-                    ease: "easeInOut",
-                  }}
-                  className="absolute top-0 left-0 w-96 h-full bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12 opacity-70"
-                  style={{
-                    filter: 'blur(1px)',
-                    background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 20%, rgba(255,255,255,0.4) 40%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.4) 60%, rgba(255,255,255,0.1) 80%, transparent 100%)'
-                  }}
-                />
-              </div>
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div
+              key={i}
+              className="relative w-1/10 h-full flex-shrink-0 overflow-hidden"
+            >
+              <Image
+                src={images[i]}
+                alt={`Banner ${i + 1}`}
+                fill
+                priority
+                className="object-cover w-full h-full"
+                style={{ objectPosition: "center" }}
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+
+              {/* Shimmer effect */}
+              <motion.div
+                animate={{ x: ["-200%", "200%"] }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  repeatDelay: 6,
+                  delay: i * 3, // stagger shimmer
+                  ease: "easeInOut",
+                }}
+                className="absolute top-0 left-0 h-full w-[120%] z-20"
+                style={{
+                  background:
+                    "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 25%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.2) 75%, transparent 100%)",
+                  transform: "skewX(-20deg)",
+                  opacity: 0.8,
+                }}
+              />
             </div>
-            
-            {/* Floating Elements */}
-            <motion.div
-              animate={{
-                y: [0, -10, 0],
-                rotate: [0, 5, 0],
-              }}
-              transition={{
-                duration: 4,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              className="absolute top-8 right-8 w-4 h-4 bg-yellow-400/60 rounded-full blur-sm"
-            />
-            <motion.div
-              animate={{
-                y: [0, 10, 0],
-                rotate: [0, -5, 0],
-              }}
-              transition={{
-                duration: 6,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: 1,
-              }}
-              className="absolute bottom-12 right-16 w-3 h-3 bg-blue-400/60 rounded-full blur-sm"
-            />
-          </motion.div>
+          ))}
         </motion.div>
+
+        {/* Indicators */}
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-30">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <motion.div
+              key={i}
+              animate={{
+                opacity: Array(21).fill(0.4).map((val, idx) =>
+                  idx === i * 2 + 2 || idx === i * 2 + 3 ? 1 : val
+                ),
+                scale: Array(21).fill(1).map((val, idx) =>
+                  idx === i * 2 + 2 || idx === i * 2 + 3 ? 1.2 : val
+                ),
+              }}
+              transition={{
+                duration: 40,
+                times: Array.from({ length: 21 }, (_, t) => t / 20),
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="w-2 h-2 bg-white/90 rounded-full"
+            />
+          ))}
+        </div>
+
+        {/* Floating Elements */}
+        <motion.div
+          animate={{ y: [0, -10, 0], rotate: [0, 5, 0] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-8 right-8 w-4 h-4 bg-yellow-400/60 rounded-full"
+        />
+        <motion.div
+          animate={{ y: [0, 10, 0], rotate: [0, -5, 0] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          className="absolute bottom-12 right-16 w-3 h-3 bg-blue-400/60 rounded-full"
+        />
+      </div>
+    </div>
+  </motion.div>
+</motion.div>
+
       </div>
     </div>
   );

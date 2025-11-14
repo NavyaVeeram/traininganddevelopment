@@ -1,5 +1,7 @@
 "use client";
-import { FaSearch } from "react-icons/fa";
+import { FaSearch,FaPrint } from "react-icons/fa";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { useMemo, useState, useEffect, useRef } from "react";
 import Select from "react-select";
 import AsyncSelect from "react-select/async";
@@ -31,6 +33,9 @@ const EmployeeHistoryList = () => {
 
   // New state to store file extensions for uploaded files keyed by `${Program_Id}_${EmployeeId}_${year}`
   const [fileExtensions, setFileExtensions] = useState({});
+
+
+
 
   useEffect(() => {
     // Removed setting EmployeeId from localStorage to avoid default display in Select dropdown
@@ -195,7 +200,163 @@ const loadOptions = async (inputValue) => {
     return [];
   }
 };
+const handleDownloadPDF = async () => {
+  if (!selectedEmployee) {
+    alert("Please select an employee");
+    return;
+  }
 
+  if (!selectedDate) {
+    alert("Please select the month and year");
+    return;
+  }
+
+  const parts = selectedEmployee.label.split("|").map((p) => p.trim());
+  const empName = parts[1] || selectedEmployee.label;
+  const employeeId = selectedEmployee.value;
+
+  try {
+    const [tableRes, detailsRes] = await Promise.all([
+      fetch(`/api/get_employee_history_table?EmployeeId=${employeeId}`),
+      fetch(`/api/get_emp_history?EmployeeId=${employeeId}`),
+    ]);
+
+    const employeeData = await tableRes.json();
+    const employeeDetails = await detailsRes.json();
+
+    if (!employeeData || employeeData.length === 0) {
+      alert("No data found for this employee");
+      return;
+    }
+    if (!employeeDetails || employeeDetails.length === 0) {
+      alert("No data found for this employee");
+      return;
+    }
+
+    const doc = new jsPDF("p", "mm", "a4");
+
+    // Header
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("TRAINING AND DEVELOPMENT", 14, 15);
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text("Employee Training History", 14, 19);
+
+    doc.setFontSize(7);
+    doc.text(
+      `We are following "IATF 16949 CAPD Method 10.3 Continuous Improvement Spirit to improve our GTI"`,
+      14,
+      23
+    );
+
+    // Employee details table
+    autoTable(doc, {
+      startY: 25,
+      tableWidth: 180,
+      margin: { left: 14, right: 14 },
+      body: [
+        ["Employee Name:", employeeDetails.Username, "DOJ:", employeeDetails.DOJ],
+        ["Employee ID:", employeeDetails.EmployeeId, "Employee Category:", employeeDetails.Emp_Category],
+        ["Designation:", employeeDetails.Designation, "Employee Type:", employeeDetails.Emp_Type],
+        ["Section:", employeeDetails.Section, "Employee Status:", employeeDetails.IsActive === "Active" ? "Active" : "Left"],
+        ["Department:", employeeDetails.Department, "Total Training Hours:", employeeDetails.No_Hrs],
+      ],
+      styles: { fontSize: 9, cellPadding: 3, lineWidth: 0.1, textColor: [0, 0, 0] },
+      columnStyles: {
+        0: { fontStyle: "bold", cellWidth: 40 },
+        1: { cellWidth: 50 },
+        2: { fontStyle: "bold", cellWidth: 40 },
+        3: { cellWidth: 50 },
+      },
+    });
+
+    // Main training history table
+    const finalY = doc.lastAutoTable.finalY;
+    const headers = [["S.No", "Category", "Program Name", "Mode", "Hours", "Conducted on"]];
+    const dataRows = employeeData.map((item, index) => [
+      index + 1,
+      item.Training_Name || "",
+      item.Program_Name || "",
+      item.Train_Mode || "",
+      item.No_Hrs || "",
+      item.Training_Date || "",
+    ]);
+
+    autoTable(doc, {
+      startY: finalY + 5,
+      head: headers,
+      body: dataRows,
+      theme: "grid",
+      tableWidth: 180,
+      margin: { left: 14, right: 14, top: 35, bottom: 30 },
+      styles: {
+        fontSize: 8,
+        cellPadding: 1.8,
+        valign: "middle",
+        halign: "left",
+        lineWidth: 0.1,
+        lineColor: "#5f5e5e",
+      },
+      columnStyles: {
+        0: { halign: "center", cellWidth: 15 }, // S.No
+        1: { halign: "center",cellWidth: 30 },
+        2: { cellWidth: 55 },
+        3: {halign: "center", cellWidth: 25 },
+        4: {halign: "center", cellWidth: 25 },
+        5: {halign: "center", cellWidth: 30 },
+      },
+      headStyles: {
+        fillColor: [240, 240, 240],
+        textColor: 0,
+        fontStyle: "bold",
+        halign: "center",
+        lineWidth: 0.1,
+        lineColor: "#5f5e5e",
+      },
+      didDrawPage: function (data) {
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+
+        const today = new Date();
+        const formattedDate = today
+          .toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+          .replace(/ /g, "-");
+
+        // Footer text
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text(
+          `Greentech Industries (India) Pvt. Ltd @ HR ${formattedDate} By Syam Prasad`,
+          pageWidth / 2,
+          pageHeight - 5,
+          { align: "center" }
+        );
+      },
+    });
+
+    // ✅ Add page numbers after all tables are drawn
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      const pageWidth = doc.internal.pageSize.getWidth();
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Page: ${String(i).padStart(2, "0")} of ${String(pageCount).padStart(2, "0")}`, pageWidth - 40, 20);
+    }
+
+    const filename = `Employee_${empName.replace(/\s+/g, "_")}_${selectedDate.toLocaleString(
+      "default",
+      { month: "short" }
+    )}_${selectedDate.getFullYear()}.pdf`;
+
+    doc.save(filename);
+  } catch (err) {
+    console.error("Error generating PDF:", err);
+    alert("Error generating PDF. Please try again.");
+  }
+};
 
 
   const handleClearTableSearch = async () => {
@@ -275,6 +436,7 @@ const loadOptions = async (inputValue) => {
     }
     const selectedEmployeeId = selectedOption.value;
     setEmployeeId(selectedEmployeeId);
+    setSelectedEmployee(selectedOption);  // Add this line
     setTrainingDetails({
       Username: "",
       Department: "",
@@ -634,7 +796,8 @@ const handleTableSearchChange = (e) => {
               Total Hrs
             </label>
             <input
-              type="text"
+              type="number"
+              //  step="any"
               value={trainingDetails?.No_Hrs ?? ""}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
@@ -659,15 +822,15 @@ const handleTableSearchChange = (e) => {
               type="text"
               value={(() => {
                 if (
-                  trainingDetails.IsActive === 1 ||
-                  trainingDetails.IsActive === "1"
+                  // trainingDetails.IsActive === 1 ||
+                  trainingDetails.IsActive === "Active"
                 )
                   return "Active";
                 if (
-                  trainingDetails.IsActive === 0 ||
-                  trainingDetails.IsActive === "0"
+                  // trainingDetails.IsActive === 0 ||
+                  trainingDetails.IsActive === "Left"
                 )
-                  return "Inactive";
+                  return "Left";
                 return "";
               })()}
               readOnly
@@ -715,8 +878,20 @@ const handleTableSearchChange = (e) => {
                     </select>
                     <span>entries</span>
                   </div>
+<div className="flex ">
+     {selectedEmployee && (
+    <button
+      onClick={handleDownloadPDF}
+      className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded shadow-md transition-colors duration-200"
+      aria-label="Download PDF Report"
+      title="Download Training Report"
+    >
+      <FaPrint />
+    </button>
+  )}
 
-                  <div className="relative">
+         
+                  <div className="relative ml-2">
                     <input
                       type="text"
                       className="border p-1 pt-[0.9] pl-8 rounded bg-secondary"
@@ -727,7 +902,7 @@ const handleTableSearchChange = (e) => {
                     <FaSearch className="absolute left-2 top-2 text-gray-400" />
                   </div>
                 </div>
-
+</div>
                 <div className="overflow-x-auto">
                   <table
                     className="min-w-full border rounded-lg bg-card text-sm"
@@ -736,7 +911,8 @@ const handleTableSearchChange = (e) => {
                     <thead className="bg-muted sticky top-0 z-10">
                       <tr>
                         {[
-                          { key: "EmployeeId", label: "Employee ID" },
+                          {key : "S.no", label: "S.No"},
+                       //   { key: "EmployeeId", label: "Employee ID" },
                           { key: "Training_Name", label: "Category" },
                           { key: "Program_Name", label: "Program Name" },
                           { key: "Train_Mode", label: "Training Mode" },
@@ -766,8 +942,11 @@ const handleTableSearchChange = (e) => {
                       {paginatedData.length > 0 ? (
                         paginatedData.map((item, index) => (
                           <tr key={index} className="hover:bg-muted border">
-                            <td className="px-4 py-2 border left-0 bg-white z-10">
+                            {/* <td className="px-4 py-2 border left-0 bg-white z-10">
                               {item.EmployeeId}
+                            </td> */}
+                             <td className="px-4 py-2 border left-0 bg-white z-10">
+                              { index + 1}
                             </td>
                             <td className="px-4 py-2 border">
                               {item.Training_Name}
@@ -783,12 +962,23 @@ const handleTableSearchChange = (e) => {
                               {item.Training_Date}
                             </td>
                             <td className="px-4 py-2 border">
-                              <input
-                                disabled={uploading}
-                                type="file"
-                                accept="application/pdf,image/jpeg,image/png"
-                                onChange={(e) => handleFileUpload(e, item)}
-                              />
+                            <div style={{ position: "relative" }}>
+    <input
+      type="file"
+      id={`file-upload-${index}`}
+      style={{ display: "none" }}
+      accept="application/pdf,image/jpeg,image/png"
+      onChange={(e) => handleFileUpload(e, item)}
+    />
+    <label
+      htmlFor={`file-upload-${index}`}
+      className={`custom-file-label ${
+        uploading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+      }`}
+    >
+      {item.selectedFileName ? item.selectedFileName : "No file chosen"}
+    </label>
+  </div>
                             </td>
                             <td className="px-4 py-2 border">
                               <button

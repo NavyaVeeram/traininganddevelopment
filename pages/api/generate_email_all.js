@@ -82,7 +82,7 @@ export default async function handler(req, res) {
     try {
       const programNamesResults = await Promise.all(
         programIdsArray.map(id =>
-          prisma.$queryRawUnsafe("EXEC [dbo].[Get_TET_Form_Program_Name] @Program_Id = '" + id + "'")
+          prisma.$queryRawUnsafe("EXEC [dbo].[Get_TET_Form_Program_Name] @Program_Ids = '" + id + "'")
         )
       );
       programNames = programNamesResults.flat().map(p => p.Program_Name || '').filter(name => name);

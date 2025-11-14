@@ -306,6 +306,15 @@ const TetReportsforTL = () => {
               ))}
             </tbody>
           </table>
+          {/* Add this after the closing </table> tag, inside or after the scrollable div */}
+<div style={{ 
+  marginTop: "1rem", 
+  padding: "0.5rem",
+  fontWeight: "bold",
+  borderTop: "2px solid #ccc"
+}}>
+  Selected: {selectedEmployees.length} / {options.length}
+</div>
         </div>
 
         {/* Update TL popup modal */}

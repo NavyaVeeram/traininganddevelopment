@@ -365,7 +365,8 @@ export default function TrainingDataTable() {
                            <td className="border p-2 text-left">{item.Program_Name}</td>
                            <td className="border p-2 text-left">{item.Train_Mode}</td>
                            <td className="border p-2 text-left">{item.Persons}</td>
-                           <td className="border p-2 text-left">{item.No_Hrs}</td>
+                         <td className="border p-2 text-left">{item.No_Hrs?.toFixed(1)}</td>
+
                            <td className="border p-2 text-left">{item.No_Times}</td>
                            <td className="border p-2 text-left">{item.Req_Months}</td>
                            <td className="border p-2 text-left">{item.Evaluation_Period}</td>
@@ -655,7 +656,7 @@ export default function TrainingDataTable() {
                       <label className="block font-semibold">Hours</label>
                       <input
                         type="number"
-                        step="1"
+                        step="0.1"
                         min="0"
                         value={editingData.No_Hrs}
                         onChange={(e) => handleInputChange(e, 'No_Hrs')}

@@ -48,8 +48,10 @@ const masterreport = [
 ];
 
 const trainingcertificates = [
-  { title: "Upload Certificates", href: "/uploadcer" },
-  { title: "Upload Materials", href: "/uploadmaterials" },
+  { title: "Upload Certificates", href: "/uploadcer" 
+  },
+  { title: "Upload Materials", href: "/uploadmaterials"
+  },
 ];
 
 const menuGroups = [
@@ -68,16 +70,11 @@ const menuGroups = [
   },
   {
     title: "Upload",
-    items: trainingcertificates,
-    show: (role: string) =>
-      role !== "Res_Person" && role !== "HOS" && role !== "HOD",
+    items: trainingcertificates
   },
   {
     title: "T & D Report",
-    items: masterreport,
-    show: (role: string, dept: string) =>
-      ["Res_Person", "HR_Res", "HR_Hod", "HOS", "HOD"].includes(role) &&
-      !(role === "Res_Person" && dept !== "MS" && dept !== "FNTRY"),
+    items: masterreport,  
   },
 ];
 
@@ -181,6 +178,7 @@ const handleNavigation = (href: string) => {
         component.title === "Requirement - IATF/HSE" &&
         accessRole !== "Res_Person" &&
         accessRole !== "HOS" &&
+        accessRole !== "HOD" &&
         accessRole !== "HR_Res"
       )
         return false;
@@ -204,6 +202,12 @@ const handleNavigation = (href: string) => {
         accessRole !== "HR_Hod"
       )
         return false;
+        if (
+  component.title === "Update TL" &&
+  department !== "MS" &&
+  department !== "FNTRY"
+)
+  return false;
       if (
         component.title === "Monthly Training Particulars" &&
         accessRole !== "HOS" &&
@@ -234,18 +238,6 @@ const handleNavigation = (href: string) => {
         accessRole !== "HR_Hod"
       )
         return false;
-      if (
-        component.title === "Upload Certificates" &&
-        accessRole !== "HR_Res" &&
-        accessRole !== "HR_Hod"
-      )
-        return false;
-      if (
-        component.title === "Upload Materials" &&
-        accessRole !== "HR_Res" &&
-        accessRole !== "HR_Hod"
-      )
-        return false;
       const normalizedAccessRole = accessRole
         ? accessRole.trim().toUpperCase()
         : "";
@@ -253,6 +245,7 @@ const handleNavigation = (href: string) => {
         return false;
       if (
         component.title === "Qualified Trainers List" &&
+         accessRole !== "Res_Person" &&
         accessRole !== "HR_Res" &&
         accessRole !== "HR_Hod" &&
         accessRole !== "HOS" &&
@@ -318,7 +311,7 @@ const handleNavigation = (href: string) => {
       <div className="flex items-center space-x-2 ml-auto mr-12">
         {menuGroups.map((group) => {
           const show = group.show
-            ? group.show(accessRole ?? "", department)
+            ? group.show(accessRole ?? "")
             : true;
           if (!show) return null;
           const filteredItems = filterMenu(group.items);
@@ -410,11 +403,9 @@ const handleNavigation = (href: string) => {
             {accessRole !== "Res_Person" && (
               <MobileMenuGroup title="Training Effectiveness" items={filterMenu(tet)} handleNavigation={handleNavigation} />
             )}
-            {accessRole !== "Res_Person" &&
-              accessRole !== "HOS" &&
-              accessRole !== "HOD" && (
+           
                 <MobileMenuGroup title="Upload" items={filterMenu(trainingcertificates)} handleNavigation={handleNavigation} />
-              )}
+          
             {(accessRole === "Res_Person" ||
               accessRole === "HR_Res" ||
               accessRole === "HR_Hod" ||

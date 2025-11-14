@@ -76,11 +76,21 @@ export default function UploadCertificates() {
   }));
   // Trainer options will be set from get_training_att_entry API response
 
+
+  useEffect(() => {
+    if (formData.Program_Id) {
+      fetchTrainingData(formData.Program_Id);
+    }
+  }, [formData.Program_Id]);
   useEffect(() => {
     const storedEmployeeId = localStorage.getItem("employeeId");
-
-    if (storedEmployeeId) {
+    const storedDepartment = localStorage.getItem("department");
+    if (storedEmployeeId && storedDepartment) {
       setEmployeeId(storedEmployeeId);
+      setDepartment(storedDepartment);
+    } else {
+      window.location.href = "/";
+      return;
     }
 
     const fetchAccessRole = async () => {
@@ -89,37 +99,19 @@ export default function UploadCertificates() {
           `/api/get_access_role?employeeId=${storedEmployeeId}`
         );
         const data = await res.json();
-
         if (res.ok && data.Access_Role) {
-          // Restrict access for HR_Res and HR_HOD roles
-          if (
-            data.Access_Role === "HOS" ||
-            data.Access_Role === "HOD" ||
-            data.Access_Role === "Res_Person"
-          ) {
-            setIsAuthorized(false);
-            return;
-          }
           setAccessRole(data.Access_Role);
           setIsAuthorized(true);
         } else {
           setIsAuthorized(false);
         }
-      } catch (error) {
-        console.error("Error fetching access role:", error);
+      } catch {
         setIsAuthorized(false);
       }
     };
 
     fetchAccessRole();
   }, []);
-
-  useEffect(() => {
-    if (formData.Program_Id) {
-      fetchTrainingData(formData.Program_Id);
-    }
-  }, [formData.Program_Id]);
-
   const fetchTrainingData = async (programId) => {
     try {
       const res = await fetch(
@@ -389,6 +381,7 @@ const handleMonthYearChange = async (date) => {
     label: option.Text,
   }));
   
+  if (isAuthorized === null) return null;
   if (isAuthorized === false) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
@@ -399,12 +392,14 @@ const handleMonthYearChange = async (date) => {
       </div>
     );
   }
+
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
       <div className="bg-sky-400 text-white p-2 rounded-t-lg">
         <h2 className="font-semibold">Upload Certificates</h2>
       </div>
       <BackButton />
+     {accessRole !== 'Res_Person' && accessRole !== 'HOS' && accessRole !== 'HOD' && (    
       <form onSubmit={handleUpload} className="space-y-6 mt-4">
         {/* Grid Layout */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -534,7 +529,7 @@ const handleMonthYearChange = async (date) => {
           </div>
         </div>
       </form>
-
+        )}
       {loading ? (
         <div className="text-center py-4">Loading data...</div>
       ) : error ? (

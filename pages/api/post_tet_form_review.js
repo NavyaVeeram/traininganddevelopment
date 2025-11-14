@@ -29,7 +29,7 @@ export default async function handler(req, res) {
       
       // Calling the stored procedure (or executing a query) via Prisma
       const result = await prisma.$executeRaw`
-        EXEC dbo.sp_Post_Tet_Form_Review 
+        EXEC dbo.Post_Tet_Form_Review 
           ${Program_Id}, 
           ${EmployeeId}, 
           ${Q_1}, 

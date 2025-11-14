@@ -97,27 +97,9 @@ export default async function handler(req, res) {
         return res.status(200).json({ message: 'Last submission successful', email: null });
       }
 
-      // Use username from request body if provided, else fetch from DB
-      let usernameToUse = username || '';
-      if (!usernameToUse) {
-        try {
-          const user = await prisma.userMaster_HR.findFirst({
-            where: { EmployeeId: trainingEmployeeId },
-            select: { Username: true },
-          });
-          if (user && user.Username) {
-            usernameToUse = user.Username;
-          } else {
-            console.warn(`Username not found for EmployeeId: ${trainingEmployeeId}`);
-          }
-        } catch (userError) {
-          console.error('Error fetching username:', userError);
-          return res.status(500).json({ message: 'Failed to fetch username' });
-        }
-      }
 
       // Generate email content inline
-      const emailHtmlContent = generateEmailHTML(usernameToUse, trainingEmployeeId);
+      const emailHtmlContent = generateEmailHTML(username, trainingEmployeeId);
 
       let transporter;
       try {

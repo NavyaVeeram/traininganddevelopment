@@ -127,6 +127,9 @@ const [employeeId, setEmployeeId] = useState(null);
     if (res.ok) {
       checkAllFormsFilled(programId);
     }
+      if (window.opener) {
+      window.opener.location.reload(); // Refreshes the parent TETForms page
+    }
   };
 
   useEffect(() => {

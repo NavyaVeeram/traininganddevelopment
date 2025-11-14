@@ -224,7 +224,8 @@ const HeadCount = () => {
     setdepartmentwiseError(null);
     try {
       const year = date.getFullYear();
-      const deptcode = selectedDepartment;
+const deptcode = selectedDepartment ?? null;
+
       const response = await fetch(
         `/api/get_data_by_department_head_count?year=${year}&Department=${deptcode}`
       );
@@ -433,11 +434,11 @@ const HeadCount = () => {
         {data.map((item, index) => (
           <tr key={item.EmployeeId || index}>
             <td className="px-4 py-2 border">{item.EmployeeId}</td>
-            <td className="px-4 py-2 border">{item.Username}</td>
+            <td className="px-4 py-2 border" style={{minWidth: "90px", maxWidth: "120px"}}>{item.Username}</td>
             <td className="px-4 py-2 border">{item.Department}</td>
             <td className="px-4 py-2 border">{item.Section}</td>
             <td className="px-4 py-2 border">{item.Designation}</td>
-            <td className="px-4 py-2 border">{item.DOJ}</td>
+            <td className="px-4 py-2 border" style={{minWidth: "120px", maxWidth: "250px"}}>{item.DOJ}</td>
             <td className="px-4 py-2 border">
               {item.IsActive}
             </td>
@@ -613,16 +614,7 @@ const HeadCount = () => {
               />
             </div>
 
-            {/* Excel Export Button */}
-            {selectedDate && !loading && !error && filteredData.length > 0 && (
-              <button
-                onClick={() => exportToExcel()}
-                className="flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-medium"
-                title="Export to Excel"
-              >
-                <FaFileExcel size={18} />
-              </button>
-            )}
+          
           </div>
 
          
@@ -639,8 +631,19 @@ const HeadCount = () => {
              {!loading && !error && (
                 <div className="card-body p-0 pb-3">
                   <div className="p-4 bg-card">
-                    <div className="flex flex-wrap justify-between items-center mb-4 space-y-2">
-                      <div className="flex items-center space-x-2 text-sm"></div>
+                    <div className="flex flex-wrap justify-end items-center mb-4 space-y-2">
+
+                     <div className="flex items-center space-x-2">
+                    {/* Excel Export Button */}
+            {selectedDate && !loading && !error && filteredData.length > 0 && (
+              <button
+                onClick={() => exportToExcel()}
+                className="flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-medium"
+                title="Export to Excel"
+              >
+                <FaFileExcel size={18} />
+              </button>
+            )}   
                       <div className="relative">
                         <input
                           type="text"
@@ -650,6 +653,7 @@ const HeadCount = () => {
                           className="border p-1 pl-8 rounded bg-secondary"
                         />
                         <FaSearch className="absolute left-2 top-2 text-gray-400" />
+                      </div>
                       </div>
                     </div>
                     <div>
@@ -749,7 +753,7 @@ const HeadCount = () => {
                       options.find((o) => o.value === selectedDepartment) || null
                     }
                     onChange={(option) =>
-                      setSelectedDepartment(option?.value || "")
+                      setSelectedDepartment(option?.value || null)
                     }
                     placeholder="Select Department"
                     styles={{
@@ -779,18 +783,7 @@ const HeadCount = () => {
                 </div>
               </div>
 
-              {/* Right Section: Export Button */}
-              {departmentwiseSelectedDate && selectedDepartment && !departmentwiseLoading && !departmentwiseError && departmentwiseFilteredData.length > 0 && (
-                <div className="flex items-center">
-                  <button
-                    onClick={() => exportToExcel()}
-                    className="flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-medium"
-                    title="Export to Excel"
-                  >
-                    <FaFileExcel size={18} />
-                  </button>
-                </div>
-              )}
+          
             </div>
           </div>
 
@@ -807,8 +800,22 @@ const HeadCount = () => {
             !departmentwiseError && (
               <div className="card-body p-0 pb-3">
                 <div className="p-4 bg-card">
-                  <div className="flex flex-wrap justify-between items-center mb-4 space-y-2">
-                    <div className="flex items-center space-x-2 text-sm"></div>
+                  <div className="flex  flex-wrap justify-end items-center mb-4 space-y-2">
+                   
+           <div className="flex items-center space-x-2">
+              {departmentwiseSelectedDate && selectedDepartment && !departmentwiseLoading && !departmentwiseError && departmentwiseFilteredData.length > 0 && (
+                <div className="flex items-center">
+                  <button
+                    onClick={() => exportToExcel()}
+                    className="flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-medium"
+                    title="Export to Excel"
+                  >
+                    <FaFileExcel size={18} />
+                  </button>
+                </div>
+              )}
+            
+
                     <div className="relative">
                       <input
                         type="text"
@@ -818,6 +825,7 @@ const HeadCount = () => {
                         className="border p-1 pl-8 rounded bg-secondary"
                       />
                       <FaSearch className="absolute left-2 top-2 text-gray-400" />
+                    </div>
                     </div>
                   </div>
                   <div>

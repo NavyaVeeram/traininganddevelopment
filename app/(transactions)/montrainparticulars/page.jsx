@@ -357,18 +357,7 @@ const handleDownloadPDF = () => {
         </div>
 
         {/* Right: Download Button */}
-       { selectedDate && filteredData.length > 0  && (
-        <div>
-          <button
-            onClick={handleDownloadPDF}
-            className="flex items-center cursor-pointer mr-2 space-x-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-1 px-3 rounded"
-            aria-label="Download PDF"
-            title="Download PDF"
-          >
-            <FaPrint />
-          </button>
-        </div>
-       )}
+    
       </div>
 
       {/* Display loading and error messages */}
@@ -404,7 +393,21 @@ const handleDownloadPDF = () => {
                 </select>
                 <span>entries</span>
               </div>
-
+              <div className="flex items-center space-x-2">
+<div>
+     { selectedDate && filteredData.length > 0  && (
+        <div>
+          <button
+            onClick={handleDownloadPDF}
+            className="flex items-center cursor-pointer mr-2 space-x-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-1 px-3 rounded"
+            aria-label="Download PDF"
+            title="Download PDF"
+          >
+            <FaPrint />
+          </button>
+        </div>
+       )}
+</div>
               <div className="relative">
                 <input
                   type="text"
@@ -414,6 +417,7 @@ const handleDownloadPDF = () => {
                   className="border p-1 pl-8 rounded bg-secondary"
                 />
                 <FaSearch className="absolute left-2 top-2 text-gray-400" />
+              </div>
               </div>
             </div>
 

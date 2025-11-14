@@ -338,8 +338,23 @@ const TETForms = () => {
                 </select>
                 <span>entries</span>
               </div>
-            </div>
 
+  <div className="flex flex-wrap justify-end items-center mb-4 space-y-2">          
+ <div className="relative">
+                    <input
+                      type="text"
+                      value={tableSearchTerm}
+                      onChange={handleTableSearchChange} // Remove the conditional check here
+                      placeholder="Search..."
+                      className={`border p-1 pl-8 rounded bg-secondary 
+                        }`}
+                      // disabled={isFinalized}
+                      // readOnly={isFinalized}
+                    />
+                    <FaSearch className="absolute left-2 top-2 text-gray-400" />
+                  </div>
+                  </div>
+                              </div>
             <div className="overflow-auto">
               <div>
                 <table

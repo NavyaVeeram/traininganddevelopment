@@ -10,9 +10,10 @@ export default async function handler(req, res) {
 
     try {
       // Call the stored procedure to get the training entry details by Program_Id
-      const trainingDetails = await prisma.$queryRaw`
-        EXEC dbo.Get_Training_Att_Entry @Program_Id = ${program_id}
-      `;
+     const program_id_raw = req.query.program_id; // e.g. "1412,1413"
+const program_id = parseInt(program_id_raw.split(',')[0].trim(), 10); // get first ID as integer
+
+const trainingDetails = await prisma.$queryRaw`EXEC dbo.Get_Training_Att_Entry @Program_Id = ${program_id}`;
       
       if (trainingDetails.length === 0) {
         return res.status(404).json({ error: "No details found for the provided Program ID" });

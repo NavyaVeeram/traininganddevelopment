@@ -341,6 +341,22 @@ const TETForms = () => {
                 </select>
                 <span>entries</span>
               </div>
+              
+                <div className="flex flex-wrap justify-end items-center mb-4 space-y-2">          
+               <div className="relative">
+                                  <input
+                                    type="text"
+                                    value={tableSearchTerm}
+                                    onChange={handleTableSearchChange} // Remove the conditional check here
+                                    placeholder="Search..."
+                                    className={`border p-1 pl-8 rounded bg-secondary 
+                                      }`}
+                                    // disabled={isFinalized}
+                                    // readOnly={isFinalized}
+                                  />
+                                  <FaSearch className="absolute left-2 top-2 text-gray-400" />
+                                </div>
+                                </div>
             </div>
 
             <div className="overflow-auto">
@@ -423,7 +439,7 @@ const TETForms = () => {
                             {item.Training_Status}
                           </td>
                           <td className="px-4 py-2 border text-blue-600 underline">
-                            {item.isViewReportEnabled ? (
+                            {/* {item.isViewReportEnabled ? (
                               <Link
                                 href={`/tetreports?id=${item.Program_Id}`}
                                 target="_blank"
@@ -436,7 +452,15 @@ const TETForms = () => {
                               <span className="text-gray-400 cursor-not-allowed">
                                 View Report
                               </span>
-                            )}
+                            )} */}
+                            <Link
+  href={`/tetreports?id=${item.Program_Id}`}
+  target="_blank"
+  rel="noopener noreferrer"
+  className="text-blue-600 underline"
+>
+  View Report
+</Link>
                           </td>
                         </tr>
                       ))

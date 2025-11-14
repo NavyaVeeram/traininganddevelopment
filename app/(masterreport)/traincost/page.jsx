@@ -695,7 +695,7 @@ const sortedBudgetVsActualData = getSortedData(budgetVsActualFilteredData, sortC
               }`}
             onClick={() => setActiveTab("actual")}
           >
-            Actual Training Budget
+        Estimated Budget
           </button>
           <button
             className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${activeTab === "budgetVsActual"
@@ -704,24 +704,12 @@ const sortedBudgetVsActualData = getSortedData(budgetVsActualFilteredData, sortC
               }`}
             onClick={() => setActiveTab("budgetVsActual")}
           >
-            Training Budget vs Actual Budget
+           Estimated Budget vs Actual Cost
           </button>
         </div>
 
         {/* Right side: Print Button */}
-        <div>
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              generateBudgetPDF(activeTab);
-            }}
-            className="flex items-center cursor-pointer space-x-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-1 px-3 rounded"
-            aria-label="Export PDF"
-            title="Export PDF"
-          >
-            <FaPrint />
-          </button>
-        </div>
+ 
       </div>
 
       {activeTab === "actual" && (
@@ -764,8 +752,21 @@ const sortedBudgetVsActualData = getSortedData(budgetVsActualFilteredData, sortC
           {selectedDate && !loading && !error && (
             <div className="card-body p-0 pb-3">
               <div className="p-4 bg-card">
-                <div className="flex flex-wrap justify-between items-center mb-4 space-y-2">
-                  <div className="flex items-center space-x-2 text-sm"></div>
+                <div className="flex flex-wrap justify-end items-center mb-4 space-y-2">
+        <div className="flex items-center space-x-2">
+                     <div>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              generateBudgetPDF(activeTab);
+            }}
+            className="flex items-center cursor-pointer space-x-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-1 px-3 rounded"
+            aria-label="Export PDF"
+            title="Export PDF"
+          >
+            <FaPrint />
+          </button>
+        </div>
                   <div className="relative">
                     <input
                       type="text"
@@ -778,6 +779,7 @@ const sortedBudgetVsActualData = getSortedData(budgetVsActualFilteredData, sortC
                       // readOnly={isFinalized}
                     />
                     <FaSearch className="absolute left-2 top-2 text-gray-400" />
+                  </div>
                   </div>
                 </div>
                 <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-300px)]">

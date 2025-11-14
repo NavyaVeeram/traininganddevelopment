@@ -26,6 +26,8 @@ export default function UploadMaterials() {
   const [department, setDepartment] = useState('');
   const [username, setUsername] = useState('');
   const [employeeId, setEmployeeId] = useState('');
+  const [accessRole, setAccessRole] = useState(null);
+  const [isAuthorized, setIsAuthorized] = useState(null);
   const [formData, setFormData] = useState({
     Program_Id: "",
     Training_Name: "",
@@ -176,23 +178,23 @@ useEffect(() => {
     handleMonthYearChange(selectedDate); // auto-load current month/year programs
   }
 }, []); // only run once when component mounts
-  useEffect(() => {
-    // Retrieve the department, username, and employeeId from localStorage
-    const storedDepartment = localStorage.getItem('department');
-    const storedUsername = localStorage.getItem('username');
-    const storedEmployeeId = localStorage.getItem('employeeId');
+  // useEffect(() => {
+  //   // Retrieve the department, username, and employeeId from localStorage
+  //   const storedDepartment = localStorage.getItem('department');
+  //   const storedUsername = localStorage.getItem('username');
+  //   const storedEmployeeId = localStorage.getItem('employeeId');
 
-    // If data is found, update state
-    if (storedDepartment && storedUsername && storedEmployeeId) {
-      setDepartment(storedDepartment);
-      setUsername(storedUsername);
-      setEmployeeId(storedEmployeeId);
-    } else {
-      // If no data found, redirect to login page
-      window.location.href = '/';
-    }
-    // Removed fetchData and trainingData usage as trainingData state is unused
-  }, [department, username, employeeId]);
+  //   // If data is found, update state
+  //   if (storedDepartment && storedUsername && storedEmployeeId) {
+  //     setDepartment(storedDepartment);
+  //     setUsername(storedUsername);
+  //     setEmployeeId(storedEmployeeId);
+  //   } else {
+  //     // If no data found, redirect to login page
+  //     window.location.href = '/';
+  //   }
+  //   // Removed fetchData and trainingData usage as trainingData state is unused
+  // }, [department, username, employeeId]);
   const handleUpload = async (e) => {
     e.preventDefault();
 
@@ -259,7 +261,38 @@ useEffect(() => {
   };
 
   useEffect(() => {
+
     fetchUploadedData();
+  }, []);
+  useEffect(() => {
+    const storedEmployeeId = localStorage.getItem("employeeId");
+    const storedDepartment = localStorage.getItem("department");
+    if (storedEmployeeId && storedDepartment) {
+      setEmployeeId(storedEmployeeId);
+      setDepartment(storedDepartment);
+    } else {
+      window.location.href = "/";
+      return;
+    }
+
+    const fetchAccessRole = async () => {
+      try {
+        const res = await fetch(
+          `/api/get_access_role?employeeId=${storedEmployeeId}`
+        );
+        const data = await res.json();
+        if (res.ok && data.Access_Role) {
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+        }
+      } catch {
+        setIsAuthorized(false);
+      }
+    };
+
+    fetchAccessRole();
   }, []);
 
   const fetchUploadedData = async () => {
@@ -369,11 +402,25 @@ const programOptions = options.map((option) => ({
   //       console.error("Failed to fetch file", err);
   //     });
   // }, [formData.Program_Id]);
+  if (isAuthorized === null) return null;
+  if (isAuthorized === false) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+        <div className="bg-white p-10 rounded shadow text-center">
+          <h2 className="text-2xl font-bold">Unauthorized</h2>
+          <p className="mt-2">You do not have access to view this page.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
-      <div className="bg-sky-400 text-white p-2 rounded-t-lg">
-        <h2 className="font-semibold">Upload Materials</h2>
+  
+      <div className="bg-sky-400 text-white p-2 rounded-t-lg">       
+        <h2 className="font-semibold">Upload Materials</h2> 
       </div>
+           {accessRole !== 'Res_Person' && accessRole !== 'HOS' && accessRole !== 'HOD' && (
       <form onSubmit={handleUpload} className="space-y-6 mt-4">
   {/* Grid Layout */}
   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -491,12 +538,13 @@ const programOptions = options.map((option) => ({
   </div>
 </div>
 </form>
-
+          )}
       {loading ? (
         <div className="text-center py-4">Loading data...</div>
       ) : error ? (
         <div className="text-center py-4 text-red-500">{error}</div>
       ) : uploadedData.length > 0 ? (
+
         <div className="card-body p-0 overflow-x-auto pb-3">
           <div className="card-body p-0 overflow-x-auto pb-3">
             <div className="p-4 bg-card">
@@ -687,6 +735,7 @@ const programOptions = options.map((option) => ({
             </div>
           </div>
         </div>
+
       ) : (
         <div className="text-center py-4 text-gray-500">
           No Files Uploaded Yet.

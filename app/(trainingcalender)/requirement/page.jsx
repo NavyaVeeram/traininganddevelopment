@@ -949,19 +949,19 @@ Category
 </div>
 <div className="space-y-0.5"> 
   <label htmlFor="For" className="block text-sm font-medium text-gray-900">
-    For:
+    Aimed For
   </label>
   <Select
     id="For"
     name="For"
     options={[
-      { value: "SELF", label: "Self Department" },
+      { value: "SELF", label: "Self " },
       { value: "COMN", label: "Common (COMN)" },
       { value: "WOMEN", label: "Women Employees" }, // ✅ Added new option
     ]}
     value={
       [
-        { value: "SELF", label: "Self Department" },
+        { value: "SELF", label: "Self " },
         { value: "COMN", label: "Common (COMN)" },
         { value: "WOMEN", label: "Women Employees" },
       ].find(option => option.value === formData.For) || null

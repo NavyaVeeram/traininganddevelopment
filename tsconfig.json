@@ -22,6 +22,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/not-found.js", "components/ui/Navbar.jsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/not-found.js", "components/ui/Navbar.jsx", "app/page.jsx", "components/EmployeePDF.js"],
   "exclude": ["node_modules"]
 }

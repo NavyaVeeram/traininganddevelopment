@@ -82,9 +82,10 @@ const HeadCount = () => {
       dataToExport = programwiseFilteredData;
       sheetName = "Program Wise Summary";
       formattedData = dataToExport.map((item) => ({
-        Month: item.Month_Name || "",
+        Month: item.Req_Months || "",
+         Training_Name: item.Training_Name || "",
+           "Training Mode": item.Train_Mode || "",
         "Program Name": item.Program_Name || "",
-        Department: item.Department || "",
         Persons: item.Persons || "",
         "Total No. Of Hrs": item.No_Hrs || "",
       }));
@@ -338,8 +339,8 @@ const HeadCount = () => {
   }, [activeTab]);
 
   const groupedData = programwiseFilteredData.reduce((acc, row) => {
-    if (!acc[row.Month_Name]) acc[row.Month_Name] = [];
-    acc[row.Month_Name].push(row);
+    if (!acc[row.Req_Months]) acc[row.Req_Months] = [];
+    acc[row.Req_Months].push(row);
     return acc;
   }, {});
 
@@ -508,9 +509,10 @@ const HeadCount = () => {
       const lowerSearchQuery = searchQuery.toLowerCase();
       const filtered = programwiseData.filter((trainer) => {
         return [
-          "Month_Name",
+          "Req_Months",
+          "Training_Name",
+          "Train_Mode",
           "Program_Name",
-          "Department",
           "Persons",
           "No_Hrs",
         ].some((field) =>
@@ -533,8 +535,9 @@ const HeadCount = () => {
   // Render table rows with conditional text field for additional training programs in actual tab
   const renderdepartmentwiseTableRows = (data, isActualTab = true) => {
     return data.map((item, index) => {
+        const isTotalRow = item.Department === "Total";
       return (
-        <tr key={item.EmployeeId || index}>
+        <tr key={item.EmployeeId || index} className={isTotalRow ? "bg-gray-100 font-bold" : ""}>
           <td className="px-4 py-2 border">{item.Department}</td>
           <td className="px-4 py-2 border text-right">{item.Jan_Emp}</td>
           <td className="px-4 py-2 border text-right">{item.Jan_Hrs}</td>
@@ -569,8 +572,9 @@ const HeadCount = () => {
 
   const renderdesignationwiseTableRows = (data, isActualTab = true) => {
     return data.map((item, index) => {
+          const isTotalRow = item.Emp_Type === "Total";
       return (
-        <tr key={item.EmployeeId || index}>
+        <tr key={item.EmployeeId || index} className={isTotalRow ? "bg-gray-100 font-bold" : ""}>
           <td className="px-4 py-2 border">{item.Emp_Type}</td>
           <td className="px-4 py-2 border text-right">{item.Jan_Emp}</td>
           <td className="px-4 py-2 border text-right">{item.Jan_Hrs}</td>
@@ -606,9 +610,10 @@ const HeadCount = () => {
     return data.map((item, index) => {
       return (
         <tr key={item.Program_Id || index}>
-          <td className="px-4 py-2 border">{item.Month_Name}</td>
+          <td className="px-4 py-2 border">{item.Req_Months}</td>
+         <td className="px-4 py-2 border">{item.Training_Name}</td>
+          <td className="px-4 py-2 border">{item.Train_Mode}</td>
           <td className="px-4 py-2 border">{item.Program_Name}</td>
-          <td className="px-4 py-2 border">{item.Department}</td>
           <td className="px-4 py-2 border">{item.Persons}</td>
           <td className="px-4 py-2 border">{item.No_Hrs}</td>
         </tr>
@@ -691,18 +696,7 @@ const HeadCount = () => {
               }}
             />
           </div>
-          {selectedDate && ( 
-           <div className="p-2 bg-white  flex justify-end">
-        <button
-          onClick={() => exportToExcel()}
-          className=" p-8 flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-medium cursor-pointer"
-          title="Export to Excel"
-        >
-          <FaFileExcel size={18}  />
-
-        </button>
-      </div>
-          )}
+ 
         </div>
         
       </div>
@@ -721,9 +715,21 @@ const HeadCount = () => {
             !programwiseError && (
               <div className="card-body p-0 pb-3">
                 <div className="p-4 bg-card">
-                  <div className="flex flex-wrap justify-between items-center mb-4 space-y-2">
-                    <div className="flex items-center space-x-2 text-sm"></div>
-                    <div className="relative">
+                  <div className="flex flex-wrap justify-end items-center mb-4 space-y-2">
+               <div className="flex items-center space-x-2 text-sm">        
+                 {selectedDate && ( 
+           <div className="p-2 bg-white  flex justify-end">
+        <button
+          onClick={() => exportToExcel()}
+          className=" p-8 flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-medium cursor-pointer"
+          title="Export to Excel"
+        >
+          <FaFileExcel size={18}  />
+
+        </button>
+      </div>
+          )}
+                       <div className="relative">
                       <input
                         type="text"
                         value={programwiseSearchTerm}
@@ -732,11 +738,13 @@ const HeadCount = () => {
                         className="border p-1 pl-8 rounded bg-secondary"
                       />
                       <FaSearch className="absolute left-2 top-2 text-gray-400" />
-                    </div>
+                    </div></div>   
+                  
+       
                   </div>
                   <div>
                     <table
-                      className="min-w-full border z-0 rounded-lg bg-card text-sm"
+                      className="min-w-full border z-0 rounded-lg bg-card text-sm overflow-auto"
                       style={{ tableLayout: "fixed", fontSize: "13px" }}
                     >
                       <thead className="bg-muted sticky top-0">
@@ -744,15 +752,16 @@ const HeadCount = () => {
                           <th className="border px-4 py-2 text-center">
                             Months
                           </th>
+                                           <th className="border px-4 py-2 text-center">
+                            Training Name
+                          </th>         
                           <th className="border px-4 py-2 text-center">
                             Program Name
                           </th>
                           <th className="border px-4 py-2 text-center">
                           Training Date
                           </th>
-                          <th className="border px-4 py-2 text-center">
-                            Department
-                          </th>
+
                           <th className="border px-4 py-2 text-center">
                             Persons
                           </th>
@@ -781,7 +790,10 @@ const HeadCount = () => {
               {month}
             </td>
           )}
+           <td className="border px-4 py-2">{entry.Training_Name}</td>
+
       {index === 0 && (
+        
   <td
     rowSpan={groupEntries.length}
     className={`border px-4 py-2 ${
@@ -799,8 +811,7 @@ const HeadCount = () => {
             </td>
           )}
     
-          <td className="border px-4 py-2">{entry.Department}</td>
-          <td className="border px-4 py-2 text-right">{entry.Persons}</td>
+                   <td className="border px-4 py-2 text-right">{entry.Persons}</td>
           <td className="border px-4 py-2 text-right">{entry.No_Hrs}</td>
         </tr>
       ))
@@ -852,7 +863,7 @@ const HeadCount = () => {
 
                 <div>
                   <table
-                    className="min-w-full border rounded-lg bg-card text-sm"
+                    className="min-w-full border rounded-lg bg-card text-sm overflow-auto"
                     style={{ tableLayout: "fixed", fontSize: "13px" }}
                   >
                     <thead className="bg-muted sticky top-0 ">
@@ -955,7 +966,7 @@ const HeadCount = () => {
 
                   <div>
                     <table
-                      className="min-w-full border  rounded-lg bg-card text-sm"
+                      className="min-w-full border  rounded-lg bg-card text-sm overflow-x-scroll "
                       style={{ tableLayout: "fixed", fontSize: "13px" }}
                     >
                       <thead className="bg-muted sticky top-0 ">

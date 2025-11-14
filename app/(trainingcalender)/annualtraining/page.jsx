@@ -577,6 +577,7 @@ const AnnualTraining = () => {
 
       {!loading && !error && trainingData.length > 0 && (
         <>
+        <div className="my-7 text-sm">
           <table
             ref={tableRef}
             id="annual-training-table"
@@ -656,28 +657,27 @@ const AnnualTraining = () => {
                             {groupedData[monthKey] &&
                               groupedData[monthKey][week] ? (
                               <ul className="list-disc list-outside pl-5 m-0 p-0">
-                                {groupedData[monthKey][week].map(
-                                  (item, idx) => {
-                                    // Use Tailwind classes conditionally
-                                    let textClass = "";
+                          {groupedData[monthKey][week].map((item, idx) => {
+  let textClass = "";
 
-                                    if (item.Special_Position) {
-                                      textClass = "text-green-600 font-semibold";
-                                    } else if (item.Is_Additional) {
-                                      textClass = "text-blue-600 font-semibold";
-                                    } else if (item.Is_External) {
-                                      textClass = "text-purple-600 font-semibold";
-                                    }
-                                    return (
-                                      <li
-                                        key={idx}
-                                        className={`mb-1 break-words whitespace-normal max-w-full ${textClass}`}
-                                      >
-                                        {item.Program_Name}
-                                      </li>
-                                    );
-                                  }
-                                )}
+if (item.Is_Additional && item.Is_External) {
+  textClass = "text-blue-600 font-semibold"; // Both Additional & External
+} else if (item.Is_External) {
+  textClass = "text-purple-600 font-semibold"; // Only External
+} else if (item.Special_Position) {
+  textClass = "text-green-600 font-semibold"; // Special Position
+}
+
+  return (
+    <li
+      key={idx}
+      className={`mb-1 break-words whitespace-normal max-w-full ${textClass}`}
+    >
+      {item.Program_Name}
+    </li>
+  );
+})}
+
                               </ul>
                             ) : (
                               "-"
@@ -691,6 +691,7 @@ const AnnualTraining = () => {
               })}
             </tbody>
           </table>
+          </div>
         </>
       )}
     </div>

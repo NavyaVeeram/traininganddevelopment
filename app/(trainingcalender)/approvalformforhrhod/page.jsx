@@ -729,7 +729,7 @@ export default function TrainingDataTable() {
                           <label className="block font-semibold ">Week No</label>
                           <input
                             type="text"
-                            value={editingData.Week ?? ""}
+                            value={editingData.Week || ""}
                             onChange={(e) => handleInputChange(e, "Week")}
                             className="border p-2 w-70 rounded-md"
                             autoComplete="off"
@@ -762,6 +762,24 @@ export default function TrainingDataTable() {
                         type="text"
                         value={editingData.Evaluation_Period}
                         onChange={(e) => handleInputChange(e, "Evaluation_Period")}
+                        className="border p-2 w-70 rounded-md"
+                      />
+                    </div>
+                        <div>
+                      <label className="block font-semibold ">Week</label>
+                      <input
+                        type="text"
+                        value={editingData.Week}
+                        onChange={(e) => handleInputChange(e, "Week")}
+                        className="border p-2 w-70 rounded-md"
+                      />
+                    </div>
+                      <div>
+                      <label className="block font-semibold ">Training Budget</label>
+                      <input
+                        type="text"
+                        value={editingData.Training_Budget ?? ""}
+                        onChange={(e) => handleInputChange(e, "Training_Budget")}
                         className="border p-2 w-70 rounded-md"
                       />
                     </div>

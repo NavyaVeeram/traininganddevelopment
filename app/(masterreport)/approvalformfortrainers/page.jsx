@@ -566,7 +566,7 @@ export default function TrainerApprovalForm() {
         return user && user.Flag === 1 ? "Approve disabled for already approved items" : "";
       })}
     />
-    {accessRole !== "HOS" &&(
+    {accessRole !== "Res_Person" &&(
       <EmailRejectionForTrainers
         selectedQualIds={selectedQualIds}
       />

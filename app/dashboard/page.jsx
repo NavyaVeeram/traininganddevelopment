@@ -34,9 +34,10 @@ const BLUE_COLORS = ["#1d4ed8", "#3b82f6", "#60a5fa", "#93c5fd", "#bfdbfe"];
 const GREEN_COLORS = ["#4ade80", "#166534", "#15803d", "#16a34a", "#22c55e"];
 
 const Dashboard = () => {
-  const [department, setDepartment] = useState("");
-  const [username, setUsername] = useState("");
-  const [employeeId, setEmployeeId] = useState("");
+   const [department, setDepartment] = useState('');
+    const [section,setSection] = useState('');
+    const [username, setUsername] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
   const [typedUsername, setTypedUsername] = useState("");
   const intervalRef = useRef(null);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -45,7 +46,8 @@ const Dashboard = () => {
   const [iatfDeptData, setIatfDeptData] = useState([]);
   const [hseDeptData, setHseDeptData] = useState([]);
   const [monthWiseBudgetIatfData, setMonthWiseBudgetIatfData] = useState([]);
-
+  const [accessRole, setAccessRole] = useState(null);
+  const [isAuthorized, setIsAuthorized] = useState(null);
   // Helper function to fill missing months with zero data
   const fillMissingMonths = (data) => {
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -80,19 +82,55 @@ const Dashboard = () => {
       .catch(() => setMonthWiseBudgetIatfData([]));
   }, [selectedYear]);
 
-  const computeStats = (data) => {
-    if (!data.length) return { total: 0, completed: 0, rate: 0 };
-    const total = data.reduce((sum, d) => sum + (d.Total || 0), 0);
-    const completed = data.reduce((sum, d) => sum + (d.Completed || 0), 0);
-    const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
-    return { total, completed, rate };
-  };
+const computeStats = (data) => {
+  if (!data.length) return { total: 0, completed: 0, rate: 0, cancelled: 0, pending: 0 };
+  
+  const total = data.reduce((sum, d) => sum + (d.Total || 0), 0);
+  const completed = data.reduce((sum, d) => sum + (d.Completed || 0), 0);
+  const cancelled = data.reduce((sum, d) => sum + (d.Cancelled || 0), 0);
+  const pending = data.reduce((sum, d) => sum + (d.Pending || 0), 0);
+  
+  const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+  
+  return { total, completed, rate, cancelled, pending };
+};
+
 
   const fillMissingMonthsBudget = (data) => {
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const dataMap = new Map(data.map(d => [d.Req_Month, d]));
     return months.map(month => dataMap.get(month) || { Req_Month: month, Training_Budget: 0, Actual_Budget: 0 });
   };
+  useEffect(() => {
+    const storedEmployeeId = localStorage.getItem("employeeId");
+    const storedDepartment = localStorage.getItem("department");
+    if (storedEmployeeId && storedDepartment) {
+      setEmployeeId(storedEmployeeId);
+      setDepartment(storedDepartment);
+    } else {
+      window.location.href = "/";
+      return;
+    }
+
+    const fetchAccessRole = async () => {
+      try {
+        const res = await fetch(
+          `/api/get_access_role?employeeId=${storedEmployeeId}`
+        );
+        const data = await res.json();
+        if (res.ok && data.Access_Role) {
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+        }
+      } catch {
+        setIsAuthorized(false);
+      }
+    };
+
+    fetchAccessRole();
+  }, []);
 
   const renderMonthWiseBudgetChart = (data, title) => {
     const chartData = data.map(d => ({
@@ -101,6 +139,17 @@ const Dashboard = () => {
       Actual_Budget: d.Actual_Budget || 0,
     }));
 
+  if (isAuthorized === null) return null;
+  if (isAuthorized === false) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+        <div className="bg-white p-10 rounded shadow text-center">
+          <h2 className="text-2xl font-bold">Unauthorized</h2>
+          <p className="mt-2">You do not have access to view this page.</p>
+        </div>
+      </div>
+    );
+  }
     return (
       <div className="rounded-xl px-4 py-3 bg-white shadow-md max-h-[400px] overflow-hidden">
         <h2 className="font-semibold text-gray-800 mb-4">{title}</h2>
@@ -176,15 +225,20 @@ const Dashboard = () => {
   const hseStats = computeStats(hseData);
 
   const renderBarChart = (data, title, stat, totalColor, completedColor, labelColor) => {
-    const chartData = data.map((d) => ({
-      Req_Month: d.Req_Month,
-      Total: d.Total || 0,
-      Completed: d.Completed || 0,
-    }));
+ const chartData = data.map((d) => ({
+  Req_Month: d.Req_Month,
+  Total: d.Total || 0,
+  Completed: d.Completed || 0,
+    Cancelled: d.Cancelled || 0,
+  Pending: d.Pending || 0,
+
+}));
+
 
     return (
       <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
         <div key={title} className="rounded-xl p-6">
+       
           <div className="flex items-center justify-between mb-4">
             <div className="flex gap-2 items-center">
               <TrendingUp className="text-gray-500 w-5 h-5" />
@@ -194,6 +248,7 @@ const Dashboard = () => {
               Completion Rate: {stat.rate}%
             </span>
           </div>
+   
           {data.length ? (
             <ChartContainer
               config={{
@@ -240,7 +295,9 @@ const Dashboard = () => {
                     );
                   }} />
                   <Bar dataKey="Total" fill={totalColor} stackId="a" radius={[2, 2, 0, 0]} />
-                  <Bar dataKey="Completed" fill={completedColor} stackId="a" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Completed" fill={completedColor} stackId="a" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="Pending" fill="orange" stackId="a" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Cancelled" fill="red" stackId="a" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartContainer>
@@ -317,7 +374,8 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-6">
       <div className="max-w-7xl mx-auto">
-        <div className="flex mb-8">
+
+   <div className="flex mb-8">
           <div className="bg-gradient-to-r from-blue-400 to-green-400 shadow rounded-lg p-4 flex items-left gap-3 border">
             <Calendar className="w-5 h-5 text-blue-700" />
             <DatePicker
@@ -329,20 +387,27 @@ const Dashboard = () => {
               }}
               showYearPicker
               dateFormat="yyyy"
+               minDate={new Date(2025, 0, 1)}
               className="border px-3 py-1 rounded focus:outline-none bg-white text-blue-700"
             />
 
           </div>
         </div>
 
-        {/* Weekly Training Component - Added here */}
-        <WeeklyTrainingComponent selectedYear={selectedYear} />
+  <WeeklyTrainingComponent selectedYear={selectedYear} />
+
+
+       
+   {[ "HOS","HR_Res", "HOD", "HR_Hod"].includes(accessRole) && (
+    <>
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             {[
               { label: "IATF Total", value: iatfStats.total, icon: <BookOpen className="w-8 h-8 text-white" />, bg: "bg-blue-400" },
               { label: "IATF Completed", value: iatfStats.completed, icon: <GiArrowScope className="w-6 h-6 text-white" />, bg: "bg-blue-700" },
+              // { label: "IATF Pending", value: iatfStats.pending, icon: <GiArrowScope className="w-6 h-6 text-white" />, bg: "bg-blue-700" },
+              // { label: "IATF Cancelled", value: iatfStats.cancelled, icon: <GiArrowScope className="w-6 h-6 text-white" />, bg: "bg-blue-700" },
               { label: "HSE Total", value: hseStats.total, icon: <BookOpen className="w-8 h-8 text-white" />, bg: "bg-green-400" },
               { label: "HSE Completed", value: hseStats.completed, icon: <GiArrowScope className="w-6 h-6 text-white" />, bg: "bg-green-700" },
             ].map(({ label, value, icon, bg }) => (
@@ -357,18 +422,19 @@ const Dashboard = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-10 mb-12">
-          {renderBarChart(fillMissingMonths(iatfData), "IATF Monthly Training", iatfStats, "#6cb0fc", "#1d4ed8", "text-blue-600")}
-          {renderBarChart(fillMissingMonths(hseData), "HSE Monthly Training", hseStats, "#52eb87", "#15803d", "text-green-700")}
+          {renderBarChart(fillMissingMonths(iatfData), "IATF Monthly Training", iatfStats, "#6cb0fc", "#1d4ed8", "red","orange","text-blue-600")}
+          {renderBarChart(fillMissingMonths(hseData), "HSE Monthly Training", hseStats, "#52eb87", "#15803d", "red","orange","text-green-700")}
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
           {renderPieChart(iatfDeptData, "IATF by Department", BLUE_COLORS)}
           {renderPieChart(hseDeptData, "HSE by Department", GREEN_COLORS)}
         </div>
-
         <div className="mt-20  max-w-7xl " >
           {renderMonthWiseBudgetChart(fillMissingMonthsBudget(monthWiseBudgetIatfData), "Training Cost ")}
         </div>
+    </>
+    )}
       </div>
     </div>
   );

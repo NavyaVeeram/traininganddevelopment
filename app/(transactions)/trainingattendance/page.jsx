@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import { FaFileExcel } from "react-icons/fa";
+import * as XLSX from "xlsx";
 import { faEdit, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { FaFilePdf, FaSearch, FaPrint } from "react-icons/fa";
@@ -17,7 +19,7 @@ import BackButton from "@/components/BackButton";
 const animatedComponents = makeAnimated();
 
 const TrainingAttendanceForm = () => {
-  
+  const [isLoadingDropdown, setIsLoadingDropdown] = useState(false);
     const [mounted, setMounted] = useState(false);
     const [year, setYear] = useState("");
     const [selectedMonth, setSelectedMonth] = useState(null);
@@ -262,7 +264,7 @@ const currentYear = currentDate.getFullYear();
   }, [department, username, employeeId]);
   const fetchEmployees = async () => {
     try {
-      const res = await fetch("/api/user_dropdown");
+      const res = await fetch("/api/user_dropdown_attendance");
       const data = await res.json();
       const formatted = data.map((item) => ({
         value: item.Value,
@@ -293,12 +295,12 @@ const currentYear = currentDate.getFullYear();
 
     fetchTrainers();
   }, []);
-useEffect(() => {
-  if (trainingName) {
-    const currentDate = new Date();
-    handleMonthYearChange(currentDate);
-  }
-}, [trainingName]);
+// useEffect(() => {
+//   if (trainingName) {
+//     const currentDate = new Date();
+//     handleMonthYearChange(currentDate);
+//   }
+// }, [trainingName]);
   const dialogMessageRef = useRef("");
 
   useEffect(() => {
@@ -313,7 +315,7 @@ useEffect(() => {
   if (selectedDate && trainingName) {
     handleMonthYearChange(selectedDate);
   }
-}, [trainingName]);
+}, [trainingName,selectedDate]);
   const fetchTrainingData = async (programId, trainingName) => {
     try {
       setTimeout(() => {
@@ -350,8 +352,8 @@ useEffect(() => {
         Trainer: trainingData.Trainer || "",
         Venue: trainingData.Venue || "",
         Actual_Budget: trainingData.Actual_Budget || "",
-        EmployeeIds: trainingData.EmployeeId
-          ? trainingData.EmployeeId.split(",").map((id) => id.trim())
+        EmployeeIds: trainingData.EmployeeIds
+          ? trainingData.EmployeeIds.split(",").map((id) => id.trim())
           : [],
       }));
 
@@ -407,12 +409,16 @@ useEffect(() => {
 const handleMonthYearChange = async (date) => {
   if (!date) return;
   setSelectedDate(date);
-
+    setIsLoadingDropdown(true);
+  setOptions([]);
   const selectedMonth = date.getMonth() + 1;
   const selectedYear = date.getFullYear();
+  // Pad month with leading zero
+  const formattedMonth = selectedMonth.toString().padStart(2, '0')
   setFormData((prev) => ({
     ...prev,
-    selectedMonth: `${selectedMonth}-${selectedYear}`,
+    selectedMonth: `${formattedMonth}-${selectedYear}`,
+     Program_Id: "", 
   }));
 
   // Use the current trainingName state instead of formData.Training_Name
@@ -467,7 +473,9 @@ const handleMonthYearChange = async (date) => {
      } catch (error) {
        console.error('Error fetching access role:', error);
        setIsAuthorized(false);
-     }
+     }finally {
+    setIsLoadingDropdown(false);
+};
    };
  
    fetchAccessRole();
@@ -517,11 +525,12 @@ const handleSubmit = async (e) => {
     const { EmployeeIds, Training_Status, Training_Date } = formData;
 
     // Validation for Training Date / Status
+    if (!isCancelChecked) {
     if (!Training_Date && !Training_Status) {
       alert("Either Training Date or Training Status must be selected.");
       return;
     }
-
+  }
     // Validation for max allowed employees
     if (Training_Date) {
       const maxAllowedEmployees = Number(formData.Persons) || 0;
@@ -567,7 +576,7 @@ if (!programIdsParam) {
       Actual_Budget: formData.Actual_Budget || null,
       EmployeeIds: formData.EmployeeIds || null,
       CreatedBy: (formData.CreatedBy || localStorage.getItem("employeeId") || "").trim(),
-      Cancel: document.getElementById("Cancel")?.checked ? 1 : 0,
+      Cancel: isCancelChecked ? 1 : 0,
     };
 
     setLoading(true);
@@ -748,8 +757,9 @@ const empRes = await fetch(`/api/get_tet_form_emp_details?id=${encodeURIComponen
       mergedPdf.registerFontkit(fontkit);
 
       // const font = await mergedPdf.embedFont(StandardFonts.HelveticaBold);
+      //user support
 const fontBytes = await fetch("/fonts/cambriab.ttf").then(res => res.arrayBuffer());
-
+// const fontBytes = await fetch("/fonts/CALIBRI.ttf").then(res => res.arrayBuffer());
 // Embed it in the PDF
 const font = await mergedPdf.embedFont(fontBytes);
     // Fetch data from API for PDF generation
@@ -846,33 +856,79 @@ const font = await mergedPdf.embedFont(fontBytes);
           });
           // Split Program_Name into two lines for drawing
         // Split Program_Name into two lines for drawing  
-         const ProgramName = emp.Program_Name || "";
-                                if (ProgramName.length > 30) {
-                                  const firstLine = ProgramName.substring(0, 30);
-                                  const secondLine = ProgramName.substring(30);
-                                  page.drawText(firstLine, {
-                                    x: 375,
-                                    y: height - 70,
-                                    size: 10,
-                                    font,
-                                    color: rgb(0, 0, 0),
-                                  });
-                                  page.drawText(secondLine, {
-                                    x: 375,
-                                    y: height - 85,
-                                    size: 10,
-                                    font,
-                                    color: rgb(0, 0, 0),
-                                  });
-                                } else {
-                                  page.drawText(ProgramName, {
-                                    x: 375,
-                                    y: height - 70,
-                                    size: 10,
-                                    font,
-                                    color: rgb(0, 0, 0),
-                                  });
-                                }
+        //  const ProgramName = emp.Program_Name || "";
+        //                         if (ProgramName.length > 24) {
+        //                           const firstLine = ProgramName.substring(0, 24);
+        //                           const secondLine = ProgramName.substring(24);
+        //                           page.drawText(firstLine, {
+        //                             x: 375,
+        //                             y: height - 70,
+        //                             size: 10,
+        //                             font,
+        //                             color: rgb(0, 0, 0),
+        //                           });
+        //                           page.drawText(secondLine, {
+        //                             x: 375,
+        //                             y: height - 85,
+        //                             size: 10,
+        //                             font,
+        //                             color: rgb(0, 0, 0),
+        //                           });
+        //                         } else {
+        //                           page.drawText(ProgramName, {
+        //                             x: 375,
+        //                             y: height - 70,
+        //                             size: 10,
+        //                             font,
+        //                             color: rgb(0, 0, 0),
+        //                           });
+        //                         }
+        function wrapText(text, maxCharsPerLine, maxLines = 2) {
+  const words = text.split(" ");
+  const lines = [];
+  let currentLine = "";
+
+  for (let word of words) {
+    // If adding the word exceeds max length, push currentLine to lines
+    if ((currentLine + (currentLine ? " " : "") + word).length > maxCharsPerLine) {
+      lines.push(currentLine.trim());
+      currentLine = word; // start new line with the word
+      if (lines.length >= maxLines - 1) break; // only allow up to maxLines
+    } else {
+      currentLine += (currentLine ? " " : "") + word;
+    }
+  }
+
+  if (currentLine && lines.length < maxLines) {
+    lines.push(currentLine.trim());
+  }
+
+  return lines;
+}
+
+// Usage
+const ProgramName = emp.Program_Name || "";
+const wrappedLines = wrapText(ProgramName, 30, 5);
+
+if (wrappedLines.length > 0) {
+  page.drawText(wrappedLines[0], {
+    x: 375,
+    y: height - 70,
+    size: 10,
+    font,
+    color: rgb(0, 0, 0),
+  });
+}
+if (wrappedLines.length > 1) {
+  page.drawText(wrappedLines[1], {
+    x: 375,
+    y: height - 85,
+    size: 10,
+    font,
+    color: rgb(0, 0, 0),
+  });
+}
+
 if (
   emp.External_Trainer === "NULL" ||
   emp.External_Trainer === null ||
@@ -999,6 +1055,31 @@ if (emp.External_Trainer && typeof emp.External_Trainer === "string") {
     setMounted(true);
   }, []);
 
+  const exportToExcel = () => {
+  if (!filteredData || filteredData.length === 0) {
+    alert("No data to export");
+    return;
+  }
+
+  // Convert SQL result to Excel-friendly format
+  const formattedData = filteredData.map((item) => ({
+    "Program Id": item.Program_Id || "",
+    Status: item.Status === 1 ? "Active" : "Inactive", // Optional readability
+    "Employee ID": item.EmployeeId || "",
+    "Employee Name": item.Username || "",
+    Department: item.Department || "",
+    Section: item.Section || "",
+    Designation: item.Designation || "",
+    "Date of Joining": item.DOJ || "",
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(formattedData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Employee Details");
+
+  XLSX.writeFile(workbook, "Employee_Details.xlsx");
+};
+
   if (!mounted) {
     return null;
   }
@@ -1007,7 +1088,6 @@ const programOptions = options.map((option) => ({
   label: option.Text,
 }));
 
-    // 🔒 Unauthorized view
   if (isAuthorized === false) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
@@ -1225,11 +1305,13 @@ const programOptions = options.map((option) => ({
               <label className="block font-medium">No of Hours:</label>
               <input
                 type="number"
+                
                 name="No_Hrs"
                 value={formData.No_Hrs}
                 onChange={handleFormDataChange}
                 // className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none"
-                required
+                step="any"
+                required={!isCancelChecked}
                 min="1"
                       disabled={!!formData.Training_Status}
                 className={`w-full py-2 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-blue-500 ${
@@ -1547,7 +1629,7 @@ const programOptions = options.map((option) => ({
                         zIndex: 50,
                       }),
                     }}
-                  required/>
+                  required={!isCancelChecked}/>
                   </div>
                 </div>
               <div>
@@ -1557,7 +1639,7 @@ const programOptions = options.map((option) => ({
               name="Actual_Budget"
               value={formData.Actual_Budget}
               onChange={handleFormDataChange}
-              disabled={formData.Train_Mode === "Internal" ||   !!formData.Training_Status}
+              disabled={formData.Train_Mode === "Internal" }
               autoComplete="off"
               className={`w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-blue-500 ${
                 formData.Train_Mode === "Internal"
@@ -1599,7 +1681,7 @@ const programOptions = options.map((option) => ({
         formatOptionLabel={(data, { context }) =>
           context === "menu" ? data.label : data.value
         }
-        required
+       required={!isCancelChecked}
         autoComplete="off"
         className="w-full text-gray-900 bg-white cursor-pointer"
         styles={{
@@ -1711,7 +1793,15 @@ const programOptions = options.map((option) => ({
                   <div className="flex ">
                           {" "}
 {accessRole === "HR_Res" && (
-              
+              <div className="flex items-center">
+               <button
+               type="button"
+  onClick={exportToExcel}
+  className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+>
+ <FaFileExcel size={18}  />
+</button>
+
                     <button
                       type="button"
                       onClick={() =>
@@ -1721,6 +1811,7 @@ const programOptions = options.map((option) => ({
                     >
                       <FaPrint />
                     </button>
+                    </div>
 )}
                     <div className="relative">
                       <input

@@ -63,36 +63,6 @@ const [trainingName, setTrainingName] = useState([]);
   console.log("DEBUG EmployeeId:", EmployeeId);
   console.log("DEBUG isExperienceAtLeast3Years:", isExperienceAtLeast3Years);
 
-  const [accessRole, setAccessRole] = useState(null);
-  const [isAuthorized, setIsAuthorized] = useState(null);
-  useEffect(() => {
-    // Removed setting EmployeeId from localStorage to avoid default display in Select dropdown
-
-    const fetchAccessRole = async () => {
-      try {
-        const res = await fetch(`/api/get_access_role?employeeId=${localStorage.getItem('employeeId')}`);
-        const data = await res.json();
-
-        if (res.ok && data.Access_Role) {
-          // Restrict access for HR_Res and HR_HOD roles
-          if (data.Access_Role === "Res_Person" ) {
-            setIsAuthorized(false);
-            return;
-          }
-          setAccessRole(data.Access_Role);
-          setIsAuthorized(true);
-        } else {
-          setIsAuthorized(false);
-        }
-      } catch (error) {
-        console.error('Error fetching access role:', error);
-        setIsAuthorized(false);
-      }
-    };
-
-    fetchAccessRole();
-  }, []);
-
     // Fetch employee options
     useEffect(() => {
       const fetchEmployeeOptions = async () => {
@@ -494,27 +464,7 @@ const [trainingName, setTrainingName] = useState([]);
 
     setFilteredData(filtered);
   };
- if (isAuthorized === null) {
-    return (
-      <div>Loading...</div>
-      // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
-      //   <div className="bg-white p-10 rounded shadow text-center">
-      //     <h2 className="text-2xl font-bold">Loading...</h2>
-      //   </div>
-      // </div>
-    );
-  }
 
-  if (isAuthorized === false) {
-    return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
-        <div className="bg-white p-10 rounded shadow text-center">
-          <h2 className="text-2xl font-bold">Unauthorized</h2>
-          <p className="mt-2">You do not have access to view this page.</p>
-        </div>
-      </div>
-    );
-  }
   return (
     <div className="max-w-full mx-auto bg-white p-2 shadow-md rounded-lg w-full">
     
@@ -870,7 +820,7 @@ const [trainingName, setTrainingName] = useState([]);
       : "↕"}
   </th>
 ))}
-{(accessRole !== "HOS" && accessRole !== "HOD") && (
+
   <th
     key="Status"
     className="px-4 py-2 border text-left cursor-pointer"
@@ -883,7 +833,7 @@ const [trainingName, setTrainingName] = useState([]);
         : "▼"
       : "↕"}
   </th>
-)}
+
                   </tr>
                 </thead>
                 <tbody>
@@ -924,7 +874,7 @@ const [trainingName, setTrainingName] = useState([]);
         <td className="px-2 py-2 border">
           {item.Qualified ? "Yes" : "No"}
         </td>
-          {accessRole !== "HOS" &&  accessRole !== "HOD" &&(
+        
       <td className="px-2 py-2 border flex items-center space-x-2">
       <input
         type="checkbox"
@@ -964,7 +914,7 @@ const [trainingName, setTrainingName] = useState([]);
         {item.Status ? "Active" : "Inactive"}
       </span>
     </td>
-          )}
+        
     </tr>
   );
 })
