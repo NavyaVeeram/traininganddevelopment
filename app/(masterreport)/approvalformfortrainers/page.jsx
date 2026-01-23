@@ -1,7 +1,7 @@
 
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
-import { FaSearch, FaEdit } from "react-icons/fa";
+import { FaSearch, FaEdit,FaEye } from "react-icons/fa";
 import Select from "react-select";
 import EmailApprovalTrainers from "../emailfortrainers/EmailApprovalTrainers"
 import EmailRejectionForTrainers from "../emailfortrainers/EmailRejectionForTrainers";
@@ -285,6 +285,17 @@ export default function TrainerApprovalForm() {
                       : " ▼"
                     : " ↕"}
                 </th>
+                  <th
+                  className="border p-2 cursor-pointer text-left"
+                  onClick={() => handleSort("View_Cert")}
+                >
+                  View Certificates
+                  {sortConfig.key === "Cert_Des"
+                    ? sortConfig.direction === "asc"
+                      ? " ▲"
+                      : " ▼"
+                    : " ↕"}
+                </th>
                 <th
                   className="border p-2 cursor-pointer text-left"
                   onClick={() => handleSort("Exp_5_Yr")}
@@ -387,6 +398,33 @@ export default function TrainerApprovalForm() {
                       {item.Certified ? "Yes" : "No"}
                     </td>
                     <td className="border p-2 text-left">{item.Cert_Des}</td>
+                        {/* NEW CELL - View Certificates */}
+                <td className="px-2 py-2 border">
+                  {item.View_Cert ? (
+                    <div className="flex flex-wrap gap-2">
+                      {item.View_Cert.split(',').map((cert, idx) => {
+                        const certFile = cert.trim();
+                        if (!certFile) return null;
+                        
+                        return (
+                          <a 
+                            key={idx}
+                            href={`/certificates/${certFile}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 px-2 py-1 rounded text-xs transition-colors"
+                            title={`View ${certFile}`}
+                          >
+                            <FaEye size={12} />
+                            Cert {idx + 1}
+                          </a>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <span className="text-gray-400 text-xs italic">No files</span>
+                  )}
+                </td>
                     <td className="border p-2 text-left">
                       {item.Exp_5_Yr ? "Yes" : "No"}
                     </td>

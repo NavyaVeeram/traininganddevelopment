@@ -28,7 +28,9 @@ const [selectedDate, setSelectedDate] = useState(() => {
   const [isAuthorized, setIsAuthorized] = useState(null);
   const [employeeId, setEmployeeId] = useState(null);
   const [isFinalized, setIsFinalized] = useState(false);
-
+const currentYear = new Date().getFullYear();
+const minDate = new Date(currentYear - 1, 0, 1); // January 1st of previous year
+const maxDate = new Date(currentYear + 1, 11, 31); // December 31st of next year
   // New state for additional training programs text field
   const [additionalTrainingProgramsText, setAdditionalTrainingProgramsText] =
     useState("");
@@ -726,6 +728,8 @@ const sortedBudgetVsActualData = getSortedData(budgetVsActualFilteredData, sortC
                 showYearPicker
                 placeholderText="Select Year"
                 className="p-2 border border-gray-300 rounded-lg"
+              minDate={minDate}  // Add this
+              maxDate={maxDate}  // Add this
                 calendarClassName="z-50"
                 popperPlacement="top-start"
                 isClearable
@@ -947,6 +951,7 @@ const sortedBudgetVsActualData = getSortedData(budgetVsActualFilteredData, sortC
         <>
           <div className="my-4 relative z-50">
             <div className="flex items-center space-x-2">
+              
               <label className="text-sm font-medium">Year</label>
               <DatePicker
                 selected={selectedDate}
@@ -980,8 +985,23 @@ const sortedBudgetVsActualData = getSortedData(budgetVsActualFilteredData, sortC
             !budgetVsActualError && (
               <div className="card-body p-0 pb-3">
                 <div className="p-4 bg-card">
-                  <div className="flex flex-wrap justify-between items-center mb-4 space-y-2">
-                    <div className="flex items-center space-x-2 text-sm"></div>
+                  <div className="flex flex-wrap justify-end items-center mb-4 space-y-2">
+                    <div className="flex items-center text-sm"></div>
+                  
+               <div className="mr-2">
+           <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    generateBudgetPDF("budgetVsActual");
+                  }}
+                  className="flex items-center cursor-pointer space-x-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-1 px-3 rounded"
+                  aria-label="Export PDF"
+                  title="Export PDF"
+                >
+                  <FaPrint />
+                </button>
+                </div>
+                <div>
                     <div className="relative">
                       <input
                         type="text"
@@ -991,6 +1011,7 @@ const sortedBudgetVsActualData = getSortedData(budgetVsActualFilteredData, sortC
                         className="border p-1 pl-8 rounded bg-secondary"
                       />
                       <FaSearch className="absolute left-2 top-2 text-gray-400" />
+                    </div>
                     </div>
                   </div>
                   <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-300px)]">

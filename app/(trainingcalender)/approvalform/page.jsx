@@ -77,39 +77,39 @@ export default function TrainingDataTable() {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    const storedEmployeeId = localStorage.getItem('employeeId');
+  // useEffect(() => {
+  //   const storedEmployeeId = localStorage.getItem('employeeId');
 
-    if (storedEmployeeId) {
-      setEmployeeId(storedEmployeeId);
-    } else {
-      window.location.href = '/';
-      return;
-    }
+  //   if (storedEmployeeId) {
+  //     setEmployeeId(storedEmployeeId);
+  //   } else {
+  //     window.location.href = '/';
+  //     return;
+  //   }
 
-      const fetchAccessRole = async () => {
-        try {
-          const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-          const data = await res.json();
+  //     const fetchAccessRole = async () => {
+  //       try {
+  //         const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+  //         const data = await res.json();
 
-          if (res.ok && data.Access_Role) {
-            if (data.Access_Role === "HR_Res" || data.Access_Role === "HR_Hod") {
-              setIsAuthorized(false);  // Hide page for these roles
-              return;
-            }
-            setAccessRole(data.Access_Role);
-            setIsAuthorized(true);
-          } else {
-            setIsAuthorized(false);
-          }
-        } catch (error) {
-          console.error('Error fetching access role:', error);
-          setIsAuthorized(false);
-        }
-      };
+  //         if (res.ok && data.Access_Role) {
+  //           if (data.Access_Role === "HR_Res" || data.Access_Role === "HR_Hod") {
+  //             setIsAuthorized(false);  // Hide page for these roles
+  //             return;
+  //           }
+  //           setAccessRole(data.Access_Role);
+  //           setIsAuthorized(true);
+  //         } else {
+  //           setIsAuthorized(false);
+  //         }
+  //       } catch (error) {
+  //         console.error('Error fetching access role:', error);
+  //         setIsAuthorized(false);
+  //       }
+  //     };
 
-    fetchAccessRole();
-  }, []);
+  //   fetchAccessRole();
+  // }, []);
 
   const monthOptions = [
     { value: "Jan", label: "Jan" },
@@ -225,38 +225,7 @@ export default function TrainingDataTable() {
     }
   };
 
-  const handleActiveToggle = async (programId, currentStatus) => {
-    try {
-      const newStatus = !currentStatus;
 
-      const response = await fetch('/api/update_status_approval', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ programId, newStatus }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update status');
-      }
-
-      const data = await response.json();
-      console.log(data.message);
-      alert(`Status has been ${newStatus ? 'activated' : 'deactivated'}`);
-
-      setTrainingData(prev =>
-        prev.map(item =>
-          item.Program_Id === programId
-            ? { ...item, IsActive: newStatus }
-            : item
-        )
-      );
-
-    } catch (error) {
-      console.error('Error updating status:', error);
-    }
-  };
 
   // Function to render tab content
   const renderTabContent = () => {
@@ -271,7 +240,12 @@ export default function TrainingDataTable() {
         return renderApprovalFormContent();
     }
   };
-
+ const handleRejectionSuccess = () => {
+    alert('Rejected successfully');
+    // Clear selected programs
+    setSelectedProgramIds([]);
+    // Optionally refresh the data
+  };
   // Extract the approval form content into a separate function
   const renderApprovalFormContent = () => {
     if (loading) return <div>Loading...</div>;
@@ -321,7 +295,22 @@ export default function TrainingDataTable() {
            <table className="w-full border-collapse text-sm">
              <thead className="bg-gray-100">
                <tr>
-                 <th></th>     
+                 <th className="border px-2 text-center">
+  <input
+    type="checkbox"
+    checked={selectedProgramIds.length === paginatedData.length && paginatedData.length > 0}
+    onChange={(e) => {
+      if (e.target.checked) {
+        // Select all Program_Ids from current page
+        setSelectedProgramIds(paginatedData.map(item => item.Program_Id));
+      } else {
+        // Deselect all
+        setSelectedProgramIds([]);
+      }
+    }}
+    className="accent-green-500 cursor-pointer"
+  />
+</th>     
                  <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Training_Name")}>Category {sortConfig.key === "Training_Name" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
                  <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Year_No")}>Year {sortConfig.key === "Year_No" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
                  <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Department")}>Department {sortConfig.key === "Department" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
@@ -365,7 +354,13 @@ export default function TrainingDataTable() {
                            <td className="border p-2 text-left">{item.Program_Name}</td>
                            <td className="border p-2 text-left">{item.Train_Mode}</td>
                            <td className="border p-2 text-left">{item.Persons}</td>
-                         <td className="border p-2 text-left">{item.No_Hrs?.toFixed(1)}</td>
+                         <td className="border p-2 text-left">
+                           {typeof item.No_Hrs === "number"
+                             ? item.No_Hrs.toFixed(1)
+                             : item.No_Hrs != null && !isNaN(Number(item.No_Hrs))
+                             ? Number(item.No_Hrs).toFixed(1)
+                             : ""}
+                         </td>
 
                            <td className="border p-2 text-left">{item.No_Times}</td>
                            <td className="border p-2 text-left">{item.Req_Months}</td>
@@ -471,9 +466,7 @@ export default function TrainingDataTable() {
                                     selectedProgramIds={selectedProgramIds}
                                     selectedProgramNames={paginatedData.filter(item => selectedProgramIds.includes(item.Program_Id)).map(item => item.Program_Name)}
                                     employeeId={employeeId}
-                                    onRejectSuccess={() => {
-                                      // Refresh data or handle post-rejection logic here
-                                    }}
+                                        onRejectSuccess={handleRejectionSuccess}
                                   />
                   </div>
                 )}
@@ -489,22 +482,22 @@ export default function TrainingDataTable() {
     return <div>Loading user information...</div>;
   }
 
-  // Unauthorized view
-  if (isAuthorized === null) {
-    // Authorization not yet determined, render loading or null to avoid hydration mismatch
-    return <div>Loading authorization...</div>;
-  }
+  // // Unauthorized view
+  // if (isAuthorized === null) {
+  //   // Authorization not yet determined, render loading or null to avoid hydration mismatch
+  //   return <div>Loading authorization...</div>;
+  // }
 
-  if (!isAuthorized) {
-    return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
-        <div className="bg-white p-10 rounded shadow text-center">
-          <h2 className="text-2xl font-bold">Unauthorized</h2>
-          <p className="mt-2">You do not have access to view this page.</p>
-        </div>
-      </div>
-    );
-  }
+  // if (!isAuthorized) {
+  //   return (
+  //     <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+  //       <div className="bg-white p-10 rounded shadow text-center">
+  //         <h2 className="text-2xl font-bold">Unauthorized</h2>
+  //         <p className="mt-2">You do not have access to view this page.</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div>
@@ -553,7 +546,7 @@ export default function TrainingDataTable() {
           {renderTabContent()}
         </div>
 
-        {/* Modal */}
+         {/* Modal */}
         {isModalOpen && (
           <div
             className="fixed inset-0 flex justify-center items-center "
@@ -566,151 +559,167 @@ export default function TrainingDataTable() {
               <h3 className="bg-sky-400 text-white p-2 flex justify-between rounded-t-lg">Update Approval Details</h3>
               {editingData && (
                 <div>
-                  <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-4">
-                    <div>
-                      <label className="block font-semibold">Category</label>
-                      <input
-                        type="text"
-                        value={editingData.Training_Name}
-                        onChange={(e) => handleInputChange(e, "Training_Name")}
-                        readOnly
-                        className="border p-2 w-70 bg-gray-200  border-gray-300 cursor-not-allowed rounded-md"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-semibold">Year</label>
-                      <input
-                        type="text"
-                        value={editingData.Year_No}
-                        onChange={(e) => handleInputChange(e, "Year_No")}
-                        readOnly
-                        className="border p-2 w-70 bg-gray-200  border-gray-300 cursor-not-allowed rounded-md"
-                      />
-                    </div>
+              <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
 
-                    <div>
-                      <label className="block font-semibold">Department</label>
-                      <input
-                        type="text"
-                        value={editingData.Department}
-                        onChange={(e) => handleInputChange(e, 'Department')}
-                        readOnly
-                        className="border p-2 w-70 bg-gray-200  border-gray-300 cursor-not-allowed rounded-md"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-semibold">Section</label>
-                      <input
-                        type="text"
-                        value={editingData.Section}
-                        onChange={(e) => handleInputChange(e, 'Section')}
-                        readOnly
-                        className="border p-2 w-70 bg-gray-200  border-gray-300 cursor-not-allowed rounded-md"
-                      />
-                    </div>
+  {/* Category */}
+  <div className="flex flex-col">
+    <label className="font-semibold mb-1">Category</label>
+    <input
+      type="text"
+      value={editingData.Training_Name}
+      onChange={(e) => handleInputChange(e, "Training_Name")}
+      readOnly
+      className="border p-2 bg-gray-200 border-gray-300 cursor-not-allowed rounded-md"
+    />
+  </div>
 
-                    <div>
-                      <label className="block font-semibold">Program Name</label>
-                      <input
-                        type="text"
-                        value={editingData.Program_Name}
-                        onChange={(e) => handleInputChange(e, 'Program_Name')}
-                        readOnly
-                        className="border p-2 w-70 bg-gray-200  border-gray-300 cursor-not-allowed rounded-md"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-semibold">Training Mode</label>
-                      <input
-                        type="text"
-                        value={editingData.Train_Mode}
-                        onChange={(e) => handleInputChange(e, 'Train_Mode')}
-                        readOnly
-                        className="border p-2 w-70 bg-gray-200  border-gray-300 cursor-not-allowed rounded-md"
-                      />
-                    </div>
+  {/* Year */}
+  <div className="flex flex-col">
+    <label className="font-semibold mb-1">Year</label>
+    <input
+      type="text"
+      value={editingData.Year_No}
+      onChange={(e) => handleInputChange(e, "Year_No")}
+      readOnly
+      className="border p-2 bg-gray-200 border-gray-300 cursor-not-allowed rounded-md"
+    />
+  </div>
 
-                    <div>
-                      <label className="block font-semibold ">Purpose</label>
-                      <input
-                        type="text"
-                        value={editingData.Train_Purpose}
-                        onChange={(e) => handleInputChange(e, 'Train_Purpose')}
-                        readOnly
-                        className="border p-2 w-70 bg-gray-200  border-gray-300 cursor-not-allowed rounded-md"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-semibold">Persons</label>
-                      <input
-                        type="number"
-                        step="1"
-                        min="0"
-                        value={editingData.Persons}
-                        onChange={(e) => handleInputChange(e, 'Persons')}
-                        className="border p-2 w-70 rounded-md"
-                      />
-                    </div>
+  {/* Department */}
+  <div className="flex flex-col">
+    <label className="font-semibold mb-1">Department</label>
+    <input
+      type="text"
+      value={editingData.Department}
+      onChange={(e) => handleInputChange(e, "Department")}
+      readOnly
+      className="border p-2 bg-gray-200 border-gray-300 cursor-not-allowed rounded-md"
+    />
+  </div>
 
-                    <div>
-                      <label className="block font-semibold">Hours</label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        value={editingData.No_Hrs}
-                        onChange={(e) => handleInputChange(e, 'No_Hrs')}
-                        className="border p-2 w-70 rounded-md"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-semibold">Times</label>
-                      <input
-                        type="number"
-                        step="1"
-                        min="0"
-                        value={editingData.No_Times}
-                        onChange={(e) => handleInputChange(e, 'No_Times')}
-                        readOnly
-                        className="border p-2 w-70 rounded-md bg-gray-200 cursor-not-allowed"
-                      />
-                    </div>
-                    <div >
-                      <label className="block font-semibold w-32">Months</label>
+  {/* Section */}
+  <div className="flex flex-col">
+    <label className="font-semibold mb-1">Section</label>
+    <input
+      type="text"
+      value={editingData.Section}
+      onChange={(e) => handleInputChange(e, "Section")}
+      readOnly
+      className="border p-2 bg-gray-200 border-gray-300 cursor-not-allowed rounded-md"
+    />
+  </div>
 
-                      <Select
-                        options={monthOptions}
-                        value={monthOptions.find(opt => opt.value === editingData.Req_Months) || null}
-                        onChange={(selectedOption) => {
-                          const selectedMonth = selectedOption ? selectedOption.value : "";
-                          handleInputChange({ target: { value: selectedMonth } }, 'Req_Months');
-                        }}
-                        placeholder="Select Month"
-                        isClearable
-                        className="text-sm"
-                        styles={{
-                          control: (base) => ({
-                            ...base,
-                            padding: "1px",
-                            borderColor: "#d1d5db",
-                            minHeight: "2rem",
-                            borderRadius: "0.5rem",
-                            width: '282px',
-                          }),
-                        }}
-                      />
-                    </div>
-            
-                    <div>
-                      <label className="block font-semibold ">Evaluation Period</label>
-                      <input
-                        type="text"
-                        value={editingData.Evaluation_Period}
-                        onChange={(e) => handleInputChange(e, "Evaluation_Period")}
-                        className="border p-2 w-70 rounded-md"
-                      />
-                    </div>
-                  </div>
+  {/* Program Name */}
+  <div className="flex flex-col">
+    <label className="font-semibold mb-1">Program Name</label>
+    <input
+      type="text"
+      value={editingData.Program_Name}
+      onChange={(e) => handleInputChange(e, "Program_Name")}
+      readOnly
+      className="border p-2 bg-gray-200 border-gray-300 cursor-not-allowed rounded-md"
+    />
+  </div>
+
+  {/* Training Mode */}
+  <div className="flex flex-col">
+    <label className="font-semibold mb-1">Training Mode</label>
+    <input
+      type="text"
+      value={editingData.Train_Mode}
+      onChange={(e) => handleInputChange(e, "Train_Mode")}
+      readOnly
+      className="border p-2 bg-gray-200 border-gray-300 cursor-not-allowed rounded-md"
+    />
+  </div>
+
+  {/* Purpose */}
+  <div className="flex flex-col">
+    <label className="font-semibold mb-1">Purpose</label>
+    <input
+      type="text"
+      value={editingData.Train_Purpose}
+      onChange={(e) => handleInputChange(e, "Train_Purpose")}
+      readOnly
+      className="border p-2 bg-gray-200 border-gray-300 cursor-not-allowed rounded-md"
+    />
+  </div>
+
+  {/* Persons */}
+  <div className="flex flex-col">
+    <label className="font-semibold mb-1">Persons</label>
+    <input
+      type="number"
+      min="0"
+      value={editingData.Persons}
+      onChange={(e) => handleInputChange(e, "Persons")}
+      className="border p-2 rounded-md"
+    />
+  </div>
+
+  {/* Hours */}
+  <div className="flex flex-col">
+    <label className="font-semibold mb-1">Hours</label>
+    <input
+      type="number"
+      min="0"
+      value={editingData.No_Hrs}
+      onChange={(e) => handleInputChange(e, "No_Hrs")}
+      className="border p-2 rounded-md"
+    />
+  </div>
+
+  {/* Times */}
+  <div className="flex flex-col">
+    <label className="font-semibold mb-1">Times</label>
+    <input
+      type="number"
+      min="0"
+      readOnly
+      value={editingData.No_Times}
+      onChange={(e) => handleInputChange(e, "No_Times")}
+      className="border p-2 bg-gray-200 cursor-not-allowed rounded-md"
+    />
+  </div>
+
+  {/* Months - React Select */}
+  <div className="flex flex-col">
+    <label className="font-semibold mb-1">Months</label>
+    <Select
+      options={monthOptions}
+      value={monthOptions.find(opt => opt.value === editingData.Req_Months) || null}
+      onChange={(selected) => {
+        const val = selected ? selected.value : "";
+        handleInputChange({ target: { value: val } }, "Req_Months");
+      }}
+      placeholder="Select Month"
+      isClearable
+      className="text-sm"
+      styles={{
+        control: (base) => ({
+          ...base,
+          padding: "2px",
+          borderRadius: "0.5rem",
+          borderColor: "#d1d5db",
+          minHeight: "2.4rem",
+        }),
+      }}
+    />
+  </div>
+
+  {/* Evaluation Period */}
+  <div className="flex flex-col">
+    <label className="font-semibold mb-1">Evaluation Period</label>
+    <input
+      type="text"
+      value={editingData.Evaluation_Period}
+      onChange={(e) => handleInputChange(e, "Evaluation_Period")}
+      className="border p-2 rounded-md"
+    />
+  </div>
+
+</div>
+
 
                   <div className="flex justify-end">
                     <button onClick={handleUpdate} className="px-4 py-2 text-sm font-semibold text-white bg-green-400 hover:bg-green-600  rounded-md mr-2 mt-2 cursor-pointer">Update</button>

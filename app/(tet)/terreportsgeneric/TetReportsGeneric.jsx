@@ -37,7 +37,7 @@ const TetReportsGeneric = () => {
     Percentage: 0,
     CreatedBy: '',
     Remarks: '',
-    ratings: Array(10).fill(5),
+    ratings: Array(10).fill(3),
   });
 
   const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -641,7 +641,7 @@ const font = await mergedPdf.embedFont(fontBytes);
       for (let i = 1; i <= 10; i++) {
         const key = `Q_${i}`;
         const ratingValue = employeeDetails[key];
-        newRatings.push(ratingValue !== null && ratingValue !== undefined ? Number(ratingValue) : 5);
+        newRatings.push(ratingValue !== null && ratingValue !== undefined ? Number(ratingValue) : 3);
       }
       setFormData((prev) => ({
         ...prev,

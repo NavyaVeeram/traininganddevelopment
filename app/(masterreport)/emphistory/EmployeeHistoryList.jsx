@@ -918,6 +918,7 @@ const handleTableSearchChange = (e) => {
                           { key: "Train_Mode", label: "Training Mode" },
                           { key: "No_Hrs", label: "Hours" },
                           { key: "Training_Date", label: "Training Date" },
+                          { key: "Percentage", label: "TET Percentage" },
                           { key: "  ", label: "Upload" },
                           { key: "", label: "View" },
                         ].map(({ key, label }, index) => (
@@ -961,6 +962,9 @@ const handleTableSearchChange = (e) => {
                             <td className="px-4 py-2 border">
                               {item.Training_Date}
                             </td>
+                            <td className="px-4 py-2 border">
+                              {item.Percentage ? `${item.Percentage}%` : ""}
+                              </td>
                             <td className="px-4 py-2 border">
                             <div style={{ position: "relative" }}>
     <input

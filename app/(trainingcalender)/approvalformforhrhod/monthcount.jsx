@@ -36,36 +36,78 @@ export default function MonthCount() {
       }
 
       const data = await res.json();
+      console.log("=== Raw API data ===", data);
 
+      // Initialize structure for all months
       const grouped = {};
-      data.forEach(({ Month, Training_name, Train_Mode, HSE_Count, IATF_Count }) => {
-        if (!grouped[Month]) {
-          grouped[Month] = {
-            Month,
-            HSE: { Internal: 0, External: 0, Overseas: 0 },
-            IATF: { Internal: 0, External: 0, Overseas: 0 },
-          };
-        }
-
-        if (Training_name?.includes("HSE")) {
-          grouped[Month].HSE[Train_Mode] += HSE_Count;
-        } else if (Training_name?.includes("IATF")) {
-          grouped[Month].IATF[Train_Mode] += IATF_Count;
-        }
-      });
-
       const allMonths = [
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
       ];
 
-      const finalData = allMonths.map((month) =>
-        grouped[month] || {
+      allMonths.forEach((month) => {
+        grouped[month] = {
           Month: month,
           HSE: { Internal: 0, External: 0, Overseas: 0 },
           IATF: { Internal: 0, External: 0, Overseas: 0 },
+          HSE_Total: 0,
+          IATF_Total: 0,
+        };
+      });
+
+      // Process the data - accumulate counts for same month/type/mode
+      data.forEach((row) => {
+        // FIXED: Use Training_Name (capital N) to match API response
+        const { Month, Training_Name, Train_Mode, MonthCount, HSE_Count, IATF_Count } = row;
+        
+        console.log(`Processing row:`, {
+          Month,
+          Training_Name,
+          Train_Mode,
+          MonthCount,
+          HSE_Count,
+          IATF_Count
+        });
+        
+        if (!Month || !grouped[Month]) {
+          console.warn(`Invalid month: ${Month}`);
+          return;
         }
-      );
+
+        // Store the total counts (these are month totals from SP)
+        grouped[Month].HSE_Total = HSE_Count || 0;
+        grouped[Month].IATF_Total = IATF_Count || 0;
+
+        // Add MonthCount to the appropriate type and mode
+        // IMPORTANT: We need to ACCUMULATE (+=) because there might be multiple
+        // Training_Name entries for the same type and mode
+        if (Training_Name?.includes("HSE")) {
+          if (Train_Mode === "Internal") {
+            grouped[Month].HSE.Internal += (MonthCount || 0);
+            console.log(`Added ${MonthCount} to HSE Internal for ${Month}, now: ${grouped[Month].HSE.Internal}`);
+          } else if (Train_Mode === "External") {
+            grouped[Month].HSE.External += (MonthCount || 0);
+            console.log(`Added ${MonthCount} to HSE External for ${Month}, now: ${grouped[Month].HSE.External}`);
+          } else if (Train_Mode === "Overseas") {
+            grouped[Month].HSE.Overseas += (MonthCount || 0);
+            console.log(`Added ${MonthCount} to HSE Overseas for ${Month}, now: ${grouped[Month].HSE.Overseas}`);
+          }
+        } else if (Training_Name?.includes("IATF")) {
+          if (Train_Mode === "Internal") {
+            grouped[Month].IATF.Internal += (MonthCount || 0);
+            console.log(`Added ${MonthCount} to IATF Internal for ${Month}, now: ${grouped[Month].IATF.Internal}`);
+          } else if (Train_Mode === "External") {
+            grouped[Month].IATF.External += (MonthCount || 0);
+            console.log(`Added ${MonthCount} to IATF External for ${Month}, now: ${grouped[Month].IATF.External}`);
+          } else if (Train_Mode === "Overseas") {
+            grouped[Month].IATF.Overseas += (MonthCount || 0);
+            console.log(`Added ${MonthCount} to IATF Overseas for ${Month}, now: ${grouped[Month].IATF.Overseas}`);
+          }
+        }
+      });
+
+      const finalData = allMonths.map((month) => grouped[month]);
+      console.log("=== Final processed data ===", finalData);
 
       setMonthCountData(finalData);
     } catch (err) {
@@ -88,8 +130,12 @@ export default function MonthCount() {
     return () => clearInterval(intervalId);
   }, [selectedDate]);
 
-  const getTotalCountByTypeAndMonth = (month, type) =>
-    Object.values(month[type]).reduce((a, b) => a + b, 0);
+  const getTotalCountByTypeAndMonth = (month, type) => {
+    // Use the pre-calculated totals from stored procedure
+    if (type === "HSE") return month.HSE_Total || 0;
+    if (type === "IATF") return month.IATF_Total || 0;
+    return 0;
+  };
 
   if (loading) {
     return (

@@ -1,68 +1,71 @@
 "use client"
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 
-export default function EmailApprovalWeek({ weeks, Training_Budget, isActiveList, trainModeList, selectedProgramIds, employeeId }) {
-  // Remove employeeId state and use prop instead
-  const [email, setEmail] = useState(null);
+export default function EmailApprovalWeek({ 
+  selectedItems, // Pass the full objects of selected programs
+  selectedProgramIds, 
+  employeeId 
+}) {
   const [loading, setLoading] = useState(false);
   const isCallingApi = useRef(false);
 
   const handleApprove = async () => {
-    if (isCallingApi.current || !employeeId) return;
+    if (isCallingApi.current) return;
 
-    // Defensive check for array lengths
-    if (!weeks || !Training_Budget || !trainModeList) {
-      console.error('Missing data arrays in approval');
-      alert('Data arrays are missing.');
-      return;
-    }
-    if (
-      weeks.length !== Training_Budget.length ||
-      weeks.length !== trainModeList.length
-    ) {
-      console.error('Data arrays length mismatch in approval');
-      alert('Data arrays length mismatch.');
+    // 1. Check if anything is selected
+    if (!selectedItems || selectedItems.length === 0) {
+      alert("Please select at least one program to approve.");
       return;
     }
 
-    // Check if any week or Budget is empty and Train_Mode is not Internal
-    const isWeekEmpty = weeks.some((week, index) => {
-      return (week === null || week === undefined || week === '') && trainModeList[index] !== "Internal";
+    // 2. VALIDATION LOGIC
+    const programsMissingWeek = [];
+
+    selectedItems.forEach(item => {
+      // Skip validation for Internal training
+      if (item.Train_Mode === "Internal") return;
+
+      // Check if Week is empty
+      // Handles: null, undefined, "", " ", or only commas
+      const weekValue = item.Week ? String(item.Week).replace(/,/g, '').trim() : '';
+      
+      if (!weekValue) {
+        programsMissingWeek.push(item.Program_Name);
+      }
     });
-    const isBudgetEmpty = Training_Budget.some((budget, index) => {
-      return (budget === null || budget === undefined || budget === '') && trainModeList[index] !== "Internal";
-    });
 
-    if (isWeekEmpty || isBudgetEmpty) {
-      alert('Please enter both the week and Training Budget for non-internal entries');
-      return;
+    // 3. HARD STOP: If validation fails, show alert and EXIT function
+    if (programsMissingWeek.length > 0) {
+      const list = programsMissingWeek.map(name => `• ${name}`).join('\n');
+      alert(`❌ Cannot Proceed!\n\nPlease enter the week for the following programs:\n\n${list}`);
+      return; // This prevents the API call
     }
 
+    // 4. API CALL (Only reached if validation passes)
     isCallingApi.current = true;
     setLoading(true);
+    
     try {
       const programIdString = selectedProgramIds.join(',');
-      const res = await fetch('/api/generate_email_all', {
+      const res = await fetch('/api/generate_email_all_approval_hr_hod', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ employeeId, programId: programIdString, approve: true }),
+        body: JSON.stringify({ 
+          employeeId, 
+          programId: programIdString, 
+          approve: true 
+        }),
       });
 
-      if (res.status === 404) {
-        alert('The data is already submitted');
+      if (res.ok) {
+        alert('✅ Data Submitted Successfully');
+        window.location.reload();
       } else {
-        const data = await res.json();
-        setEmail(data.email);
-        if (data.email) {
-          alert(`Data Submitted Successfully`);
-          window.location.reload(); // Refresh page after alert
-        } else if (data) {
-          alert(`Data Submitted Successfully`);
-          window.location.reload(); // Refresh page after alert
-        } else {
-          alert('Error');
-        }
+        const errorData = await res.json();
+        alert(`❌ Error: ${errorData.message || 'Failed to submit'}`);
       }
+    } catch (error) {
+      alert('❌ An error occurred. Please try again.');
     } finally {
       setLoading(false);
       isCallingApi.current = false;
@@ -70,22 +73,12 @@ export default function EmailApprovalWeek({ weeks, Training_Budget, isActiveList
   };
 
   return (
-    <div>
-      {/* Removed input field for employeeId */}
-      <button
-        onClick={handleApprove}
-        className="px-6 mt-2 py-2 text-sm cursor-pointer font-semibold text-white bg-green-500 rounded-md shadow-md hover:bg-green-700 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
-        disabled={loading || !employeeId}
-        title="Please update all changes before approving"
-      >
-        {loading ? 'Processing...' : 'Approve'}
-      </button>
-      {/* {email && (
-        <div>
-          <h3>Email Sent To:</h3>
-          <p>{email}</p>
-        </div>
-      )} */}
-    </div>
+    <button
+      onClick={handleApprove}
+      disabled={loading}
+         className="px-6 mt-2 py-2 text-sm cursor-pointer font-semibold text-white bg-green-500 rounded-md shadow-md hover:bg-green-700 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
+    >
+      {loading ? 'Processing...' : 'Approve'}
+    </button>
   );
 }

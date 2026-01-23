@@ -8,6 +8,7 @@ import { FaPrint } from "react-icons/fa";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import BackButton from "@/components/BackButton";
+import FullYearCalendar from "../calendar/page";
 
 const monthsOrder = [
   "January",
@@ -207,280 +208,351 @@ const AnnualTraining = () => {
     });
   });
 
-  const generatePDF = async () => {
-    const doc = new jsPDF("landscape", "mm", "a4");
-    const year = selectedDate.getFullYear();
-    const trainingType = trainingName;
-    const monthsPerPage = trainingType === "HSE" ? 6 : 3;
+const generatePDF = async () => {
+  const doc = new jsPDF("landscape", "mm", "a4");
+  const year = selectedDate.getFullYear();
+  const trainingType = trainingName;
+  const monthsPerPage = trainingType === "HSE" ? 6 : 3;
 
-    for (
-      let pageIndex = 0;
-      pageIndex < monthsInData.length;
-      pageIndex += monthsPerPage
-    ) {
-      const chunk = monthsInData.slice(pageIndex, pageIndex + monthsPerPage);
+  for (
+    let pageIndex = 0;
+    pageIndex < monthsInData.length;
+    pageIndex += monthsPerPage
+  ) {
+    const chunk = monthsInData.slice(pageIndex, pageIndex + monthsPerPage);
 
-      // Create hidden wrapper
-      const wrapper = document.createElement("div");
-      wrapper.style.position = "fixed";
-      wrapper.style.top = "-10000px";
-      wrapper.style.left = "0";
-      wrapper.style.padding = "0px";
-      wrapper.style.width = "1222px";
-      wrapper.style.backgroundColor = "white";
+    // Create hidden wrapper
+    const wrapper = document.createElement("div");
+    wrapper.style.position = "fixed";
+    wrapper.style.top = "-10000px";
+    wrapper.style.left = "0";
+    wrapper.style.padding = "0px";
+    wrapper.style.width = "1222px";
+    wrapper.style.backgroundColor = "white";
+wrapper.style.height = "auto";  // ✅ ADD HERE
+    // Create title and legend container
+    const titleContainer = document.createElement("div");
+    titleContainer.style.position = "relative";
+    titleContainer.style.width = "100%";
+    titleContainer.style.marginBottom = "10px";
+    titleContainer.style.display = "flex";
+    titleContainer.style.justifyContent = "space-between";
+    titleContainer.style.alignItems = "center";
 
-      // Create table
-      const table = document.createElement("table");
-      table.style.borderCollapse = "collapse";
-      table.style.borderSpacing = "0";
-      table.style.width = "100%";
-      table.style.fontSize = "12px";
-      table.style.tableLayout = "fixed";
-      table.style.border = "0.5px solid #999";
-      table.style.color = "black";
-      table.style.margin = "0";
-      table.style.padding = "0";
+   wrapper.appendChild(titleContainer);
 
-      // Header row
-      const headerRow = document.createElement("tr");
+    // Create table
+    const table = document.createElement("table"); // Add this line
+    const monthsHeaderRow = document.createElement("tr");
+ table.style.borderSpacing = "0";
+    table.style.width = "100%";
+    table.style.fontSize = "12px";
+    table.style.tableLayout = "fixed";
+    table.style.border = "0.5px solid #999";
+    table.style.color = "black";
+    table.style.margin = "0";
+    table.style.padding = "0";
 
-      // "Months" header
-      const monthHeader = document.createElement("th");
-      monthHeader.textContent = "Months";
-      monthHeader.style.border = "0.5px solid #999";
-      monthHeader.style.verticalAlign = "middle";
-      monthHeader.style.textAlign = "center";
-      monthHeader.style.width = "80px";
-      monthHeader.style.height = "40px";
-      monthHeader.style.verticalAlign = "middle";
-      monthHeader.style.lineHeight = "40px";
-      monthHeader.style.padding = "0";
-      monthHeader.style.fontSize = "14px";
-      headerRow.appendChild(monthHeader);
+    // Data Rows (Each Month) - Header row removed
+    chunk.forEach((month) => {
+      const weeks = dynamicWeeksByMonth[month]?.slice(0, 5) || [];
+      const monthKey = month.toLowerCase().slice(0, 3);
 
-      // "Weeks" header
-      const weekHeader = document.createElement("th");
-      weekHeader.textContent = "Weeks";
-      weekHeader.colSpan = 5;
-      weekHeader.style.border = "0.5px solid #999";
-      weekHeader.style.textAlign = "center";
-      weekHeader.style.backgroundColor = "#ffffff";
-      weekHeader.style.colSpan = 5;
-      weekHeader.style.height = "40px";
-      weekHeader.style.verticalAlign = "middle";
-      weekHeader.style.lineHeight = "40px";
-      weekHeader.style.padding = "0";
-      weekHeader.style.fontSize = "14px";
-      headerRow.appendChild(weekHeader);
+      // Week numbers row (directly under the month label)
+      const weekNumberRow = document.createElement("tr");
 
-      table.appendChild(headerRow);
+      const monthCell = document.createElement("td");
+      monthCell.textContent = month;
+      monthCell.rowSpan =
+        weeks.reduce((max, week) => {
+          const len = groupedData[monthKey][week]?.length || 0;
+          return Math.max(max, len);
+        }, 1) + 1;
 
-      // Data Rows (Each Month)
-      chunk.forEach((month) => {
-        const weeks = dynamicWeeksByMonth[month]?.slice(0, 5) || [];
-        const monthKey = month.toLowerCase().slice(0, 3);
+      monthCell.style.border = "0.5px solid #999";
+      monthCell.style.textAlign = "center";
+      monthCell.style.fontWeight = "bold";
+      monthCell.style.backgroundColor = "#93cddd";
+      monthCell.style.verticalAlign = "middle";
+      monthCell.style.width = "80px";
+      monthCell.style.fontSize = "12px";
+      monthCell.style.fontFamily = "Arial, sans-serif";
+      weekNumberRow.appendChild(monthCell);
 
-        // Week numbers row (directly under the month label)
-        const weekNumberRow = document.createElement("tr");
+      weeks.forEach((week) => {
+        const weekCell = document.createElement("td");
+        weekCell.textContent = `Week ${week}`;
+        weekCell.style.border = "0.5px solid #999";
+        weekCell.style.textAlign = "center";
+        weekCell.style.verticalAlign = "middle";
+        weekCell.style.height = "25px";
+        weekCell.style.lineHeight = "40px";
+        weekCell.style.padding = "0";
+        weekCell.style.backgroundColor = "#fde0b8";
+        weekCell.style.fontWeight = "bold";
+        weekCell.style.fontSize = "12px";
+        weekCell.style.fontFamily = "Arial, sans-serif";
+         weekCell.style.width = "180px"; // Add this line with fixed width
+  weekCell.style.minWidth = "180px"; // Add this line
+  weekCell.style.maxWidth = "180px"; // Add this line
+        weekNumberRow.appendChild(weekCell);
+      });
 
-        const monthCell = document.createElement("td");
-        monthCell.textContent = month;
-        monthCell.rowSpan =
-          weeks.reduce((max, week) => {
-            const len = groupedData[monthKey][week]?.length || 0;
-            return Math.max(max, len);
-          }, 1) + 1;
+     table.appendChild(weekNumberRow);
 
-        monthCell.style.border = "0.5px solid #999";
-        monthCell.style.textAlign = "center";
-        monthCell.style.fontWeight = "bold";
-        monthCell.style.backgroundColor = "#d0f1e8";
-        monthCell.style.verticalAlign = "middle";
-        monthCell.style.width = "80px";
-        monthCell.style.fontSize = "14px";
-        weekNumberRow.appendChild(monthCell);
+      // Collect week-wise items
+      const weekItems = weeks.map((week) => {
+        return groupedData[monthKey]?.[week] || [];
+      });
 
-        weeks.forEach((week) => {
-          const weekCell = document.createElement("td");
-          weekCell.textContent = `Week ${week}`;
-          weekCell.style.border = "0.5px solid #999";
-          weekCell.style.textAlign = "center";
-          weekCell.style.verticalAlign = "middle";
-          weekCell.style.height = "25px";
-          weekCell.style.lineHeight = "40px";
-          weekCell.style.padding = "0";
-          weekCell.style.backgroundColor = "#fde0b8";
-          weekCell.style.fontWeight = "bold";
-          weekCell.style.fontSize = "14px";
-          weekNumberRow.appendChild(weekCell);
-        });
+      const maxRows = Math.max(...weekItems.map((items) => items.length));
 
-        table.appendChild(weekNumberRow);
+      // Add data rows under week numbers
+      for (let rowIndex = 0; rowIndex < maxRows; rowIndex++) {
+        const row = document.createElement("tr");
 
-        // Collect week-wise items
-        const weekItems = weeks.map((week) => {
-          return groupedData[monthKey]?.[week] || [];
-        });
+        weeks.forEach((_, weekIndex) => {
+          const cell = document.createElement("td");
+          cell.style.border = "0.5px solid #999";
+          cell.style.padding = "6px 6px";
+          cell.style.verticalAlign = "top";
+          cell.style.textAlign = "left";
+          cell.style.lineHeight = "1.4";
+          cell.style.height = "100%";
+          cell.style.fontSize = "11px";
+          cell.style.fontFamily = "Arial, sans-serif";
+ cell.style.width = "180px"; // Add this line
+  cell.style.minWidth = "180px"; // Add this line
+  cell.style.maxWidth = "180px"; // Add this line
+  cell.style.whiteSpace = "normal";  // ✅ ADD THIS - allows text to wrap
+cell.style.wordWrap = "break-word";  // ✅ ADD THIS
+cell.style.overflow = "visible";  // ✅ ADD THIS
+          const item = weekItems[weekIndex][rowIndex];
+          if (item) {
+            const div = document.createElement("div");
+            div.style.marginBottom = "6px";
+            div.style.padding = "2px 4px";
+            div.style.borderRadius = "2px";
+            div.style.display = "block";
+            div.style.backgroundColor = "transparent";
+            div.style.fontFamily = "Arial, sans-serif";
 
-        const maxRows = Math.max(...weekItems.map((items) => items.length));
-
-        // Add data rows under week numbers
-        for (let rowIndex = 0; rowIndex < maxRows; rowIndex++) {
-          const row = document.createElement("tr");
-
-          weeks.forEach((_, weekIndex) => {
-            const cell = document.createElement("td");
-            cell.style.border = "0.5px solid #999";
-            cell.style.padding = "6px 6px";
-            cell.style.verticalAlign = "top";
-            cell.style.textAlign = "left";
-            cell.style.lineHeight = "1.4";
-            cell.style.height = "100%";
-            cell.style.fontSize = "14px";
-
-            const item = weekItems[weekIndex][rowIndex];
-            if (item) {
-              const div = document.createElement("div");
-              div.style.marginBottom = "6px";
-              div.style.padding = "2px 4px";
-              div.style.borderRadius = "2px";
-              div.style.display = "block";
-              div.style.backgroundColor = "transparent";
-
-              if (item.Is_External) {
-                cell.style.backgroundColor = "#f0dff8";
-                cell.style.color = "black";
-              }
-              if (item.Special_Position) {
-                cell.style.backgroundColor = "#e6f7df";
-                cell.style.color = "black";
-              }
-
-              div.textContent = `• ${item.Program_Name || item}`;
-              div.innerHTML = `&#8226; ${item.Program_Name || item}`;
-              div.style.paddingLeft = "15px";
-              div.style.textIndent = "-10px";
-              cell.appendChild(div);
-            } else {
-              const dash = document.createElement("div");
-              dash.textContent = "-";
-              dash.style.textAlign = "center";
-              dash.style.color = "3px solid black";
-              dash.style.padding = "4px";
-              dash.style.fontStyle = "Times New Roman";
-              cell.appendChild(dash);
+            // Apply background colors based on item type
+            if (item.Is_External) {
+              cell.style.backgroundColor = "#f0dff8";
+              cell.style.color = "black";
+            }
+            if (item.Special_Position && trainingType !== "IATF") {
+              cell.style.backgroundColor = "#e6f7df";
+              cell.style.color = "black";
+            }
+            if (item.Is_Additional) {
+              cell.style.backgroundColor = "#dbeafe";
+              cell.style.color = "black";
             }
 
-            row.appendChild(cell);
-          });
+            div.textContent = `• ${item.Program_Name || item}`;
+            div.innerHTML = `&#8226; ${item.Program_Name || item}`;
+            div.style.paddingLeft = "15px";
+            div.style.textIndent = "-10px";
+            cell.appendChild(div);
+          } else {
+            const dash = document.createElement("div");
+            dash.textContent = "-";
+            dash.style.textAlign = "center";
+            dash.style.color = "3px solid black";
+            dash.style.padding = "4px";
+            dash.style.fontFamily = "Arial, sans-serif";
+            cell.appendChild(dash);
+          }
 
-          table.appendChild(row);
-        }
-      });
+          row.appendChild(cell);
+        });
 
-      wrapper.appendChild(table);
-      document.body.appendChild(wrapper);
-
-      const canvas = await html2canvas(wrapper, {
-        backgroundColor: "#ffffff",
-        scale: 2,
-      });
-
-      const imgData = canvas.toDataURL("image/png");
-
-      if (pageIndex > 0) doc.addPage();
-
-      // Header
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "bold");
-      let title = "";
-
-      if (trainingType === "HSE") {
-        title = `${trainingType} Annual Training Plan - ${year}`;
-      } else {
-        title = `${trainingType} 16949 Annual Training Plan - ${year}`;
+        table.appendChild(row);
       }
+    });
 
-      doc.text(title, 10, 10);
-      const footerText =
-        trainingType === "HSE"
-          ? 'We are following "[S014001] & [S045001] CAPD Method 10.3 Continuous Improvement Spirit to improve our GTI"'
-          : 'We are following "IATF16949 CAPD method 10.3 Continuous Improvement Spirit to improve our GTI"';
-
-      doc.setFontSize(6);
-      doc.setFont("helvetica", "normal");
-      doc.text(footerText, 10, 16);
-
-      // Table Image
-      doc.addImage(imgData, "PNG", 10, 22, 277, 150); // x = 10
-
-      //Add Page Number at Top Right
-      const currentPage = pageIndex / monthsPerPage + 1;
-      const totalPages = Math.ceil(monthsInData.length / monthsPerPage);
-
-      doc.setFontSize(8);
-      doc.setFont("helvetica", "normal");
-      doc.text(
-        `Page ${currentPage} of ${totalPages}`,
-        doc.internal.pageSize.getWidth() - 10,
-        20,
-        { align: "right" }
-      );
-
-      // Footer box dimensions
-      const boxX = 10;
-      const boxY = 172;
-      const boxWidth = doc.internal.pageSize.getWidth() - 20;
-      const boxHeight = 23;
-      const boxRight = boxX + boxWidth;
-      const boxBottom = boxY + boxHeight;
-
-      // Draw footer rectangle border
-      doc.setDrawColor("#999");
-      doc.setLineWidth(0.3);
-      doc.line(boxX, boxY, boxX, boxBottom); // Left border
-      doc.line(boxRight, boxY, boxRight, boxBottom); // Right border
-      doc.line(boxX, boxBottom, boxRight, boxBottom);
-      doc.rect(boxX, boxY, boxWidth, boxHeight);
-
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-
-      const signatureY = boxY + 20;
-      doc.text("Prepared By", 30, signatureY);
-      doc.text("Checked By", 130, signatureY);
-      doc.text("Approved By", 230, signatureY);
-
-      const footerInfoY = signatureY + 10;
-      doc.setFontSize(8);
-
-      doc.text("EDI 1.0", boxX + 2, footerInfoY);
-
-      doc.text(
-        "Greentech Industries (India) Pvt. Ltd.",
-        doc.internal.pageSize.getWidth() / 2,
-        footerInfoY,
-        { align: "center" }
-      );
-
-      doc.text("HR-021-1", doc.internal.pageSize.getWidth() - 10, footerInfoY, {
-        align: "right",
-      });
-
-      document.body.removeChild(wrapper);
+    // Add "Foundry FD" row at the end of the table on last page only
+    if (pageIndex === monthsInData.length - monthsPerPage || 
+        pageIndex + monthsPerPage >= monthsInData.length) {
+      const foundryRow = document.createElement("tr");
+      
+      const foundryCell = document.createElement("td");
+      foundryCell.innerHTML = "FD-Foundry / MG-Machining Group / GMO - GM Office / FA - Facility / GA - General Affairs / QA - Quality Assurance / BU - Business / PMC - Production & Material Control<br>HSE - Health Safety and Environment / HR - Human Resources / IT - Information Technology / PU - Purchase / WH - Warehouse / FI - Finance / COM - Common";
+      foundryCell.colSpan = 6;
+      foundryCell.style.border = "0.5px solid #999";
+      foundryCell.style.textAlign = "center";
+      foundryCell.style.fontWeight = "bold";
+      foundryCell.style.backgroundColor = "#f0f0f0";
+      foundryCell.style.paddingTop = "8px";  // ✅ ADD THIS
+foundryCell.style.height = "auto";  // ✅ ADD THIS
+foundryCell.style.minHeight = "40px";  // ✅ ADD THIS - allows cell to expand
+foundryCell.style.lineHeight = "1.6";  // ✅ CHANGE from 1.4 to 1.6 for better spacing
+      foundryCell.style.paddingBottom = "8px";
+      foundryCell.style.paddingLeft = "10px";
+      foundryCell.style.paddingRight = "10px";
+      foundryCell.style.verticalAlign = "top";
+      foundryCell.style.fontSize = "12px";
+      foundryCell.style.fontFamily = "Arial, sans-serif";
+      foundryRow.appendChild(foundryCell);
+      table.appendChild(foundryRow);
     }
 
-    doc.save(`${trainingType}_Annual_Training_${year}.pdf`);
-  };
+    wrapper.appendChild(table);
+    document.body.appendChild(wrapper);
+
+    const canvas = await html2canvas(wrapper, {
+      backgroundColor: "#ffffff",
+      scale: 2,
+    });
+
+    const imgData = canvas.toDataURL("image/png");
+
+    if (pageIndex > 0) doc.addPage();
+
+    // Header
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    let title = "";
+
+    if (trainingType === "HSE") {
+      title = `${trainingType} Annual Training Plan - ${year}`;
+    } else {
+      title = `${trainingType} 16949 Annual Training Plan - ${year}`;
+    }
+
+    doc.text(title, 10, 10);
+
+    // Footer text right after heading
+    const footerText =
+      trainingType === "HSE"
+        ? 'We are following "ISO14001 & ISO45001 CAPD Method 10.3 Continuous Improvement Spirit to improve our GTI"'
+        : 'We are following "IATF16949 CAPD method 10.3 Continuous Improvement Spirit to improve our GTI"';
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text(footerText, 10, 15);
+
+    // Calculate page width
+    const pageWidth = doc.internal.pageSize.getWidth();
+    
+    // Add Page Number at Top Right
+    const currentPage = pageIndex / monthsPerPage + 1;
+    const totalPages = Math.ceil(monthsInData.length / monthsPerPage);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text(
+      `Page ${currentPage} of ${totalPages}`,
+      pageWidth - 10,
+      20,
+      { align: "right" }
+    );
+
+    // Calculate starting position for legends from the right (before page number)
+    let legendX = pageWidth - 10; // Start from right edge
+    const legendY = 20; // Same line as page number
+    const squareSize = 2;
+    const squareYOffset = 18.5; // Y offset for squares to align with text baseline
+
+    // Get page number width to position legends before it
+    const pageNumberText = `Page ${currentPage} of ${totalPages}`;
+    const pageNumberWidth = doc.getTextWidth(pageNumberText);
+    legendX -= (pageNumberWidth + 10); // Position before page number with gap
+   // Display "Months" text at the left side of the same line as page number
+doc.setFontSize(8);
+doc.setFont("helvetica", "bold");
+doc.text("Months", 15, 20);  // Keep this as is - already at left (x=10)
+
+
+    // Add legends from right to left
+    doc.setTextColor(147, 51, 234); // Purple for External
+    const externalWidth = doc.getTextWidth("External");
+    legendX -= externalWidth;
+    doc.text("External", legendX, legendY);
+    doc.setFillColor(147, 51, 234);
+    doc.rect(legendX - 4, squareYOffset, squareSize, squareSize, 'F');
+    legendX -= 12; // Gap
+
+    doc.setTextColor(37, 99, 235); // Blue for Additional
+    const additionalWidth = doc.getTextWidth("Additional");
+    legendX -= additionalWidth;
+    doc.text("Additional", legendX, legendY);
+    doc.setFillColor(37, 99, 235);
+    doc.rect(legendX - 4, squareYOffset, squareSize, squareSize, 'F');
+    legendX -= 12; // Gap
+
+    if (trainingType !== "IATF") {
+      doc.setTextColor(22, 163, 74); // Green for Special Position
+      const specialWidth = doc.getTextWidth("Special Position");
+      legendX -= specialWidth;
+      doc.text("Special Position", legendX, legendY);
+      doc.setFillColor(22, 163, 74);
+      doc.rect(legendX - 4, squareYOffset, squareSize, squareSize, 'F');
+    }
+
+    // Reset text color to black
+    doc.setTextColor(0, 0, 0);
+
+    // Table Image
+    doc.addImage(imgData, "PNG", 10, 21, 277, 150);
+
+    // Footer box dimensions
+    const boxX = 10;
+    const boxY = 171;
+    const boxWidth = doc.internal.pageSize.getWidth() - 20;
+    const boxHeight = 23;
+    const boxRight = boxX + boxWidth;
+    const boxBottom = boxY + boxHeight;
+
+    // Draw footer rectangle border
+    doc.setDrawColor("#999");
+    doc.setLineWidth(0.3);
+    doc.line(boxX, boxY, boxX, boxBottom); // Left border
+    doc.line(boxRight, boxY, boxRight, boxBottom); // Right border
+    doc.line(boxX, boxBottom, boxRight, boxBottom);
+    doc.rect(boxX, boxY, boxWidth, boxHeight);
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+
+    const signatureY = boxY + 20;
+    doc.text("Prepared By", 30, signatureY);
+    doc.text("Checked By", 140, signatureY);
+    doc.text("Approved By", 245, signatureY);
+
+    const footerInfoY = signatureY + 10;
+    doc.setFontSize(8);
+
+    // doc.text("EDI 1.0", boxX + 2, footerInfoY);
+
+    doc.text(
+      "Greentech Industries (India) Pvt. Ltd @ HR 25.12.2025 By Syam Prasad",
+      doc.internal.pageSize.getWidth() / 2,
+      footerInfoY,
+      { align: "center" }
+    );
+
+    doc.text("HR-021-2", doc.internal.pageSize.getWidth() - 10, footerInfoY, {
+      align: "right",
+    });
+
+    document.body.removeChild(wrapper);
+  }
+
+  doc.save(`${trainingType}_Annual_Training_${year}.pdf`);
+};
 
   return (
     <div className="max-w-full mx-auto bg-white p-2 w-full">
       <div className="bg-sky-400 text-white p-2 flex justify-between rounded-t-lg">
         <p className="font-semibold">Annual Training Calendar</p>
+    
       </div>
 <BackButton/>
       <div className="mb-4 mt-2 flex justify-between items-center space-x-4">
-        <div className="flex">
+        <div className="flex justify-between w-full">
+          <div className="flex">
           <div>
             <label htmlFor="year-select" className="mr-2 font-semibold">
              Year:
@@ -547,6 +619,10 @@ const AnnualTraining = () => {
                 }),
               }}
             />
+          </div>
+          </div>
+          <div className="flex-shrink-0">
+                <FullYearCalendar/>
           </div>
         </div>
         <div className="hidden">text-green-600 text-blue-600 text-gray-800</div>

@@ -26,7 +26,7 @@ const generateEmailHTML = (programNames) => {
     </p> 
       <div class="text-center">
         <a
-          href="http://10.40.20.5:100"
+          href="http://10.40.20.93:8070/approvalformhos"
           target="_blank"
           rel="noopener noreferrer"
           class="inline-block bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 text-white font-semibold text-base sm:text-lg py-3 px-6 rounded-full shadow-md transition duration-300"
@@ -80,13 +80,19 @@ export default async function handler(req, res) {
   let programNames = [];
   if (programIdsArray.length > 0) {
     try {
-      const programNamesResults = await Promise.all(
-        programIdsArray.map(id =>
-          prisma.$queryRawUnsafe("EXEC [dbo].[Get_TET_Form_Program_Name] @Program_Ids = '" + id + "'")
-        )
-      );
+     const programNamesResults = await Promise.all(
+  programIdsArray.map(id =>
+    prisma.$queryRaw`EXEC [dbo].[Get_TET_Form_Program_Name] @Program_Ids = ${id}`
+  )
+);
       programNames = programNamesResults.flat().map(p => p.Program_Name || '').filter(name => name);
-    } catch (error) {
+     if (programNames.length === 0) {
+      console.warn('No valid program names returned from database');
+    }
+    } 
+    
+    
+    catch (error) {
       console.error('Error fetching program names:', error);
     }
   }

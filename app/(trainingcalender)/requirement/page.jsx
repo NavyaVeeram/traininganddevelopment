@@ -45,7 +45,13 @@ export default function Requirement() {
     Evaluation_Period: '',
     CreatedBy: '',
   });
-
+const handleSelectAll = (e) => {
+  if (e.target.checked) {
+    setSelectedProgramIds(paginatedData.map(item => item.Program_Id));
+  } else {
+    setSelectedProgramIds([]);
+  }
+};
   // Added missing states to fix "data is not defined" error
   const [data, setData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -134,6 +140,7 @@ export default function Requirement() {
     try {
       const updatedFormData = {
         ...formData,
+         Year_No: selectedDate.getFullYear().toString(), 
         CreatedBy: employeeId,
         UpdatedBy:employeeId,
         Department: department,
@@ -316,7 +323,45 @@ export default function Requirement() {
     // Update No. of Times based on selected months
     setNoOfTimes(selectedOptions.length);
   }, [selectedOptions]);  // Only run this effect when selectedOptions changes
+// Add this useEffect after your existing useEffects to dynamically filter months
 
+useEffect(() => {
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth(); // 0-indexed (0 = Jan, 11 = Dec)
+  const selectedYear = selectedDate.getFullYear();
+
+  let availableMonths = [];
+
+  if (selectedYear === currentYear) {
+    // For current year (2025), show only current and future months
+    // If current month is November (index 10), show Nov and Dec
+    availableMonths = monthOrder.slice(currentMonth);
+  } else if (selectedYear === currentYear + 1) {
+    // For next year (2026), show all months
+    availableMonths = monthOrder;
+  }
+
+  // Create month options from available months
+  const monthOptions = availableMonths.map(month => ({
+    value: month,
+    label: month
+  }));
+
+  setOptions(monthOptions);
+
+  // Clear selected months if they're not available in the new year
+  setFormData(prev => {
+    const filteredMonths = prev.Req_Months.filter(month => 
+      availableMonths.includes(month)
+    );
+    return {
+      ...prev,
+      Req_Months: filteredMonths,
+      No_Times: filteredMonths.length
+    };
+  });
+}, [selectedDate]); // Re-run when year selection changes
   // Removed early return for loading state to fix hook order error
   // Instead, loading state will be conditionally rendered inside JSX below
 
@@ -365,6 +410,7 @@ const responseData = await res.json();
     setError(err.message);
   }
 };
+
 const programOptions = programs.map(program => ({
   value: program.Value,
   label: program.Text,
@@ -372,40 +418,178 @@ const programOptions = programs.map(program => ({
 
 
   // Handle update button in the modal
-  const handleUpdate = async () => {
-    try {
-      const programId = editingData?.Program_Id;
-      console.log('Program_Id:', programId);
+const handleUpdate = async () => {
+  try {
+    const programId = editingData?.Program_Id;
+    
+    if (!programId) {
+      alert('Program ID is missing');
+      return;
+    }
 
-      // Log the data to check if all fields are present
-      console.log('Updating with data:', editingData);
+    // Validate fields
+    if (
+      !editingData.Training_Name ||
+      !editingData.Program_Name ||
+      !editingData.Train_Mode ||
+      !editingData.Train_Purpose ||
+      !editingData.Persons ||
+      !editingData.No_Hrs ||
+      !editingData.Evaluation_Period
+    ) {
+      alert('All fields must be filled!');
+      return;
+    }
 
-      const res = await fetch(`/api/update_training_data_requirement?Program_Id=${programId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingData), // Send updated data
-      });
-      const responseData = await res.json(); 
-      if (res.ok) {
-        alert(` ${responseData.message}`);
-        
-      // ✅ Optimistically update the local trainingData array
+    if (isNaN(editingData.Persons) || editingData.Persons <= 0) {
+      alert('Number of persons must be a positive number');
+      return;
+    }
+
+    if (isNaN(editingData.No_Hrs) || editingData.No_Hrs <= 0) {
+      alert('Number of hours must be a positive number');
+      return;
+    }
+
+    // Prepare the data to send
+    const updateData = {
+      Program_Id: programId,
+      EmployeeId: employeeId,
+      Training_Name: editingData.Training_Name,
+      Year_No: parseInt(editingData.Year_No),
+      Department: editingData.Department,
+      Section: editingData.Section,
+      Program_Name: editingData.Program_Name,
+      Train_Mode: editingData.Train_Mode,
+      Train_Purpose: editingData.Train_Purpose,
+      Persons: parseInt(editingData.Persons),
+      No_Hrs: parseFloat(editingData.No_Hrs),
+      No_Times: parseInt(editingData.No_Times),
+      Req_Months: Array.isArray(editingData.Req_Months) 
+        ? editingData.Req_Months.join(',') 
+        : editingData.Req_Months,
+      Evaluation_Period: editingData.Evaluation_Period,
+      For: editingData.For || null
+    };
+
+    console.log('Sending update data:', updateData);
+
+    const res = await fetch(`/api/update_training_data_requirement`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updateData),
+    });
+
+    const responseData = await res.json();
+    
+    if (res.ok) {
+      alert(responseData.message || 'Training record updated successfully');
+      
+      // Optimistically update the local trainingData array
       const updatedList = trainingData.map((item) =>
-        item.Program_Id === programId ? { ...item, ...editingData } : item
+        item.Program_Id === programId 
+          ? { 
+              ...item, 
+              ...editingData,
+              Req_Months: Array.isArray(editingData.Req_Months) 
+                ? editingData.Req_Months.join(',') 
+                : editingData.Req_Months
+            } 
+          : item
       );
       setTrainingData(updatedList);
-        const month = selectedDate.getMonth() + 1; // Get the current month
-        const year = selectedDate.getFullYear(); // Get the current year
-        fetchData(month, year); // Refresh the list after updating
-        setIsModalOpen(false); // Close the modal
-        setError(""); // Clear any previous error messages
-      } else {
-        alert(`Error: ${responseData.message || 'Unknown error'}`);
+      
+      // Refresh data from server
+      const refreshRes = await fetch(
+        `/api/view_training_data_by_employee?employeeId=${employeeId}&department=${department}`
+      );
+      const refreshedData = await refreshRes.json();
+      if (refreshRes.ok) {
+        setTrainingData(refreshedData);
       }
-    } catch (err) {
-      setError('Failed to update the record');
+      
+      setIsModalOpen(false);
+      setEditingData(null);
+      setError("");
+    } else {
+      alert(`Error: ${responseData.message || 'Unknown error'}`);
     }
+  } catch (err) {
+    console.error('Update error:', err);
+    alert(`Failed to update the record: ${err.message}`);
+    setError('Failed to update the record');
+  }
+};const getEvaluationPeriodLabel = (value) => {
+  const periods = {
+    "30": "1 Month",
+    "60": "2 Months",
+    "90": "3 Months"
   };
+  return periods[value] || value;
+};
+const handleEdit = async (training) => {
+  console.log('=== Edit Started ===');
+  console.log('Training data:', training);
+  console.log('Training.Program_Name (ID):', training.Program_Name);
+
+  // Set editing data FIRST
+  const editData = {
+    Program_Id: training.Program_Id,
+    Training_Name: training.Training_Name,
+    Year_No: training.Year_No,
+    Department: training.Department,
+    Section: training.Section,
+    Program_Name: training.Program_Name, // ID value
+    Train_Mode: training.Train_Mode,
+    Train_Purpose: training.Train_Purpose,
+    Persons: training.Persons,
+    No_Hrs: training.No_Hrs,
+    No_Times: training.No_Times,
+    Req_Months: typeof training.Req_Months === 'string' 
+      ? training.Req_Months.split(',').map(m => m.trim()) 
+      : training.Req_Months,
+    Evaluation_Period: training.Evaluation_Period,
+    For: training.For || 'SELF'
+  };
+  
+  console.log('Setting editingData:', editData);
+  setEditingData(editData);
+
+  // Fetch programs based on Training_Name AFTER setting edit data
+  if (training.Training_Name) {
+    try {
+      console.log('Fetching programs for:', training.Training_Name);
+      
+      const response = await fetch(`/api/get_programs_dropdown?Training_Name=${training.Training_Name}`);
+      const data = await response.json();
+      
+      console.log('Fetched programs response:', data);
+      
+      if (response.ok && data.length > 0) {
+        setPrograms(data);
+        
+        const mappedOptions = data.map(program => ({
+          value: program.Value,
+          label: program.Text,
+        }));
+        console.log('Mapped program options:', mappedOptions);
+        
+        const matchingProgram = data.find(p => p.Value === training.Program_Name);
+        console.log('Matching program found:', matchingProgram);
+        
+      } else {
+        console.error('No programs found or error:', data);
+        setPrograms([]);
+      }
+    } catch (error) {
+      console.error('Error fetching programs:', error);
+      setPrograms([]);
+    }
+  }
+  
+  console.log('Opening modal...');
+  setIsModalOpen(true);
+};
 
   // Handle cancel button click in the modal
   const handleCancel = () => {
@@ -535,7 +719,7 @@ const programOptions = programs.map(program => ({
   return (
     <div className="max-w-full mx-auto bg-white p-2 w-full">
     <div className="bg-sky-400 text-white p-2  flex justify-between rounded-t-lg">
-        <p className="font-semibold">   Annual Training Requirement Form</p>
+        <p className="font-semibold">   Annual Training Needs Requirement Form</p>
         <div className="flex justify-end mx-3">
         {username?(
           <>
@@ -554,7 +738,7 @@ const programOptions = programs.map(program => ({
 <BackButton/>
    
       <form onSubmit={handleSubmit} className="w-full p-3 bg-white shadow-lg my-1 rounded-lg">
-      <div className="flex justify-between">
+  <div className="flex justify-between">
           <div className="flex items-center space-x-2">  {department ? (
     <>
       <label className="font-bold">Department :</label>
@@ -594,7 +778,6 @@ const programOptions = programs.map(program => ({
                   className="p-2 border border-gray-300 rounded-lg"
                   calendarClassName="z-50" 
                   popperPlacement="top-start"
-                  isClearable
                   isSearchable
                   required
                   popperModifiers={{
@@ -1069,7 +1252,12 @@ Category
       >
           <thead className="bg-muted sticky top-0 z-10">
           <tr className="bg-gray-100">
-            <th className="px-4 py-2 border text-left"></th>{/* New checkbox header */}
+            <th className="px-4 py-2 border text-left">  <input
+      type="checkbox"
+      checked={selectedProgramIds.length === paginatedData.length && paginatedData.length > 0}
+      onChange={handleSelectAll}
+      className="cursor-pointer mr-2"
+    /></th>{/* New checkbox header */}
             {Object.keys(columnKeyMap).map((key) => (
               <th
                 key={key}
@@ -1122,6 +1310,18 @@ Category
 
 <td className="px-4 py-2 border">
   <div className="flex justify-center">
+      <button 
+      type="button" 
+      onClick={() => handleEdit(training)}
+      style={{ 
+        background: 'none', 
+        border: 'none', 
+        padding: '4px',
+        cursor: 'pointer'
+      }}
+    >
+      <FaEdit style={{ color: "blue", cursor: "pointer", fontSize: "15px" }} />
+    </button>
     <button 
       type="button" 
       onClick={(e) => {
@@ -1227,6 +1427,220 @@ Category
 )
 }
 </form>
+{/* Edit Modal */}
+{isModalOpen && editingData && (
+  <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
+   onClick={handleCancel}>
+    <div className="bg-white p-6 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+     onClick={(e) => e.stopPropagation()}>
+      <div className="bg-sky-400 text-white p-3 -mx-6 -mt-6 mb-4 rounded-t-lg">
+        <h2 className="text-xl font-bold">Edit Training Record</h2>
+      </div>
+      
+      <form onSubmit={(e) => { e.preventDefault(); handleUpdate(); }}>
+        {/* Row 1 */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+          {/* Training Category */}
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-900">Category</label>
+          <input type="text" value={editingData.Training_Name} readOnly className="w-full p-2 border border-gray-300 rounded-lg bg-gray-100"/>
+          </div>
+
+          {/* Program Name */}
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-900">Program Name</label>
+          <input type="text" value={editingData.Program_Name} readOnly className="w-full p-2 border border-gray-300 rounded-lg bg-gray-100"
+            />
+          </div>
+
+
+          {/* Purpose */}
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-900">Purpose</label>
+            <Input
+              type="text"
+              value={editingData.Train_Purpose}
+              onChange={(e) => setEditingData({ ...editingData, Train_Purpose: e.target.value })}
+              className="w-full p-2 border border-gray-300 rounded-lg"
+            />
+          </div>
+           {/* Persons */}
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-900">No. of Persons</label>
+            <Input
+              type="number"
+              value={editingData.Persons}
+              onChange={(e) => setEditingData({ ...editingData, Persons: e.target.value })}
+              className="w-full p-2 border border-gray-300 rounded-lg"
+            />
+          </div>
+        </div>
+
+        {/* Row 2 */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+         
+
+          {/* Hours */}
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-900">No. of Hours</label>
+            <Input
+              type="number"
+              value={editingData.No_Hrs}
+              onChange={(e) => setEditingData({ ...editingData, No_Hrs: e.target.value })}
+              className="w-full p-2 border border-gray-300 rounded-lg"
+            />
+          </div>
+
+          {/* Required Months */}
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-900">Required Months</label>
+            <Select
+              isMulti
+              closeMenuOnSelect={false}
+              value={
+                (Array.isArray(editingData.Req_Months) 
+                  ? editingData.Req_Months 
+                  : editingData.Req_Months?.split(',') || []
+                )
+                .sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b))
+                .map(month => ({ value: month, label: month }))
+              }
+              onChange={(selectedOptions) => {
+                const sortedMonths = [...(selectedOptions || [])].sort(
+                  (a, b) => monthOrder.indexOf(a.value) - monthOrder.indexOf(b.value)
+                );
+                const selectedMonthValues = sortedMonths.map(option => option.value);
+                setEditingData({
+                  ...editingData,
+                  Req_Months: selectedMonthValues,
+                  No_Times: selectedMonthValues.length
+                });
+              }}
+              options={options}
+              className="cursor-pointer"
+              styles={{
+                control: (base) => ({
+                  ...base,
+                  minHeight: "2rem",
+                  borderColor: "#d1d5db",
+                }),
+              }}
+            />
+          </div>
+
+          {/* No. of Times */}
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-900">No. of Times</label>
+            <Input
+              type="text"
+              value={editingData.No_Times}
+              readOnly
+              className="w-full p-2 border border-gray-300 rounded-lg bg-gray-100"
+            />
+          </div>
+                 {/* Evaluation Period */}
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-900">Evaluation Period</label>
+            <Select
+              value={[
+                { value: 30, label: "1 Month" },
+                { value: 60, label: "2 Months" },
+                { value: 90, label: "3 Months" },
+              ].find(option => option.value === editingData.Evaluation_Period) || null}
+              onChange={(selectedOption) =>
+                setEditingData({ ...editingData, Evaluation_Period: selectedOption.value })
+              }
+              options={[
+                { value: 30, label: "1 Month" },
+                { value: 60, label: "2 Months" },
+                { value: 90, label: "3 Months" },
+              ]}
+              className="cursor-pointer"
+              styles={{
+                control: (base) => ({
+                  ...base,
+                  minHeight: "2rem",
+                  borderColor: "#d1d5db",
+                }),
+              }}
+            />
+          </div>
+
+        </div>
+
+        {/* Row 3 */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+   
+          {/* Aimed For */}
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-900">Aimed For</label>
+            <Select
+              value={[
+                { value: "SELF", label: "Self" },
+                { value: "COMN", label: "Common (COMN)" },
+                { value: "WOMEN", label: "Women Employees" },
+              ].find(option => option.value === editingData.For) || null}
+              onChange={(selectedOption) =>
+                setEditingData({ ...editingData, For: selectedOption.value })
+              }
+              options={[
+                { value: "SELF", label: "Self" },
+                { value: "COMN", label: "Common (COMN)" },
+                { value: "WOMEN", label: "Women Employees" },
+              ]}
+              className="cursor-pointer"
+              styles={{
+                control: (base) => ({
+                  ...base,
+                  minHeight: "2rem",
+                  borderColor: "#d1d5db",
+                }),
+              }}
+            />
+          </div>
+          
+          {/* Training Mode */}
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-900">Mode of Training</label>
+            <div className="flex space-x-4 mt-2">
+              {['Internal', 'External', 'Overseas'].map((mode) => (
+                <div key={mode} className="flex items-center gap-x-2">
+                  <input
+                    type="radio"
+                    id={`edit_${mode}`}
+                    name="edit_Train_Mode"
+                    value={mode}
+                    checked={editingData.Train_Mode === mode}
+                    onChange={(e) => setEditingData({ ...editingData, Train_Mode: e.target.value })}
+                    className="h-4 w-4 cursor-pointer"
+                  />
+                  <label htmlFor={`edit_${mode}`} className="text-sm">{mode}</label>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Buttons */}
+        <div className="flex gap-3 justify-end mt-6">
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="px-6 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700"
+          >
+            Update
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
     </div>
   );
 }

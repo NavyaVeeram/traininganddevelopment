@@ -19,8 +19,9 @@ import {
 const training = [
   { title: "Annual Training Calender - IATF/HSE", href: "/annualtraining" },
   { title: "Requirement - IATF/HSE", href: "/requirement" },
-  { title: "Approval Form", href: "/approvalform" },
-  { title: "Approval Form ", href: "/approvalformforhrhod" },
+  { title: "Approval Form", href: "/approvalformhos" },
+   { title: "Approval Form ", href: "/approvalformforhod" },
+  { title: " Approval Form", href: "/approvalformforhrhod" },
   { title: "Approved Data", href: "/approveddata" },
 ];
 
@@ -38,6 +39,8 @@ const tet = [
 
 const masterreport = [
   { title: "Employee History", href: "/emphistory" },
+   { title: "Trainers History", href: "/trainerhistory" },
+    { title: "Standard Programs", href: "/allprograms" },
   { title: "Qualified Trainers List", href: "/quatrainlist" },
   { title: "Training Cost/Budget", href: "/traincost" },
   { title: "Training Agencies", href: "/trainingagencies" },
@@ -60,7 +63,7 @@ const menuGroups = [
     title: "Transaction",
     items: transaction,
     show: (role: string) =>
-      role !== "Res_Person" && role !== "HOS" && role !== "HOD",
+       role !== "HOS" && role !== "HOD",
   },
   
   {
@@ -172,109 +175,138 @@ const handleNavigation = (href: string) => {
     );
   }
 
-  const filterMenu = (menu: { title: string; href: string }[]) =>
-    menu.filter((component) => {
-      if (
-        component.title === "Requirement - IATF/HSE" &&
-        accessRole !== "Res_Person" &&
-        accessRole !== "HOS" &&
-        accessRole !== "HOD" &&
-        accessRole !== "HR_Res"
-      )
-        return false;
-      if (
-        component.title === "Approval Form" &&
-        accessRole !== "HOS" &&
-        accessRole !== "HOD"
-      )
-        return false;
-      if (
-        component.title === "Approval Form " &&
-        accessRole !== "HR_Res" &&
-        accessRole !== "HR_Hod"
-      )
-        return false;
-      if (
-        component.title === "Training Attendance Entry" &&
-        accessRole !== "HOS" &&
-        accessRole !== "HOD" &&
-        accessRole !== "HR_Res" &&
-        accessRole !== "HR_Hod"
-      )
-        return false;
-        if (
-  component.title === "Update TL" &&
-  department !== "MS" &&
-  department !== "FNTRY"
-)
-  return false;
-      if (
-        component.title === "Monthly Training Particulars" &&
-        accessRole !== "HOS" &&
-        accessRole !== "HOD" &&
-        accessRole !== "HR_Res" &&
-        accessRole !== "HR_Hod"
-      )
-        return false;
-         // New condition to hide "Generate Training Sessions" for HR department
+const filterMenu = (menu: { title: string; href: string }[]) =>
+  menu.filter((component) => {
     if (
-      component.title === "Generate Training Sessions" &&
-      // department === "HR" &&
-       accessRole !== "HR_Res"
+      component.title === "Requirement - IATF/HSE" &&
+      accessRole !== "Res_Person" &&
+      accessRole !== "HOS" &&
+      accessRole !== "HOD" &&
+      accessRole !== "HR_Res"
     )
       return false;
+    if (
+      component.title === "Approval Form" &&
+       accessRole !== "HOS"  
+    )
+      return false;
+    if (
+      component.title === "Approval Form " &&
+      accessRole !== "HOD"
+      
+    )
+      return false;
+     if (
+      component.title === " Approval Form" &&
+      accessRole !== "HR_Res" &&
+       accessRole !== "HR_Hod"
+    )
+      return false;
+    // Special handling for Training Attendance Entry
+    if (component.title === "Training Attendance Entry") {
+      // Allow employee ID 190321 regardless of role
+      if (department === "HR") {
+        return true;
+
+      }
+      // For all other users, check their access role
       if (
-        component.title === "Generate TEE Forms" &&
-        accessRole !== "Res_Person" &&
         accessRole !== "HOS" &&
         accessRole !== "HOD" &&
         accessRole !== "HR_Res" &&
         accessRole !== "HR_Hod"
-      )
+      ) {
         return false;
-      if (
-        component.title === "Generic Forms" &&
-        accessRole !== "HR_Res" &&
-        accessRole !== "HR_Hod"
-      )
-        return false;
-      const normalizedAccessRole = accessRole
-        ? accessRole.trim().toUpperCase()
-        : "";
-      if (component.title === "Employee History" && accessRole !== "HR_Res")
-        return false;
-      if (
-        component.title === "Qualified Trainers List" &&
-         accessRole !== "Res_Person" &&
-        accessRole !== "HR_Res" &&
-        accessRole !== "HR_Hod" &&
-        accessRole !== "HOS" &&
-        accessRole !== "HOD"
-      )
-        return false;
-      if (component.title === "Training Cost/Budget" && accessRole !== "HR_Res")
-        return false;
-      if (component.title === "Training Agencies" && accessRole !== "HR_Res")
-        return false;
-      if (
-        component.title === "Add Training Record" &&
-        normalizedAccessRole !== "HR_RES"
-      )
-        return false;
-      if (
-        component.title === "Total Head Count" &&
-        normalizedAccessRole !== "HR_RES" &&
-        normalizedAccessRole !== "HR_HOD"
-      )
-        return false;
-      if (
-        component.title === "Training Hours" &&
-        normalizedAccessRole !== "HR_RES" &&
-        normalizedAccessRole !== "HR_HOD"
-      )
-        return false;
-      return true;
-    });
+      }
+    }
+    
+     if (department === "HR") {
+        return true;
+      }
+    if (
+      component.title === "Update TL" &&
+      department !== "MS" &&
+      department !== "FNTRY" &&
+      department !== "HR"
+    )
+      return false;
+      if (department === "HR") {
+        return true;
+      }
+    if (
+      component.title === "Monthly Training Particulars" &&
+      accessRole !== "HOS" &&
+      accessRole !== "HOD" &&
+      accessRole !== "HR_Res" &&
+      accessRole !== "HR_Hod"
+    )
+      return false;
+      
+    if (
+      component.title === "Generate Training Sessions" &&
+      accessRole !== "HR_Res"
+    )
+      return false;
+    if (
+      component.title === "Generate TEE Forms" &&
+      accessRole !== "Res_Person" &&
+      accessRole !== "HOS" &&
+      accessRole !== "HOD" &&
+      accessRole !== "HR_Res" &&
+      accessRole !== "HR_Hod"
+    )
+      return false;
+    if (
+      component.title === "Generic Forms" &&
+      accessRole !== "HR_Res" &&
+      accessRole !== "HR_Hod"
+    )
+      return false;
+    const normalizedAccessRole = accessRole
+      ? accessRole.trim().toUpperCase()
+      : "";
+    if (component.title === "Employee History" && accessRole !== "HR_Res" &&  accessRole !== "HR_Hod")
+      return false;
+     if (component.title === "Trainers History" && accessRole !== "HR_Res" &&  accessRole !== "HR_Hod")
+      return false;
+// Special restriction for Standard Programs - only HR_Res can see it
+if (component.title === "Standard Programs") {
+  if (department !== "HR" || accessRole !== "HR_Res") {
+    return false;
+  }
+}
+    if (
+      component.title === "Qualified Trainers List" &&
+      accessRole !== "Res_Person" &&
+      accessRole !== "HR_Res" &&
+      accessRole !== "HR_Hod" &&
+      accessRole !== "HOS" &&
+      accessRole !== "HOD"
+    )
+      return false;
+    if (component.title === "Training Cost/Budget" && accessRole !== "HR_Res")
+      return false;
+    if (component.title === "Training Agencies" && accessRole !== "HR_Res")
+      return false;
+    if (
+      component.title === "Add Training Record" &&
+      normalizedAccessRole !== "HR_RES"
+    )
+      return false;
+    if (
+      component.title === "Total Head Count" &&
+      normalizedAccessRole !== "HR_RES" &&
+      normalizedAccessRole !== "HR_HOD"
+    )
+      return false;
+    if (
+      component.title === "Training Hours" &&
+      normalizedAccessRole !== "HR_RES" &&
+      normalizedAccessRole !== "HR_HOD"
+    )
+      return false;
+    return true;
+  });
 
   const handleMenuClick = (title: string) => {
     if (openMenu === title) {
@@ -472,12 +504,30 @@ function ProfileDropdown({ username }: { username: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
-  const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    router.push("/");
-    setOpen(false);
-  };
-
+  // const handleLogout = () => {
+  //   localStorage.removeItem("isLoggedIn");
+  //   router.push("/");
+  //   setOpen(false);
+  // };
+const handleLogout = async () => {
+  // Call logout API to clear the cookie
+  await fetch('/api/logout', { method: 'POST' });
+  
+  // Clear localStorage
+  localStorage.removeItem("isLoggedIn");
+  localStorage.removeItem("department");
+  localStorage.removeItem("username");
+  localStorage.removeItem("employeeId");
+  
+  // Clear any stored redirect URLs
+  sessionStorage.removeItem('intendedUrl');
+  
+  // Set logout flag to prevent redirect message
+  sessionStorage.setItem("justLoggedOut", "true");
+  
+  router.push("/");
+  setOpen(false);
+};
   const handleDashboard = () => {
     router.push("/dashboard");
     setOpen(false);

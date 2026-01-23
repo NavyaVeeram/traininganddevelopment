@@ -93,21 +93,36 @@ const MonthlyTrainingParticulars = () => {
         );
         const data = await res.json();
 
-        if (res.ok && data.Access_Role) {
-          // Restrict access for HR_Res and HR_HOD roles
-          if (
-            data.Access_Role === "HOS" ||
-            data.Access_Role === "HOD" ||
-            data.Access_Role === "Res_Person"
-          ) {
-            setIsAuthorized(false);
-            return;
-          }
-          setAccessRole(data.Access_Role);
-          setIsAuthorized(true);
-        } else {
+        if (!res.ok) {
           setIsAuthorized(false);
+          return;
         }
+
+        const role = (data.Access_Role || "").toString();
+        const dept = (data.Department || "").toString();
+
+        // If department is HR -> allow access regardless of role (including Res_Person)
+        if (dept.toLowerCase() === "hr") {
+          setAccessRole(role);
+          setIsAuthorized(true);
+          return;
+        }
+
+        // If not HR department:
+        // - deny Res_Person
+        // - deny HOS / HOD
+        if (
+          role.toLowerCase() === "res_person" ||
+          role.toLowerCase() === "hos" ||
+          role.toLowerCase() === "hod"
+        ) {
+          setIsAuthorized(false);
+          return;
+        }
+
+        // Default allow for other roles/departments
+        setAccessRole(role);
+        setIsAuthorized(true);
       } catch (error) {
         console.error("Error fetching access role:", error);
         setIsAuthorized(false);

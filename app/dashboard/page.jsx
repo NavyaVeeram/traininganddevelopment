@@ -101,37 +101,49 @@ const computeStats = (data) => {
     const dataMap = new Map(data.map(d => [d.Req_Month, d]));
     return months.map(month => dataMap.get(month) || { Req_Month: month, Training_Budget: 0, Actual_Budget: 0 });
   };
-  useEffect(() => {
-    const storedEmployeeId = localStorage.getItem("employeeId");
-    const storedDepartment = localStorage.getItem("department");
-    if (storedEmployeeId && storedDepartment) {
-      setEmployeeId(storedEmployeeId);
-      setDepartment(storedDepartment);
-    } else {
-      window.location.href = "/";
-      return;
-    }
 
-    const fetchAccessRole = async () => {
-      try {
-        const res = await fetch(
-          `/api/get_access_role?employeeId=${storedEmployeeId}`
-        );
-        const data = await res.json();
-        if (res.ok && data.Access_Role) {
-          setAccessRole(data.Access_Role);
+  
+useEffect(() => {
+  const storedEmployeeId = localStorage.getItem("employeeId");
+  const storedDepartment = localStorage.getItem("department");
+  if (storedEmployeeId && storedDepartment) {
+    setEmployeeId(storedEmployeeId);
+    setDepartment(storedDepartment);
+  } else {
+    window.location.href = "/";
+    return;
+  }
+
+  const fetchAccessRole = async () => {
+    try {
+      const res = await fetch(
+        `/api/get_access_role?employeeId=${storedEmployeeId}`
+      );
+      const data = await res.json();
+        console.log("API Response:", data);
+    console.log("Access_Role value:", data.Access_Role);
+    console.log("Access_Role type:", typeof data.Access_Role);
+    console.log("Trimmed value:", data.Access_Role?.trim());
+
+      if (res.ok && data.Access_Role) {
+      setAccessRole(data.Access_Role.trim());
+        // Check if the role is in the authorized list
+        const authorizedRoles = ["HOS", "HR_Res", "HOD", "HR_Hod", "Res_Person"];
+        if (authorizedRoles.includes(data.Access_Role)) {
           setIsAuthorized(true);
         } else {
           setIsAuthorized(false);
         }
-      } catch {
+      } else {
         setIsAuthorized(false);
       }
-    };
+    } catch {
+      setIsAuthorized(false);
+    }
+  };
 
-    fetchAccessRole();
-  }, []);
-
+  fetchAccessRole();
+}, []);
   const renderMonthWiseBudgetChart = (data, title) => {
     const chartData = data.map(d => ({
       Req_Month: d.Req_Month,
@@ -139,17 +151,6 @@ const computeStats = (data) => {
       Actual_Budget: d.Actual_Budget || 0,
     }));
 
-  if (isAuthorized === null) return null;
-  if (isAuthorized === false) {
-    return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
-        <div className="bg-white p-10 rounded shadow text-center">
-          <h2 className="text-2xl font-bold">Unauthorized</h2>
-          <p className="mt-2">You do not have access to view this page.</p>
-        </div>
-      </div>
-    );
-  }
     return (
       <div className="rounded-xl px-4 py-3 bg-white shadow-md max-h-[400px] overflow-hidden">
         <h2 className="font-semibold text-gray-800 mb-4">{title}</h2>
@@ -370,7 +371,17 @@ const computeStats = (data) => {
       </div>
     );
   };
-
+if (isAuthorized === null) return null;
+if (isAuthorized === false) {
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+      <div className="bg-white p-10 rounded shadow text-center">
+        <h2 className="text-2xl font-bold">Unauthorized</h2>
+        <p className="mt-2">You do not have access to view this page.</p>
+      </div>
+    </div>
+  );
+}
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-6">
       <div className="max-w-7xl mx-auto">
@@ -396,10 +407,10 @@ const computeStats = (data) => {
 
   <WeeklyTrainingComponent selectedYear={selectedYear} />
 
-
        
-   {[ "HOS","HR_Res", "HOD", "HR_Hod"].includes(accessRole) && (
+   {["HR_Res", "HR_Hod"].includes(accessRole) && (
     <>
+
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">

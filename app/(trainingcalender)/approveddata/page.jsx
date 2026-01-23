@@ -213,8 +213,8 @@ export default function TrainingDataTable() {
             lowerKey !== "no_times" &&
             lowerKey !== "isactive" &&
             lowerKey !== "email_status" &&
-            lowerKey !== "training_name" &&
-            lowerKey !== "emp_send"
+            lowerKey !== "training_name" 
+       //     lowerKey !== "emp_send"
           );
         })
       : [];

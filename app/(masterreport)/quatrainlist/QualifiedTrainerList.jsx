@@ -1,13 +1,17 @@
 "use client";
-import { FaEdit, FaSearch, FaSortUp } from "react-icons/fa";
+import { FaEdit, FaSearch, FaSortUp,FaTrash, FaEye  } from "react-icons/fa";
 import { useState, useEffect, useRef, useMemo } from "react";
 import Select from "react-select";
+import DeleteTrainerButton from "../quatrainlist/DeleteTrainerButton";
 import TrainerApprovalForm from "../approvalformfortrainers/page";
 import BackButton from "@/components/BackButton";
 const QualifiedTrainerList = () => {
+  // 1. ADD NEW STATE VARIABLE (add this near your other useState declarations)
+const [existingCertificates, setExistingCertificates] = useState([]);
+
   const [data, setData] = useState([]);
   const [EmployeeId, setEmployeeId] = useState(null);
-
+  const fileInputRef = useRef(null);
   // Add useEffect to set EmployeeId from localStorage on mount
   useEffect(() => {
     const storedEmployeeId = localStorage.getItem("employeeId");
@@ -15,7 +19,7 @@ const QualifiedTrainerList = () => {
       setEmployeeId(storedEmployeeId);
     }
   }, []);
-
+const [uploadedFiles, setUploadedFiles] = useState([]);
   const [employeeOptions, setEmployeeOptions] = useState([]);
   const [trainingDetails, setTrainingDetails] = useState({
     Username: "",
@@ -24,6 +28,15 @@ const QualifiedTrainerList = () => {
     Designation: "",
     Gender: "",
     DOJ: "",
+Training_Name: "",
+            Certified:"",
+            Cert_Des: "",            
+            View_Cert:  "",
+            Exp_5_Yr: "",
+            Exp_3_Yr: "",
+            HOD_Rec:  "",
+            Qualified: "",
+
   });
 
   // Computed variables to check DOJ experience for enabling/disabling checkboxes
@@ -132,55 +145,127 @@ const [trainingName, setTrainingName] = useState([]);
       DOJ: "",
     });
     setEmployeeId(null);
-    setTrainingName("");
+    setTrainingName([]);
     setCertified(false);
+    setCertifiedInput("");  // ✅ ADD THIS
+  setShowCertifiedInput(false);  // ✅ ADD THIS
     setExp5Yr(false);
     setExp3Yr(false);
     setHodRec(false);
     setQualified(false);
+     setExistingCertificates([]);
   };
 
   // Handle selection of employee ID from the dropdown
-  const handleEmployeeIdChange = async (selectedOption) => {
+const handleEmployeeIdChange = async (selectedOption) => {
     const selectedEmployeeId = selectedOption ? selectedOption.value : null;
     setEmployeeId(selectedEmployeeId);
-    setTrainingDetails({
-      Username: "",
-      Department: "",
-      Section: "",
-      Designation: "",
-      Gender: "",
-      DOJ: "",
-    });
-
-    if (selectedEmployeeId) {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch(
-          `/api/get_user_details?EmployeeId=${selectedEmployeeId}`
-        );
-        const data = await res.json();
-
-        if (res.status === 200) {
-          setTrainingDetails({
-            Username: data.Username || "",
-            Department: data.Department || "",
-            Section: data.Section || "",
-            Designation: data.Designation || "",
-            Gender: data.Gender || "",
-            DOJ: data.DOJ || "",
-          });
-        } else {
-          setError(data.message || "Error fetching user details");
-        }
-      } catch (err) {
-        setError("Failed to fetch data");
-      } finally {
-        setLoading(false);
-      }
+    
+    // Reset states when clearing selection
+    if (!selectedEmployeeId) {
+      setTrainingDetails({
+        Username: "",
+        Department: "",
+        Section: "",
+        Designation: "",
+        Gender: "",
+        DOJ: "",
+        Training_Name: "",
+        Certified: "",
+        Cert_Des: "",            
+        View_Cert: "",
+        Exp_5_Yr: "",
+        Exp_3_Yr: "",
+        HOD_Rec: "",
+        Qualified: "",
+      });
+      setTrainingName([]);
+      return;
     }
-  };
+
+    // Fetch data when an employee is selected
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/get_user_details?EmployeeId=${selectedEmployeeId}`
+      );
+      const fetchedData = await res.json();
+
+      if (res.status === 200) {
+        setTrainingDetails({
+          Username: fetchedData.Username || "",
+          Department: fetchedData.Department || "",
+          Section: fetchedData.Section || "",
+          Designation: fetchedData.Designation || "",
+          Gender: fetchedData.Gender || "",
+          DOJ: fetchedData.DOJ || "",
+          Training_Name: fetchedData.Training_Name || "",
+          Certified: fetchedData.Certified || "",
+          Cert_Des: fetchedData.Cert_Des || "",            
+          View_Cert: fetchedData.View_Cert || "",
+          Exp_5_Yr: fetchedData.Exp_5_Yr || "",
+          Exp_3_Yr: fetchedData.Exp_3_Yr || "",
+          HOD_Rec: fetchedData.HOD_Rec || "",
+          Qualified: fetchedData.Qualified || "",
+        });
+        // ✅ Parse Training_Name (independent)
+if (fetchedData.Training_Name && fetchedData.Training_Name.trim() !== "") {
+  setTrainingName(
+    fetchedData.Training_Name.split(",").map(t => t.trim())
+  );
+} else {
+  setTrainingName([]);
+}
+
+// ✅ Parse View_Cert (independent — THIS FIXES YOUR ISSUE)
+if (fetchedData.View_Cert && fetchedData.View_Cert.trim() !== "") {
+  setExistingCertificates(
+    fetchedData.View_Cert
+      .split(",")
+      .map(cert => cert.trim())
+      .filter(Boolean)
+  );
+} else {
+  setExistingCertificates([]);
+}
+
+// Always reset new uploads
+setUploadedFiles([]);
+
+      } else {
+        setError(fetchedData.message || "Error fetching user details");
+      }
+        // ✅ ADD THIS: Set checkbox states based on fetched data
+  // ✅ ADD THIS: Set checkbox states based on fetched data
+// If Cert_Des has data, consider Certified as true regardless of the boolean value
+const hasCertification = fetchedData.Certified || (fetchedData.Cert_Des && fetchedData.Cert_Des.trim() !== "");
+setCertified(hasCertification);
+  setExp5Yr(fetchedData.Exp_5_Yr ? true : false);
+  setExp3Yr(fetchedData.Exp_3_Yr ? true : false);
+  setHodRec(fetchedData.HOD_Rec ? true : false);
+  
+  // ✅ If Certified is true, show the input and set the description
+ if (hasCertification) {
+    setShowCertifiedInput(true);
+    setCertifiedInput(fetchedData.Cert_Des || "");
+  } else {
+    setShowCertifiedInput(false);
+    setCertifiedInput("");
+  }
+ // 4. ADD NEW FUNCTION to handle removing existing certificates
+
+
+  // ✅ Set qualified state if any checkbox is true
+  const isAnyChecked = fetchedData.Certified || fetchedData.Exp_5_Yr || 
+                       fetchedData.Exp_3_Yr || fetchedData.HOD_Rec;
+  setQualified(isAnyChecked);
+    } catch (err) {
+      setError("Failed to fetch data");
+    } finally {
+      setLoading(false);
+    }
+};
 
   const handleCheckboxChange = (setter, currentState, checkboxName) => {
     setter((prev) => {
@@ -207,31 +292,65 @@ const [trainingName, setTrainingName] = useState([]);
       return newValue;
     });
   };
-
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    setUploadedFiles((prevFiles) => [...prevFiles, ...files]);
+  };
+   const handleRemoveFile = (index) => {
+    setUploadedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+  };
+  
+  const handleRemoveExistingCert = (certName) => {
+  setExistingCertificates((prev) => prev.filter((cert) => cert !== certName));
+};
+  
   // Submit form data
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (trainingName.length === 0) {
-      alert("Please select at least one Category (IATF or HSE)!");
-      return;
-    }
+  /* ==============================
+     BASIC VALIDATIONS
+  ============================== */
+  if (trainingName.length === 0) {
+    alert("Please select at least one Category (IATF or HSE)!");
+    return;
+  }
 
-    if (!qualified) {
-      alert("You must check the Qualified checkbox!");
-      return;
-    }
+  if (!qualified) {
+    alert("You must check the Qualified checkbox!");
+    return;
+  }
 
-    // Check if logged-in user's department matches selected employee's department
-    const loggedInDepartment = localStorage.getItem("department") || "";
-    if (loggedInDepartment !== trainingDetails.Department) {
-      alert("You can only submit data for employees in your own department.");
-      return;
-    }
+  const loggedInDepartment = localStorage.getItem("department") || "";
+  if (loggedInDepartment !== trainingDetails.Department) {
+    alert("You can only submit data for employees in your own department.");
+    return;
+  }
 
-    // Get CreatedBy from localStorage directly
-    const createdByFromStorage = localStorage.getItem('employeeId');
+  const createdByFromStorage = localStorage.getItem("employeeId") || "";
 
+  if (!createdByFromStorage) {
+    alert("Invalid login session. Please re-login.");
+    return;
+  }
+
+  /* ==============================
+     BUILD FINAL FILE LIST
+  ============================== */
+ 
+const retainedFiles = [...existingCertificates]; // files user kept
+
+// Add new file names to the final list
+const newFileNames = uploadedFiles.map(file => file.name);
+const finalFilenames = [...existingCertificates, ...newFileNames];
+
+  setLoading(true);
+  setError(null);
+
+  try {
+    /* ==============================
+       STEP 1: SAVE QUALIFIED TRAINER
+    ============================== */
     const dataToSubmit = {
       Training_Name: trainingName.join(","),
       EmployeeId: EmployeeId,
@@ -242,89 +361,104 @@ const [trainingName, setTrainingName] = useState([]);
       HOD_Rec: hodRec ? 1 : 0,
       Qualified: qualified ? 1 : 0,
       IsActive: 1,
-      CreatedBy: createdByFromStorage || "", // Use localStorage EmployeeId for CreatedBy
+      CreatedBy: createdByFromStorage,
+      ExistingCertificates: retainedFiles.join(","), // informational
     };
 
-    setLoading(true);
-    setError(null);
+    const res = await fetch("/api/insert_qualified_trainer_list", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(dataToSubmit),
+    });
 
-    try {
-      const res = await fetch("/api/insert_qualified_trainer_list", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(dataToSubmit),
-      });
-      const responseData = await res.json();
+    const responseData = await res.json();
 
-      if (res.ok) {
-        alert(` ${responseData.message}`);
-        fetchQualifiedTrainers();
-        resetForm();
-
-        // Call the email submission API after successful insert
-          try {
-          const emailRes = await fetch("/api/generate_email_qualified_trainers_submit", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              localEmployeeId: localStorage.getItem("employeeId"),
-              trainingEmployeeId: EmployeeId,
-              username: trainingDetails.Username,
-              approve: true,
-            }),
-          });
-
-          console.log("DEBUG Email API call data:", {
-            localEmployeeId: localStorage.getItem("employeeId"),
-            trainingEmployeeId: EmployeeId,
-            username: trainingDetails.Username,
-            approve: true,
-          });
-
-          if (emailRes.status === 404) {
-            alert("The data is already submitted or not found");
-          } else if (emailRes.ok) {
-            const emailData = await emailRes.json();
-            if (emailData.email) {
-              alert("Email sent successfully");
-            } else {
-              alert("Submission successful, no email sent");
-            }
-          } else {
-            const errorData = await emailRes.json();
-            alert(`Email API error: ${errorData.message || "Unknown error"}`);
-          }
-        } catch (emailError) {
-          alert("An error occurred while sending email");
-          console.error(emailError);
-        }
-
-        // Call the additional API after insert
-        try {
-          const approvalRes = await fetch(`/api/trainer_approval_form_data?employeeId=${createdByFromStorage}`);
-          if (!approvalRes.ok) {
-            console.error('Failed to fetch trainer approval form data');
-          }
-        } catch (error) {
-          console.error('Error fetching trainer approval form data:', error);
-        }
-
-        // Removed window.location.reload() to avoid full page reload
-        window.location.reload();
-      } else {
-        alert(`Error: ${responseData.message || "Unknown error"}`);
-      }
-    } catch (error) {
-      alert("An error occurred while submitting the form");
-      console.error(error);
-    } finally {
-      setLoading(false);
+    if (!res.ok) {
+      throw new Error(responseData.message || "Failed to submit trainer data");
     }
-  };
+
+   /* ==============================
+   STEP 2: UPLOAD CERTIFICATES (ALWAYS)
+============================== */
+const formData = new FormData();
+
+// Add new files to upload
+uploadedFiles.forEach((file) => {
+  formData.append("file", file);
+});
+
+formData.append("Employee_Id", EmployeeId);
+formData.append("CreatedBy", createdByFromStorage);
+formData.append("retainedFiles", JSON.stringify(existingCertificates));
+
+const uploadRes = await fetch("/api/insert_upload_emp_certificates", {
+  method: "POST",
+  body: formData,
+});
+
+const uploadData = await uploadRes.json();
+
+if (!uploadRes.ok) {
+  throw new Error(uploadData.message || "Certificate sync failed");
+}
+
+
+    /* ==============================
+       STEP 3: POST-SUBMIT ACTIONS
+    ============================== */
+    alert("Qualified trainer and certificates saved successfully.");
+
+    fetchQualifiedTrainers();
+    resetForm();
+
+    setUploadedFiles([]);
+    setExistingCertificates([]);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+
+    /* ==============================
+       STEP 4: EMAIL NOTIFICATION
+    ============================== */
+    try {
+      await fetch("/api/generate_email_qualified_trainers_submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          localEmployeeId: createdByFromStorage,
+          trainingEmployeeId: EmployeeId,
+          username: trainingDetails.Username,
+          approve: true,
+        }),
+      });
+    } catch (emailErr) {
+      console.warn("Email notification failed:", emailErr);
+    }
+
+    /* ==============================
+       STEP 5: REFRESH APPROVAL DATA
+    ============================== */
+    try {
+      await fetch(
+        `/api/trainer_approval_form_data?employeeId=${createdByFromStorage}`
+      );
+    } catch (approvalErr) {
+      console.warn("Approval refresh failed:", approvalErr);
+    }
+
+    window.location.reload();
+
+  } catch (err) {
+    console.error("Submission error:", err);
+    alert(err.message || "An error occurred while submitting the form");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+
 
   const columnKeyMap = {
     EmployeeId: "EmployeeId",
@@ -443,6 +577,8 @@ const [trainingName, setTrainingName] = useState([]);
         "DOJ",
         "Training_Name",
         "Certified",
+        "Cert_Des",
+         "View_Cert", // ADD THIS
         "Exp_5_Yr",
         "Exp_3_Yr",
         "HOD_Rec",
@@ -639,101 +775,190 @@ const [trainingName, setTrainingName] = useState([]);
         </div>
         {/* Checkbox Section */}
         
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-          <div className="flex space-x-2">
-            <label className="block text-sm font-medium text-gray-900">
-              Certified
-            </label>
-          <input
-              type="checkbox"
-              checked={certified}
-              onChange={() =>
-                handleCheckboxChange(setCertified, certified, "certified")
-              }
-              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
-            />
-            {showCertifiedInput && (
-              <input
-                type="text"
-                value={certifiedInput}
-                onChange={(e) => setCertifiedInput(e.target.value)}
-                placeholder="Enter certification description"
-                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none"
-                required
-              />
-            )}
-          </div>
-       
+<div className="mt-6">
+  <div className="flex items-center justify-around">
+    {/* Certified Section */}
+    <div className="flex items-center gap-2">
+      <label className="text-sm font-medium text-gray-900 whitespace-nowrap">Certified</label>
+      <input
+        type="checkbox"
+        checked={certified}
+        onChange={() => handleCheckboxChange(setCertified, certified, "certified")}
+        className="h-4 w-4 text-indigo-600"
+      />
+    </div>
+    
+ {showCertifiedInput && (
+  <>
+    <input
+      type="text"
+      value={certifiedInput}
+      onChange={(e) => setCertifiedInput(e.target.value)}
+      placeholder="Enter certification description"
+      className="w-48 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400 text-sm"
+      required
+    />
+    
+   <div className="flex items-center gap-2">
+  <label className="text-sm font-medium text-gray-900 whitespace-nowrap">
+    Upload Files
+  </label>
+  
+  {/* Multi-select style file upload */}
+  <div className="relative w-52">
+    <div 
+      onClick={() => fileInputRef.current?.click()}
+      className="min-h-[2.5rem] p-2 border border-gray-300 rounded-lg cursor-pointer hover:border-sky-400 focus-within:ring-2 focus-within:ring-sky-400 bg-white"
+    >
+      {existingCertificates.length === 0 && uploadedFiles.length === 0 ? (
+        <span className="text-gray-400 text-sm">Choose files...</span>
+      ) : (
+        <div className="flex flex-wrap gap-1">
+          {/* Show existing certificates */}
+          {existingCertificates.map((cert, index) => (
+            <span
+              key={`existing-${index}`}
+              className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-2 py-1 rounded text-xs border border-green-200"
+            >
+              <a 
+                href={`/certificates/${cert}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="max-w-[80px] truncate hover:underline"
+                title={cert}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {cert.length > 15 ? `...${cert.slice(-12)}` : cert}
+              </a>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveExistingCert(cert);
+                }}
+                className="hover:text-red-600 ml-1"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+          
+          {/* Show newly uploaded files */}
+          {uploadedFiles.map((file, index) => (
+            <span
+              key={`new-${index}`}
+              className="inline-flex items-center gap-1 bg-sky-100 text-sky-700 px-2 py-1 rounded text-xs border border-sky-200"
+            >
+              <span className="max-w-[100px] truncate" title={file.name}>
+                {file.name}
+              </span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveFile(index);
+                }}
+                className="hover:text-red-600 ml-1"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+    
+    <input
+      ref={fileInputRef}
+      type="file"
+      multiple
+      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+      onChange={handleFileChange}
+      className="hidden"
+    />
+    
+    {/* File count badge */}
+    {(existingCertificates.length + uploadedFiles.length) > 0 && (
+      <div className="absolute -top-2 -right-2 bg-sky-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
+        {existingCertificates.length + uploadedFiles.length}
+      </div>
+    )}
+  </div>
+</div>
+  </>
+)}
 
-        
-<div className="flex  justify-around">
-  <div className="flex space-x-2">
-    <label className="block text-sm font-medium text-gray-900">
-      OverAll Exp (5 years)
-    </label>
+    {/* Overall Exp Section */}
+    <div className="flex items-center gap-2">
+      <label className="text-sm font-medium text-gray-900 whitespace-nowrap">
+        OverAll Exp (5 years)
+      </label>
       <input
         type="checkbox"
         checked={exp5Yr}
         onChange={() => handleCheckboxChange(setExp5Yr, exp5Yr, "exp5Yr")}
-        className="h-4 w-4 "
+        className="h-4 w-4"
       />
     </div>
-               <div className="flex  space-x-2">
-            <label className="block text-sm font-medium text-gray-900">
-              GTI Exp (3 yrs)
-            </label>
-            <input
-              type="checkbox"
-              checked={exp3Yr}
-              onChange={() => handleCheckboxChange(setExp3Yr, exp3Yr, "exp3Yr")}
-              className="h-4 w-4 "
-              disabled={!isExperienceAtLeast3Years}
-            />
-          </div>
-          </div>
 
-       <div className="flex  justify-around">
+    {/* GTI Exp Section */}
+    <div className="flex items-center gap-2">
+      <label className="text-sm font-medium text-gray-900 whitespace-nowrap">
+        GTI Exp (3 yrs)
+      </label>
+      <input
+        type="checkbox"
+        checked={exp3Yr}
+        onChange={() => handleCheckboxChange(setExp3Yr, exp3Yr, "exp3Yr")}
+        className="h-4 w-4"
+        disabled={!isExperienceAtLeast3Years}
+      />
+    </div>
 
-          <div className="flex space-x-2">
-            <label className="block text-sm font-medium text-gray-900">
-              Nominated by HOD
-            </label>
-            <input
-              type="checkbox"
-              checked={hodRec}
-              onChange={() => handleCheckboxChange(setHodRec, hodRec, "hodRec")}
-              className="h-4 w-4"
-            />
-          </div>
+    {/* Nominated by HOD Section */}
+    <div className="flex items-center gap-2">
+      <label className="text-sm font-medium text-gray-900 whitespace-nowrap">
+        Nominated by HOD
+      </label>
+      <input
+        type="checkbox"
+        checked={hodRec}
+        onChange={() => handleCheckboxChange(setHodRec, hodRec, "hodRec")}
+        className="h-4 w-4"
+      />
+    </div>
 
-          <div className="flex space-x-2">
-            <label className="block text-sm font-medium text-gray-900">
-              Qualified
-            </label>
-            <input
-              type="checkbox"
-              checked={qualified}
-              required
-              readOnly
-              className="h-4 w-4"
-            />
-          </div>
+    {/* Qualified Section */}
+    <div className="flex items-center gap-2">
+      <label className="text-sm font-medium text-gray-900 whitespace-nowrap">
+        Qualified
+      </label>
+      <input
+        type="checkbox"
+        checked={qualified}
+        required
+        readOnly
+        className="h-4 w-4"
+      />
+    </div>
+
+    {/* Submit Button */}
+    <button
+      type="submit"
+      className="px-6 py-2 cursor-pointer text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
+    >
+      Submit
+    </button>
+  </div>
+
+
 </div>
-          <div>
-          <button
-              type="submit"
-              className="px-6 py-2 cursor-pointer text-sm font-semibold text-white bg-gray-600 rounded-md shadow-md hover:bg-gray-900 focus:ring-2 focus:ring-black-600 focus:ring-offset-2"
-            >
-              Submit
-            </button>
-          </div>
-     
-        </div>
+
       </form>
       </div>
 
 <div>
-  <TrainerApprovalForm/>
+  <TrainerApprovalForm />
 </div>
    
         <div className="card-body p-0 overflow-x-auto pb-3">
@@ -800,6 +1025,7 @@ const [trainingName, setTrainingName] = useState([]);
   { key: "Training_Name", label: "Category" },
   { key: "Certified", label: "Certified" },
   { key :"Cert_Des",label:"Cert_Des"},
+    { key: "View_Cert", label: "View Certificates" },
 { key: "Exp_5_Yr", label: "OverAll Exp (5 yrs)" },
 { key: "Exp_3_Yr", label: "GTI Exp (3 yrs)" },
   { key: "HOD_Rec", label: "Nominated by HOD" },
@@ -833,6 +1059,7 @@ const [trainingName, setTrainingName] = useState([]);
         : "▼"
       : "↕"}
   </th>
+  <th className="px-2 py-2 border">Actions</th>
 
                   </tr>
                 </thead>
@@ -862,6 +1089,33 @@ const [trainingName, setTrainingName] = useState([]);
          <td className="px-2 py-2 border">
           {item.Cert_Des}
         </td>
+        {/* NEW CELL - View Certificates */}
+<td className="px-2 py-2 border">
+  {item.View_Cert ? (
+    <div className="flex flex-wrap gap-2">
+      {item.View_Cert.split(',').map((cert, idx) => {
+        const certFile = cert.trim();
+        if (!certFile) return null;
+        
+        return (
+          <a 
+            key={idx}
+            href={`/certificates/${certFile}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 px-2 py-1 rounded text-xs transition-colors"
+            title={`View ${certFile}`}
+          >
+            <FaEye size={12} />
+            Cert {idx + 1}
+          </a>
+        );
+      })}
+    </div>
+  ) : (
+    <span className="text-gray-400 text-xs italic">No files</span>
+  )}
+</td>
         <td className="px-2 py-2 border">
           {item.Exp_5_Yr ? "Yes" : "No"}
         </td>
@@ -914,7 +1168,19 @@ const [trainingName, setTrainingName] = useState([]);
         {item.Status ? "Active" : "Inactive"}
       </span>
     </td>
-        
+      <td className="px-2 py-2 border">
+  {item.Qual_Id ? (
+    <DeleteTrainerButton 
+      qualId={item.Qual_Id}
+       username={item.Username}
+       onResetSuccess={() => fetchQualifiedTrainers()}
+    />
+  ) : (
+    <span className="text-red-500 text-xs">
+      ID Missing: {JSON.stringify(Object.keys(item))}
+    </span>
+  )}
+</td>  
     </tr>
   );
 })

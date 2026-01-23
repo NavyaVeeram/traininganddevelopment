@@ -8,19 +8,19 @@ import EmailApprovalWeek from "../email/EmailApprovalforhrhod";
 import FullYearCalendar from "../calendar/page";
 import dynamic from "next/dynamic";
 import BackButton from "@/components/BackButton";
-
-const MonthCount = dynamic(() => import("./monthcount"), { ssr: false }); // Dynamically import MonthCount with no SSR
+import { FaFileExcel } from "react-icons/fa";
+import * as XLSX from 'xlsx';
+const MonthCount = dynamic(() => import("./monthcount"), { ssr: false });
 
 export default function TrainingDataTable() {
   // Add tab state
-  const [activeTab, setActiveTab] = useState('approval'); // Default to approval tab
+  const [activeTab, setActiveTab] = useState('approval');
   const [selectedProgramIds, setSelectedProgramIds] = useState([]);
 
   const [trainingData, setTrainingData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  // Remove monthCountData state as it's no longer needed
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const [loading, setLoading] = useState(true);
   const [department, setDepartment] = useState('');
@@ -33,6 +33,15 @@ export default function TrainingDataTable() {
   const [accessRole, setAccessRole] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(null);
   const [isMounted, setIsMounted] = useState(false);
+
+  // NEW: Training Name filter states
+  const [trainingNameOptions, setTrainingNameOptions] = useState([]);
+  const [selectedTrainingName, setSelectedTrainingName] = useState('');
+
+  const weekOptions = Array.from({ length: 52 }, (_, i) => ({
+    value: (i + 1).toString(),
+    label: `Week ${i + 1}`
+  }));
 
   useEffect(() => {
     setIsMounted(true);
@@ -62,6 +71,14 @@ export default function TrainingDataTable() {
             ...item
           }));
           setTrainingData(updatedData);
+
+          // Generate unique Training_Name options for dropdown
+          const uniqueTrainingNames = [...new Set(updatedData.map(item => item.Training_Name))];
+          const options = [{ value: '', label: 'All Categories' }, ...uniqueTrainingNames.map(name => ({
+            value: name,
+            label: name
+          }))];
+          setTrainingNameOptions(options);
         } else {
           console.error('Failed to fetch training data:', data.message);
           setTrainingData([]);
@@ -126,6 +143,31 @@ export default function TrainingDataTable() {
     { value: "Dec", label: "Dec" },
   ];
 
+  const validateWeeksBeforeApproval = () => {
+    const selectedItems = paginatedData.filter(item => 
+      selectedProgramIds.includes(item.Program_Id)
+    );
+    
+    const itemsWithoutWeek = selectedItems.filter(item => {
+      if (item.Train_Mode === "Internal") {
+        return false;
+      }
+      const weekStr = item.Week ? String(item.Week).trim() : '';
+      return weekStr === '';
+    });
+    
+    if (itemsWithoutWeek.length > 0) {
+      const programNames = itemsWithoutWeek
+        .map(item => item.Program_Name)
+        .join('\n- ');
+      
+      alert(`Please select the week for the following programs:\n\n- ${programNames}`);
+      return false;
+    }
+    
+    return true;
+  };
+
   const handleSort = (key) => {
     if (!key) return;
 
@@ -152,12 +194,16 @@ export default function TrainingDataTable() {
     setTrainingData(sortedData);
   };
 
+  // UPDATED: Enhanced filteredData with Training_Name filter
   const filteredData = useMemo(() => {
     return trainingData.filter(item =>
-      item.Training_Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.Program_Name.toLowerCase().includes(searchQuery.toLowerCase())
+      (selectedTrainingName === '' || item.Training_Name === selectedTrainingName) &&
+      (
+        item.Training_Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.Program_Name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
     );
-  }, [trainingData, searchQuery]);
+  }, [trainingData, searchQuery, selectedTrainingName]);
 
   const totalPages = rowsPerPage === "All" ? 1 : Math.ceil(filteredData.length / rowsPerPage);
   const paginatedData =
@@ -174,7 +220,6 @@ export default function TrainingDataTable() {
     setIsModalOpen(false);
   };
 
-  // Improved handleInputChange to parse Training_Budget as number
   const handleInputChange = (e, key) => {
     setEditingData(prevData => {
       let value = e.target.value;
@@ -195,9 +240,9 @@ export default function TrainingDataTable() {
       (editingData.Train_Mode !== "Internal" && (!editingData?.Week || editingData.Week.trim() === "")) ||
       (editingData.Train_Mode !== "Internal" &&
         (editingData.Training_Budget === "" ||
-          editingData.Training_Budget === undefined ||
-          editingData.Training_Budget === null ||
-          isNaN(Number(editingData.Training_Budget))))
+         editingData.Training_Budget === undefined ||
+         editingData.Training_Budget === null ||
+         isNaN(Number(editingData.Training_Budget))))
     ) {
       if (editingData.Train_Mode !== "Internal") {
         alert("Week and Training_Budget are required and must be valid.");
@@ -242,32 +287,52 @@ export default function TrainingDataTable() {
       setError("Failed to update the record");
     }
   };
+const handleExcelExport = () => {
+  // Prepare data for export
+  const exportData = filteredData.map(item => ({
+    'Category': item.Training_Name,
+    'Year': item.Year_No,
+    'Department': item.Department,
+    'Section': item.Section,
+    'Program Name': item.Program_Name,
+    'Training Mode': item.Train_Mode,
+    'Persons': item.Persons,
+    'Hours': item.No_Hrs,
+    'Times': item.No_Times,
+    'Months': item.Req_Months,
+    'Evaluation Period': item.Evaluation_Period,
+    'Week': item.Week,
+    'Training Budget': item.Training_Budget
+  }));
 
-  // const handleActiveToggle = async (programId, currentStatus) => {
-  // };
+  // Create workbook and worksheet
+  const ws = XLSX.utils.json_to_sheet(exportData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Training Data");
 
-  // Function to render tab content
+  // Generate file and download
+  XLSX.writeFile(wb, `Training_Data_${new Date().toISOString().split('T')[0]}.xlsx`);
+};
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'approval':
         return renderApprovalFormContent();
       case 'other':
-        // Replace the hardcoded table with the MonthCount component
         return <MonthCount />;
-        
-      default:
+  default:
         return renderApprovalFormContent();
     }
   };
 
-  // Extract the approval form content into a separate function
   const renderApprovalFormContent = () => {
     if (loading) return <div>Loading...</div>;
 
     return (
       <div className="p-4 bg-white">
-        {/* Search and Pagination Controls */}
-        <div className="mb-4 flex justify-between items-center">
+        {/* UPDATED: Enhanced Search and Filter Controls */}
+        <div className="mb-4 flex flex-wrap gap-4 justify-between items-center">
+          {/* Rows per page */}
           <div className="flex items-center gap-2 text-sm">
             <span>Show</span>
             <select
@@ -286,6 +351,31 @@ export default function TrainingDataTable() {
             </select>
             <span>entries</span>
           </div>
+
+          {/* NEW: Training Name Filter Dropdown */}
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium whitespace-nowrap">Select Category:</label>
+            <Select
+              options={trainingNameOptions}
+              value={trainingNameOptions.find(opt => opt.value === selectedTrainingName) || null}
+              onChange={(selected) => setSelectedTrainingName(selected ? selected.value : '')}
+              placeholder="All Categories"
+              isClearable
+              className="text-sm min-w-[200px] dark:z-0"
+              styles={{
+                control: (base) => ({
+                  ...base,
+                  padding: "2px",
+                  borderRadius: "0.5rem",
+                  borderColor: "#d1d5db",
+                  minHeight: "2.4rem",
+             
+                }),
+              }}
+            />
+          </div>
+
+          {/* Search and Calendar */}
           <div className="flex items-center gap-2 text-sm">
             <div className="relative">
               <input
@@ -306,198 +396,214 @@ export default function TrainingDataTable() {
         </div>
 
         {/* Table */}
-        <table className="w-full border-collapse text-sm">
-          <thead className="bg-gray-100">
-            <tr>
-              <th></th>    
-              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Training_Name")}>Category{sortConfig.key === "Training_Name" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Year_No")}>Year {sortConfig.key === "Year_No" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Department")}>Department {sortConfig.key === "Department" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Section")}>Section {sortConfig.key === "Section" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Program_Name")}>Program_Name {sortConfig.key === "Program_Name" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th> 
-              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Train_Mode")}>Training Mode {sortConfig.key === "Train_Mode" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Persons")}>Persons {sortConfig.key === "Persons" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("No_Hrs")}>Hours {sortConfig.key === "No_Hrs" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("No_Times")}>Times {sortConfig.key === "No_Times" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-              <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Req_Months")}>Months {sortConfig.key === "Req_Months" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-            <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Evaluation_Period")}>Evaluation Period {sortConfig.key === "Evaluation_Period" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-             <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Week")}>Week {sortConfig.key === "Week" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-                 <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Training_Budget")}>Training Budget {sortConfig.key === "Training_Budget" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}</th>
-                      <th className="border p-2 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedData.length > 0 ? (
-                    paginatedData.map((item) => (
-                      <tr key={item.Program_Id} className="hover:bg-gray-50">
-                                <td className="border p-2 text-left">
-                          <div className="flex items-center justify-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={selectedProgramIds.includes(item.Program_Id)}
-                              onChange={(e) => {
-                                console.log('Checkbox change for Program_Id:', item.Program_Id, 'Checked:', e.target.checked);
-                                if (e.target.checked) {
-                                  setSelectedProgramIds(prev => [...prev, item.Program_Id]);
-                                } else {
-                                  setSelectedProgramIds(prev => prev.filter(id => id !== item.Program_Id));
-                                }
-                              }}
-                              className="accent-green-500 cursor-pointer"
-                              title={selectedProgramIds.includes(item.Program_Id) ? "Selected" : "Not selected"}
-                            />
-                          </div>
-                        </td>
-                        <td className="border p-2 text-left">{item.Training_Name}</td>
-                        <td className="border p-2 text-left">{item.Year_No}</td>
-                        <td className="border p-2 text-left">{item.Department}</td>
-                        <td className="border p-2 text-left">{item.Section}</td>
-                        <td className="border p-2 text-left">{item.Program_Name}</td>
-                        <td className="border p-2 text-left">{item.Train_Mode}</td>
-                        <td className="border p-2 text-left">{item.Persons}</td>
-                        <td className="border p-2 text-left">{item.No_Hrs}</td>
-                        <td className="border p-2 text-left">{item.No_Times}</td>
-                        <td className="border p-2 text-left">{item.Req_Months}</td>
-                        <td className="border p-2 text-left">{item.Evaluation_Period}</td>
-                        <td className="border p-2 text-left">{item.Week}</td>
-                                     <td className="border p-2 text-left">{item.Training_Budget}</td>
-                        <td className="border p-2">
-                          <div className="flex justify-center gap-2">
-                            <button onClick={() => handleEdit(item)}>
-                              <FaEdit className="text-blue-500 cursor-pointer" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                     ) : (
+        <div className="overflow-auto" style={{ maxHeight: 'calc(100vh - 300px)' }}>
+          <table className="w-full border-collapse">
+            <thead className="bg-gray-100 text-sm sticky top-0">
               <tr>
-                <td colSpan={15} className="text-center border p-4">
-                  No data found.
-                </td>
+                <th className="px-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedProgramIds.length === paginatedData.length && paginatedData.length > 0}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedProgramIds(paginatedData.map(item => item.Program_Id));
+                      } else {
+                        setSelectedProgramIds([]);
+                      }
+                    }}
+                    className="accent-green-500 cursor-pointer"
+                  />
+                </th>    
+                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Training_Name")}>
+                  Category{sortConfig.key === "Training_Name" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}
+                </th>
+                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Year_No")}>
+                  Year {sortConfig.key === "Year_No" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}
+                </th>
+                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Department")}>
+                  Department {sortConfig.key === "Department" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}
+                </th>
+                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Section")}>
+                  Section {sortConfig.key === "Section" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}
+                </th>
+                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Program_Name")}>
+                  Program_Name {sortConfig.key === "Program_Name" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}
+                </th> 
+                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Train_Mode")}>
+                  Training Mode {sortConfig.key === "Train_Mode" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}
+                </th>
+                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Persons")}>
+                  Persons {sortConfig.key === "Persons" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}
+                </th>
+                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("No_Hrs")}>
+                  Hours {sortConfig.key === "No_Hrs" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}
+                </th>
+                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("No_Times")}>
+                  Times {sortConfig.key === "No_Times" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}
+                </th>
+                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Req_Months")}>
+                  Months {sortConfig.key === "Req_Months" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}
+                </th>
+                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Evaluation_Period")}>
+                  Evaluation Period {sortConfig.key === "Evaluation_Period" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}
+                </th>
+                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Week")}>
+                  Week {sortConfig.key === "Week" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}
+                </th>
+                <th className="border p-2 cursor-pointer text-left" onClick={() => handleSort("Training_Budget")}>
+                  Training Budget {sortConfig.key === "Training_Budget" ? (sortConfig.direction === "asc" ? "▲" : "▼") : "↕"}
+                </th>
+                <th className="border p-2 text-left">Actions</th>
               </tr>
+            </thead>
+            <tbody>
+              {paginatedData.length > 0 ? (
+                paginatedData.map((item) => (
+                  <tr key={item.Program_Id} className="hover:bg-gray-50">
+                    <td className="border p-2 text-left">
+                      <div className="flex items-center justify-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedProgramIds.includes(item.Program_Id)}
+                          onChange={(e) => {
+                            console.log('Checkbox change for Program_Id:', item.Program_Id, 'Checked:', e.target.checked);
+                            if (e.target.checked) {
+                              setSelectedProgramIds(prev => [...prev, item.Program_Id]);
+                            } else {
+                              setSelectedProgramIds(prev => prev.filter(id => id !== item.Program_Id));
+                            }
+                          }}
+                          className="accent-green-500 cursor-pointer"
+                          title={selectedProgramIds.includes(item.Program_Id) ? "Selected" : "Not selected"}
+                        />
+                      </div>
+                    </td>
+                    <td className="border p-2 text-left">{item.Training_Name}</td>
+                    <td className="border p-2 text-left">{item.Year_No}</td>
+                    <td className="border p-2 text-left">{item.Department}</td>
+                    <td className="border p-2 text-left">{item.Section}</td>
+                    <td className="border p-2 text-left">{item.Program_Name}</td>
+                    <td className="border p-2 text-left">{item.Train_Mode}</td>
+                    <td className="border p-2 text-left">{item.Persons}</td>
+                    <td className="border p-2 text-left">{item.No_Hrs}</td>
+                    <td className="border p-2 text-left">{item.No_Times}</td>
+                    <td className="border p-2 text-left">{item.Req_Months}</td>
+                    <td className="border p-2 text-left">{item.Evaluation_Period}</td>
+                    <td className="border p-2 text-left">{item.Week}</td>
+                    <td className="border p-2 text-left">{item.Training_Budget}</td>
+                    <td className="border p-2">
+                      <div className="flex justify-center gap-2">
+                        <button onClick={() => handleEdit(item)}>
+                          <FaEdit className="text-blue-500 cursor-pointer" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={15} className="text-center border p-4">
+                    No data found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        <div className="flex flex-wrap justify-between items-center mt-4 space-y-2">
+          {/* Showing entries */}
+          <div style={{ fontSize: "14px" }}>
+            Showing{" "}
+            {paginatedData.length > 0 ? (
+              rowsPerPage === "All" ? (
+                `1 to ${paginatedData.length} of ${paginatedData.length} entries`
+              ) : (
+                `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
+                  currentPage * rowsPerPage,
+                  paginatedData.length
+                )} of ${filteredData.length} entries`
+              )
+            ) : (
+              "0 entries"
             )}
-          </tbody>
+          </div>
 
-        </table>
- <div className="flex flex-wrap justify-between items-center mt-4 space-y-2">
-  {/* Showing entries */}
-  <div style={{ fontSize: "14px" }}>
-    Showing{" "}
-    {paginatedData.length > 0 ? (
-      rowsPerPage === "All" ? (
-        `1 to ${paginatedData.length} of ${paginatedData.length} entries`
-      ) : (
-        `${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(
-          currentPage * rowsPerPage,
-          paginatedData.length
-        )} of ${paginatedData.length} entries`
-      )
-    ) : (
-      "0 entries"
-    )}
-  </div>
+          {/* Pagination buttons */}
+          {rowsPerPage !== "All" && (
+            <div className="flex space-x-2" style={{ fontSize: "14px" }}>
+              <button
+                type="button"
+                className="px-3 py-1 border cursor-pointer rounded"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                {"<<"}
+              </button>
+              <button
+                type="button"
+                className="px-3 py-1 border cursor-pointer rounded"
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                {"<"}
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className={`px-3 py-1 border cursor-pointer rounded ${
+                    currentPage === i + 1 ? "bg-black text-white" : ""
+                  }`}
+                  onClick={() => setCurrentPage(i + 1)}
+                >
+                  {i + 1}
+                </button>
+              ))}
+              <button
+                type="button"
+                className="px-3 py-1 border cursor-pointer rounded"
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                {">"}
+              </button>
+              <button
+                type="button"
+                className="px-3 py-1 border cursor-pointer rounded"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                {">>"}
+              </button>
+            </div>
+          )}
+        </div>
 
-  {/* Pagination buttons - hidden if All */}
-  {rowsPerPage !== "All" && (
-    <div className="flex space-x-2" style={{ fontSize: "14px" }}>
-      <button
-        type="button"
-        className="px-3 py-1 border cursor-pointer rounded"
-        onClick={() => setCurrentPage(1)}
-        disabled={currentPage === 1}
-      >
-        {"<<"}
-      </button>
-      <button
-        type="button"
-        className="px-3 py-1 border cursor-pointer rounded"
-        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-        disabled={currentPage === 1}
-      >
-        {"<"}
-      </button>
-      {Array.from({ length: totalPages }, (_, i) => (
-        <button
-          key={i}
-          type="button"
-          className={`px-3 py-1 border cursor-pointer rounded ${
-            currentPage === i + 1 ? "bg-black text-primary-foreground" : ""
-          }`}
-          onClick={() => setCurrentPage(i + 1)}
-        >
-          {i + 1}
-        </button>
-      ))}
-      <button
-        type="button"
-        className="px-3 py-1 border cursor-pointer rounded"
-        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-        disabled={currentPage === totalPages}
-      >
-        {">"}
-      </button>
-      <button
-        type="button"
-        className="px-3 py-1 border cursor-pointer rounded"
-        onClick={() => setCurrentPage(totalPages)}
-        disabled={currentPage === totalPages}
-      >
-        {">>"}
-      </button>
-    </div>
-  )}
-</div>
+        <BackButton/>
 
-<BackButton/>
-        {/* Approval Button */}
+        {/* Approval Buttons */}
         {selectedProgramIds.length > 0 && (
           <div className="flex justify-end mt-6 gap-x-2">
-              <EmailApprovalWeek
-                weeks={paginatedData.filter(item => selectedProgramIds.includes(item.Program_Id)).map(item => item.Week)}
-                Training_Budget={paginatedData.filter(item => selectedProgramIds.includes(item.Program_Id)).map(item => item.Training_Budget)}
-                trainModeList={paginatedData.filter(item => selectedProgramIds.includes(item.Program_Id)).map(item => item.Train_Mode)}
-                selectedProgramIds={selectedProgramIds}
-                employeeId={employeeId}
-                onApproveSuccess={() => {
-                  // Refresh data or handle post-approval logic here
-                }}
-                onApprove={() => {
-                  // Debug log selectedProgramIds and employeeId before API call
-                  console.log('Selected Program IDs:', selectedProgramIds);
-                  console.log('Employee ID:', employeeId);
-                  // Call the API with employeeId and programId as comma-separated string
-                  const programIdString = selectedProgramIds.join(',');
-                  console.log('Program ID string to send:', programIdString);
-                  fetch('/api/generate_email_all', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ employeeId, programId: programIdString, approve: true }),
-                  })
-                  .then(res => res.json())
-                  .then(data => {
-                    console.log('Approval response:', data);
-                    // Handle success or error feedback here
-                  })
-                  .catch(err => {
-                    console.error('Approval error:', err);
-                  });
-                }}
-              />
-              <EmailRejection
-                weeks={paginatedData.filter(item => selectedProgramIds.includes(item.Program_Id)).map(item => item.Week)}
-                Training_Budget={paginatedData.filter(item => selectedProgramIds.includes(item.Program_Id)).map(item => item.Training_Budget)}
-                trainModeList={paginatedData.filter(item => selectedProgramIds.includes(item.Program_Id)).map(item => item.Train_Mode)}
-                selectedProgramIds={selectedProgramIds}
-                selectedProgramNames={paginatedData.filter(item => selectedProgramIds.includes(item.Program_Id)).map(item => item.Program_Name)}
-                employeeId={employeeId}
-                onRejectSuccess={() => {
-                  // Refresh data or handle post-rejection logic here
-                }}
-              />
+            <EmailApprovalWeek
+              selectedItems={trainingData.filter(item => selectedProgramIds.includes(item.Program_Id))}
+              employeeId={employeeId}
+              selectedProgramIds={selectedProgramIds}
+            />
+            <EmailRejection
+              weeks={trainingData.filter(item => selectedProgramIds.includes(item.Program_Id)).map(item => item.Week)}
+              Training_Budget={trainingData.filter(item => selectedProgramIds.includes(item.Program_Id)).map(item => item.Training_Budget)}
+              trainModeList={trainingData.filter(item => selectedProgramIds.includes(item.Program_Id)).map(item => item.Train_Mode)}
+              selectedProgramIds={selectedProgramIds}
+              selectedProgramNames={trainingData.filter(item => selectedProgramIds.includes(item.Program_Id)).map(item => item.Program_Name)}
+              employeeId={employeeId}
+              onRejectSuccess={() => {
+                // Refresh data or handle post-rejection logic here
+              }}
+            />
           </div>
         )}
-
       </div>
     );
   };
@@ -510,34 +616,29 @@ export default function TrainingDataTable() {
     return <div>Loading user information...</div>;
   }
 
-  // Unauthorized view
-  if (isAuthorized === null) {
-    // Authorization not yet determined, render loading or null to avoid hydration mismatch
-    return <div>Loading authorization...</div>;
-  }
+  // if (isAuthorized === null) {
+  //   return <div>Loading authorization...</div>;
+  // }
 
-  if (!isAuthorized) {
-    return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
-        <div className="bg-white p-10 rounded shadow text-center">
-          <h2 className="text-2xl font-bold">Unauthorized</h2>
-          <p className="mt-2">You do not have access to view this page.</p>
-        </div>
-      </div>
-    );
-  }
+  // if (!isAuthorized) {
+  //   return (
+  //     <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+  //       <div className="bg-white p-10 rounded shadow text-center">
+  //         <h2 className="text-2xl font-bold">Unauthorized</h2>
+  //         <p className="mt-2">You do not have access to view this page.</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
-  
   return (
     <div>
       <div className="max-w-full mx-auto bg-white p-2 w-full">
-        {/* Header with Tabs */} 
-
+        {/* Header with Tabs */}
         <div className="bg-sky-400 text-white p-2 flex justify-between items-center rounded-t-lg">
           <div className="flex items-center gap-6">
             <p className="font-semibold">Approval Form</p>
             
-            {/* Tab Navigation beside the heading */}
             <div className="flex space-x-1 bg-sky-500 rounded-lg p-1">
               <button
                 onClick={() => setActiveTab('approval')}
@@ -561,13 +662,16 @@ export default function TrainingDataTable() {
               </button>
             </div>
           </div>
-          
+
+
           <div className="flex justify-end mx-3">
+           
             {username ? (
               <p className="font-bold">{username}</p>
             ) : (
               <p>Loading the Username</p>
             )}
+
           </div>
         </div>
 
@@ -579,134 +683,144 @@ export default function TrainingDataTable() {
         {/* Modal */}
         {isModalOpen && (
           <div
-            className="fixed inset-0 flex justify-center items-center "
+            className="fixed inset-0 flex justify-center items-center z-40 bg-black bg-opacity-50"
             onClick={() => setIsModalOpen(false)}
           >
             <div
-              className="relative z-50 w-full max-w-4xl p-6 bg-white shadow-lg rounded-lg "
+              className="relative z-50 w-full max-w-4xl p-6 bg-white shadow-lg rounded-lg max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="bg-sky-400 text-white p-2 flex justify-between rounded-t-lg">Update Approval Details</h3>
+              <h3 className="bg-sky-400 text-white p-3 flex justify-between items-center rounded-t-lg">
+                Update Approval Details
+                <button onClick={handleCancel} className="text-white hover:text-gray-200">
+                  <FaTrash />
+                </button>
+              </h3>
               {editingData && (
                 <div>
-                  <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-4">
-                    <div>
-                      <label className="block font-semibold">Category</label>
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {/* Category */}
+                    <div className="flex flex-col">
+                      <label className="font-semibold mb-1">Category</label>
                       <input
                         type="text"
                         value={editingData.Training_Name}
-                        onChange={(e) => handleInputChange(e, "Training_Name")}
                         readOnly
-                        className="border p-2 w-70 bg-gray-200  border-gray-300 cursor-not-allowed rounded-md"
+                        className="border p-2 bg-gray-100 border-gray-300 cursor-not-allowed rounded-md"
                       />
                     </div>
-                    <div>
-                      <label className="block font-semibold">Year</label>
+
+                    {/* Year */}
+                    <div className="flex flex-col">
+                      <label className="font-semibold mb-1">Year</label>
                       <input
                         type="text"
                         value={editingData.Year_No}
-                        onChange={(e) => handleInputChange(e, "Year_No")}
                         readOnly
-                        className="border p-2 w-70 bg-gray-200  border-gray-300 cursor-not-allowed rounded-md"
+                        className="border p-2 bg-gray-100 border-gray-300 cursor-not-allowed rounded-md"
                       />
                     </div>
 
-                    <div>
-                      <label className="block font-semibold">Department</label>
+                    {/* Department */}
+                    <div className="flex flex-col">
+                      <label className="font-semibold mb-1">Department</label>
                       <input
                         type="text"
                         value={editingData.Department}
-                        onChange={(e) => handleInputChange(e, 'Department')}
                         readOnly
-                        className="border p-2 w-70 bg-gray-200  border-gray-300 cursor-not-allowed rounded-md"
+                        className="border p-2 bg-gray-100 border-gray-300 cursor-not-allowed rounded-md"
                       />
                     </div>
-                    <div>
-                      <label className="block font-semibold">Section</label>
+
+                    {/* Section */}
+                    <div className="flex flex-col">
+                      <label className="font-semibold mb-1">Section</label>
                       <input
                         type="text"
                         value={editingData.Section}
-                        onChange={(e) => handleInputChange(e, 'Section')}
                         readOnly
-                        className="border p-2 w-70 bg-gray-200  border-gray-300 cursor-not-allowed rounded-md"
+                        className="border p-2 bg-gray-100 border-gray-300 cursor-not-allowed rounded-md"
                       />
                     </div>
 
-                    <div>
-                      <label className="block font-semibold">Program Name</label>
+                    {/* Program Name */}
+                    <div className="flex flex-col">
+                      <label className="font-semibold mb-1">Program Name</label>
                       <input
                         type="text"
                         value={editingData.Program_Name}
-                        onChange={(e) => handleInputChange(e, 'Program_Name')}
                         readOnly
-                        className="border p-2 w-70 bg-gray-200  border-gray-300 cursor-not-allowed rounded-md"
+                        className="border p-2 bg-gray-100 border-gray-300 cursor-not-allowed rounded-md"
                       />
                     </div>
-                    <div>
-                      <label className="block font-semibold">Training Mode</label>
+
+                    {/* Training Mode */}
+                    <div className="flex flex-col">
+                      <label className="font-semibold mb-1">Training Mode</label>
                       <input
                         type="text"
                         value={editingData.Train_Mode}
-                        onChange={(e) => handleInputChange(e, 'Train_Mode')}
                         readOnly
-                        className="border p-2 w-70 bg-gray-200  border-gray-300 cursor-not-allowed rounded-md"
+                        className="border p-2 bg-gray-100 border-gray-300 cursor-not-allowed rounded-md"
                       />
                     </div>
 
-                    <div>
-                      <label className="block font-semibold ">Purpose</label>
+                    {/* Purpose */}
+                    <div className="flex flex-col">
+                      <label className="font-semibold mb-1">Purpose</label>
                       <input
                         type="text"
                         value={editingData.Train_Purpose}
-                        onChange={(e) => handleInputChange(e, 'Train_Purpose')}
                         readOnly
-                        className="border p-2 w-70 bg-gray-200  border-gray-300 cursor-not-allowed rounded-md"
+                        className="border p-2 bg-gray-100 border-gray-300 cursor-not-allowed rounded-md"
                       />
                     </div>
-                    <div>
-                      <label className="block font-semibold">Persons</label>
+
+                    {/* Persons */}
+                    <div className="flex flex-col">
+                      <label className="font-semibold mb-1">Persons</label>
                       <input
                         type="number"
-                        step="1"
                         min="0"
                         value={editingData.Persons}
-                        onChange={(e) => handleInputChange(e, 'Persons')}
-                        className="border p-2 w-70 rounded-md"
+                        onChange={(e) => handleInputChange(e, "Persons")}
+                        className="border p-2 rounded-md"
                       />
                     </div>
 
-                    <div>
-                      <label className="block font-semibold">Hours</label>
+                    {/* Hours */}
+                    <div className="flex flex-col">
+                      <label className="font-semibold mb-1">Hours</label>
                       <input
                         type="number"
-                        step="1"
                         min="0"
                         value={editingData.No_Hrs}
-                        onChange={(e) => handleInputChange(e, 'No_Hrs')}
-                        className="border p-2 w-70 rounded-md"
+                        onChange={(e) => handleInputChange(e, "No_Hrs")}
+                        className="border p-2 rounded-md"
                       />
                     </div>
-                    <div>
-                      <label className="block font-semibold">Times</label>
+
+                    {/* Times */}
+                    <div className="flex flex-col">
+                      <label className="font-semibold mb-1">Times</label>
                       <input
                         type="number"
-                        step="1"
                         min="0"
-                        value={editingData.No_Times}
-                        onChange={(e) => handleInputChange(e, 'No_Times')}
                         readOnly
-                        className="border p-2 w-70 rounded-md bg-gray-200 cursor-not-allowed"
+                        value={editingData.No_Times}
+                        className="border p-2 bg-gray-100 cursor-not-allowed rounded-md"
                       />
                     </div>
-                    <div >
-                      <label className="block font-semibold w-32">Months</label>
 
+                    {/* Months */}
+                    <div className="flex flex-col">
+                      <label className="font-semibold mb-1">Months</label>
                       <Select
                         options={monthOptions}
                         value={monthOptions.find(opt => opt.value === editingData.Req_Months) || null}
-                        onChange={(selectedOption) => {
-                          const selectedMonth = selectedOption ? selectedOption.value : "";
-                          handleInputChange({ target: { value: selectedMonth } }, 'Req_Months');
+                        onChange={(selected) => {
+                          const val = selected ? selected.value : "";
+                          handleInputChange({ target: { value: val } }, "Req_Months");
                         }}
                         placeholder="Select Month"
                         isClearable
@@ -714,80 +828,82 @@ export default function TrainingDataTable() {
                         styles={{
                           control: (base) => ({
                             ...base,
-                            padding: "1px",
-                            borderColor: "#d1d5db",
-                            minHeight: "2rem",
+                            padding: "2px",
                             borderRadius: "0.5rem",
-                            width: '282px',
+                            borderColor: "#d1d5db",
+                            minHeight: "2.4rem",
                           }),
                         }}
                       />
                     </div>
+
+                    {/* Week (only if not Internal) */}
+                    {/* {editingData.Train_Mode !== "Internal" && ( */}
+                      <div className="flex flex-col">
+                        <label className="font-semibold mb-1">Week No</label>
+                        <Select
+                          options={weekOptions}
+                          isMulti
+                          value={
+                            (() => {
+                              if (!editingData.Week) return [];
+                              const weekStr = String(editingData.Week);
+                              return weekStr.split(',').map(w => ({
+                                value: w.trim(),
+                                label: `Week ${w.trim()}`
+                              })).filter(w => w.value);
+                            })()
+                          }
+                          onChange={(selected) => {
+                            const val = selected && selected.length > 0 
+                              ? selected.map(opt => opt.value).join(',')
+                              : "";
+                            handleInputChange({ target: { value: val } }, "Week");
+                          }}
+                        />
+                      </div>
+                    {/* )} */}
+
+                    {/* Training Budget (only if not Internal) */}
                     {editingData.Train_Mode !== "Internal" && (
-                      <>
-                        <div>
-                          <label className="block font-semibold ">Week No</label>
-                          <input
-                            type="text"
-                            value={editingData.Week || ""}
-                            onChange={(e) => handleInputChange(e, "Week")}
-                            className="border p-2 w-70 rounded-md"
-                            autoComplete="off"
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="block font-semibold ">Training Budget</label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={
-                              editingData.Training_Budget !== undefined &&
-                              editingData.Training_Budget !== null
-                                ? editingData.Training_Budget
-                                : ""
-                            }
-                            onChange={(e) => handleInputChange(e, "Training_Budget")}
-                            className="border p-2 w-70 rounded-md"
-                            autoComplete="off"
-                            required
-                          />
-                        </div>
-                      </>
+                      <div className="flex flex-col">
+                        <label className="font-semibold mb-1">Training Budget</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={editingData.Training_Budget ?? ""}
+                          onChange={(e) => handleInputChange(e, "Training_Budget")}
+                          className="border p-2 rounded-md"
+                        />
+                      </div>
                     )}
-                    <div>
-                      <label className="block font-semibold ">Evaluation Period</label>
+
+                    {/* Evaluation Period */}
+                    <div className="flex flex-col">
+                      <label className="font-semibold mb-1">Evaluation Period</label>
                       <input
                         type="text"
                         value={editingData.Evaluation_Period}
                         onChange={(e) => handleInputChange(e, "Evaluation_Period")}
-                        className="border p-2 w-70 rounded-md"
-                      />
-                    </div>
-                        <div>
-                      <label className="block font-semibold ">Week</label>
-                      <input
-                        type="text"
-                        value={editingData.Week}
-                        onChange={(e) => handleInputChange(e, "Week")}
-                        className="border p-2 w-70 rounded-md"
-                      />
-                    </div>
-                      <div>
-                      <label className="block font-semibold ">Training Budget</label>
-                      <input
-                        type="text"
-                        value={editingData.Training_Budget ?? ""}
-                        onChange={(e) => handleInputChange(e, "Training_Budget")}
-                        className="border p-2 w-70 rounded-md"
+                        className="border p-2 rounded-md"
                       />
                     </div>
                   </div>
 
-                  <div className="flex justify-end">
-                    <button onClick={handleUpdate} className="px-4 py-2 text-sm font-semibold text-white bg-green-400 hover:bg-green-600  rounded-md mr-2 mt-2 cursor-pointer">Update</button>
-                    <button onClick={handleCancel} className="px-4 py-2 text-sm font-semibold text-white bg-red-500 hover:bg-red-800  rounded-md mt-2 cursor-pointer">Cancel</button>
+                  <div className="flex justify-end gap-2 mt-6">
+                    <button 
+                      onClick={handleUpdate} 
+                      className="px-6 py-2 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-md transition-colors"
+                    >
+                      Update
+                    </button>
+                    <button 
+                      onClick={handleCancel} 
+                      className="px-6 py-2 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-md transition-colors"
+                    >
+                      Cancel
+                    </button>
                   </div>
                 </div>
               )}

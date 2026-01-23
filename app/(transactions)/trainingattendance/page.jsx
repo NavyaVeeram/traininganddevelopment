@@ -10,6 +10,7 @@ import dynamic from "next/dynamic";
 const DatePicker = dynamic(() => import("react-datepicker"), { ssr: false });
 import "react-datepicker/dist/react-datepicker.css";
 import Select from "react-select";
+import CreatableSelect from 'react-select/creatable';
 import makeAnimated from "react-select/animated";
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
@@ -25,6 +26,7 @@ const TrainingAttendanceForm = () => {
     const [selectedMonth, setSelectedMonth] = useState(null);
     const [Training_Name, setTraining_Name] = useState("");
       const [trainingName, setTrainingName] = useState("IATF");
+     const [userDepartment, setUserDepartment] = useState(null);
       const currentDate = new Date();
 const currentMonth = currentDate.getMonth() + 1;
 const currentYear = currentDate.getFullYear();
@@ -452,32 +454,51 @@ const handleMonthYearChange = async (date) => {
       setEmployeeId(storedEmployeeId);
     }
 
-    const fetchAccessRole = async () => {
-      try {
-        const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-        const data = await res.json();
+const fetchAccessRole = async () => {
+  try {
+    const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
+    const data = await res.json();
 
-        if (res.ok && data.Access_Role) {
-          // Restrict access for HR_Res and HR_HOD roles
-          if (data.Access_Role === "HOS" || data.Access_Role === "HOD" || data.Access_Role === "Res_Person") {
-            setIsAuthorized(false);
-            //
-           // window.location.href = '/unauthorized';
-           return;
-         }
-         setAccessRole(data.Access_Role);
-         setIsAuthorized(true);
-       } else {
-         setIsAuthorized(false);
-       }
-     } catch (error) {
-       console.error('Error fetching access role:', error);
-       setIsAuthorized(false);
-     }finally {
+    console.log('Debug Access:', {
+      employeeId: storedEmployeeId,
+      department: data.Department,
+      accessRole: data.Access_Role,
+      responseOk: res.ok,
+      fullData: data
+    });
+
+    if (res.ok && data.Access_Role) {
+      // ✅ Save the department to state
+      setUserDepartment(data.Department);
+      
+      // Check if department is HR
+      if (data.Department === "HR") {
+        setAccessRole(data.Access_Role);
+        setIsAuthorized(true);
+        return;
+      }
+
+      // For non-HR departments, restrict specific roles
+      if (data.Access_Role === "HOS" || 
+          data.Access_Role === "HOD" || 
+          data.Access_Role === "Res_Person") {
+        setIsAuthorized(false);
+        return;
+      }
+      
+      setAccessRole(data.Access_Role);
+      setIsAuthorized(true);
+    } else {
+      console.log('❌ Authorization failed - no Access_Role found');
+      setIsAuthorized(false);
+    }
+  } catch (error) {
+    console.error('Error fetching access role:', error);
+    setIsAuthorized(false);
+  } finally {
     setIsLoadingDropdown(false);
+  }
 };
-   };
- 
    fetchAccessRole();
  }, []);
  const handleProgramChange = async (e) => {
@@ -1585,7 +1606,7 @@ const programOptions = options.map((option) => ({
                     Venue:
                   </label>
                   <div className="relative">
-                    <Select
+                   <CreatableSelect
                       id="Venue"
                       name="Venue"
                     options={venueOptions}
@@ -1602,7 +1623,7 @@ const programOptions = options.map((option) => ({
                         Venue: selectedOption ? selectedOption.value : "",
                       }));
                     }}
-                    placeholder="Select Venue"
+                    placeholder="Select Venue or Type to Add"
                     className="text-gray-900 rounded-md cursor-pointer"
                     isDisabled={!!formData.Training_Status}
                     styles={{
@@ -1629,6 +1650,7 @@ const programOptions = options.map((option) => ({
                         zIndex: 50,
                       }),
                     }}
+                    isClearable
                   required={!isCancelChecked}/>
                   </div>
                 </div>
@@ -1790,10 +1812,7 @@ const programOptions = options.map((option) => ({
                     </select>
                     <span>entries</span>
                   </div>
-                  <div className="flex ">
-                          {" "}
-{accessRole === "HR_Res" && (
-              <div className="flex items-center">
+                  <div className="flex ">              <div className="flex items-center">
                <button
                type="button"
   onClick={exportToExcel}
@@ -1812,8 +1831,9 @@ const programOptions = options.map((option) => ({
                       <FaPrint />
                     </button>
                     </div>
-)}
-                    <div className="relative">
+
+                           
+                                    <div className="relative">
                       <input
                         type="text"
                         className="border p-1 pl-8 rounded bg-secondary"
