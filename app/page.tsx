@@ -19,13 +19,14 @@ export default function LoginForm() {
     "/assets/img1.jpg",
     "/assets/img2.jpg",
     "/assets/img3.jpg",
+    "/assets/img4.jpg",
     "/assets/img7.jpg",
     "/assets/img5.jpg",
     "/assets/img6.jpg",
     "/assets/ecg.jpg",
     "/assets/img10.jpg",
     "/assets/img8.jpg",
-    "/assets/img9.jpg",
+     "/assets/loginimage.png",
   ];
 
   const router = useRouter();
@@ -509,26 +510,51 @@ export default function LoginForm() {
                 <motion.div
                   animate={{
                     x: [
-                      "0%", "0%", "-10%", "-10%", "-20%", "-20%", "-30%", "-30%",
-                      "-40%", "-40%", "-50%", "-50%", "-60%", "-60%", "-70%", "-70%",
-                      "-80%", "-80%", "-90%", "-90%", "0%"
+                      "0%", "0%", 
+                      "-8.33%", "-8.33%", 
+                      "-16.66%", "-16.66%", 
+                      "-25%", "-25%",
+                      "-33.33%", "-33.33%", 
+                      "-41.66%", "-41.66%", 
+                      "-50%", "-50%", 
+                      "-58.33%", "-58.33%",
+                      "-66.66%", "-66.66%", 
+                      "-75%", "-75%", 
+                      "-83.33%", "-83.33%",
+                      "-91.66%", "-91.66%",
+                      "-100%"
                     ],
                   }}
                   transition={{
-                    duration: 40,
-                    times: Array.from({ length: 21 }, (_, i) => i / 20),
+                    duration: 50,
+                    times: [
+                      0, 0.04,
+                      0.08, 0.12,
+                      0.16, 0.20,
+                      0.24, 0.28,
+                      0.32, 0.36,
+                      0.40, 0.44,
+                      0.48, 0.52,
+                      0.56, 0.60,
+                      0.64, 0.68,
+                      0.72, 0.76,
+                      0.80, 0.84,
+                      0.88, 0.92,
+                      0.96
+                    ],
                     repeat: Infinity,
                     ease: "easeInOut",
+                    repeatType: "loop"
                   }}
-                  className="flex w-[1000%] h-full"
+                  className="flex w-[1200%] h-full"
                 >
-                  {Array.from({ length: 10 }).map((_, i) => (
+                  {images.map((image, i) => (
                     <div
                       key={i}
-                      className="relative w-1/10 h-full flex-shrink-0 overflow-hidden"
+                      className="relative w-[8.33%] h-full flex-shrink-0 overflow-hidden"
                     >
                       <Image
-                        src={images[i]}
+                        src={image}
                         alt={`Banner ${i + 1}`}
                         fill
                         priority
@@ -561,20 +587,24 @@ export default function LoginForm() {
 
                 {/* Indicators */}
                 <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-30">
-                  {Array.from({ length: 10 }).map((_, i) => (
+                  {Array.from({ length: 12 }).map((_, i) => (
                     <motion.div
                       key={i}
                       animate={{
-                        opacity: Array(21).fill(0.4).map((val, idx) =>
-                          idx === i * 2 + 2 || idx === i * 2 + 3 ? 1 : val
-                        ),
-                        scale: Array(21).fill(1).map((val, idx) =>
-                          idx === i * 2 + 2 || idx === i * 2 + 3 ? 1.2 : val
-                        ),
+                        opacity: Array(25).fill(0.4).map((val, idx) => {
+                          const activeStart = i * 2 + 2;
+                          const activeEnd = i * 2 + 3;
+                          return idx === activeStart || idx === activeEnd ? 1 : val;
+                        }),
+                        scale: Array(25).fill(1).map((val, idx) => {
+                          const activeStart = i * 2 + 2;
+                          const activeEnd = i * 2 + 3;
+                          return idx === activeStart || idx === activeEnd ? 1.2 : val;
+                        }),
                       }}
                       transition={{
-                        duration: 40,
-                        times: Array.from({ length: 21 }, (_, t) => t / 20),
+                        duration: 48,
+                        times: Array.from({ length: 25 }, (_, t) => t / 24),
                         repeat: Infinity,
                         ease: "easeInOut",
                       }}

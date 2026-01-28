@@ -350,7 +350,7 @@ useEffect(() => {
         Training_Status: trainingData.Training_Status || "",
         Forward: trainingData.Forward || "",
         Schedule_Type: trainingData.Schedule_Type || "",
-        External_Trainer: trainingData.External_Trainer || "", // Add External_Trainer from API
+       External_Trainer: trainingData.Trainer_Name || "",
         Trainer: trainingData.Trainer || "",
         Venue: trainingData.Venue || "",
         Actual_Budget: trainingData.Actual_Budget || "",
@@ -1610,13 +1610,12 @@ const programOptions = options.map((option) => ({
                       id="Venue"
                       name="Venue"
                     options={venueOptions}
-                    value={
-                      formData.Venue
-                        ? venueOptions.find(
-                            (option) => option.value === formData.Venue
-                          )
-                        : null
-                    }
+                   value={
+  formData.Venue
+    ? venueOptions.find((option) => option.value === formData.Venue) || 
+      { value: formData.Venue, label: formData.Venue }
+    : null
+}
                     onChange={(selectedOption) => {
                       setFormData((prev) => ({
                         ...prev,

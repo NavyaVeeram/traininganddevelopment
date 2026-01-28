@@ -180,6 +180,8 @@ const handleEmployeeIdChange = async (selectedOption) => {
         Qualified: "",
       });
       setTrainingName([]);
+       setCertifiedInput("");  // Add this
+  setExistingCertificates([]);  // Add this
       return;
     }
 
@@ -193,22 +195,22 @@ const handleEmployeeIdChange = async (selectedOption) => {
       const fetchedData = await res.json();
 
       if (res.status === 200) {
-        setTrainingDetails({
-          Username: fetchedData.Username || "",
-          Department: fetchedData.Department || "",
-          Section: fetchedData.Section || "",
-          Designation: fetchedData.Designation || "",
-          Gender: fetchedData.Gender || "",
-          DOJ: fetchedData.DOJ || "",
-          Training_Name: fetchedData.Training_Name || "",
-          Certified: fetchedData.Certified || "",
-          Cert_Des: fetchedData.Cert_Des || "",            
-          View_Cert: fetchedData.View_Cert || "",
-          Exp_5_Yr: fetchedData.Exp_5_Yr || "",
-          Exp_3_Yr: fetchedData.Exp_3_Yr || "",
-          HOD_Rec: fetchedData.HOD_Rec || "",
-          Qualified: fetchedData.Qualified || "",
-        });
+    setTrainingDetails({
+  Username: fetchedData.Username || "",
+  Department: fetchedData.Department || "",
+  Section: fetchedData.Section || "",
+  Designation: fetchedData.Designation || "",
+  Gender: fetchedData.Gender || "",
+  DOJ: fetchedData.DOJ || "",
+  Training_Name: fetchedData.Training_Name || "",
+  Certified: fetchedData.Certified || "",
+  Cert_Des: fetchedData.Cert_Des || "",
+  View_Cert: fetchedData.View_Cert || "",
+  Exp_5_Yr: fetchedData.Exp_5_Yr || "",
+  Exp_3_Yr: fetchedData.Exp_3_Yr || "",
+  HOD_Rec: fetchedData.HOD_Rec || "",
+  Qualified: fetchedData.Qualified || "",
+});
         // ✅ Parse Training_Name (independent)
 if (fetchedData.Training_Name && fetchedData.Training_Name.trim() !== "") {
   setTrainingName(
@@ -618,7 +620,7 @@ if (!uploadRes.ok) {
             </label>
             <Select
               options={options}
-              value={options.find((o) => o.value === EmployeeId) || null}
+             value={EmployeeId ? options.find((o) => o.value === EmployeeId) || null : null}
               onChange={handleEmployeeIdChange}
               placeholder="Select EmployeeId"
               isClearable
@@ -662,7 +664,7 @@ if (!uploadRes.ok) {
             </label>
             <input
               type="text"
-              value={trainingDetails.Username}
+            value={trainingDetails.Username || ""}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
@@ -673,7 +675,7 @@ if (!uploadRes.ok) {
             </label>
             <input
               type="text"
-              value={trainingDetails.Department}
+              value={trainingDetails.Department || ""}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
@@ -684,7 +686,7 @@ if (!uploadRes.ok) {
             </label>
             <input
               type="text"
-              value={trainingDetails.Section}
+              value={trainingDetails.Section || ""}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
@@ -697,7 +699,7 @@ if (!uploadRes.ok) {
             </label>
             <input
               type="text"
-              value={trainingDetails.Designation}
+            value={trainingDetails.Designation || ""}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
@@ -708,7 +710,7 @@ if (!uploadRes.ok) {
             </label>
             <input
               type="text"
-              value={trainingDetails.Gender}
+            value={trainingDetails.Gender || ""}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
@@ -719,7 +721,7 @@ if (!uploadRes.ok) {
             </label>
             <input
               type="text"
-              value={trainingDetails.DOJ}
+             value={trainingDetails.DOJ || ""}
               readOnly
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-gray-100"
             />
@@ -792,7 +794,7 @@ if (!uploadRes.ok) {
   <>
     <input
       type="text"
-      value={certifiedInput}
+     value={certifiedInput || ""}
       onChange={(e) => setCertifiedInput(e.target.value)}
       placeholder="Enter certification description"
       className="w-48 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400 text-sm"
@@ -971,7 +973,7 @@ if (!uploadRes.ok) {
                 <span>Show</span>
                 <select
                   className="border p-1 rounded bg-secondary"
-                  value={rowsPerPage}
+                  value={rowsPerPage || 10}
                   onChange={(e) => {
                     setRowsPerPage(
                       e.target.value === "All"
@@ -996,7 +998,7 @@ if (!uploadRes.ok) {
                     type="text"
                     className="border p-1 pl-8 rounded "
                     placeholder="Search..."
-                    value={tableSearchTerm}
+                    value={tableSearchTerm || ""}
                     onChange={handleTableSearchChange}
                   />
                   <FaSearch className="absolute left-2 top-2 text-gray-400" />

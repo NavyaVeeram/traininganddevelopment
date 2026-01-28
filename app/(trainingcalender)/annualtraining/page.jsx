@@ -621,9 +621,7 @@ doc.text("Months", 15, 20);  // Keep this as is - already at left (x=10)
             />
           </div>
           </div>
-          <div className="flex-shrink-0">
-                <FullYearCalendar/>
-          </div>
+         
         </div>
         <div className="hidden">text-green-600 text-blue-600 text-gray-800</div>
 
@@ -640,9 +638,12 @@ doc.text("Months", 15, 20);  // Keep this as is - already at left (x=10)
             >
               <FaPrint />
             </button>
+
           </div>
         )}
-
+ <div className="flex-shrink-0">
+                <FullYearCalendar/>
+          </div>
       </div>
       {loading && <p>Loading training calendar...</p>}
       {error && <p className="text-red-600">Error: {error}</p>}
@@ -668,17 +669,19 @@ doc.text("Months", 15, 20);  // Keep this as is - already at left (x=10)
                   <div className="text-center">
                     Annual Training Calendar for {trainingName}
                   </div>
-                  <div className="mr-2 absolute right-2 transform -translate-y-5 flex space-x-4 text-sm">
-                    <span className="text-green-600 font-semibold">
-                      ● Special Position
-                    </span>
-                    <span className="text-blue-600 font-semibold">
-                      ● Additional
-                    </span>
-                    <span className="text-purple-600 font-semibold">
-                      ● External
-                    </span>
-                  </div>
+            <div className="mr-2 absolute right-2 transform -translate-y-5 flex space-x-4 text-sm">
+  {trainingName === "HSE" && (
+    <span className="text-green-600 font-semibold">
+      ● Special Position
+    </span>
+  )}
+  <span className="text-blue-600 font-semibold">
+    ● Additional
+  </span>
+  <span className="text-purple-600 font-semibold">
+    ● External
+  </span>
+</div>
                 </td>
               </tr>
               <tr>

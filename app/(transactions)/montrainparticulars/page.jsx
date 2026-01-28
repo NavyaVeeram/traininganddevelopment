@@ -181,17 +181,17 @@ const MonthlyTrainingParticulars = () => {
     setTableSearchTerm("");
     setFilteredData(trainingData);
   };
-  if (isAuthorized === null) {
-    return (
-      <div>Loading...</div>
-      // <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
-      //   <div className="bg-white p-10 rounded shadow text-center">
-      //     <h2 className="text-2xl font-bold">Loading...</h2>
-      //   </div>
-      // </div>
-    );
-  }
+if (isAuthorized === null) {
+  return <div>Loading...</div>
+}
 
+if (isAuthorized === false) {
+  return (
+    <div className="min-h-screen...">
+      // Unauthorized message
+    </div>
+  );
+}
 const handleDownloadPDF = () => {
   if (!selectedDate) {
     alert("please select the month and year");
@@ -480,13 +480,13 @@ const handleDownloadPDF = () => {
 {filteredData.length > 0 ? (
     paginatedData.map((item, index) => (
       <tr key={index} className="hover:bg-gray-100 border">
-        <td className="px-4 py-2 border">{item.Training_Name}</td>   {/* Category */}
-        <td className="px-4 py-2 border">{item.Program_Name}</td>   {/* Program Name */}
-        <td className="px-4 py-2 border">{item.Req_Months}</td>     {/* Scheduled Month */}
-        <td className="px-4 py-2 border">{item.Training_Date}</td>  {/* Conducted Date */}
-        <td className="px-4 py-2 border">{item.Train_Mode}</td>     {/* Mode */}
-        <td className="px-4 py-2 border">{item.Schedule_Type}</td>  {/* Schedule Type */}
-        <td className="px-4 py-2 border">{item.Training_Status}</td>{/* Training Status */}
+        <td className="px-4 py-2 border">{item.Training_Name}</td>   
+        <td className="px-4 py-2 border">{item.Program_Name}</td>   
+        <td className="px-4 py-2 border">{item.Req_Months}</td>    
+        <td className="px-4 py-2 border">{item.Training_Date}</td> 
+        <td className="px-4 py-2 border">{item.Train_Mode}</td>    
+        <td className="px-4 py-2 border">{item.Schedule_Type}</td> 
+        <td className="px-4 py-2 border">{item.Training_Status}</td>
       </tr>
     ))
   ) : (

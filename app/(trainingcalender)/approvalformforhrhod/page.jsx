@@ -37,12 +37,59 @@ export default function TrainingDataTable() {
   // NEW: Training Name filter states
   const [trainingNameOptions, setTrainingNameOptions] = useState([]);
   const [selectedTrainingName, setSelectedTrainingName] = useState('');
-
-  const weekOptions = Array.from({ length: 52 }, (_, i) => ({
-    value: (i + 1).toString(),
-    label: `Week ${i + 1}`
-  }));
-
+const weekOptions = Array.from({ length: 52 }, (_, i) => ({
+  value: (i + 1).toString(),
+  label: `Week ${i + 1}`
+}));
+// Add this function in your component
+const getISOWeeksForMonth = (monthValue, year) => {
+  const monthMap = {
+    "Jan": 0, "Feb": 1, "Mar": 2, "Apr": 3, "May": 4, "Jun": 5,
+    "Jul": 6, "Aug": 7, "Sep": 8, "Oct": 9, "Nov": 10, "Dec": 11
+  };
+  
+  const monthIndex = monthMap[monthValue];
+  const weeks = [];
+  
+  // Get first and last day of the month
+  const firstDay = new Date(year, monthIndex, 1);
+  const lastDay = new Date(year, monthIndex + 1, 0);
+  
+  // Helper to get ISO week number
+  const getISOWeek = (date) => {
+    const target = new Date(date.valueOf());
+    const dayNr = (date.getDay() + 6) % 7;
+    target.setDate(target.getDate() - dayNr + 3);
+    const firstThursday = target.valueOf();
+    target.setMonth(0, 1);
+    if (target.getDay() !== 4) {
+      target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+    }
+    return 1 + Math.ceil((firstThursday - target) / 604800000);
+  };
+  
+  // Get all unique week numbers in the month
+  for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
+    const weekNum = getISOWeek(d);
+    if (!weeks.includes(weekNum)) {
+      weeks.push(weekNum);
+    }
+  }
+  
+  return weeks.sort((a, b) => a - b);
+};
+// Add this useMemo hook
+const filteredWeekOptions = useMemo(() => {
+  if (!editingData?.Req_Months || !editingData?.Year_No) {
+    return weekOptions; // Return all weeks if no month selected
+  }
+  
+  const weeksInMonth = getISOWeeksForMonth(editingData.Req_Months, editingData.Year_No);
+  
+  return weekOptions.filter(week => 
+    weeksInMonth.includes(parseInt(week.value))
+  );
+}, [editingData?.Req_Months, editingData?.Year_No]);
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -353,6 +400,7 @@ const handleExcelExport = () => {
           </div>
 
           {/* NEW: Training Name Filter Dropdown */}
+      {trainingData.length > 0 && (    
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium whitespace-nowrap">Select Category:</label>
             <Select
@@ -374,7 +422,7 @@ const handleExcelExport = () => {
               }}
             />
           </div>
-
+)}
           {/* Search and Calendar */}
           <div className="flex items-center gap-2 text-sm">
             <div className="relative">
@@ -839,29 +887,30 @@ const handleExcelExport = () => {
 
                     {/* Week (only if not Internal) */}
                     {/* {editingData.Train_Mode !== "Internal" && ( */}
-                      <div className="flex flex-col">
-                        <label className="font-semibold mb-1">Week No</label>
-                        <Select
-                          options={weekOptions}
-                          isMulti
-                          value={
-                            (() => {
-                              if (!editingData.Week) return [];
-                              const weekStr = String(editingData.Week);
-                              return weekStr.split(',').map(w => ({
-                                value: w.trim(),
-                                label: `Week ${w.trim()}`
-                              })).filter(w => w.value);
-                            })()
-                          }
-                          onChange={(selected) => {
-                            const val = selected && selected.length > 0 
-                              ? selected.map(opt => opt.value).join(',')
-                              : "";
-                            handleInputChange({ target: { value: val } }, "Week");
-                          }}
-                        />
-                      </div>
+                  <div className="flex flex-col">
+  <label className="font-semibold mb-1">Week No</label>
+  <Select
+    options={filteredWeekOptions}  // Use filtered options instead of weekOptions
+    isMulti
+    value={
+      (() => {
+        if (!editingData.Week) return [];
+        const weekStr = String(editingData.Week);
+        return weekStr.split(',').map(w => ({
+          value: w.trim(),
+          label: `Week ${w.trim()}`
+        })).filter(w => w.value);
+      })()
+    }
+    onChange={(selected) => {
+      const val = selected && selected.length > 0 
+        ? selected.map(opt => opt.value).join(',')
+        : "";
+      handleInputChange({ target: { value: val } }, "Week");
+    }}
+    placeholder={editingData.Req_Months ? `Weeks in ${editingData.Req_Months}` : "Select month first"}
+  />
+</div>
                     {/* )} */}
 
                     {/* Training Budget (only if not Internal) */}
