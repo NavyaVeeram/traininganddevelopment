@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
-import { FaSearch, FaTrash, FaEdit } from "react-icons/fa";
+import { FaSearch, FaTimes, FaEdit } from "react-icons/fa";
 import Select from "react-select";
 import EmailRejection from "../email/EmailRejection";
 import EmailApprovalWeek from "../email/EmailApprovalforhrhod";
@@ -316,15 +316,21 @@ const filteredWeekOptions = useMemo(() => {
       });
       const responseData = await res.json();
       if (res.ok) {
+         setIsModalOpen(false); // ✅ Close modal BEFORE alert
         alert(` ${responseData.message}`);
 
-        const updatedList = trainingData.map((item) =>
-          item.Program_Id === programId
-            ? { ...item, ...editingData, Training_Budget: editingData.Train_Mode === "Internal" ? (editingData.Training_Budget === "" ? 0 : Number(editingData.Training_Budget)) : Number(editingData.Training_Budget) }
-            : item
-        );
-        setTrainingData(updatedList);
-        console.log("Updated trainingData:", updatedList);
+
+  // Refetch the data after successful update
+      const response = await fetch(`/api/approval_form_data?employeeId=${employeeId}&department=${department}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        const updatedData = data.map(item => ({
+          ...item
+        }));
+        setTrainingData(updatedData);
+      }
+        console.log("Updated trainingData:", updatedData);
         setIsModalOpen(false);
         setError("");
       } else {
@@ -371,7 +377,16 @@ const handleExcelExport = () => {
         return renderApprovalFormContent();
     }
   };
-
+// Add this useEffect after your other useEffect hooks
+useEffect(() => {
+  if (editingData?.Req_Months && isModalOpen) {
+    // Clear the Week field when month changes
+    setEditingData(prev => ({
+      ...prev,
+      Week: ""
+    }));
+  }
+}, [editingData?.Req_Months, isModalOpen]);
   const renderApprovalFormContent = () => {
     if (loading) return <div>Loading...</div>;
 
@@ -655,7 +670,58 @@ const handleExcelExport = () => {
       </div>
     );
   };
+useEffect(() => {
+  const storedEmployeeId = localStorage.getItem("employeeId");
 
+  if (!storedEmployeeId) {
+    window.location.href = '/';
+    return;
+  }
+
+  setEmployeeId(storedEmployeeId);
+
+  const fetchAccessRole = async () => {
+    try {
+      const res = await fetch(
+        `/api/get_access_role?employeeId=${storedEmployeeId}`
+      );
+      const data = await res.json();
+
+      if (res.ok && data.Access_Role) {
+        // ✅ ONLY allow HOS access
+        if (data.Access_Role === "HR_Res" || data.Access_Role === "HR_Hod") {
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
+          // ❌ Block everyone else
+          setIsAuthorized(false);
+        }
+      } else {
+        setIsAuthorized(false);
+      }
+    } catch (error) {
+      console.error("Error fetching access role:", error);
+      setIsAuthorized(false);
+    }
+  };
+
+  fetchAccessRole();
+}, []);
+
+ if (isAuthorized === null) {
+    return <div>Loading...</div>;
+  }
+
+  if (isAuthorized === false) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+        <div className="bg-white p-10 rounded shadow text-center">
+          <h2 className="text-2xl font-bold">Unauthorized</h2>
+          <p className="mt-2">You do not have access to view this page.</p>
+        </div>
+      </div>
+    );
+  }
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -741,7 +807,7 @@ const handleExcelExport = () => {
               <h3 className="bg-sky-400 text-white p-3 flex justify-between items-center rounded-t-lg">
                 Update Approval Details
                 <button onClick={handleCancel} className="text-white hover:text-gray-200">
-                  <FaTrash />
+                  <FaTimes />
                 </button>
               </h3>
               {editingData && (
@@ -863,26 +929,30 @@ const handleExcelExport = () => {
                     {/* Months */}
                     <div className="flex flex-col">
                       <label className="font-semibold mb-1">Months</label>
-                      <Select
-                        options={monthOptions}
-                        value={monthOptions.find(opt => opt.value === editingData.Req_Months) || null}
-                        onChange={(selected) => {
-                          const val = selected ? selected.value : "";
-                          handleInputChange({ target: { value: val } }, "Req_Months");
-                        }}
-                        placeholder="Select Month"
-                        isClearable
-                        className="text-sm"
-                        styles={{
-                          control: (base) => ({
-                            ...base,
-                            padding: "2px",
-                            borderRadius: "0.5rem",
-                            borderColor: "#d1d5db",
-                            minHeight: "2.4rem",
-                          }),
-                        }}
-                      />
+<Select
+  options={monthOptions}
+  value={monthOptions.find(opt => opt.value === editingData.Req_Months) || null}
+  onChange={(selected) => {
+    const val = selected ? selected.value : "";
+    setEditingData(prevData => ({
+      ...prevData,
+      Req_Months: val,
+      Week: "" // Clear weeks when month changes
+    }));
+  }}
+  placeholder="Select Month"
+  isClearable
+  className="text-sm"
+  styles={{
+    control: (base) => ({
+      ...base,
+      padding: "2px",
+      borderRadius: "0.5rem",
+      borderColor: "#d1d5db",
+      minHeight: "2.4rem",
+    }),
+  }}
+/>
                     </div>
 
                     {/* Week (only if not Internal) */}

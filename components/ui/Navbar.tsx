@@ -21,7 +21,7 @@ const training = [
   { title: "Requirement - IATF/HSE", href: "/requirement" },
   { title: "Approval Form", href: "/approvalformhos" },
    { title: "Approval Form ", href: "/approvalformforhod" },
-  { title: " Approval Form", href: "/approvalformforhrhod" },
+  { title: "Approval Form  ", href: "/approvalformforhrhod" },
   { title: "Approved Data", href: "/approveddata" },
 ];
 
@@ -197,8 +197,9 @@ const filterMenu = (menu: { title: string; href: string }[]) =>
     )
       return false;
      if (
-      component.title === " Approval Form" &&
-      accessRole !== "HR_Res" &&
+      component.title === "Approval Form  " &&
+      accessRole !== "HR_Res" 
+      &&
        accessRole !== "HR_Hod"
     )
       return false;

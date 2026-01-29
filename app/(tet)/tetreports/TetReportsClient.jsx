@@ -124,12 +124,24 @@ const [employeeId, setEmployeeId] = useState(null);
     alert(data.message);
 
     // After successful submission, re-check if all forms are filled to enable print button dynamically
-    if (res.ok) {
-      checkAllFormsFilled(programId);
-    }
-      if (window.opener) {
-      window.opener.location.reload(); // Refreshes the parent TETForms page
-    }
+   if (res.ok) {
+  // Update the selectedEmployee's flag to 1 in local state
+  setSelectedEmployee(prev => ({
+    ...prev,
+    flag: 1
+  }));
+  
+  // Also update the options array to reflect the change
+  setOptions(prevOptions => 
+    prevOptions.map(opt => 
+      opt.value === selectedEmployee.value 
+        ? { ...opt, flag: 1 } 
+        : opt
+    )
+  );
+  
+  checkAllFormsFilled(programId);
+}
   };
 
   useEffect(() => {

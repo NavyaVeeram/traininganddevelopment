@@ -6,7 +6,7 @@ import Select from "react-select";
 import EmailRejection from "../email/EmailRejection";
 import FullYearCalendar from "../calendar/page";
 import dynamic from "next/dynamic";
-import EmailApprovalhod from "../email/EmailApprovalhod";
+import EmailApprovalhos from "../email/EmailApprovalhos";
 import BackButton from "@/components/BackButton";
 
 const MonthCount = dynamic(() => import("./monthcount"), { ssr: false }); // Dynamically import MonthCount with no SSR
@@ -76,41 +76,6 @@ export default function TrainingDataTable() {
 
     fetchData();
   }, []);
-
-  // useEffect(() => {
-  //   const storedEmployeeId = localStorage.getItem('employeeId');
-
-  //   if (storedEmployeeId) {
-  //     setEmployeeId(storedEmployeeId);
-  //   } else {
-  //     window.location.href = '/';
-  //     return;
-  //   }
-
-  //     const fetchAccessRole = async () => {
-  //       try {
-  //         const res = await fetch(`/api/get_access_role?employeeId=${storedEmployeeId}`);
-  //         const data = await res.json();
-
-  //         if (res.ok && data.Access_Role) {
-  //           if (data.Access_Role === "HR_Res" || data.Access_Role === "HR_Hod") {
-  //             setIsAuthorized(false);  // Hide page for these roles
-  //             return;
-  //           }
-  //           setAccessRole(data.Access_Role);
-  //           setIsAuthorized(true);
-  //         } else {
-  //           setIsAuthorized(false);
-  //         }
-  //       } catch (error) {
-  //         console.error('Error fetching access role:', error);
-  //         setIsAuthorized(false);
-  //       }
-  //     };
-
-  //   fetchAccessRole();
-  // }, []);
-
   const monthOptions = [
     { value: "Jan", label: "Jan" },
     { value: "Feb", label: "Feb" },
@@ -440,7 +405,7 @@ export default function TrainingDataTable() {
         disabled={currentPage === totalPages}
       >
         {">"}
-      </button> 
+      </button>
       <button
         type="button"
         className="px-3 py-1 border cursor-pointer rounded"
@@ -456,7 +421,7 @@ export default function TrainingDataTable() {
             {/* Approval Button */}
                 {selectedProgramIds.length > 0 && (
                   <div className="flex justify-end mt-6 gap-x-2">
-                    <EmailApprovalhod
+                    <EmailApprovalhos
                       employeeId={employeeId}
                         selectedProgramNames={paginatedData.filter(item => selectedProgramIds.includes(item.Program_Id)).map(item => item.Program_Name)}
                       selectedProgramIds={selectedProgramIds}
@@ -473,7 +438,58 @@ export default function TrainingDataTable() {
       </div>
     );
   };
+useEffect(() => {
+  const storedEmployeeId = localStorage.getItem("employeeId");
 
+  if (!storedEmployeeId) {
+    window.location.href = '/';
+    return;
+  }
+
+  setEmployeeId(storedEmployeeId);
+
+  const fetchAccessRole = async () => {
+    try {
+      const res = await fetch(
+        `/api/get_access_role?employeeId=${storedEmployeeId}`
+      );
+      const data = await res.json();
+
+      if (res.ok && data.Access_Role) {
+        // ✅ ONLY allow HOS access
+        if (data.Access_Role === "HOD") {
+          setAccessRole(data.Access_Role);
+          setIsAuthorized(true);
+        } else {
+          // ❌ Block everyone else
+          setIsAuthorized(false);
+        }
+      } else {
+        setIsAuthorized(false);
+      }
+    } catch (error) {
+      console.error("Error fetching access role:", error);
+      setIsAuthorized(false);
+    }
+  };
+
+  fetchAccessRole();
+}, []);
+
+ if (isAuthorized === null) {
+    return <div>Loading...</div>;
+  }
+
+  if (isAuthorized === false) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
+        <div className="bg-white p-10 rounded shadow text-center">
+          <h2 className="text-2xl font-bold">Unauthorized</h2>
+          <p className="mt-2">You do not have access to view this page.</p>
+        </div>
+      </div>
+    );
+  }
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -481,23 +497,6 @@ export default function TrainingDataTable() {
   if (!username) {
     return <div>Loading user information...</div>;
   }
-
-  // // Unauthorized view
-  // if (isAuthorized === null) {
-  //   // Authorization not yet determined, render loading or null to avoid hydration mismatch
-  //   return <div>Loading authorization...</div>;
-  // }
-
-  // if (!isAuthorized) {
-  //   return (
-  //     <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 text-gray-800">
-  //       <div className="bg-white p-10 rounded shadow text-center">
-  //         <h2 className="text-2xl font-bold">Unauthorized</h2>
-  //         <p className="mt-2">You do not have access to view this page.</p>
-  //       </div>
-  //     </div>
-  //   );
-  // }
 
   return (
     <div>
