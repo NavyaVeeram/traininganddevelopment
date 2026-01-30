@@ -27,7 +27,10 @@ export default async function handler(req, res) {
           message: "Login Successful"
         };
         // Set a cookie to indicate logged in status
-       res.setHeader('Set-Cookie', `isLoggedIn=true; Path=/; HttpOnly; ${process.env.NODE_ENV === 'production' ? 'Secure;' : ''} SameSite=Lax; Max-Age=604800`);        return res.status(200).json(normalizedData);
+       res.setHeader('Set-Cookie',
+         `isLoggedIn=true; Path=/; ${process.env.NODE_ENV === 'production' ? 'Secure;' : ''} SameSite=Lax; Max-Age=604800`
+
+        );        return res.status(200).json(normalizedData);
       } else {
         console.error('External API login failed:', data);
         return res.status(response.status).json(data);

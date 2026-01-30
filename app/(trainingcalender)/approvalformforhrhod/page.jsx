@@ -4,7 +4,7 @@ import axios from "axios";
 import { FaSearch, FaTimes, FaEdit } from "react-icons/fa";
 import Select from "react-select";
 import EmailRejection from "../email/EmailRejection";
-import EmailApprovalWeek from "../email/EmailApprovalforhrhod";
+import EmailApprovalWeekForHrHod from "../email/EmailApprovalforhrhod";
 import FullYearCalendar from "../calendar/page";
 import dynamic from "next/dynamic";
 import BackButton from "@/components/BackButton";
@@ -649,7 +649,7 @@ useEffect(() => {
         {/* Approval Buttons */}
         {selectedProgramIds.length > 0 && (
           <div className="flex justify-end mt-6 gap-x-2">
-            <EmailApprovalWeek
+            <EmailApprovalWeekForHrHod
               selectedItems={trainingData.filter(item => selectedProgramIds.includes(item.Program_Id))}
               employeeId={employeeId}
               selectedProgramIds={selectedProgramIds}

@@ -511,8 +511,12 @@ function ProfileDropdown({ username }: { username: string }) {
   //   setOpen(false);
   // };
 const handleLogout = async () => {
-  // Call logout API to clear the cookie
-  await fetch('/api/logout', { method: 'POST' });
+  try {
+    // Call logout API to clear the cookie server-side
+    await fetch('/api/logout', { method: 'POST' });
+  } catch (error) {
+    console.error('Logout API error:', error);
+  }
   
   // Clear localStorage
   localStorage.removeItem("isLoggedIn");
@@ -522,6 +526,9 @@ const handleLogout = async () => {
   
   // Clear any stored redirect URLs
   sessionStorage.removeItem('intendedUrl');
+  
+  // Clear cookie client-side as backup
+  document.cookie = "isLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   
   // Set logout flag to prevent redirect message
   sessionStorage.setItem("justLoggedOut", "true");

@@ -108,6 +108,8 @@ export default function LoginForm() {
           localStorage.setItem("department", data.department);
           localStorage.setItem("username", data.username);
           localStorage.setItem("employeeId", data.employeeId);
+           // ADD THIS: Set cookie for middleware
+        document.cookie = "isLoggedIn=true; path=/; max-age=86400"; // 24 hours
         }
         
         // Redirect to the intended URL or dashboard

@@ -1,7 +1,7 @@
 "use client"
 import { useState, useRef } from 'react';
 
-export default function EmailApprovalWeek({ 
+export default function EmailApprovalWeekForHrHod({ 
   selectedItems, // Pass the full objects of selected programs
   selectedProgramIds, 
   employeeId 
