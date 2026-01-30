@@ -1065,7 +1065,304 @@ if (emp.External_Trainer && typeof emp.External_Trainer === "string") {
       document.body.removeChild(link);
     }
   }
+//   async function generatePdfForEmployees1(Program_Id) {
+//     const templatePath = "/training_report.pdf";
+//     const label = "Training_Effectiveness_Filtered_Employees.pdf";
+//     const templateBytes = await fetch(templatePath).then((res) =>
+//       res.arrayBuffer()
+//     );
+//           const mergedPdf = await PDFDocument.create();
+//   // Register fontkit to embed custom fonts
+//       mergedPdf.registerFontkit(fontkit);
 
+//       // const font = await mergedPdf.embedFont(StandardFonts.HelveticaBold);
+//       //user support
+// //const fontBytes = await fetch("/fonts/cambriab.ttf").then(res => res.arrayBuffer());
+//  const fontBytes = await fetch("/fonts/CALIBRI.ttf").then(res => res.arrayBuffer());
+// // Embed it in the PDF
+// const font = await mergedPdf.embedFont(fontBytes);
+//     // Fetch data from API for PDF generation
+//     const apiUrl = `/api/get_tet_form_emp_details_for_report?programId=${Program_Id}`;
+//     let employees = [];
+//     try {
+//       const response = await fetch(apiUrl);
+//       if (response.ok) {
+//         employees = await response.json();
+//       } else {
+//         alert("Failed to fetch employee data for PDF.");
+//         return;
+//       }
+//     } catch (error) {
+//       alert("Error fetching employee data for PDF.");
+//       return;
+//     }
+
+//     if (employees.length === 0) {
+//       alert("No employee data available for PDF.");
+//       return;
+//     }
+
+//     for (const emp of employees) {
+//       const templatePdf = await PDFDocument.load(templateBytes);
+//       const copiedPages = await mergedPdf.copyPages(
+//         templatePdf,
+//         templatePdf.getPageIndices()
+//       );
+
+//       copiedPages.forEach((page, index) => {
+//         const height = page.getSize().height;
+
+//         if (index === 0) {
+//         const Username = emp.UserName || "";
+//                                 const words = Username.split(" ").filter(Boolean);
+//                                 if (words.length > 3) {
+//                                   // Draw first 4 words on one line at top
+//                                   const firstLine = words.slice(0, 3).join(" ");
+//                                   const secondLine = words.slice(3).join(" ");
+//                                   page.drawText(firstLine, {
+//                                     x: 140,
+//                                     y: height - 70,
+//                                     size: 10,
+//                                     font,
+//                                     color: rgb(0, 0, 0),
+//                                   });
+//                                   // Draw remaining words on next line lower
+//                                   page.drawText(secondLine, {
+//                                     x: 140,
+//                                     y: height - 85,
+//                                     size: 10,
+//                                     font,
+//                                     color: rgb(0, 0, 0),
+//                                   });
+//                                 } else {
+//                                   // Draw all words in one line at top
+//                                   page.drawText(Username, {
+//                                     x: 140,
+//                                     y: height - 70,
+//                                     size: 10,
+//                                     font,
+//                                     color: rgb(0, 0, 0),
+//                                   });
+//                                 }
+//           // Customize on first page
+//           page.drawText(String(emp.EmployeeId || "") , {
+//             x: 140,
+//             y: height - 104,
+//             size: 10,
+//             font,
+//             color: rgb(0, 0, 0),
+//           });
+//           page.drawText(String(emp.Designation || "") , {
+//             x: 140,
+//             y: height - 138,
+//             size: 10,
+//             font,
+//             color: rgb(0, 0, 0),
+//           });
+//           page.drawText(String(emp.Section || "") , {
+//             x: 140,
+//             y: height - 173,
+//             size: 10,
+//             font,
+//             color: rgb(0, 0, 0),
+//           });
+//           page.drawText(String(emp.Department || "") , {
+//             x: 140,
+//             y: height - 208,
+//             size: 10,
+//             font,
+//             color: rgb(0, 0, 0),
+//           });
+//           // Split Program_Name into two lines for drawing
+//         // Split Program_Name into two lines for drawing  
+//         //  const ProgramName = emp.Program_Name || "";
+//         //                         if (ProgramName.length > 24) {
+//         //                           const firstLine = ProgramName.substring(0, 24);
+//         //                           const secondLine = ProgramName.substring(24);
+//         //                           page.drawText(firstLine, {
+//         //                             x: 375,
+//         //                             y: height - 70,
+//         //                             size: 10,
+//         //                             font,
+//         //                             color: rgb(0, 0, 0),
+//         //                           });
+//         //                           page.drawText(secondLine, {
+//         //                             x: 375,
+//         //                             y: height - 85,
+//         //                             size: 10,
+//         //                             font,
+//         //                             color: rgb(0, 0, 0),
+//         //                           });
+//         //                         } else {
+//         //                           page.drawText(ProgramName, {
+//         //                             x: 375,
+//         //                             y: height - 70,
+//         //                             size: 10,
+//         //                             font,
+//         //                             color: rgb(0, 0, 0),
+//         //                           });
+//         //                         }
+//         function wrapText(text, maxCharsPerLine, maxLines = 2) {
+//   const words = text.split(" ");
+//   const lines = [];
+//   let currentLine = "";
+
+//   for (let word of words) {
+//     // If adding the word exceeds max length, push currentLine to lines
+//     if ((currentLine + (currentLine ? " " : "") + word).length > maxCharsPerLine) {
+//       lines.push(currentLine.trim());
+//       currentLine = word; // start new line with the word
+//       if (lines.length >= maxLines - 1) break; // only allow up to maxLines
+//     } else {
+//       currentLine += (currentLine ? " " : "") + word;
+//     }
+//   }
+
+//   if (currentLine && lines.length < maxLines) {
+//     lines.push(currentLine.trim());
+//   }
+
+//   return lines;
+// }
+
+// // Usage
+// const ProgramName = emp.Program_Name || "";
+// const wrappedLines = wrapText(ProgramName, 30, 5);
+
+// if (wrappedLines.length > 0) {
+//   page.drawText(wrappedLines[0], {
+//     x: 375,
+//     y: height - 70,
+//     size: 10,
+//     font,
+//     color: rgb(0, 0, 0),
+//   });
+// }
+// if (wrappedLines.length > 1) {
+//   page.drawText(wrappedLines[1], {
+//     x: 375,
+//     y: height - 85,
+//     size: 10,
+//     font,
+//     color: rgb(0, 0, 0),
+//   });
+// }
+
+// if (
+//   emp.External_Trainer === "NULL" ||
+//   emp.External_Trainer === null ||
+//   emp.External_Trainer === "undefined"
+// ) {
+//   if (emp.Trainer && typeof emp.Trainer === "string") {
+//     const trainerLines = emp.Trainer
+//       .split(",")
+//       .map((name) => name.trim())
+//       .filter(Boolean);
+
+//     trainerLines.forEach((line, index) => {
+//       page.drawText(line, {
+//         x: 375,
+//         y: height - 104 - index * 12,
+//         size: 10,
+//         font,
+//         color: rgb(0, 0, 0),
+//       });
+//     });
+//   }
+// }
+
+// // Internal Trainer (if exists)
+// if (emp.Trainer && typeof emp.Trainer === "string") {
+//   const trainerLines = emp.Trainer
+//     .split(",")
+//     .map((name) => name.trim())
+//     .filter(Boolean);
+
+//   trainerLines.forEach((line, index) => {
+//     page.drawText(line, {
+//       x: 375,
+//       y: height - 104 - index * 12,
+//       size: 10,
+//       font,
+//       color: rgb(0, 0, 0),
+//     });
+//   });
+// }
+
+// // External Trainer with "And More" appended to 2nd line
+// if (emp.External_Trainer && typeof emp.External_Trainer === "string") {
+//   const trainerLines = emp.External_Trainer
+//     .split(",")
+//     .map((name) => name.trim())
+//     .filter(Boolean);
+
+//   let limitedLines = [];
+
+//   if (trainerLines.length > 2) {
+//     // First trainer stays the same, second trainer gets "And More..."
+//     limitedLines = [
+//       trainerLines[0],
+//       trainerLines[1] + " And More..."
+//     ];
+//   } else {
+//     limitedLines = trainerLines;
+//   }
+
+//   limitedLines.forEach((line, index) => {
+//     page.drawText(line, {
+//       x: 375,
+//       y: height - 104 - index * 12,
+//       size: 10,
+//       font,
+//       color: rgb(0, 0, 0),
+//     });
+//   });
+// }
+
+
+//           page.drawText(String(emp.Train_Mode || "") , {
+//             x: 375,
+//             y: height - 139,
+//             size: 10,
+//             font,
+//             color: rgb(0, 0, 0),
+//           });
+
+
+
+//     page.drawText(String(emp.No_Hrs) || "", {
+//             x: 375,
+//             y: height - 173,
+//             size: 10,
+//             font,
+//             color: rgb(0, 0, 0),
+//           });
+      
+
+//           page.drawText(String(emp.Training_Date) || "", {
+//             x: 375,
+//             y: height - 208,
+//             size: 10,
+//             font,
+//             color: rgb(0, 0, 0),
+//           });
+//         }
+
+//         mergedPdf.addPage(page);
+//       });
+//     }
+
+//     const finalPdfBytes = await mergedPdf.save();
+//     const blob = new Blob([finalPdfBytes], { type: "application/pdf" });
+//     if (typeof document !== "undefined") {
+//       const link = document.createElement("a");
+//       link.href = URL.createObjectURL(blob);
+//       link.download = label;
+//       document.body.appendChild(link);
+//       link.click();
+//       document.body.removeChild(link);
+//     }
+//   }
   useEffect(() => {
     if (formData.Program_Id) {
       setLoading(true);
@@ -1825,10 +2122,19 @@ const programOptions = options.map((option) => ({
                       onClick={() =>
                         generatePdfForEmployees(formData.Program_Id)
                       }
-                      className="flex items-center cursor-pointer justify-end bg-gray-600 text-white px-4 py-2 mx-2 rounded-sm hover:bg-gray-900 transition"
+                      className="flex items-center  cursor-pointer justify-end bg-gray-600 text-white px-4 py-2 mx-2 rounded-sm hover:bg-gray-900 transition"
                     >
                       <FaPrint />
                     </button>
+                        {/* <button
+                      type="button"
+                      onClick={() =>
+                        generatePdfForEmployees1(formData.Program_Id)
+                      }
+                      className="flex items-center cursor-pointer justify-end bg-gray-600 text-white px-4 py-2 mx-2 rounded-sm hover:bg-gray-900 transition"
+                    >
+                      <FaPrint />
+                    </button> */}
                     </div>
 
                            
