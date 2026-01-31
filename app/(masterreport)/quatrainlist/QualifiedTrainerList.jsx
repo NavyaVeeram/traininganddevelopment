@@ -10,32 +10,25 @@ const QualifiedTrainerList = () => {
 const [existingCertificates, setExistingCertificates] = useState([]);
 
   const [data, setData] = useState([]);
-  const [EmployeeId, setEmployeeId] = useState(null);
+  const [EmployeeId, setEmployeeId] = useState("");
   const fileInputRef = useRef(null);
-  // Add useEffect to set EmployeeId from localStorage on mount
-  useEffect(() => {
-    const storedEmployeeId = localStorage.getItem("employeeId");
-    if (storedEmployeeId) {
-      setEmployeeId(storedEmployeeId);
-    }
-  }, []);
 const [uploadedFiles, setUploadedFiles] = useState([]);
   const [employeeOptions, setEmployeeOptions] = useState([]);
   const [trainingDetails, setTrainingDetails] = useState({
-    Username: "",
-    Department: "",
-    Section: "",
-    Designation: "",
-    Gender: "",
-    DOJ: "",
-Training_Name: "",
-            Certified:"",
-            Cert_Des: "",            
-            View_Cert:  "",
-            Exp_5_Yr: "",
-            Exp_3_Yr: "",
-            HOD_Rec:  "",
-            Qualified: "",
+     Username: "",
+  Department: "",
+  Section: "",
+  Designation: "",
+  Gender: "",
+  DOJ: "",
+  Training_Name: "",
+  Certified: "",
+  Cert_Des: "",            
+  View_Cert: "",
+  Exp_5_Yr: "",
+  Exp_3_Yr: "",
+  HOD_Rec: "",
+  Qualified: "",
 
   });
 
@@ -137,14 +130,22 @@ const [trainingName, setTrainingName] = useState([]);
 
   const resetForm = () => {
     setTrainingDetails({
-      Username: "",
-      Department: "",
-      Section: "",
-      Designation: "",
-      Gender: "",
-      DOJ: "",
+    Username: "",
+    Department: "",
+    Section: "",
+    Designation: "",
+    Gender: "",
+    DOJ: "",
+    Training_Name: "",
+    Certified: "",
+    Cert_Des: "",            
+    View_Cert: "",
+    Exp_5_Yr: "",
+    Exp_3_Yr: "",
+    HOD_Rec: "",
+    Qualified: "",
     });
-    setEmployeeId(null);
+    setEmployeeId("");
     setTrainingName([]);
     setCertified(false);
     setCertifiedInput("");  // ✅ ADD THIS
@@ -158,7 +159,7 @@ const [trainingName, setTrainingName] = useState([]);
 
   // Handle selection of employee ID from the dropdown
 const handleEmployeeIdChange = async (selectedOption) => {
-    const selectedEmployeeId = selectedOption ? selectedOption.value : null;
+    const selectedEmployeeId = selectedOption ? selectedOption.value : "";
     setEmployeeId(selectedEmployeeId);
     
     // Reset states when clearing selection
@@ -180,8 +181,9 @@ const handleEmployeeIdChange = async (selectedOption) => {
         Qualified: "",
       });
       setTrainingName([]);
-       setCertifiedInput("");  // Add this
-  setExistingCertificates([]);  // Add this
+       setCertifiedInput(""); 
+  setShowCertifiedInput(false);  
+  setExistingCertificates([]);  
       return;
     }
 
@@ -397,7 +399,8 @@ const uploadRes = await fetch("/api/insert_upload_emp_certificates", {
   method: "POST",
   body: formData,
 });
-
+console.log("Upload response status:", uploadRes.status);
+console.log("Upload response headers:", uploadRes.headers.get("content-type"));
 const uploadData = await uploadRes.json();
 
 if (!uploadRes.ok) {
@@ -434,6 +437,10 @@ if (!uploadRes.ok) {
           approve: true,
         }),
       });
+        // Only parse JSON if response has content
+  if (emailRes.ok && emailRes.headers.get("content-type")?.includes("application/json")) {
+    await emailRes.json();
+  }
     } catch (emailErr) {
       console.warn("Email notification failed:", emailErr);
     }
@@ -445,6 +452,9 @@ if (!uploadRes.ok) {
       await fetch(
         `/api/trainer_approval_form_data?employeeId=${createdByFromStorage}`
       );
+       if (approvalRes.ok && approvalRes.headers.get("content-type")?.includes("application/json")) {
+    await approvalRes.json();
+  }
     } catch (approvalErr) {
       console.warn("Approval refresh failed:", approvalErr);
     }
@@ -620,8 +630,7 @@ if (!uploadRes.ok) {
             </label>
             <Select
               options={options}
-             value={EmployeeId ? options.find((o) => o.value === EmployeeId) || null : null}
-              onChange={handleEmployeeIdChange}
+         value={options.find((o) => o.value === EmployeeId) ?? null}              onChange={handleEmployeeIdChange}
               placeholder="Select EmployeeId"
               isClearable
               styles={{

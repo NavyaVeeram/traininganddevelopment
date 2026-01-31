@@ -112,8 +112,10 @@ export default function LoginForm() {
         document.cookie = "isLoggedIn=true; path=/; max-age=86400"; // 24 hours
         }
         
-        // Redirect to the intended URL or dashboard
-        router.push(redirectUrl);
+         setTimeout(() => {
+    window.location.replace(redirectUrl);
+    // Or use: window.location.href = redirectUrl;
+  }, 100);
       } else {
         setStatus("error");
       }
